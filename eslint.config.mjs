@@ -6,10 +6,12 @@ import pluginReact from 'eslint-plugin-react';
 import pluginJsxA11y from 'eslint-plugin-jsx-a11y';
 import beautifulSort from 'eslint-plugin-beautiful-sort';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import eslintPluginAstro from 'eslint-plugin-astro';
 
 export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
+  ...eslintPluginAstro.configs.recommended,
   pluginReact.configs.flat['jsx-runtime'],
   pluginJsxA11y.flatConfigs.recommended,
   eslintPluginPrettierRecommended,
