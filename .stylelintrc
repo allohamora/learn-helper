@@ -10,9 +10,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.{js,jsx,ts,tsx}"
-      ],
+      "files": ["**/*.{js,jsx,ts,tsx}"],
       "customSyntax": "postcss-styled-syntax"
     }
   ]
