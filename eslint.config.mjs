@@ -20,9 +20,14 @@ export default tseslint.config(
   eslintPluginPrettierRecommended,
   { ignores: ['node_modules', 'dist'] },
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx,astro}'],
     languageOptions: { globals: { ...globals.browser }, parserOptions: { project: true } },
     plugins: { 'beautiful-sort': beautifulSort },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
     rules: {
       'no-use-before-define': 'error',
       'object-shorthand': 'warn',
