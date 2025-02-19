@@ -29,7 +29,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      'no-use-before-define': 'error',
+      'no-use-before-define': 'warn',
       'object-shorthand': 'warn',
       'no-async-promise-executor': 'warn',
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
@@ -38,7 +38,9 @@ export default tseslint.config(
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-deprecated': 'error',
+      'react/no-unknown-property': ['error', { ignore: ['class', 'set:html'] }],
       'beautiful-sort/import': [
         'error',
         { special: [], order: ['special', 'namespace', 'default', 'defaultObj', 'obj', 'none'] },

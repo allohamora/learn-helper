@@ -1,0 +1,52 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import { Toaster } from '@/components/ui/toaster';
+import '@/styles/global.css';
+
+type Props = {
+  title: string;
+};
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Learn Helper</title>
+    <ClientRouter />
+    <script>
+      const getThemePreference = () => {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      };
+
+      const applyTheme = () => {
+        const isDark = getThemePreference() === 'dark';
+        document.documentElement.classList[isDark ? 'add' : 'remove']('dark');
+      };
+
+      document.addEventListener('astro:after-swap', applyTheme);
+      applyTheme();
+    </script>
+  </head>
+  <body class="flex min-h-screen min-w-full flex-col">
+    <nav
+      class="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
+      <div class="container flex h-14 items-center px-4">
+        <a href="/" class="flex items-center space-x-2">
+          <img src="/favicon.svg" alt="Learn Helper Logo" class="size-6" />
+          <span class="font-bold">Learn Helper</span>
+        </a>
+      </div>
+    </nav>
+    <main>
+      <slot />
+    </main>
+    <Toaster client:load />
+  </body>
+</html>
