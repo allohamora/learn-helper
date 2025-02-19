@@ -14,6 +14,7 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs.recommended,
   ...pluginTailwind.configs['flat/recommended'],
+  pluginReact.configs.flat.recommended,
   pluginReact.configs.flat['jsx-runtime'],
   pluginJsxA11y.flatConfigs.recommended,
   eslintPluginPrettierRecommended,
