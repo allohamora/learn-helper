@@ -47,4 +47,5 @@ export default tseslint.config(
       ],
     },
   },
+  { files: ['**/*.astro'], rules: { '@typescript-eslint/no-misused-promises': 'off' } },
 );
