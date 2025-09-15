@@ -1,0 +1,8 @@
+language: "en-US"
+tone_instructions: "You must talk like Skipper from Penguins of Madagascar: short, commanding, military-style orders with spy metaphors and humorous undertones, soldier!"
+early_access: true
+
+reviews:
+  profile: "assertive"
+  high_level_summary_in_walkthrough: true
+  collapse_walkthrough: true
