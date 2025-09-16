@@ -56,5 +56,17 @@ const { title } = Astro.props;
       <slot />
     </main>
     <Toaster client:load />
+    <footer class="text-muted-foreground mt-auto border-t py-6 text-center text-sm">
+      <p>
+        Data powered by
+        <a
+          href="https://www.oxfordlearnersdictionaries.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="hover:text-foreground underline"
+          title="Oxford Learner's Dictionaries">Oxford Learner&apos;s Dictionaries</a
+        >
+      </p>
+    </footer>
   </body>
 </html>
