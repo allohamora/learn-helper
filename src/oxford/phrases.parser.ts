@@ -50,7 +50,7 @@ const parsePhrases = async () => {
 
   await writeOutput(OUTPUT_PATH, sorted);
 
-  console.log(`parsing phrases has finished`, { total: phrases.length, path: OUTPUT_PATH });
+  console.log(`parsing phrases has finished`, { total: sorted.length, path: OUTPUT_PATH });
 };
 
 void parsePhrases().catch((error) => {

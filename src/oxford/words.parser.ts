@@ -56,7 +56,7 @@ const parseWords = async () => {
 
   await writeOutput(OUTPUT_PATH, sorted);
 
-  console.log(`parsing words has finished`, { total: words.length, path: OUTPUT_PATH });
+  console.log(`parsing words has finished`, { total: sorted.length, path: OUTPUT_PATH });
 };
 
 void parseWords().catch((error) => {
