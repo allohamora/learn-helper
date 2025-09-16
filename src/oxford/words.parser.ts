@@ -60,5 +60,5 @@ const parseWords = async () => {
 };
 
 void parseWords().catch((error) => {
-  console.log('parsing words has failed', { error });
+  console.error('parsing words has failed', { error });
 });
