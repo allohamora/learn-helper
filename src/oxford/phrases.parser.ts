@@ -55,4 +55,5 @@ const parsePhrases = async () => {
 
 void parsePhrases().catch((error) => {
   console.error('parsing phrases has failed', { error });
+  process.exitCode = 1;
 });
