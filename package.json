@@ -14,7 +14,9 @@
     "lint": "eslint \"**/*.{ts,tsx,astro}\"",
     "lint:fix": "eslint \"**/*.{ts,tsx,astro}\" --fix",
     "csslint": "stylelint \"src/**/*.{css,ts,tsx}\"",
-    "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix"
+    "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix",
+    "parse:words": "tsx src/oxford/words.parser.ts",
+    "parse:phrases": "tsx src/oxford/phrases.parser.ts"
   },
   "dependencies": {
     "@clerk/astro": "^2.13.0",
@@ -27,6 +29,7 @@
     "github-markdown-css": "^5.8.1",
     "lucide-react": "^0.542.0",
     "marked": "^16.2.1",
+    "node-html-parser": "^7.0.1",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-hook-form": "^7.62.0",
@@ -67,8 +70,14 @@
     "stylelint-config-standard": "^39.0.0",
     "stylelint-config-tailwindcss": "^1.0.0",
     "stylelint-prettier": "^5.0.3",
+    "tsx": "^4.20.5",
     "typescript-eslint": "^8.42.0"
   },
+  "engines": {
+    "node": ">=v22.13.0",
+    "npm": ">=10.9.2"
+  },
+  "packageManager": "npm@10.9.2",
   "lint-staged": {
     "*.{js,cjs,mjs,json,yml,md}": "prettier --write",
     "*.css": "stylelint --fix",
