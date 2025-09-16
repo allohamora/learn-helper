@@ -5,9 +5,9 @@ import { getHtml, getOutputPath, sortByLevel, toLink, writeOutput } from './util
 const OUTPUT_PATH = getOutputPath('oxford-5000-words.json');
 
 const schema = z.object({
-  word: z.string(),
-  level: z.string(),
-  partOfSpeech: z.string(),
+  word: z.string().min(1),
+  level: z.string().min(1),
+  partOfSpeech: z.string().min(1),
   link: z.url(),
   usAudioLink: z.url(),
 });
@@ -24,9 +24,9 @@ const parseHtml = (html: string) => {
   return list.children
     .filter((item) => !!item.getAttribute('data-ox5000'))
     .map((item) => {
-      const word = item.getAttribute('data-hw');
-      const level = item.getAttribute('data-ox5000');
-      const partOfSpeech = item.querySelector('.pos')?.textContent;
+      const word = item.getAttribute('data-hw')?.trim();
+      const level = item.getAttribute('data-ox5000')?.trim();
+      const partOfSpeech = item.querySelector('.pos')?.textContent?.trim();
 
       const link = toLink(item.querySelector('a:first-child')?.getAttribute('href'));
       const usAudioLink = toLink(item.querySelector('.pron-us')?.getAttribute('data-src-mp3'));

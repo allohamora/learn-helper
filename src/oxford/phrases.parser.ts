@@ -5,8 +5,8 @@ import { getHtml, getOutputPath, sortByLevel, toLink, writeOutput } from './util
 const OUTPUT_PATH = getOutputPath('oxford-phrase-list.json');
 
 const schema = z.object({
-  phrase: z.string(),
-  level: z.string(),
+  phrase: z.string().min(1),
+  level: z.string().min(1),
   link: z.url(),
   usAudioLink: z.url(),
 });
@@ -20,8 +20,8 @@ const parseHtml = (html: string) => {
   }
 
   return list.children.map((item) => {
-    const phrase = item.getAttribute('data-hw');
-    const level = item.getAttribute('data-oxford_phrase_list');
+    const phrase = item.getAttribute('data-hw')?.trim();
+    const level = item.getAttribute('data-oxford_phrase_list')?.trim();
 
     const link = toLink(item.querySelector('a:first-child')?.getAttribute('href'));
     const usAudioLink = toLink(item.querySelector('.pron-us')?.getAttribute('data-src-mp3'));
