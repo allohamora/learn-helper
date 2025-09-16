@@ -1,20 +1,8 @@
 import { parse } from 'node-html-parser';
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { z } from 'zod';
+import { getHtml, getOutputPath, sortByLevel, toLink, writeOutput } from './utils';
 
-const OUTPUT_PATH = join(import.meta.dirname, 'output', 'oxford-phrase-list.json');
-const BASE_URL = 'https://www.oxfordlearnersdictionaries.com';
-
-const getHtml = async () => {
-  const res = await fetch(`${BASE_URL}/wordlists/oxford-phrase-list`);
-
-  return res.text();
-};
-
-const toLink = (relativeLink?: string) => {
-  return relativeLink ? `${BASE_URL}${relativeLink}` : null;
-};
+const OUTPUT_PATH = getOutputPath('oxford-phrase-list.json');
 
 const schema = z.object({
   phrase: z.string(),
@@ -56,13 +44,13 @@ const parseHtml = (html: string) => {
 export const parsePhrases = async () => {
   console.log('parsing phrases has been started');
 
-  const html = await getHtml();
+  const html = await getHtml('/wordlists/oxford-phrase-list');
   const phrases = parseHtml(html);
-  const sorted = phrases.toSorted((a, b) => a.level.localeCompare(b.level));
+  const sorted = sortByLevel(phrases);
 
-  await writeFile(OUTPUT_PATH, JSON.stringify(sorted, null, 2));
+  await writeOutput(OUTPUT_PATH, sorted);
 
-  console.log(`parsing phrases has been finished`, { total: phrases.length, output: OUTPUT_PATH });
+  console.log(`parsing phrases has been finished`, { total: phrases.length, path: OUTPUT_PATH });
 };
 
 void parsePhrases().catch((error) => {
