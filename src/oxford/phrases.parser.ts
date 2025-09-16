@@ -41,7 +41,7 @@ const parseHtml = (html: string) => {
   });
 };
 
-export const parsePhrases = async () => {
+const parsePhrases = async () => {
   console.log('parsing phrases has started');
 
   const html = await getHtml('/wordlists/oxford-phrase-list');

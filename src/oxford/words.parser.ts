@@ -47,7 +47,7 @@ const parseHtml = (html: string) => {
     });
 };
 
-export const parseWords = async () => {
+const parseWords = async () => {
   console.log('parsing words has started');
 
   const html = await getHtml('/wordlists/oxford3000-5000');
