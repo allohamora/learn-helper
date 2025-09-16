@@ -15,7 +15,8 @@
     "lint:fix": "eslint \"**/*.{ts,tsx,astro}\" --fix",
     "csslint": "stylelint \"src/**/*.{css,ts,tsx}\"",
     "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix",
-    "parse:words": "tsx src/oxford/words.parser.ts"
+    "parse:words": "tsx src/oxford/words.parser.ts",
+    "parse:phrases": "tsx src/oxford/phrases.parser.ts"
   },
   "dependencies": {
     "@clerk/astro": "^2.13.0",
