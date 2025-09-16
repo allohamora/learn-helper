@@ -40,7 +40,7 @@ const parseHtml = (html: string) => {
           usAudioLink,
         });
       } catch (error) {
-        console.error('parsing list item failed', { html: item.outerHTML, error });
+        console.error('parsing list item has failed', { html: item.outerHTML, error });
 
         throw error;
       }
@@ -48,7 +48,7 @@ const parseHtml = (html: string) => {
 };
 
 export const parseWords = async () => {
-  console.log('parsing words has been started');
+  console.log('parsing words has started');
 
   const html = await getHtml('/wordlists/oxford3000-5000');
   const words = parseHtml(html);
@@ -56,9 +56,9 @@ export const parseWords = async () => {
 
   await writeOutput(OUTPUT_PATH, sorted);
 
-  console.log(`parsing words has been finished`, { total: words.length, path: OUTPUT_PATH });
+  console.log(`parsing words has finished`, { total: words.length, path: OUTPUT_PATH });
 };
 
 void parseWords().catch((error) => {
-  console.log('parsing words has been failed', { error });
+  console.log('parsing words has failed', { error });
 });
