@@ -14,9 +14,7 @@
     "lint": "eslint \"**/*.{ts,tsx,astro}\"",
     "lint:fix": "eslint \"**/*.{ts,tsx,astro}\" --fix",
     "csslint": "stylelint \"src/**/*.{css,ts,tsx}\"",
-    "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix",
-    "parse:words": "tsx src/oxford/words.parser.ts",
-    "parse:phrases": "tsx src/oxford/phrases.parser.ts"
+    "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix"
   },
   "dependencies": {
     "@clerk/astro": "^2.13.0",
@@ -29,7 +27,6 @@
     "github-markdown-css": "^5.8.1",
     "lucide-react": "^0.542.0",
     "marked": "^16.2.1",
-    "node-html-parser": "^7.0.1",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "react-hook-form": "^7.62.0",
