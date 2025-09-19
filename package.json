@@ -4,9 +4,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "astro dev --remote",
+    "build": "astro build --remote",
     "preview": "astro preview",
+    "push": "astro db push --remote",
+    "seed": "astro db execute db/seed.ts --remote",
     "astro": "astro",
     "prepare": "husky",
     "format": "prettier . --check",
