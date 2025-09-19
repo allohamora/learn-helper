@@ -1,6 +1,8 @@
-import { NODE_ENV } from "./config.js";
-import { createLogger } from "./libs/pino.lib.js";
+import { Bot } from "grammy";
+import { TELEGRAM_TOKEN } from "./config.js";
 
-const logger = createLogger("main");
+const bot = new Bot(TELEGRAM_TOKEN);
 
-logger.info({ msg: "hello-world!", NODE_ENV });
+bot.on("message:text", (ctx) => ctx.reply("Hello! I am your bot."));
+
+bot.start();

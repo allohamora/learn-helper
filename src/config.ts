@@ -8,6 +8,9 @@ const schema = z.object({
   PINO_LEVEL: z
     .enum(["trace", "debug", "info", "warn", "error", "fatal"])
     .default("info"),
+  TELEGRAM_TOKEN: z.string().min(1),
 });
 
-export const { NODE_ENV, PINO_LEVEL } = schema.parse(process.env);
+export const { NODE_ENV, PINO_LEVEL, TELEGRAM_TOKEN } = schema.parse(
+  process.env
+);
