@@ -1,6 +1,6 @@
 # Learn Helper
 
-a web app designed to help you learn English
+an app designed to help you learn English
 
 ---
 
