@@ -4,6 +4,7 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import node from '@astrojs/node';
 import clerk from '@clerk/astro';
+import db from '@astrojs/db';
 
 // https://astro.build/config
 export default defineConfig({
@@ -17,7 +18,7 @@ export default defineConfig({
       CLERK_SECRET_KEY: envField.string({ context: 'server', access: 'secret' }),
     },
   },
-  integrations: [clerk(), react()],
+  integrations: [clerk(), react(), db()],
   adapter: node({
     mode: 'standalone',
   }),
