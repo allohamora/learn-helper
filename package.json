@@ -11,8 +11,13 @@
     "build": "tsc -p ./tsconfig.build.json",
     "postbuild": "tsc-alias -p ./tsconfig.build.json"
   },
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "zod": "^4.1.9"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",
+    "@types/node": "^22.9.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.6",
     "tsc-alias": "^1.8.16",
