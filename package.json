@@ -3,12 +3,24 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
-  "scripts": {},
+  "scripts": {
+    "prepare": "husky",
+    "lint": "ultracite check",
+    "lint:fix": "ultracite fix"
+  },
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.6",
+    "ultracite": "^5.3.8"
+  },
   "engines": {
     "node": ">=v22.13.0",
     "npm": ">=10.9.2"
   },
-  "packageManager": "npm@10.9.2"
+  "packageManager": "npm@10.9.2",
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": "ultracite fix"
+  }
 }
