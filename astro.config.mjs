@@ -8,6 +8,10 @@ import clerk from '@clerk/astro';
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
+  server: {
+    port: 4321,
+    host: true,
+  },
   vite: {
     plugins: [tailwindcss()],
   },
