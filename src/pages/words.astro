@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/layout.astro';
+import { UserWordsPage } from '@/components/page/user-words';
+import { ensureUserWordsExists } from '@/repositories/user-word.repository';
+
+const { userId } = Astro.locals.auth();
+if (!userId) {
+  return Astro.redirect('/');
+}
+
+await ensureUserWordsExists(userId);
+---
+
+<Layout title="Words">
+  <UserWordsPage client:load />
+</Layout>

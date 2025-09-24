@@ -1,24 +1,29 @@
-import { column, defineDb, defineTable, NOW, sql } from 'astro:db';
-
-// random symbols for id
-const ID = sql`lower(hex(randomblob(16)))`;
+import { column, defineDb, defineTable } from 'astro:db';
 
 const Word = defineTable({
   columns: {
-    id: column.text({ primaryKey: true, default: ID }),
+    id: column.number({ primaryKey: true }),
     value: column.text(),
     definition: column.text(),
     partOfSpeech: column.text({ optional: true }),
-    level: column.text(),
+    level: column.text({ enum: ['a1', 'a2', 'b1', 'b2', 'c1'] }),
     spelling: column.text({ optional: true }),
     pronunciation: column.text(),
     link: column.text(),
-    list: column.text(),
-    createdAt: column.date({ default: NOW }),
+    list: column.text({ enum: ['oxford-5000-words', 'oxford-phrase-list'] }),
+  },
+});
+
+const UserWord = defineTable({
+  columns: {
+    id: column.number({ primaryKey: true }),
+    userId: column.text(),
+    wordId: column.number({ references: () => Word.columns.id }),
+    status: column.text({ enum: ['learning', 'known', 'learned'], default: 'learning' }),
   },
 });
 
 // https://astro.build/db/config
 export default defineDb({
-  tables: { Word },
+  tables: { Word, UserWord },
 });

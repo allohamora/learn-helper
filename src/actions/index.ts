@@ -1,11 +1,22 @@
+import { getUserWords } from '@/repositories/user-word.repository';
 import { defineAction } from 'astro:actions';
+import { z } from 'astro:schema';
 
 export const server = {
-  getCurrentUser: defineAction({
-    handler: async (_input, ctx) => {
-      const user = await ctx.locals.currentUser();
+  getUserWords: defineAction({
+    input: z.object({
+      level: z.enum(['a1', 'a2', 'b1', 'b2', 'c1']).optional(),
+      list: z.enum(['oxford-5000-words', 'oxford-phrase-list']).optional(),
+      cursor: z.string().optional(),
+      limit: z.number().min(1).max(100).default(50),
+    }),
+    handler: async (data, context) => {
+      const { userId } = context.locals.auth();
+      if (!userId) {
+        throw new Error('Unauthorized');
+      }
 
-      return { firstName: user?.firstName, lastName: user?.lastName };
+      return await getUserWords({ userId, ...data });
     },
   }),
 };
