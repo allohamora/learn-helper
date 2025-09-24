@@ -49,5 +49,7 @@ From `package.json`:
 
 ## Instructions
 
+- Write comments only when necessary to clarify complex logic; prefer self-documenting code.
+- Use `context7` mcp tools to get latest docs of the libraries before use them.
 - Use `shadcn` CLI commands to install or update UI components; do NOT write component source from the memory.
 - Use Astro Actions (`src/actions`) instead of adding bespoke API endpoint routes; implement server logic in actions and invoke them from forms/components to keep a unified server boundary.
