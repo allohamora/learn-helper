@@ -1,16 +1,8 @@
 ---
 import Layout from '../layouts/layout.astro';
-import { db } from 'astro:db';
 import { IndexPage } from '@/components/page/index';
-import { Word } from 'astro:db';
-
-const [{ count }] = await db
-  .select({ count: db.$count(Word) })
-  .from(Word)
-  .limit(1);
 ---
 
 <Layout title="Home">
-  <IndexPage />
-  Words count: {count}
+  <IndexPage client:load />
 </Layout>
