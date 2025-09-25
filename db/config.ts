@@ -19,7 +19,7 @@ const UserWord = defineTable({
     id: column.number({ primaryKey: true }),
     userId: column.text(),
     wordId: column.number({ references: () => Word.columns.id }),
-    status: column.text({ enum: ['learning', 'known', 'learned'], default: 'learning' }),
+    status: column.text({ enum: ['waiting', 'learning', 'known', 'learned'], default: 'waiting' }),
   },
 });
 

@@ -1,4 +1,4 @@
-import { db, UserWord, eq, sql, Word, and, asc, gte } from 'astro:db';
+import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
   const res = await db.select().from(UserWord).where(eq(UserWord.userId, userId)).limit(1);
@@ -48,7 +48,7 @@ export const getUserWords = async ({ userId, level, list, cursor, limit }: GetUs
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
-      .where(and(...filters, eq(UserWord.status, 'learning')));
+      .where(and(...filters, inArray(UserWord.status, ['learning', 'waiting'])));
 
     return count;
   };
