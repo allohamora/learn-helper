@@ -3,15 +3,16 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { actions } from 'astro:actions';
 import { UserWordsFilters } from './user-words-filters';
-import { WordCard } from './word-card';
-import { Loader } from './ui/loader';
+import { WordsTable } from './words-table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
 import { type Level, type List } from '@/types/user-words.types';
 
 export const UserWords: FC = () => {
   const [level, setLevel] = useState<Level | undefined>();
-  const [listType, setListType] = useState<List | undefined>();
-  const { ref, inView } = useInView();
+  const [activeTab, setActiveTab] = useState<'oxford-5000' | 'phrase-list'>('oxford-5000');
+
+  const listType: List | undefined = activeTab === 'oxford-5000' ? 'oxford-5000-words' : 'oxford-phrase-list';
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(
     {
@@ -39,11 +40,10 @@ export const UserWords: FC = () => {
   const totalWords = data?.pages[0]?.total || 0;
   const learningWords = data?.pages[0]?.learning || 0;
 
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'oxford-5000' | 'phrase-list');
+    setLevel(undefined); // Reset level filter when switching tabs
+  };
 
   if (isError) {
     return (
@@ -78,37 +78,38 @@ export const UserWords: FC = () => {
         </div>
       )}
 
-      {data && (
-        <UserWordsFilters level={level} listType={listType} onLevelChange={setLevel} onListTypeChange={setListType} />
-      )}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+            <TabsTrigger value="oxford-5000">Oxford 5000</TabsTrigger>
+            <TabsTrigger value="phrase-list">Phrase List</TabsTrigger>
+          </TabsList>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {allWords.map((word) => (
-          <WordCard key={word.id} word={word} />
-        ))}
-
-        {(isLoading || isFetchingNextPage) && (
-          <div className="col-span-full flex justify-center py-8">
-            <Loader className="text-muted-foreground" />
-          </div>
-        )}
-      </div>
-
-      {!hasNextPage && allWords.length > 0 && (
-        <div className="py-8 text-center">
-          <div className="text-muted-foreground">You&apos;ve reached the end! No more words to show.</div>
+          {data && <UserWordsFilters level={level} onLevelChange={setLevel} />}
         </div>
-      )}
 
-      {!isLoading && allWords.length === 0 && (
-        <div className="py-12 text-center">
-          <div className="text-muted-foreground">
-            No words found. Try adjusting your filters or add some words to get started.
-          </div>
-        </div>
-      )}
+        <TabsContent value="oxford-5000" className="mt-6">
+          <WordsTable
+            words={allWords}
+            isLoading={isLoading}
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            onLoadMore={fetchNextPage}
+            showPartOfSpeech={true}
+          />
+        </TabsContent>
 
-      <div ref={ref} />
+        <TabsContent value="phrase-list" className="mt-6">
+          <WordsTable
+            words={allWords}
+            isLoading={isLoading}
+            isFetchingNextPage={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            onLoadMore={fetchNextPage}
+            showPartOfSpeech={false}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

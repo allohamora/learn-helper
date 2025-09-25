@@ -40,7 +40,8 @@ export const getUserWords = async ({ userId, level, list, cursor, limit }: GetUs
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
-      .where(and(...filters));
+      .where(and(...filters))
+      .leftJoin(Word, eq(UserWord.wordId, Word.id));
 
     return count;
   };
@@ -49,7 +50,8 @@ export const getUserWords = async ({ userId, level, list, cursor, limit }: GetUs
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
-      .where(and(...filters, inArray(UserWord.status, ['learning', 'waiting'])));
+      .where(and(...filters, inArray(UserWord.status, ['learning', 'waiting'])))
+      .leftJoin(Word, eq(UserWord.wordId, Word.id));
 
     return count;
   };
