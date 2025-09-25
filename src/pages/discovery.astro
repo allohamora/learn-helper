@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/layout.astro';
+import { DiscoveryPage } from '../components/page/discovery.tsx';
+import { ensureUserWordsExists } from '@/repositories/user-word.repository';
+
+const { userId } = Astro.locals.auth();
+if (!userId) {
+  return Astro.redirect('/');
+}
+
+await ensureUserWordsExists(userId);
+---
+
+<Layout title="Discover Words">
+  <DiscoveryPage client:load />
+</Layout>

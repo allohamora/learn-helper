@@ -84,3 +84,43 @@ export const getUserWords = async ({ userId, level, list, status, cursor, limit 
     ...data,
   };
 };
+
+export const getWaitingWords = async (userId: string, limit: number = 10) => {
+  const filters = [eq(UserWord.userId, userId), eq(UserWord.status, 'waiting')];
+
+  const getTotal = async () => {
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(UserWord)
+      .where(and(...filters))
+      .leftJoin(Word, eq(UserWord.wordId, Word.id));
+
+    return count;
+  };
+
+  const getData = async () => {
+    const result = await db
+      .select()
+      .from(UserWord)
+      .where(and(...filters))
+      .leftJoin(Word, eq(UserWord.wordId, Word.id))
+      .orderBy(asc(UserWord.id))
+      .limit(limit);
+
+    return result.map((item) => ({
+      ...item.Word,
+      ...item.UserWord,
+    }));
+  };
+
+  const [total, data] = await Promise.all([getTotal(), getData()]);
+
+  return {
+    total,
+    data,
+  };
+};
+
+export const updateUserWordStatus = async (id: number, status: Status) => {
+  await db.update(UserWord).set({ status }).where(eq(UserWord.id, id));
+};
