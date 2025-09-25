@@ -6,20 +6,22 @@ import { UserWordsFilters } from './user-words-filters';
 import { WordsTable } from './words-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
-import { type Level, type List } from '@/types/user-words.types';
+import { type Level, type List, type Status } from '@/types/user-words.types';
 
 export const UserWords: FC = () => {
   const [level, setLevel] = useState<Level | undefined>();
+  const [status, setStatus] = useState<Status | undefined>();
   const [activeTab, setActiveTab] = useState<'oxford-5000' | 'phrase-list'>('oxford-5000');
 
   const listType: List | undefined = activeTab === 'oxford-5000' ? 'oxford-5000-words' : 'oxford-phrase-list';
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(
     {
-      queryKey: ['userWords', level, listType],
+      queryKey: ['userWords', level, status, listType],
       queryFn: async ({ pageParam }) => {
         const result = await actions.getUserWords({
           level,
+          status,
           list: listType,
           cursor: pageParam,
           limit: 50,
@@ -43,6 +45,7 @@ export const UserWords: FC = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value as 'oxford-5000' | 'phrase-list');
     setLevel(undefined); // Reset level filter when switching tabs
+    setStatus(undefined); // Reset status filter when switching tabs
   };
 
   if (isError) {
@@ -69,12 +72,14 @@ export const UserWords: FC = () => {
             <div className="text-foreground text-3xl font-bold">{totalWords}</div>
             <div className="text-muted-foreground text-sm">total words</div>
           </div>
-          <div className="text-center sm:text-left">
-            <div className="text-3xl font-bold text-green-600">
-              {totalWords > 0 ? Math.round(((totalWords - learningWords) / totalWords) * 100) : 0}%
+          {!status && (
+            <div className="text-center sm:text-left">
+              <div className="text-3xl font-bold text-green-600">
+                {totalWords > 0 ? Math.round(((totalWords - learningWords) / totalWords) * 100) : 0}%
+              </div>
+              <div className="text-muted-foreground text-sm">progress</div>
             </div>
-            <div className="text-muted-foreground text-sm">progress</div>
-          </div>
+          )}
         </div>
       )}
 
@@ -85,7 +90,9 @@ export const UserWords: FC = () => {
             <TabsTrigger value="phrase-list">Phrase List</TabsTrigger>
           </TabsList>
 
-          {data && <UserWordsFilters level={level} onLevelChange={setLevel} />}
+          {data && (
+            <UserWordsFilters level={level} status={status} onLevelChange={setLevel} onStatusChange={setStatus} />
+          )}
         </div>
 
         <TabsContent value="oxford-5000" className="mt-6">

@@ -7,6 +7,7 @@ export const server = {
     input: z.object({
       level: z.enum(['a1', 'a2', 'b1', 'b2', 'c1']).optional(),
       list: z.enum(['oxford-5000-words', 'oxford-phrase-list']).optional(),
+      status: z.enum(['waiting', 'learning', 'known', 'learned']).optional(),
       cursor: z.string().optional(),
       limit: z.number().min(1).max(100).default(50),
     }),

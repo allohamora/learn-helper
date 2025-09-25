@@ -1,4 +1,4 @@
-import type { Level, List } from '@/types/user-words.types';
+import type { Level, List, Status } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
@@ -25,15 +25,17 @@ type GetUserWordsBody = {
   userId: string;
   level?: Level;
   list?: List;
+  status?: Status;
   cursor?: string;
   limit: number;
 };
 
-export const getUserWords = async ({ userId, level, list, cursor, limit }: GetUserWordsBody) => {
+export const getUserWords = async ({ userId, level, list, status, cursor, limit }: GetUserWordsBody) => {
   const filters = [
     eq(UserWord.userId, userId),
     level ? eq(Word.level, level) : undefined,
     list ? eq(Word.list, list) : undefined,
+    status ? eq(UserWord.status, status) : undefined,
   ];
 
   const getTotal = async () => {
