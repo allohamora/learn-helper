@@ -1,12 +1,12 @@
 import { type FC } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { type Level, type ListType } from '@/types/user-words.types';
+import { type Level, type List } from '@/types/user-words.types';
 
 type UserWordsFiltersProps = {
   level?: Level;
-  listType?: ListType;
+  listType?: List;
   onLevelChange: (level?: Level) => void;
-  onListTypeChange: (listType?: ListType) => void;
+  onListTypeChange: (listType?: List) => void;
 };
 
 const LEVELS: { value: Level; label: string }[] = [
@@ -17,7 +17,7 @@ const LEVELS: { value: Level; label: string }[] = [
   { value: 'c1', label: 'C1 - Advanced' },
 ];
 
-const LIST_TYPES: { value: ListType; label: string }[] = [
+const LIST_TYPES: { value: List; label: string }[] = [
   { value: 'oxford-5000-words', label: 'Oxford 5000 Words' },
   { value: 'oxford-phrase-list', label: 'Oxford Phrase List' },
 ];
@@ -53,7 +53,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, listType, o
         </label>
         <Select
           value={listType || 'all'}
-          onValueChange={(value) => onListTypeChange(value === 'all' ? undefined : (value as ListType))}
+          onValueChange={(value) => onListTypeChange(value === 'all' ? undefined : (value as List))}
         >
           <SelectTrigger id="list-filter" className="w-[200px]">
             <SelectValue placeholder="All lists" />

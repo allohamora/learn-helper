@@ -6,11 +6,11 @@ import { UserWordsFilters } from './user-words-filters';
 import { WordCard } from './word-card';
 import { Loader } from './ui/loader';
 import { Button } from './ui/button';
-import { type Level, type ListType } from '@/types/user-words.types';
+import { type Level, type List } from '@/types/user-words.types';
 
 export const UserWords: FC = () => {
   const [level, setLevel] = useState<Level | undefined>();
-  const [listType, setListType] = useState<ListType | undefined>();
+  const [listType, setListType] = useState<List | undefined>();
   const { ref, inView } = useInView();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(

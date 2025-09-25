@@ -1,3 +1,4 @@
+import type { Level, List } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
@@ -22,8 +23,8 @@ export const ensureUserWordsExists = async (userId: string) => {
 
 type GetUserWordsBody = {
   userId: string;
-  level?: 'a1' | 'a2' | 'b1' | 'b2' | 'c1';
-  list?: 'oxford-5000-words' | 'oxford-phrase-list';
+  level?: Level;
+  list?: List;
   cursor?: string;
   limit: number;
 };

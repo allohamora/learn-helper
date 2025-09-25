@@ -1,18 +1,8 @@
-export type Level = 'a1' | 'a2' | 'b1' | 'b2' | 'c1';
-export type ListType = 'oxford-5000-words' | 'oxford-phrase-list';
-export type Status = 'waiting' | 'learning' | 'known' | 'learned';
+import type { ActionReturnType, Actions } from 'astro:actions';
+import type { UserWord, Word } from 'astro:db';
 
-export type Word = {
-  id: number;
-  wordId: number;
-  userId: string;
-  status: Status;
-  level?: Level;
-  value?: string;
-  list?: ListType;
-  link?: string;
-  definition?: string;
-  partOfSpeech?: string | null;
-  spelling?: string | null;
-  pronunciation?: string;
-};
+export type Level = (typeof Word.$inferInsert)['level'];
+export type List = (typeof Word.$inferInsert)['list'];
+export type Status = (typeof UserWord.$inferInsert)['status'];
+
+export type Word = NonNullable<ActionReturnType<Actions['getUserWords']>['data']>['data'][number];
