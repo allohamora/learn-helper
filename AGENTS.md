@@ -49,6 +49,7 @@ From `package.json`:
 
 ## Instructions
 
+- Install new dependencies by npm install commands; do NOT manually edit package.json or package-lock.json.
 - Write comments only when necessary to clarify complex logic; prefer self-documenting code.
 - Use `context7` mcp tools to get latest docs of the libraries before use them.
 - Use `shadcn` CLI commands to install or update UI components; do NOT write component source from the memory.
