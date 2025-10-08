@@ -1,6 +1,5 @@
-import { type FC, useState, useEffect } from 'react';
+import { type FC, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useInView } from 'react-intersection-observer';
 import { actions } from 'astro:actions';
 import { UserWordsFilters } from './user-words-filters';
 import { WordsTable } from './words-table';
@@ -11,18 +10,16 @@ import { type Level, type List, type Status } from '@/types/user-words.types';
 export const UserWords: FC = () => {
   const [level, setLevel] = useState<Level | undefined>();
   const [status, setStatus] = useState<Status | undefined>();
-  const [activeTab, setActiveTab] = useState<'oxford-5000' | 'phrase-list'>('oxford-5000');
-
-  const listType: List | undefined = activeTab === 'oxford-5000' ? 'oxford-5000-words' : 'oxford-phrase-list';
+  const [list, setList] = useState<List>('oxford-5000-words');
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(
     {
-      queryKey: ['userWords', level, status, listType],
+      queryKey: ['userWords', level, status, list],
       queryFn: async ({ pageParam }) => {
         const result = await actions.getUserWords({
           level,
           status,
-          list: listType,
+          list,
           cursor: pageParam,
           limit: 50,
         });
@@ -43,10 +40,21 @@ export const UserWords: FC = () => {
   const learningWords = data?.pages[0]?.learning || 0;
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value as 'oxford-5000' | 'phrase-list');
-    setLevel(undefined); // Reset level filter when switching tabs
-    setStatus(undefined); // Reset status filter when switching tabs
+    setList(value as List);
+    setLevel(undefined);
+    setStatus(undefined);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="text-center">
+          <h3 className="text-foreground mb-2 text-lg font-semibold">Loading Words...</h3>
+          <p className="text-muted-foreground">Please wait while we fetch your words.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isError) {
     return (
@@ -83,11 +91,11 @@ export const UserWords: FC = () => {
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <Tabs value={list} onValueChange={handleTabChange}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
-            <TabsTrigger value="oxford-5000">Oxford 5000</TabsTrigger>
-            <TabsTrigger value="phrase-list">Phrase List</TabsTrigger>
+            <TabsTrigger value="oxford-5000-words">Oxford 5000</TabsTrigger>
+            <TabsTrigger value="oxford-phrase-list">Phrase List</TabsTrigger>
           </TabsList>
 
           {data && (
@@ -95,7 +103,7 @@ export const UserWords: FC = () => {
           )}
         </div>
 
-        <TabsContent value="oxford-5000" className="mt-6">
+        <TabsContent value="oxford-5000-words" className="mt-6">
           <WordsTable
             words={allWords}
             isLoading={isLoading}
@@ -106,7 +114,7 @@ export const UserWords: FC = () => {
           />
         </TabsContent>
 
-        <TabsContent value="phrase-list" className="mt-6">
+        <TabsContent value="oxford-phrase-list" className="mt-6">
           <WordsTable
             words={allWords}
             isLoading={isLoading}
