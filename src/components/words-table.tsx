@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import type { Word } from '@/types/user-words.types';
+import { Status, type Word } from '@/types/user-words.types';
 
 type WordsTableProps = {
   words: Word[];
@@ -86,7 +86,10 @@ export const WordsTable: FC<WordsTableProps> = ({
         accessorKey: 'status',
         header: 'Status',
         cell: ({ getValue }) => (
-          <Badge variant={getValue<string>() === 'learning' ? 'default' : 'secondary'} className="px-2 py-0.5 text-xs">
+          <Badge
+            variant={getValue<string>() === Status.Learning ? 'default' : 'secondary'}
+            className="px-2 py-0.5 text-xs"
+          >
             {getValue<string>()}
           </Badge>
         ),

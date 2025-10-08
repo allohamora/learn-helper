@@ -3,6 +3,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
 import { Button } from '@/components/ui/button';
 import { WordDiscoveryCard } from '@/components/word-discovery-card';
+import { Status } from '@/types/user-words.types';
+
+type DiscoveryStatus = typeof Status.Learning | typeof Status.Known;
 
 export function Discovery() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,7 +32,7 @@ export function Discovery() {
   const remaining = total - handled;
 
   const updateWordMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: 'learning' | 'known' }) => {
+    mutationFn: async ({ id, status }: { id: number; status: DiscoveryStatus }) => {
       const result = await actions.updateWordStatus({ id, status });
       if (result.error) {
         throw new Error('Failed to update word status');
@@ -39,7 +42,7 @@ export function Discovery() {
     },
   });
 
-  const handle = async (status: 'learning' | 'known') => {
+  const handle = async (status: DiscoveryStatus) => {
     const currentWord = words[currentIndex];
     if (!currentWord) return;
 
@@ -104,7 +107,7 @@ export function Discovery() {
 
         <div className="mt-8 flex gap-4">
           <Button
-            onClick={async () => await handle('known')}
+            onClick={async () => await handle(Status.Known)}
             variant="destructive"
             className="h-12 flex-1 text-base"
             disabled={updateWordMutation.isPending}
@@ -112,7 +115,7 @@ export function Discovery() {
             I Know This
           </Button>
           <Button
-            onClick={async () => await handle('learning')}
+            onClick={async () => await handle(Status.Learning)}
             variant="default"
             className="h-12 flex-1 text-base"
             disabled={updateWordMutation.isPending}

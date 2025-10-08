@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import type { Word } from '@/types/user-words.types';
+import { List, type Word } from '@/types/user-words.types';
 
 type WordCardProps = {
   word: Word;
@@ -82,7 +82,7 @@ export const WordCard: FC<WordCardProps> = ({ word }) => {
           )}
 
           <Badge variant="outline" className="px-2 py-0.5 text-xs">
-            {word.list === 'oxford-5000-words' ? 'oxford 5000' : 'phrase list'}
+            {word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
           </Badge>
 
           <Badge className="px-2 py-0.5 text-xs" variant="outline">

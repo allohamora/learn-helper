@@ -1,4 +1,4 @@
-import type { Level } from '@/types/user-words.types';
+import { List, type LevelValue } from '@/types/user-words.types';
 import { db, Word } from 'astro:db';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -14,7 +14,7 @@ type Word = {
   value: string; // "visit",
   definition: string; // "an occasion or a period of time when somebody goes to see a place or person and spends time there",
   partOfSpeech?: string; // "noun",
-  level: Level; // "a1",
+  level: LevelValue; // "a1",
   spelling?: string; // "/ˈvɪzɪt/",
   pronunciation: string; // "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/v/vis/visit/visit__us_1.mp3",
   link: string; // "https://www.oxfordlearnersdictionaries.com/definition/english/visit_2"
@@ -22,20 +22,20 @@ type Word = {
 
 // https://astro.build/db/seed
 export default async function seed() {
-  const words = await getData<Word[]>('oxford-5000-words');
-  const phrases = await getData<Word[]>('oxford-phrase-list');
+  const words = await getData<Word[]>(List.Oxford5000Words);
+  const phrases = await getData<Word[]>(List.OxfordPhraseList);
 
   for (const word of words) {
     await db.insert(Word).values({
       ...word,
-      list: 'oxford-5000-words',
+      list: List.Oxford5000Words,
     });
   }
 
   for (const phrase of phrases) {
     await db.insert(Word).values({
       ...phrase,
-      list: 'oxford-phrase-list',
+      list: List.OxfordPhraseList,
     });
   }
 }

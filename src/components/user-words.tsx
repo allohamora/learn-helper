@@ -5,12 +5,12 @@ import { UserWordsFilters } from './user-words-filters';
 import { WordsTable } from './words-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
-import { type Level, type List, type Status } from '@/types/user-words.types';
+import { List, type LevelValue, type ListValue, type StatusValue } from '@/types/user-words.types';
 
 export const UserWords: FC = () => {
-  const [level, setLevel] = useState<Level | undefined>();
-  const [status, setStatus] = useState<Status | undefined>();
-  const [list, setList] = useState<List>('oxford-5000-words');
+  const [level, setLevel] = useState<LevelValue | undefined>();
+  const [status, setStatus] = useState<StatusValue | undefined>();
+  const [list, setList] = useState<ListValue>(List.Oxford5000Words);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(
     {
@@ -40,7 +40,7 @@ export const UserWords: FC = () => {
   const learningWords = data?.pages[0]?.learning || 0;
 
   const handleTabChange = (value: string) => {
-    setList(value as List);
+    setList(value as ListValue);
     setLevel(undefined);
     setStatus(undefined);
   };
@@ -94,8 +94,8 @@ export const UserWords: FC = () => {
       <Tabs value={list} onValueChange={handleTabChange}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="grid w-full grid-cols-2 sm:w-auto">
-            <TabsTrigger value="oxford-5000-words">Oxford 5000</TabsTrigger>
-            <TabsTrigger value="oxford-phrase-list">Phrase List</TabsTrigger>
+            <TabsTrigger value={List.Oxford5000Words}>Oxford 5000</TabsTrigger>
+            <TabsTrigger value={List.OxfordPhraseList}>Phrase List</TabsTrigger>
           </TabsList>
 
           {data && (
@@ -103,7 +103,7 @@ export const UserWords: FC = () => {
           )}
         </div>
 
-        <TabsContent value="oxford-5000-words" className="mt-6">
+        <TabsContent value={List.Oxford5000Words} className="mt-6">
           <WordsTable
             words={allWords}
             isLoading={isLoading}
@@ -114,7 +114,7 @@ export const UserWords: FC = () => {
           />
         </TabsContent>
 
-        <TabsContent value="oxford-phrase-list" className="mt-6">
+        <TabsContent value={List.OxfordPhraseList} className="mt-6">
           <WordsTable
             words={allWords}
             isLoading={isLoading}

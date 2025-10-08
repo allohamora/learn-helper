@@ -1,4 +1,4 @@
-import type { Level, List, Status } from '@/types/user-words.types';
+import { Status, type LevelValue, type ListValue, type StatusValue } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
@@ -23,9 +23,9 @@ export const ensureUserWordsExists = async (userId: string) => {
 
 type GetUserWordsBody = {
   userId: string;
-  level?: Level;
-  list?: List;
-  status?: Status;
+  level?: LevelValue;
+  list?: ListValue;
+  status?: StatusValue;
   cursor?: string;
   limit: number;
 };
@@ -52,7 +52,7 @@ export const getUserWords = async ({ userId, level, list, status, cursor, limit 
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
-      .where(and(...filters, inArray(UserWord.status, ['learning', 'waiting'])))
+      .where(and(...filters, inArray(UserWord.status, [Status.Learning, Status.Waiting])))
       .leftJoin(Word, eq(UserWord.wordId, Word.id));
 
     return count;
@@ -86,7 +86,7 @@ export const getUserWords = async ({ userId, level, list, status, cursor, limit 
 };
 
 export const getWaitingWords = async (userId: string, limit: number = 10) => {
-  const filters = [eq(UserWord.userId, userId), eq(UserWord.status, 'waiting')];
+  const filters = [eq(UserWord.userId, userId), eq(UserWord.status, Status.Waiting)];
 
   const getTotal = async () => {
     const [{ count }] = await db
@@ -121,6 +121,6 @@ export const getWaitingWords = async (userId: string, limit: number = 10) => {
   };
 };
 
-export const updateUserWordStatus = async (id: number, status: Status) => {
+export const updateUserWordStatus = async (id: number, status: StatusValue) => {
   await db.update(UserWord).set({ status }).where(eq(UserWord.id, id));
 };
