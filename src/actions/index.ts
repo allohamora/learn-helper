@@ -1,13 +1,14 @@
 import { getUserWords, getWaitingWords, updateUserWordStatus } from '@/repositories/user-word.repository';
+import { levels, lists, statuses } from '@/types/user-words.types';
 import { defineAction } from 'astro:actions';
 import { z } from 'astro:schema';
 
 export const server = {
   getUserWords: defineAction({
     input: z.object({
-      level: z.enum(['a1', 'a2', 'b1', 'b2', 'c1']).optional(),
-      list: z.enum(['oxford-5000-words', 'oxford-phrase-list']).optional(),
-      status: z.enum(['waiting', 'learning', 'known', 'learned']).optional(),
+      level: z.enum(levels).optional(),
+      list: z.enum(lists).optional(),
+      status: z.enum(statuses).optional(),
       cursor: z.string().optional(),
       limit: z.number().min(1).max(100).default(50),
     }),
@@ -36,7 +37,7 @@ export const server = {
   updateWordStatus: defineAction({
     input: z.object({
       id: z.number(),
-      status: z.enum(['waiting', 'learning', 'known', 'learned']),
+      status: z.enum(statuses),
     }),
     handler: async (data, context) => {
       const { userId } = context.locals.auth();
