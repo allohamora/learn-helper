@@ -1,5 +1,5 @@
 import { Level, List, Status } from '@/types/user-words.types';
-import { column, defineDb, defineTable } from 'astro:db';
+import { column, defineDb, defineTable, NOW } from 'astro:db';
 import type { UnionToTuple } from 'type-fest';
 
 const Word = defineTable({
@@ -25,6 +25,7 @@ const UserWord = defineTable({
       enum: Object.values(Status) as UnionToTuple<(typeof Status)[keyof typeof Status]>,
       default: Status.Waiting,
     }),
+    updatedAt: column.date({ default: NOW }),
   },
 });
 

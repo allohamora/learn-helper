@@ -128,6 +128,6 @@ export const updateUserWordStatus = async ({
 }: AuthParams<{ status: Status; userWordId: number }>) => {
   await db
     .update(UserWord)
-    .set({ status })
+    .set({ status, updatedAt: new Date() })
     .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)));
 };
