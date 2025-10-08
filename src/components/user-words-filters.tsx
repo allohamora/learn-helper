@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Level, List, Status, type LevelValue, type ListValue, type StatusValue } from '@/types/user-words.types';
+import { Level, Status, type LevelValue, type StatusValue } from '@/types/user-words.types';
 
 type UserWordsFiltersProps = {
   level?: LevelValue;
@@ -24,11 +24,6 @@ const STATUSES: { value: StatusValue; label: string }[] = [
   { value: Status.Reviewing, label: 'Reviewing' },
   { value: Status.Learned, label: 'Learned' },
   { value: Status.Known, label: 'Known' },
-];
-
-const LIST_TYPES: { value: ListValue; label: string }[] = [
-  { value: List.Oxford5000Words, label: 'Oxford 5000 Words' },
-  { value: List.OxfordPhraseList, label: 'Oxford Phrase List' },
 ];
 
 export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, status, onLevelChange, onStatusChange }) => {
