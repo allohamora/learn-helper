@@ -1,4 +1,4 @@
-import { Status, type LevelValue, type ListValue, type StatusValue } from '@/types/user-words.types';
+import { Level, List, Status } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
@@ -23,9 +23,9 @@ export const ensureUserWordsExists = async (userId: string) => {
 
 type GetUserWordsBody = {
   userId: string;
-  level?: LevelValue;
-  list?: ListValue;
-  status?: StatusValue;
+  level?: Level;
+  list?: List;
+  status?: Status;
   cursor?: string;
   limit: number;
 };
@@ -121,6 +121,6 @@ export const getWaitingWords = async (userId: string, limit: number = 10) => {
   };
 };
 
-export const updateUserWordStatus = async (id: number, status: StatusValue) => {
+export const updateUserWordStatus = async (id: number, status: Status) => {
   await db.update(UserWord).set({ status }).where(eq(UserWord.id, id));
 };

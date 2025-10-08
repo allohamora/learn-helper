@@ -1,15 +1,15 @@
 import { type FC } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Level, Status, type LevelValue, type StatusValue } from '@/types/user-words.types';
+import { Level, Status } from '@/types/user-words.types';
 
 type UserWordsFiltersProps = {
-  level?: LevelValue;
-  status?: StatusValue;
-  onLevelChange: (level?: LevelValue) => void;
-  onStatusChange: (status?: StatusValue) => void;
+  level?: Level;
+  status?: Status;
+  onLevelChange: (level?: Level) => void;
+  onStatusChange: (status?: Status) => void;
 };
 
-const LEVELS: { value: LevelValue; label: string }[] = [
+const LEVELS: { value: Level; label: string }[] = [
   { value: Level.A1, label: 'A1 - Beginner' },
   { value: Level.A2, label: 'A2 - Elementary' },
   { value: Level.B1, label: 'B1 - Intermediate' },
@@ -17,7 +17,7 @@ const LEVELS: { value: LevelValue; label: string }[] = [
   { value: Level.C1, label: 'C1 - Advanced' },
 ];
 
-const STATUSES: { value: StatusValue; label: string }[] = [
+const STATUSES: { value: Status; label: string }[] = [
   { value: Status.Waiting, label: 'Waiting' },
   { value: Status.Learning, label: 'Learning' },
   { value: Status.Struggling, label: 'Struggling' },
@@ -35,7 +35,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, status, onL
         </label>
         <Select
           value={level || 'all'}
-          onValueChange={(value) => onLevelChange(value === 'all' ? undefined : (value as LevelValue))}
+          onValueChange={(value) => onLevelChange(value === 'all' ? undefined : (value as Level))}
         >
           <SelectTrigger id="level-filter" className="w-[200px]">
             <SelectValue placeholder="All levels" />
@@ -57,7 +57,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, status, onL
         </label>
         <Select
           value={status || 'all'}
-          onValueChange={(value) => onStatusChange(value === 'all' ? undefined : (value as StatusValue))}
+          onValueChange={(value) => onStatusChange(value === 'all' ? undefined : (value as Status))}
         >
           <SelectTrigger id="status-filter" className="w-[180px]">
             <SelectValue placeholder="All statuses" />

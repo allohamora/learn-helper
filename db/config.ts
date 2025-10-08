@@ -1,5 +1,6 @@
-import { levels, lists, Status, statuses } from '@/types/user-words.types';
+import { Level, List, Status } from '@/types/user-words.types';
 import { column, defineDb, defineTable } from 'astro:db';
+import type { UnionToTuple } from 'type-fest';
 
 const Word = defineTable({
   columns: {
@@ -7,11 +8,11 @@ const Word = defineTable({
     value: column.text(),
     definition: column.text(),
     partOfSpeech: column.text({ optional: true }),
-    level: column.text({ enum: levels }),
+    level: column.text({ enum: Object.values(Level) as UnionToTuple<(typeof Level)[keyof typeof Level]> }),
     spelling: column.text({ optional: true }),
     pronunciation: column.text(),
     link: column.text(),
-    list: column.text({ enum: lists }),
+    list: column.text({ enum: Object.values(List) as UnionToTuple<(typeof List)[keyof typeof List]> }),
   },
 });
 
@@ -20,7 +21,10 @@ const UserWord = defineTable({
     id: column.number({ primaryKey: true }),
     userId: column.text(),
     wordId: column.number({ references: () => Word.columns.id }),
-    status: column.text({ enum: statuses, default: Status.Waiting }),
+    status: column.text({
+      enum: Object.values(Status) as UnionToTuple<(typeof Status)[keyof typeof Status]>,
+      default: Status.Waiting,
+    }),
   },
 });
 
