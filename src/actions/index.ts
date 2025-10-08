@@ -1,7 +1,19 @@
 import { getUserWords, getWaitingWords, updateUserWordStatus } from '@/repositories/user-word.repository';
+import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
-import { defineAction } from 'astro:actions';
+import { defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro:schema';
+
+const auth = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
+  return async (data: T, context: ActionAPIContext) => {
+    const { userId } = context.locals.auth();
+    if (!userId) {
+      throw new Error('Unauthorized');
+    }
+
+    return await fn({ ...data, userId });
+  };
+};
 
 export const server = {
   getUserWords: defineAction({
@@ -12,41 +24,19 @@ export const server = {
       cursor: z.string().optional(),
       limit: z.number().min(1).max(100).default(50),
     }),
-    handler: async (data, context) => {
-      const { userId } = context.locals.auth();
-      if (!userId) {
-        throw new Error('Unauthorized');
-      }
-
-      return await getUserWords({ userId, ...data });
-    },
+    handler: auth(getUserWords),
   }),
   getWaitingWords: defineAction({
     input: z.object({
       limit: z.number().min(1).max(50).default(10),
     }),
-    handler: async (data, context) => {
-      const { userId } = context.locals.auth();
-      if (!userId) {
-        throw new Error('Unauthorized');
-      }
-
-      return await getWaitingWords(userId, data.limit);
-    },
+    handler: auth(getWaitingWords),
   }),
   updateWordStatus: defineAction({
     input: z.object({
-      id: z.number(),
+      userWordId: z.number(),
       status: z.nativeEnum(Status),
     }),
-    handler: async (data, context) => {
-      const { userId } = context.locals.auth();
-      if (!userId) {
-        throw new Error('Unauthorized');
-      }
-
-      await updateUserWordStatus(data.id, data.status);
-      return { success: true };
-    },
+    handler: auth(updateUserWordStatus),
   }),
 };

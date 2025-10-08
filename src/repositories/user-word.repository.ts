@@ -1,3 +1,4 @@
+import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
 
@@ -21,14 +22,13 @@ export const ensureUserWordsExists = async (userId: string) => {
   }
 };
 
-type GetUserWordsBody = {
-  userId: string;
+type GetUserWordsBody = AuthParams<{
   level?: Level;
   list?: List;
   status?: Status;
   cursor?: string;
   limit: number;
-};
+}>;
 
 export const getUserWords = async ({ userId, level, list, status, cursor, limit }: GetUserWordsBody) => {
   const filters = [
@@ -85,7 +85,7 @@ export const getUserWords = async ({ userId, level, list, status, cursor, limit 
   };
 };
 
-export const getWaitingWords = async (userId: string, limit: number = 10) => {
+export const getWaitingWords = async ({ userId, limit }: AuthParams<{ limit: number }>) => {
   const filters = [eq(UserWord.userId, userId), eq(UserWord.status, Status.Waiting)];
 
   const getTotal = async () => {
@@ -121,6 +121,13 @@ export const getWaitingWords = async (userId: string, limit: number = 10) => {
   };
 };
 
-export const updateUserWordStatus = async (id: number, status: Status) => {
-  await db.update(UserWord).set({ status }).where(eq(UserWord.id, id));
+export const updateUserWordStatus = async ({
+  userId,
+  status,
+  userWordId,
+}: AuthParams<{ status: Status; userWordId: number }>) => {
+  await db
+    .update(UserWord)
+    .set({ status })
+    .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)));
 };

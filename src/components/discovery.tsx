@@ -32,8 +32,8 @@ export function Discovery() {
   const remaining = total - handled;
 
   const updateWordMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: DiscoveryStatus }) => {
-      const result = await actions.updateWordStatus({ id, status });
+    mutationFn: async ({ userWordId, status }: { userWordId: number; status: DiscoveryStatus }) => {
+      const result = await actions.updateWordStatus({ userWordId, status });
       if (result.error) {
         throw new Error('Failed to update word status');
       }
@@ -47,7 +47,7 @@ export function Discovery() {
     if (!currentWord) return;
 
     await updateWordMutation.mutateAsync({
-      id: currentWord.id,
+      userWordId: currentWord.id,
       status,
     });
 
