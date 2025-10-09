@@ -97,7 +97,7 @@ export function Discovery() {
   }
 
   return (
-    <div className="bg-background min-h-screen p-4">
+    <div className="mt-4 space-y-6">
       <div className="mx-auto max-w-md pt-8">
         <div className="mb-8 text-center">
           <p className="text-muted-foreground text-sm">Remaining words: {remaining}</p>
