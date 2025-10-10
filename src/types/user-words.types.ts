@@ -1,5 +1,4 @@
-import type { ActionReturnType, Actions } from 'astro:actions';
-import type { Word } from 'astro:db';
+import type * as db from 'astro:db';
 
 export enum Level {
   A1 = 'a1',
@@ -23,4 +22,40 @@ export enum Status {
   Known = 'known', // user already knew the word
 }
 
-export type UserWord = NonNullable<ActionReturnType<Actions['getUserWords']>['data']>['data'][number];
+export type UserWord = { word: typeof db.Word.$inferSelect } & typeof db.UserWord.$inferSelect;
+
+export type ShowcaseTask = {
+  type: 'showcase';
+  data: typeof db.Word.$inferSelect;
+};
+
+export type WordToDefinitionTask = {
+  id: string;
+  type: 'word-to-definition';
+  data: {
+    target: typeof db.Word.$inferSelect;
+    options: {
+      definition: string;
+      isCorrect: boolean;
+      isChosen?: boolean;
+    }[];
+  };
+};
+
+export type DefinitionToWordTask = {
+  id: string;
+  type: 'definition-to-word';
+  data: {
+    target: {
+      definition: string;
+    };
+    options: {
+      value: string;
+      partOfSpeech: string | null;
+      isCorrect: boolean;
+      isChosen?: boolean;
+    }[];
+  };
+};
+
+export type LearningTask = ShowcaseTask | WordToDefinitionTask | DefinitionToWordTask;
