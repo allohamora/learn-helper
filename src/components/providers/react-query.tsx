@@ -5,8 +5,8 @@ type ReactQueryProviderProps = {
   children: ReactNode;
 };
 
-export const ReactQueryProvider: FC<ReactQueryProviderProps> = ({ children }) => {
-  const queryClient = new QueryClient();
+const queryClient = new QueryClient();
 
+export const ReactQueryProvider: FC<ReactQueryProviderProps> = ({ children }) => {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };
