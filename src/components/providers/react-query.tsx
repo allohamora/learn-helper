@@ -5,8 +5,8 @@ type UserWordsProviderProps = {
   children: ReactNode;
 };
 
-const queryClient = new QueryClient();
-
 export const ReactQueryProvider: FC<UserWordsProviderProps> = ({ children }) => {
+  const queryClient = new QueryClient();
+
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 };
