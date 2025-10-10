@@ -52,7 +52,7 @@ export const LearningResult: FC<LearningResultProps> = ({ showcaseTasks, mistake
 
         <div className="flex justify-between">
           <div>
-            <Button disabled={isPending}>
+            <Button disabled={isPending} asChild>
               <a href="/learning">{isPending ? 'Saving...' : 'Learn More Words'}</a>
             </Button>
           </div>
