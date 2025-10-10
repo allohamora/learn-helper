@@ -1,6 +1,7 @@
 import type { ShowcaseTask } from '@/types/user-words.types';
 import { type FC } from 'react';
 import { Button } from './ui/button';
+import { Loader } from './ui/loader';
 
 export type LearningResultProps = {
   showcaseTasks: ShowcaseTask[];
@@ -16,8 +17,7 @@ export const LearningResult: FC<LearningResultProps> = ({ showcaseTasks, mistake
 
         {isPending && (
           <div className="mb-4 flex items-center justify-center">
-            <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
-            <span className="text-muted-foreground">Updating word progress...</span>
+            <Loader />
           </div>
         )}
 

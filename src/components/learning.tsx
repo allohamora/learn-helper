@@ -7,6 +7,7 @@ import { DefinitionToWord } from './definition-to-word';
 import { WordToDefinition } from './word-to-definition';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
+import { Loader } from './ui/loader';
 
 const MISTAKES_THRESHOLD = 2;
 
@@ -41,10 +42,7 @@ export const Learning: FC = () => {
   if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center">
-        <div className="text-center">
-          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
-          <p className="text-muted-foreground">Loading learning words...</p>
-        </div>
+        <Loader />
       </div>
     );
   }

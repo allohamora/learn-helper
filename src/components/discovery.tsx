@@ -4,6 +4,7 @@ import { actions } from 'astro:actions';
 import { Button } from '@/components/ui/button';
 import { WordDiscoveryCard } from '@/components/word-discovery-card';
 import { Status } from '@/types/user-words.types';
+import { Loader } from './ui/loader';
 
 type DiscoveryStatus = typeof Status.Learning | typeof Status.Known;
 
@@ -66,10 +67,7 @@ export function Discovery() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center">
-        <div className="text-center">
-          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
-          <p className="text-muted-foreground">Loading words...</p>
-        </div>
+        <Loader />
       </div>
     );
   }
