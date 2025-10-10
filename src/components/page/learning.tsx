@@ -1,11 +1,11 @@
 import { type FC } from 'react';
 import { ReactQueryProvider } from '../providers/react-query';
-import { LearningOrchestrator } from '../learning-orchestrator';
+import { Learning } from '../learning';
 
 export const LearningPage: FC = () => {
   return (
     <ReactQueryProvider>
-      <LearningOrchestrator />
+      <Learning />
     </ReactQueryProvider>
   );
 };

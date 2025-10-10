@@ -10,7 +10,7 @@ import { LearningResult } from './learning-result';
 
 const MISTAKES_THRESHOLD = 2;
 
-export const LearningOrchestrator: FC = () => {
+export const Learning: FC = () => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
