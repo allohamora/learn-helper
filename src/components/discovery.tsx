@@ -18,7 +18,7 @@ export function Discovery() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['waitingWords'],
+    queryKey: ['getWaitingWords'],
     queryFn: async () => {
       const result = await actions.getWaitingWords({ limit: 10 });
       if (result.error) {

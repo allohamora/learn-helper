@@ -17,7 +17,7 @@ export const Learning: FC = () => {
   const [isFinished, setIsFinished] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['learningTasks'],
+    queryKey: ['getLearningTasks'],
     queryFn: async () => {
       const result = await actions.getLearningTasks({});
       if (result.error) {
