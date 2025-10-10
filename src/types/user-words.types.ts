@@ -24,14 +24,20 @@ export enum Status {
 
 export type UserWord = { word: typeof db.Word.$inferSelect } & typeof db.UserWord.$inferSelect;
 
+export enum TaskType {
+  Showcase = 'showcase',
+  WordToDefinition = 'word-to-definition',
+  DefinitionToWord = 'definition-to-word',
+}
+
 export type ShowcaseTask = {
-  type: 'showcase';
+  type: TaskType.Showcase;
   data: typeof db.Word.$inferSelect;
 };
 
 export type WordToDefinitionTask = {
   id: string;
-  type: 'word-to-definition';
+  type: TaskType.WordToDefinition;
   data: {
     target: typeof db.Word.$inferSelect;
     options: {
@@ -44,7 +50,7 @@ export type WordToDefinitionTask = {
 
 export type DefinitionToWordTask = {
   id: string;
-  type: 'definition-to-word';
+  type: TaskType.DefinitionToWord;
   data: {
     target: {
       definition: string;

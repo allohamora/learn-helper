@@ -1,11 +1,12 @@
 import { getLearningWords } from '@/repositories/user-word.repository';
 import type { AuthParams } from '@/types/auth.types';
-import type {
-  DefinitionToWordTask,
-  LearningTask,
-  ShowcaseTask,
-  UserWord,
-  WordToDefinitionTask,
+import {
+  TaskType,
+  type DefinitionToWordTask,
+  type LearningTask,
+  type ShowcaseTask,
+  type UserWord,
+  type WordToDefinitionTask,
 } from '@/types/user-words.types';
 import { randomUUID } from 'node:crypto';
 
@@ -19,7 +20,7 @@ const shuffle = <T>(array: T[]): T[] => {
 const toShowcaseTasks = (words: UserWord[]) => {
   return words.map(
     (item): ShowcaseTask => ({
-      type: 'showcase',
+      type: TaskType.Showcase,
       data: item.word,
     }),
   );
@@ -35,7 +36,7 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
 
     return {
       id: randomUUID(),
-      type: 'word-to-definition' as const,
+      type: TaskType.WordToDefinition,
       data: {
         target: target.word,
         options,
@@ -54,7 +55,7 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
 
     return {
       id: randomUUID(),
-      type: 'definition-to-word' as const,
+      type: TaskType.DefinitionToWord,
       data: {
         target: { definition: target.word.definition },
         options,
