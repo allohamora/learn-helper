@@ -1,178 +1,44 @@
-import { type FC, useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { type FC, useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
-import { Status } from '@/types/user-words.types';
+import { Status, TaskType } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
 import { WordToDefinition } from './word-to-definition';
-import { Loader } from '@/components/ui/loader';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { LearningResult } from './learning-result';
 
-type LearningPhase = 'loading' | 'showcase' | 'definition-to-word' | 'word-to-definition' | 'completed';
-
-type TaskResult = {
-  wordId: number;
-  userWordId: number;
-  failures: number;
-};
+const MISTAKES_THRESHOLD = 2;
 
 export const LearningOrchestrator: FC = () => {
-  const [phase, setPhase] = useState<LearningPhase>('loading');
-  const [currentTaskWordIndex, setCurrentTaskWordIndex] = useState(0);
-  const [showcaseWordIndex, setShowcaseWordIndex] = useState(0);
-  const [taskResults, setTaskResults] = useState<Map<string, TaskResult>>(new Map());
-  const queryClient = useQueryClient();
+  const [idx, setIdx] = useState(0);
+  const [mistakes, setMistakes] = useState<Record<number, number>>({});
+  const [isFinished, setIsFinished] = useState(false);
 
-  // React Query for loading learning words
-  const {
-    data: words = [],
-    isLoading,
-    error,
-    isSuccess,
-  } = useQuery({
-    queryKey: ['learningWords'],
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['learningTasks'],
     queryFn: async () => {
-      const result = await actions.getLearningWords({});
+      const result = await actions.getLearningTasks({});
       if (result.error) {
-        throw new Error('Failed to load learning words');
+        throw new Error('Failed to load learning tasks');
       }
+
       return result.data;
     },
   });
 
-  // React Query mutation for updating word status
-  const updateWordStatusMutation = useMutation({
-    mutationFn: async ({ userWordId, status }: { userWordId: number; status: Status }) => {
-      const result = await actions.updateWordStatus({ userWordId, status });
+  const updateUserWordStatuses = useMutation({
+    mutationFn: async (data: { userWordId: number; status: Status }[]) => {
+      const result = await actions.updateUserWordStatuses({ data });
       if (result.error) {
-        throw new Error('Failed to update word status');
+        throw new Error('Failed to update word statuses');
       }
+
       return result.data;
-    },
-    onSuccess: () => {
-      // Invalidate and refetch learning words query
-      queryClient.invalidateQueries({ queryKey: ['learningWords'] });
-      // Also invalidate user words if it exists
-      queryClient.invalidateQueries({ queryKey: ['userWords'] });
-      queryClient.invalidateQueries({ queryKey: ['waitingWords'] });
-    },
-    onError: (error) => {
-      console.error('Failed to update word status:', error);
     },
   });
 
-  // Update phase based on query results
-  useEffect(() => {
-    if (isLoading) {
-      setPhase('loading');
-    } else if (isSuccess) {
-      if (words.length > 0) {
-        setPhase('showcase');
-      } else {
-        setPhase('completed');
-      }
-    } else if (error) {
-      console.error('Failed to load learning words:', error);
-      setPhase('completed');
-    }
-  }, [isLoading, isSuccess, error, words.length]);
-
-  const currentTaskWord = words[currentTaskWordIndex];
-  const showcaseWord = words[showcaseWordIndex];
-
-  const handleShowcaseNext = () => {
-    if (showcaseWordIndex < words.length - 1) {
-      setShowcaseWordIndex((prev) => prev + 1);
-    }
-  };
-
-  const handleShowcasePrev = () => {
-    if (showcaseWordIndex > 0) {
-      setShowcaseWordIndex((prev) => prev - 1);
-    }
-  };
-
-  const handleShowcaseComplete = () => {
-    setCurrentTaskWordIndex(0);
-    setPhase('definition-to-word');
-  };
-
-  const handleDefinitionToWordComplete = (failures: number) => {
-    const key = `${currentTaskWord.id}-definition-to-word`;
-    setTaskResults(
-      (prev) =>
-        new Map(
-          prev.set(key, {
-            wordId: currentTaskWord.id,
-            userWordId: currentTaskWord.id,
-            failures,
-          }),
-        ),
-    );
-
-    // Move to next word for definition-to-word phase
-    if (currentTaskWordIndex < words.length - 1) {
-      setCurrentTaskWordIndex((prev) => prev + 1);
-    } else {
-      // All definition-to-word tasks complete, start word-to-definition phase
-      setCurrentTaskWordIndex(0);
-      setPhase('word-to-definition');
-    }
-  };
-
-  const handleWordToDefinitionComplete = (failures: number) => {
-    const key = `${currentTaskWord.id}-word-to-definition`;
-    setTaskResults(
-      (prev) =>
-        new Map(
-          prev.set(key, {
-            wordId: currentTaskWord.id,
-            userWordId: currentTaskWord.id,
-            failures,
-          }),
-        ),
-    );
-
-    // Move to next word for word-to-definition phase
-    if (currentTaskWordIndex < words.length - 1) {
-      setCurrentTaskWordIndex((prev) => prev + 1);
-    } else {
-      // All tasks complete
-      setPhase('completed');
-      // Update statuses in the background
-      updateWordStatuses();
-    }
-  };
-
-  const updateWordStatuses = async () => {
-    try {
-      // Calculate total failures for each word and update status
-      const statusUpdates = words.map((word) => {
-        const defToWordKey = `${word.id}-definition-to-word`;
-        const wordToDefKey = `${word.id}-word-to-definition`;
-
-        const defToWordFailures = taskResults.get(defToWordKey)?.failures || 0;
-        const wordToDefFailures = taskResults.get(wordToDefKey)?.failures || 0;
-        const totalFailures = defToWordFailures + wordToDefFailures;
-
-        // If total failures >= 4: Struggling, else: Reviewing
-        const newStatus = totalFailures >= 4 ? Status.Struggling : Status.Reviewing;
-
-        return updateWordStatusMutation.mutateAsync({
-          userWordId: word.id,
-          status: newStatus,
-        });
-      });
-
-      // Wait for all status updates to complete
-      await Promise.all(statusUpdates);
-    } catch (error) {
-      console.error('Failed to update word statuses:', error);
-    }
-  };
-
-  if (phase === 'loading') {
+  if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center">
         <div className="text-center">
@@ -189,7 +55,7 @@ export const LearningOrchestrator: FC = () => {
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
           <p className="text-muted-foreground mb-6">Failed to load learning words. Please try again.</p>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['learningWords'] })} size="lg">
+          <Button onClick={() => refetch()} size="lg">
             Try Again
           </Button>
         </div>
@@ -197,101 +63,52 @@ export const LearningOrchestrator: FC = () => {
     );
   }
 
-  if (phase === 'completed') {
+  const { showcaseTasks, wordToDefinitionTasks, definitionToWordTasks } = data;
+  const tasks = [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks];
+
+  if (!tasks || tasks.length === 0) {
     return (
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h1 className="mb-4 text-3xl font-bold">Learning Session Complete! 🎉</h1>
-
-          {updateWordStatusMutation.isPending && (
-            <div className="mb-4 flex items-center justify-center">
-              <Loader className="mr-2 h-6 w-6" />
-              <span className="text-muted-foreground">Updating word progress...</span>
-            </div>
-          )}
-
-          {words.length === 0 ? (
-            <>
-              <p className="text-muted-foreground mb-6 text-lg">
-                No words to learn right now. Try discovering some new words!
-              </p>
-              <div className="space-y-3">
-                <Button asChild size="lg">
-                  <a href="/discovery">Discover New Words</a>
-                </Button>
-                <br />
-                <Button variant="outline" asChild>
-                  <a href="/">Back to Dashboard</a>
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-muted-foreground mb-6 text-lg">
-                You&apos;ve completed learning {words.length} word{words.length > 1 ? 's' : ''}.
-              </p>
-
-              {/* Show summary of results */}
-              <div className="bg-muted/50 mb-6 rounded-lg p-6">
-                <h3 className="mb-4 font-semibold">Session Summary</h3>
-                <div className="space-y-2">
-                  {words.map((item) => {
-                    const defToWordKey = `${item.id}-definition-to-word`;
-                    const wordToDefKey = `${item.id}-word-to-definition`;
-                    const defToWordFailures = taskResults.get(defToWordKey)?.failures || 0;
-                    const wordToDefFailures = taskResults.get(wordToDefKey)?.failures || 0;
-                    const totalFailures = defToWordFailures + wordToDefFailures;
-                    const status = totalFailures >= 4 ? 'Needs more practice' : 'Ready for review';
-
-                    return (
-                      <div key={item.id} className="flex items-center justify-between">
-                        <span className="font-medium">{item.word.value}</span>
-                        <span
-                          className={cn('text-sm', {
-                            'text-orange-600': totalFailures >= 4,
-                            'text-green-600': totalFailures < 4,
-                          })}
-                        >
-                          {status} ({totalFailures} errors)
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Button
-                  onClick={() => {
-                    // Reset state and refetch learning words
-                    setPhase('loading');
-                    setCurrentTaskWordIndex(0);
-                    setShowcaseWordIndex(0);
-                    setTaskResults(new Map());
-                    queryClient.invalidateQueries({ queryKey: ['learningWords'] });
-                  }}
-                  size="lg"
-                  disabled={updateWordStatusMutation.isPending}
-                >
-                  {updateWordStatusMutation.isPending ? 'Saving...' : 'Learn More Words'}
-                </Button>
-                <br />
-                <Button variant="outline" asChild>
-                  <a href="/words">View All Words</a>
-                </Button>
-                <br />
-                <Button variant="outline" asChild>
-                  <a href="/">Back to Dashboard</a>
-                </Button>
-              </div>
-            </>
-          )}
+          <h1 className="mb-4 text-2xl font-bold">No Words to Learn</h1>
+          <p className="text-muted-foreground mb-6 text-lg">You have no words to learn at the moment.</p>
         </div>
       </div>
     );
   }
 
-  if (!currentTaskWord && phase !== 'showcase') return null;
+  const currentTask = tasks[idx];
+
+  const onNext = () => {
+    const nextIdx = idx + 1;
+    if (nextIdx < tasks.length) {
+      setIdx(nextIdx);
+      return;
+    }
+
+    setIsFinished(true);
+
+    const data = showcaseTasks.map((task) => ({
+      userWordId: task.data.id,
+      status: (mistakes[task.data.id] || 0) >= MISTAKES_THRESHOLD ? Status.Struggling : Status.Reviewing,
+    }));
+
+    updateUserWordStatuses.mutate(data);
+  };
+
+  const onPrev = () => {
+    const nextIdx = idx - 1;
+    if (nextIdx < 0) {
+      console.warn('Already at the first task');
+      return;
+    }
+
+    setIdx(nextIdx);
+  };
+
+  const onMistake = (userWordId: number) => {
+    setMistakes({ ...mistakes, [userWordId]: (mistakes[userWordId] || 0) + 1 });
+  };
 
   return (
     <div className="space-y-6">
@@ -299,62 +116,39 @@ export const LearningOrchestrator: FC = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Learning Session</h1>
           <span className="text-muted-foreground">
-            {phase === 'showcase'
-              ? `Preview: ${showcaseWordIndex + 1} of ${words.length}`
-              : phase === 'definition-to-word'
-                ? `Definition → Word: ${currentTaskWordIndex + 1} of ${words.length}`
-                : `Word → Definition: ${currentTaskWordIndex + 1} of ${words.length}`}
+            {idx + 1} of {tasks.length}
           </span>
         </div>
         <div className="bg-muted mt-2 h-2 w-full rounded-full">
           <div
             className="bg-primary h-2 rounded-full transition-all duration-300"
             style={{
-              width: `${(() => {
-                if (phase === 'showcase') {
-                  return 0; // Showcase is preparation, doesn't count toward progress
-                }
-                if (phase === 'definition-to-word') {
-                  // First half: definition-to-word tasks (0% to 50%)
-                  return ((currentTaskWordIndex + 1) / words.length) * 50;
-                }
-                if (phase === 'word-to-definition') {
-                  // Second half: word-to-definition tasks (50% to 100%)
-                  return 50 + ((currentTaskWordIndex + 1) / words.length) * 50;
-                }
-                return 100; // Completed
-              })()}%`,
+              width: `${((idx + 1) / tasks.length) * 100}%`,
             }}
           />
         </div>
       </div>
 
       <div className="min-h-[600px]">
-        {phase === 'showcase' && showcaseWord && (
-          <ShowcaseCard
-            current={showcaseWord}
-            onNext={handleShowcaseNext}
-            onPrev={handleShowcasePrev}
-            onComplete={handleShowcaseComplete}
-            currentIndex={showcaseWordIndex}
-            totalWords={words.length}
-            isLastWord={showcaseWordIndex === words.length - 1}
-          />
-        )}
+        {!isFinished ? (
+          <>
+            {currentTask?.type === TaskType.Showcase && (
+              <ShowcaseCard idx={idx} data={currentTask.data} onNext={onNext} onPrev={onPrev} />
+            )}
 
-        {phase === 'definition-to-word' && currentTaskWord && (
-          <DefinitionToWord
-            current={currentTaskWord}
-            other={words.filter((w) => w.id !== currentTaskWord.id)}
-            onComplete={handleDefinitionToWordComplete}
-          />
-        )}
+            {currentTask?.type === TaskType.DefinitionToWord && (
+              <DefinitionToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
 
-        {phase === 'word-to-definition' && currentTaskWord && (
-          <WordToDefinition
-            current={currentTaskWord}
-            other={words.filter((w) => w.id !== currentTaskWord.id)}
-            onComplete={handleWordToDefinitionComplete}
+            {currentTask?.type === TaskType.WordToDefinition && (
+              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+          </>
+        ) : (
+          <LearningResult
+            showcaseTasks={showcaseTasks}
+            mistakes={mistakes}
+            isPending={updateUserWordStatuses.isPending}
           />
         )}
       </div>

@@ -162,3 +162,23 @@ export const updateUserWordStatus = async ({
     .set({ status, updatedAt: new Date() })
     .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)));
 };
+
+export const updateUserWordStatuses = async ({
+  userId,
+  data,
+}: AuthParams<{ data: { status: Status; userWordId: number }[] }>) => {
+  const state = data.reduce(
+    (state, item) => ({
+      ...state,
+      [item.status]: [...(state[item.status] || []), item.userWordId],
+    }),
+    {} as Record<Status, number[]>,
+  );
+
+  for (const [status, userWordIds] of Object.entries(state) as [Status, number[]][]) {
+    await db
+      .update(UserWord)
+      .set({ status, updatedAt: new Date() })
+      .where(and(eq(UserWord.userId, userId), inArray(UserWord.id, userWordIds)));
+  }
+};

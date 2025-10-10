@@ -1,83 +1,40 @@
-import { type FC, useState, useMemo, useEffect } from 'react';
+import { type FC, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type UserWord } from '@/types/user-words.types';
+import { List, type WordToDefinitionTask } from '@/types/user-words.types';
 
 type WordToDefinitionProps = {
-  current: UserWord;
-  other: UserWord[];
-  onComplete: (failures: number) => void;
+  data: WordToDefinitionTask['data'];
+  onMistake: (userWordId: number) => void;
+  onNext: () => void;
 };
 
-type OptionState = 'idle' | 'correct' | 'incorrect';
+export const WordToDefinition: FC<WordToDefinitionProps> = ({ data, onMistake, onNext }) => {
+  const [answers, setAnswers] = useState<Set<number>>(new Set());
+  const [isFinished, setIsFinished] = useState(false);
+  const { playAudio, isPlaying } = useAudioPlayer();
 
-export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, onComplete }) => {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [optionStates, setOptionStates] = useState<Record<string, OptionState>>({});
-  const [failures, setFailures] = useState(0);
-  const [isAnswered, setIsAnswered] = useState(false);
-  const { isPlaying, playAudio } = useAudioPlayer();
+  const onSelectOption = (optionId: number) => {
+    setAnswers((prev) => new Set(prev).add(optionId));
 
-  // Reset state when word changes
-  useEffect(() => {
-    setSelectedOption(null);
-    setOptionStates({});
-    setFailures(0);
-    setIsAnswered(false);
-  }, [current.id]);
-
-  const options = useMemo(() => {
-    // Create options array with correct answer and distractors
-    const distractors = other.slice(0, Math.min(3, other.length));
-    const allOptions = [current, ...distractors];
-
-    // Shuffle options using Fisher-Yates algorithm for better randomness
-    const shuffled = [...allOptions];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    return shuffled.map((item) => ({
-      id: item.id,
-      definition: item.word.definition,
-      partOfSpeech: item.word.partOfSpeech,
-    }));
-  }, [current.id, other.map((item) => item.id).join(',')]);
-
-  const handleOptionSelect = (optionId: number) => {
-    if (isAnswered) return;
-
-    const isCorrect = optionId === current.id;
-    setSelectedOption(optionId.toString());
-
-    if (isCorrect) {
-      setOptionStates((prev) => ({ ...prev, [optionId]: 'correct' }));
-      setIsAnswered(true);
+    if (data.options.find((opt) => opt.id === optionId)?.isCorrect) {
+      setIsFinished(true);
     } else {
-      setOptionStates((prev) => ({ ...prev, [optionId]: 'incorrect' }));
-      setFailures((prev) => prev + 1);
-      // Allow retry after a brief delay
-      setTimeout(() => {
-        setSelectedOption(null);
-      }, 1000);
+      onMistake(data.id);
+      onMistake(optionId);
     }
-  };
-
-  const handleContinue = () => {
-    onComplete(failures);
   };
 
   const handlePlayPronunciation = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
-    if (current.word.pronunciation) {
-      playAudio(current.word.pronunciation);
+    if (data.pronunciation) {
+      playAudio(data.pronunciation);
     }
   };
 
@@ -92,14 +49,14 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, on
         <CardHeader className="space-y-4 pb-4">
           <div className="flex items-start justify-between">
             <CardTitle className="text-3xl leading-tight font-bold">
-              {current.word.value}
-              {current.word.spelling && (
-                <span className="text-muted-foreground ml-2 text-lg font-normal">({current.word.spelling})</span>
+              {data.value}
+              {data.spelling && (
+                <span className="text-muted-foreground ml-2 text-lg font-normal">({data.spelling})</span>
               )}
             </CardTitle>
 
             <div className="flex items-center gap-1">
-              {current.word.pronunciation && (
+              {data.pronunciation && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -112,7 +69,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, on
                 </Button>
               )}
 
-              {current.word.link && (
+              {data.link && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -120,7 +77,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, on
                   className="h-8 w-8 shrink-0 p-0"
                   title="View in Oxford Dictionary"
                 >
-                  <a href={current.word.link} target="_blank" rel="noopener noreferrer">
+                  <a href={data.link} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
@@ -130,39 +87,37 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, on
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="text-xs">
-              {current.word.level}
+              {data.level}
             </Badge>
-            {current.word.partOfSpeech && (
+            {data.partOfSpeech && (
               <Badge variant="outline" className="text-xs">
-                {current.word.partOfSpeech.toLowerCase()}
+                {data.partOfSpeech.toLowerCase()}
               </Badge>
             )}
             <Badge variant="outline" className="text-xs">
-              {current.word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
+              {data.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
             </Badge>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-3">
           <div className="space-y-3">
-            {options.map((option) => {
-              const state = optionStates[option.id] || 'idle';
-              const isSelected = selectedOption === option.id.toString();
+            {data.options.map((option) => {
+              const isAnswered = answers.has(option.id);
 
               return (
                 <Button
                   key={option.id}
                   variant="outline"
                   className={cn(
-                    'w-full justify-start text-left p-4 h-auto transition-colors duration-200 whitespace-normal',
+                    'w-full justify-start text-left p-4 h-auto transition-colors duration-200 whitespace-normal [&:disabled]:opacity-80',
                     {
-                      'border-green-500 bg-green-50 text-green-700': state === 'correct',
-                      'border-red-500 bg-red-50 text-red-700': state === 'incorrect',
-                      'border-primary bg-primary/5': isSelected && state === 'idle',
+                      'border-green-500 text-green-500': isAnswered && option.isCorrect,
+                      'border-red-500 text-red-500': isAnswered && !option.isCorrect,
                     },
                   )}
-                  onClick={() => handleOptionSelect(option.id)}
-                  disabled={isAnswered}
+                  onClick={() => onSelectOption(option.id)}
+                  disabled={isAnswered || isFinished}
                 >
                   <div className="flex w-full items-start justify-between gap-3">
                     <span className="flex-1 text-base leading-relaxed">{option.definition}</span>
@@ -174,18 +129,10 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, on
         </CardContent>
       </Card>
 
-      {failures > 0 && (
-        <div className="mb-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            {failures} incorrect attempt{failures > 1 ? 's' : ''}
-          </p>
-        </div>
-      )}
-
-      {isAnswered && (
+      {isFinished && (
         <div className="text-center">
-          <Button onClick={handleContinue} size="lg" className="px-8">
-            Continue
+          <Button onClick={onNext} size="lg" className="px-8">
+            Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

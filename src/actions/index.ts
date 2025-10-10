@@ -3,6 +3,7 @@ import {
   getWaitingWords,
   updateUserWordStatus,
   getLearningWords,
+  updateUserWordStatuses,
 } from '@/repositories/user-word.repository';
 import { getLearningTasks } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
@@ -44,6 +45,17 @@ export const server = {
       status: z.nativeEnum(Status),
     }),
     handler: auth(updateUserWordStatus),
+  }),
+  updateUserWordStatuses: defineAction({
+    input: z.object({
+      data: z.array(
+        z.object({
+          userWordId: z.number(),
+          status: z.nativeEnum(Status),
+        }),
+      ),
+    }),
+    handler: auth(updateUserWordStatuses),
   }),
   getLearningWords: defineAction({
     input: z.object({

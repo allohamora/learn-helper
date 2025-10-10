@@ -1,68 +1,28 @@
-import { type FC, useState, useMemo, useEffect } from 'react';
+import { useState, type FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { UserWord } from '@/types/user-words.types';
+import type { DefinitionToWordTask } from '@/types/user-words.types';
 
 type DefinitionToWordProps = {
-  current: UserWord;
-  other: UserWord[];
-  onComplete: (failures: number) => void;
+  data: DefinitionToWordTask['data'];
+  onMistake: (userWordId: number) => void;
+  onNext: () => void;
 };
 
-type OptionState = 'idle' | 'correct' | 'incorrect';
+export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, onMistake, onNext }) => {
+  const [answers, setAnswers] = useState<Set<number>>(new Set());
+  const [isFinished, setIsFinished] = useState(false);
 
-export const DefinitionToWord: FC<DefinitionToWordProps> = ({ current, other, onComplete }) => {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [optionStates, setOptionStates] = useState<Record<string, OptionState>>({});
-  const [failures, setFailures] = useState(0);
-  const [isAnswered, setIsAnswered] = useState(false);
+  const onSelectOption = (optionId: number) => {
+    setAnswers((prev) => new Set(prev).add(optionId));
 
-  // Reset state when word changes
-  useEffect(() => {
-    setSelectedOption(null);
-    setOptionStates({});
-    setFailures(0);
-    setIsAnswered(false);
-  }, [current.id]);
-
-  const options = useMemo(() => {
-    // Create options array with correct answer and distractors
-    const distractors = other.slice(0, Math.min(3, other.length));
-    const allOptions = [current, ...distractors];
-
-    // Shuffle options using Fisher-Yates algorithm for better randomness
-    const shuffled = [...allOptions];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    return shuffled.map((item) => ({ id: item.id, value: item.word.value, partOfSpeech: item.word.partOfSpeech }));
-  }, [current.id, other.map((item) => item.id).join(',')]);
-
-  const handleOptionSelect = (optionId: number) => {
-    if (isAnswered) return;
-
-    const isCorrect = optionId === current.id;
-    setSelectedOption(optionId.toString());
-
-    if (isCorrect) {
-      setOptionStates((prev) => ({ ...prev, [optionId]: 'correct' }));
-      setIsAnswered(true);
+    if (data.options.find((opt) => opt.id === optionId)?.isCorrect) {
+      setIsFinished(true);
     } else {
-      setOptionStates((prev) => ({ ...prev, [optionId]: 'incorrect' }));
-      setFailures((prev) => prev + 1);
-      // Allow retry after a brief delay
-      setTimeout(() => {
-        setSelectedOption(null);
-      }, 1000);
+      onMistake(data.id);
     }
-  };
-
-  const handleContinue = () => {
-    onComplete(failures);
   };
 
   return (
@@ -75,27 +35,28 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ current, other, on
       <Card className="bg-card mb-6 shadow-lg">
         <CardHeader>
           <CardTitle className="flex min-h-[120px] items-center justify-center text-center">
-            <p className="text-xl leading-relaxed font-normal">{current.word.definition}</p>
+            <p className="text-xl leading-relaxed font-normal">{data.definition}</p>
           </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-3">
           <div className="space-y-3">
-            {options.map((option) => {
-              const state = optionStates[option.id] || 'idle';
-              const isSelected = selectedOption === option.id.toString();
+            {data.options.map((option) => {
+              const isAnswered = answers.has(option.id);
 
               return (
                 <Button
                   key={option.id}
                   variant="outline"
-                  className={cn('w-full justify-start text-left p-4 h-auto transition-colors duration-200', {
-                    'border-green-500 bg-green-50 text-green-700': state === 'correct',
-                    'border-red-500 bg-red-50 text-red-700': state === 'incorrect',
-                    'border-primary bg-primary/5': isSelected && state === 'idle',
-                  })}
-                  onClick={() => handleOptionSelect(option.id)}
-                  disabled={isAnswered}
+                  className={cn(
+                    'w-full justify-start text-left p-4 h-auto transition-colors duration-200 [&:disabled]:opacity-80',
+                    {
+                      'border-green-500 text-green-500': isAnswered && option.isCorrect,
+                      'border-red-500 text-red-500': isAnswered && !option.isCorrect,
+                    },
+                  )}
+                  onClick={() => onSelectOption(option.id)}
+                  disabled={isFinished || isAnswered}
                 >
                   <div className="flex w-full items-center justify-between">
                     <div>
@@ -114,18 +75,10 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ current, other, on
         </CardContent>
       </Card>
 
-      {failures > 0 && (
-        <div className="mb-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            {failures} incorrect attempt{failures > 1 ? 's' : ''}
-          </p>
-        </div>
-      )}
-
-      {isAnswered && (
+      {isFinished && (
         <div className="text-center">
-          <Button onClick={handleContinue} size="lg" className="px-8">
-            Continue
+          <Button onClick={onNext} size="lg" className="px-8">
+            Next
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>

@@ -3,7 +3,6 @@ import type { AuthParams } from '@/types/auth.types';
 import {
   TaskType,
   type DefinitionToWordTask,
-  type LearningTask,
   type ShowcaseTask,
   type UserWord,
   type WordToDefinitionTask,
@@ -20,6 +19,7 @@ const shuffle = <T>(array: T[]): T[] => {
 const toShowcaseTasks = (words: UserWord[]) => {
   return words.map(
     (item): ShowcaseTask => ({
+      id: randomUUID(),
       type: TaskType.Showcase,
       data: item.word,
     }),
@@ -29,16 +29,17 @@ const toShowcaseTasks = (words: UserWord[]) => {
 const toWordToDefinitionTasks = (words: UserWord[]) => {
   return words.map((target): WordToDefinitionTask => {
     const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ definition: value.word.definition, isCorrect: false }));
-    const correct = { definition: target.word.definition, isCorrect: true };
+      .map((value) => ({ id: value.id, definition: value.word.definition, isCorrect: false }));
+    const correct = { id: target.id, definition: target.word.definition, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
       id: randomUUID(),
       type: TaskType.WordToDefinition,
       data: {
-        target: target.word,
+        ...target.word,
         options,
       },
     };
@@ -48,16 +49,28 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
 const toDefinitionToWordTasks = (words: UserWord[]) => {
   return words.map((target): DefinitionToWordTask => {
     const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ value: value.word.value, partOfSpeech: value.word.partOfSpeech, isCorrect: false }));
-    const correct = { value: target.word.value, partOfSpeech: target.word.partOfSpeech, isCorrect: true };
+      .map((value) => ({
+        id: value.id,
+        value: value.word.value,
+        partOfSpeech: value.word.partOfSpeech,
+        isCorrect: false,
+      }));
+    const correct = {
+      id: target.id,
+      value: target.word.value,
+      partOfSpeech: target.word.partOfSpeech,
+      isCorrect: true,
+    };
     const options = shuffle([correct, ...wrong]);
 
     return {
       id: randomUUID(),
       type: TaskType.DefinitionToWord,
       data: {
-        target: { definition: target.word.definition },
+        id: target.id,
+        definition: target.word.definition,
         options,
       },
     };
@@ -71,5 +84,9 @@ export const getLearningTasks = async (params: AuthParams<{ limit?: number }>) =
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
 
-  return [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks] as LearningTask[];
+  return {
+    showcaseTasks,
+    wordToDefinitionTasks,
+    definitionToWordTasks,
+  };
 };

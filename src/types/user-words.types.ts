@@ -31,6 +31,7 @@ export enum TaskType {
 }
 
 export type ShowcaseTask = {
+  id: string;
   type: TaskType.Showcase;
   data: typeof db.Word.$inferSelect;
 };
@@ -38,12 +39,11 @@ export type ShowcaseTask = {
 export type WordToDefinitionTask = {
   id: string;
   type: TaskType.WordToDefinition;
-  data: {
-    target: typeof db.Word.$inferSelect;
+  data: typeof db.Word.$inferSelect & {
     options: {
+      id: number;
       definition: string;
       isCorrect: boolean;
-      isChosen?: boolean;
     }[];
   };
 };
@@ -52,14 +52,13 @@ export type DefinitionToWordTask = {
   id: string;
   type: TaskType.DefinitionToWord;
   data: {
-    target: {
-      definition: string;
-    };
+    id: number;
+    definition: string;
     options: {
+      id: number;
       value: string;
       partOfSpeech: string | null;
       isCorrect: boolean;
-      isChosen?: boolean;
     }[];
   };
 };
