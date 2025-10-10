@@ -25,7 +25,6 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ data, onMistake, o
       setIsFinished(true);
     } else {
       onMistake(data.id);
-      onMistake(optionId);
     }
   };
 
