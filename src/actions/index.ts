@@ -2,7 +2,6 @@ import {
   getUserWords,
   getWaitingWords,
   updateUserWordStatus,
-  getLearningWords,
   updateUserWordStatuses,
 } from '@/repositories/user-word.repository';
 import { getLearningTasks } from '@/services/user-word.service';
@@ -56,12 +55,6 @@ export const server = {
       ),
     }),
     handler: auth(updateUserWordStatuses),
-  }),
-  getLearningWords: defineAction({
-    input: z.object({
-      limit: z.number().min(1).max(10).default(5),
-    }),
-    handler: auth(getLearningWords),
   }),
   getLearningTasks: defineAction({
     input: z.object({
