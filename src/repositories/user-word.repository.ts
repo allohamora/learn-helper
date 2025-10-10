@@ -121,6 +121,23 @@ export const getWaitingWords = async ({ userId, limit }: AuthParams<{ limit: num
   };
 };
 
+export const getLearningWords = async ({ userId, limit = 5 }: AuthParams<{ limit?: number }>) => {
+  const result = await db
+    .select()
+    .from(UserWord)
+    .where(and(eq(UserWord.userId, userId), eq(UserWord.status, Status.Learning)))
+    .leftJoin(Word, eq(UserWord.wordId, Word.id))
+    .orderBy(asc(UserWord.id))
+    .limit(limit);
+
+  return {
+    words: result.map((item) => ({
+      ...item.Word,
+      ...item.UserWord,
+    })),
+  };
+};
+
 export const updateUserWordStatus = async ({
   userId,
   status,

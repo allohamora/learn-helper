@@ -1,4 +1,9 @@
-import { getUserWords, getWaitingWords, updateUserWordStatus } from '@/repositories/user-word.repository';
+import {
+  getUserWords,
+  getWaitingWords,
+  updateUserWordStatus,
+  getLearningWords,
+} from '@/repositories/user-word.repository';
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
 import { defineAction, type ActionAPIContext } from 'astro:actions';
@@ -38,5 +43,11 @@ export const server = {
       status: z.nativeEnum(Status),
     }),
     handler: auth(updateUserWordStatus),
+  }),
+  getLearningWords: defineAction({
+    input: z.object({
+      limit: z.number().min(1).max(10).default(5),
+    }),
+    handler: auth(getLearningWords),
   }),
 };

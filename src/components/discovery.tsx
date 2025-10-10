@@ -65,7 +65,7 @@ export function Discovery() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-4 flex items-center justify-center">
         <div className="text-center">
           <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
           <p className="text-muted-foreground">Loading words...</p>
@@ -76,7 +76,7 @@ export function Discovery() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-4 flex items-center justify-center">
         <div className="text-center">
           <p className="text-destructive mb-4">{error.message}</p>
           <Button onClick={() => refetch()}>Try Again</Button>
@@ -87,7 +87,7 @@ export function Discovery() {
 
   if (!currentWord) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-4 flex items-center justify-center">
         <div className="text-center">
           <h2 className="mb-4 text-2xl font-bold">Great job!</h2>
           <p className="text-muted-foreground mb-4">You&apos;ve reviewed all available words.</p>
