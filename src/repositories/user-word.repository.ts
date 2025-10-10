@@ -52,23 +52,31 @@ export const getUserWords = async ({ userId, level, list, status, cursor, limit 
   ];
 
   const getTotal = async () => {
-    const [{ count }] = await db
+    const [res] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
       .where(and(...filters))
       .leftJoin(Word, eq(UserWord.wordId, Word.id));
 
-    return count;
+    if (!res) {
+      throw new Error('Failed to get total count');
+    }
+
+    return res.count;
   };
 
   const getLearning = async () => {
-    const [{ count }] = await db
+    const [res] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
       .where(and(...filters, inArray(UserWord.status, [Status.Learning, Status.Waiting])))
       .leftJoin(Word, eq(UserWord.wordId, Word.id));
 
-    return count;
+    if (!res) {
+      throw new Error('Failed to get learning count');
+    }
+
+    return res.count;
   };
 
   const getData = async () => {
@@ -99,13 +107,17 @@ export const getWaitingWords = async ({ userId, limit }: AuthParams<{ limit: num
   const filters = [eq(UserWord.userId, userId), eq(UserWord.status, Status.Waiting)];
 
   const getTotal = async () => {
-    const [{ count }] = await db
+    const [res] = await db
       .select({ count: sql<number>`count(*)` })
       .from(UserWord)
       .where(and(...filters))
       .leftJoin(Word, eq(UserWord.wordId, Word.id));
 
-    return count;
+    if (!res) {
+      throw new Error('Failed to get total count');
+    }
+
+    return res.count;
   };
 
   const getData = async () => {
