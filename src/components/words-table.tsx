@@ -108,7 +108,7 @@ export const WordsTable: FC<WordsTableProps> = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    playAudio(word.pronunciation!);
+                    playAudio(word.pronunciation);
                   }}
                   disabled={isPlaying}
                   className="h-6 w-6 shrink-0 p-0"
