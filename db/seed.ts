@@ -10,7 +10,7 @@ const getData = async <T>(name: string) => {
   return JSON.parse(data) as T;
 };
 
-type Word = {
+type WordData = {
   value: string; // "visit",
   definition: string; // "an occasion or a period of time when somebody goes to see a place or person and spends time there",
   partOfSpeech?: string; // "noun",
@@ -22,8 +22,8 @@ type Word = {
 
 // https://astro.build/db/seed
 export default async function seed() {
-  const words = await getData<Word[]>(List.Oxford5000Words);
-  const phrases = await getData<Word[]>(List.OxfordPhraseList);
+  const words = await getData<WordData[]>(List.Oxford5000Words);
+  const phrases = await getData<WordData[]>(List.OxfordPhraseList);
 
   for (const word of words) {
     await db.insert(Word).values({
