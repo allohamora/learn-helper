@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { type FC, type MouseEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ type WordCardProps = {
 export const WordCard: FC<WordCardProps> = ({ userWord }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
 
-  const handlePlayPronunciation = (event: React.MouseEvent) => {
+  const handlePlayPronunciation = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 

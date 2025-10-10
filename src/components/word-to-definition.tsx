@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, type MouseEvent, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ data, onMistake, o
     }
   };
 
-  const handlePlayPronunciation = (event: React.MouseEvent) => {
+  const handlePlayPronunciation = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 

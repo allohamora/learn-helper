@@ -1,3 +1,4 @@
+import { type MouseEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ type WordDiscoveryCardProps = {
 export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
   const { isPlaying, playAudio } = useAudioPlayer();
 
-  const handlePlayPronunciation = (event: React.MouseEvent) => {
+  const handlePlayPronunciation = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
