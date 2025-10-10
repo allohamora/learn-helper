@@ -33,7 +33,7 @@ export function Discovery() {
 
   const updateWordMutation = useMutation({
     mutationFn: async ({ userWordId, status }: { userWordId: number; status: DiscoveryStatus }) => {
-      const result = await actions.updateWordStatus({ userWordId, status });
+      const result = await actions.updateUserWordStatuses({ data: [{ userWordId, status }] });
       if (result.error) {
         throw new Error('Failed to update word status');
       }

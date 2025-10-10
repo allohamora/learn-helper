@@ -152,17 +152,6 @@ export const getLearningWords = async ({ userId, limit = 5 }: AuthParams<{ limit
   return mapUserWords(result);
 };
 
-export const updateUserWordStatus = async ({
-  userId,
-  status,
-  userWordId,
-}: AuthParams<{ status: Status; userWordId: number }>) => {
-  await db
-    .update(UserWord)
-    .set({ status, updatedAt: new Date() })
-    .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)));
-};
-
 export const updateUserWordStatuses = async ({
   userId,
   data,

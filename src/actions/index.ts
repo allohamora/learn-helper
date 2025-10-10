@@ -1,9 +1,4 @@
-import {
-  getUserWords,
-  getWaitingWords,
-  updateUserWordStatus,
-  updateUserWordStatuses,
-} from '@/repositories/user-word.repository';
+import { getUserWords, getWaitingWords, updateUserWordStatuses } from '@/repositories/user-word.repository';
 import { getLearningTasks } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
@@ -37,13 +32,6 @@ export const server = {
       limit: z.number().min(1).max(50).default(10),
     }),
     handler: auth(getWaitingWords),
-  }),
-  updateWordStatus: defineAction({
-    input: z.object({
-      userWordId: z.number(),
-      status: z.nativeEnum(Status),
-    }),
-    handler: auth(updateUserWordStatus),
   }),
   updateUserWordStatuses: defineAction({
     input: z.object({
