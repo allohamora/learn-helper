@@ -219,7 +219,7 @@ export const WordsTable: FC<WordsTableProps> = ({
               const row = rows[virtualRow.index];
               return (
                 <div
-                  key={row.id}
+                  key={row?.id}
                   className="hover:bg-muted/50 flex w-full min-w-fit items-center pt-2"
                   style={{
                     position: 'absolute',
@@ -231,7 +231,7 @@ export const WordsTable: FC<WordsTableProps> = ({
                   data-index={virtualRow.index}
                   ref={rowVirtualizer.measureElement}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {row?.getVisibleCells().map((cell) => (
                     <div
                       key={cell.id}
                       className="flex shrink-0 items-center px-4 py-2"
