@@ -176,7 +176,7 @@ export const LearningOrchestrator: FC = () => {
 
   if (phase === 'loading') {
     return (
-      <div className="mt-4 flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className="text-center">
           <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
           <p className="text-muted-foreground">Loading learning words...</p>
@@ -187,7 +187,7 @@ export const LearningOrchestrator: FC = () => {
 
   if (error) {
     return (
-      <div className="mt-4 space-y-6">
+      <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
           <p className="text-muted-foreground mb-6">Failed to load learning words. Please try again.</p>
@@ -201,7 +201,7 @@ export const LearningOrchestrator: FC = () => {
 
   if (phase === 'completed') {
     return (
-      <div className="mt-4 space-y-6">
+      <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-3xl font-bold">Learning Session Complete! 🎉</h1>
 
@@ -296,7 +296,7 @@ export const LearningOrchestrator: FC = () => {
   if (!currentTaskWord && phase !== 'showcase') return null;
 
   return (
-    <div className="mt-4 space-y-6">
+    <div className="space-y-6">
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Learning Session</h1>

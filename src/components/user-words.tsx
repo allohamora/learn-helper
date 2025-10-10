@@ -73,7 +73,7 @@ export const UserWords: FC = () => {
   }
 
   return (
-    <div className="mt-4 space-y-6">
+    <div className="space-y-6">
       {data && (
         <div className="flex flex-col gap-6 rounded-lg p-4 sm:flex-row">
           <div className="text-center sm:text-left">

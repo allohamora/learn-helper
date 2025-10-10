@@ -2,7 +2,7 @@ import { type FC } from 'react';
 
 export const IndexPage: FC = () => {
   return (
-    <div className="flex flex-col items-center justify-center px-4 pt-20 text-center">
+    <div className="flex flex-col items-center justify-center px-4 pt-16 text-center">
       <div className="mx-auto max-w-3xl">
         <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-6xl">
           Master English with

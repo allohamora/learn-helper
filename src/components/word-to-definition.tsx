@@ -139,7 +139,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
           </div>
         </CardHeader>
 
-        <CardContent className="mt-4 space-y-3">
+        <CardContent className="space-y-3">
           <div className="space-y-3">
             {options.map((option) => {
               const state = optionStates[option.id] || 'idle';
