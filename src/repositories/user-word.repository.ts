@@ -140,7 +140,7 @@ export const getWaitingWords = async ({ userId, limit }: AuthParams<{ limit: num
   };
 };
 
-export const getLearningWords = async ({ userId, limit = 5 }: AuthParams<{ limit?: number }>) => {
+export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: number }>) => {
   const result = await db
     .select()
     .from(UserWord)

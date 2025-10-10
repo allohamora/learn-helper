@@ -20,7 +20,7 @@ export function Discovery() {
   } = useQuery({
     queryKey: ['getWaitingWords'],
     queryFn: async () => {
-      const result = await actions.getWaitingWords({ limit: 10 });
+      const result = await actions.getWaitingWords({});
       if (result.error) {
         throw new Error('Failed to load words');
       }

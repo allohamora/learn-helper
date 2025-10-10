@@ -77,7 +77,7 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
   });
 };
 
-export const getLearningTasks = async (params: AuthParams<{ limit?: number }>) => {
+export const getLearningTasks = async (params: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(params);
 
   const showcaseTasks = toShowcaseTasks(words);
