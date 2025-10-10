@@ -5,23 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink, ArrowRight, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type Word } from '@/types/user-words.types';
+import { List, type UserWord } from '@/types/user-words.types';
 
 type ShowcaseCardProps = {
-  word: Word;
   onNext?: () => void;
   onPrev?: () => void;
   onComplete: () => void;
+  current: UserWord;
   currentIndex: number;
   totalWords: number;
   isLastWord: boolean;
 };
 
 export const ShowcaseCard: FC<ShowcaseCardProps> = ({
-  word,
   onNext,
   onPrev,
   onComplete,
+  current,
   currentIndex,
   totalWords,
   isLastWord,
@@ -32,8 +32,8 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({
     event.preventDefault();
     event.stopPropagation();
 
-    if (word.pronunciation) {
-      playAudio(word.pronunciation);
+    if (current.word.pronunciation) {
+      playAudio(current.word.pronunciation);
     }
   };
 
@@ -53,14 +53,14 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({
         <CardHeader className="space-y-4 pb-4">
           <div className="flex items-start justify-between">
             <CardTitle className="text-3xl leading-tight font-bold">
-              {word.value}
-              {word.spelling && (
-                <span className="text-muted-foreground ml-2 text-lg font-normal">({word.spelling})</span>
+              {current.word.value}
+              {current.word.spelling && (
+                <span className="text-muted-foreground ml-2 text-lg font-normal">({current.word.spelling})</span>
               )}
             </CardTitle>
 
             <div className="flex items-center gap-1">
-              {word.pronunciation && (
+              {current.word.pronunciation && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -73,7 +73,7 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({
                 </Button>
               )}
 
-              {word.link && (
+              {current.word.link && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -81,7 +81,7 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({
                   className="h-8 w-8 shrink-0 p-0"
                   title="View in Oxford Dictionary"
                 >
-                  <a href={word.link} target="_blank" rel="noopener noreferrer">
+                  <a href={current.word.link} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
@@ -91,22 +91,22 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="text-xs">
-              {word.level}
+              {current.word.level}
             </Badge>
-            {word.partOfSpeech && (
+            {current.word.partOfSpeech && (
               <Badge variant="outline" className="text-xs">
-                {word.partOfSpeech.toLowerCase()}
+                {current.word.partOfSpeech.toLowerCase()}
               </Badge>
             )}
             <Badge variant="outline" className="text-xs">
-              {word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
+              {current.word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
             </Badge>
           </div>
         </CardHeader>
 
         <CardContent className="flex flex-1 items-center justify-center pt-4">
           <div className="text-center">
-            <p className="text-foreground text-xl leading-relaxed">{word.definition}</p>
+            <p className="text-foreground text-xl leading-relaxed">{current.word.definition}</p>
           </div>
         </CardContent>
       </Card>

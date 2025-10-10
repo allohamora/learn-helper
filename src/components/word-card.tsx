@@ -5,21 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type Word } from '@/types/user-words.types';
+import { List, type UserWord } from '@/types/user-words.types';
 
 type WordCardProps = {
-  word: Word;
+  userWord: UserWord;
 };
 
-export const WordCard: FC<WordCardProps> = ({ word }) => {
+export const WordCard: FC<WordCardProps> = ({ userWord }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
 
   const handlePlayPronunciation = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
-    if (word.pronunciation) {
-      playAudio(word.pronunciation);
+    if (userWord.word.pronunciation) {
+      playAudio(userWord.word.pronunciation);
     }
   };
 
@@ -28,14 +28,14 @@ export const WordCard: FC<WordCardProps> = ({ word }) => {
       <CardHeader className="flex-shrink-0 px-4 pt-4 pb-2">
         <div className="flex items-start justify-between">
           <CardTitle className="text-base leading-tight font-semibold">
-            {word.value}
-            {word.spelling && word.spelling !== word.value && (
-              <span className="text-muted-foreground ml-1 text-xs font-normal">({word.spelling})</span>
+            {userWord.word.value}
+            {userWord.word.spelling && userWord.word.spelling !== userWord.word.value && (
+              <span className="text-muted-foreground ml-1 text-xs font-normal">({userWord.word.spelling})</span>
             )}
           </CardTitle>
 
           <div className="flex items-center gap-1">
-            {word.pronunciation && (
+            {userWord.word.pronunciation && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -48,7 +48,7 @@ export const WordCard: FC<WordCardProps> = ({ word }) => {
               </Button>
             )}
 
-            {word.link && (
+            {userWord.word.link && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -56,7 +56,7 @@ export const WordCard: FC<WordCardProps> = ({ word }) => {
                 className="h-7 w-7 shrink-0 p-0"
                 title="View in Oxford Dictionary"
               >
-                <a href={word.link} target="_blank" rel="noopener noreferrer">
+                <a href={userWord.word.link} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </Button>
@@ -67,26 +67,26 @@ export const WordCard: FC<WordCardProps> = ({ word }) => {
 
       <CardContent className="flex flex-grow flex-col space-y-3 px-4 pb-3">
         <div className="text-xs leading-relaxed">
-          <p className="text-muted-foreground">{word.definition}</p>
+          <p className="text-muted-foreground">{userWord.word.definition}</p>
         </div>
 
         <div className="mt-auto flex flex-wrap items-center gap-1">
           <Badge className="px-2 py-0.5 text-xs" variant="outline">
-            {word.level}
+            {userWord.word.level}
           </Badge>
 
-          {word.partOfSpeech && (
+          {userWord.word.partOfSpeech && (
             <Badge variant="outline" className="px-2 py-0.5 text-xs">
-              {word.partOfSpeech}
+              {userWord.word.partOfSpeech}
             </Badge>
           )}
 
           <Badge variant="outline" className="px-2 py-0.5 text-xs">
-            {word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
+            {userWord.word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
           </Badge>
 
           <Badge className="px-2 py-0.5 text-xs" variant="outline">
-            {word.status}
+            {userWord.status}
           </Badge>
         </div>
       </CardContent>

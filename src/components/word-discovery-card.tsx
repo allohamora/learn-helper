@@ -4,21 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type Word } from '@/types/user-words.types';
+import { List, type UserWord } from '@/types/user-words.types';
 
 type WordDiscoveryCardProps = {
-  word: Word;
+  userWord: UserWord;
 };
 
-export function WordDiscoveryCard({ word }: WordDiscoveryCardProps) {
+export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
   const { isPlaying, playAudio } = useAudioPlayer();
 
   const handlePlayPronunciation = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
-    if (word.pronunciation) {
-      playAudio(word.pronunciation);
+    if (userWord.word.pronunciation) {
+      playAudio(userWord.word.pronunciation);
     }
   };
 
@@ -27,14 +27,14 @@ export function WordDiscoveryCard({ word }: WordDiscoveryCardProps) {
       <CardHeader className="space-y-4 pb-4">
         <div className="flex items-start justify-between">
           <CardTitle className="text-2xl leading-tight font-bold">
-            {word.value}
-            {word.spelling && (
-              <span className="text-muted-foreground ml-2 text-base font-normal">({word.spelling})</span>
+            {userWord.word.value}
+            {userWord.word.spelling && (
+              <span className="text-muted-foreground ml-2 text-base font-normal">({userWord.word.spelling})</span>
             )}
           </CardTitle>
 
           <div className="flex items-center gap-1">
-            {word.pronunciation && (
+            {userWord.word.pronunciation && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -47,7 +47,7 @@ export function WordDiscoveryCard({ word }: WordDiscoveryCardProps) {
               </Button>
             )}
 
-            {word.link && (
+            {userWord.word.link && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -55,7 +55,7 @@ export function WordDiscoveryCard({ word }: WordDiscoveryCardProps) {
                 className="h-8 w-8 shrink-0 p-0"
                 title="View in Oxford Dictionary"
               >
-                <a href={word.link} target="_blank" rel="noopener noreferrer">
+                <a href={userWord.word.link} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>
@@ -65,21 +65,21 @@ export function WordDiscoveryCard({ word }: WordDiscoveryCardProps) {
 
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary" className="text-xs">
-            {word.level}
+            {userWord.word.level}
           </Badge>
-          {word.partOfSpeech && (
+          {userWord.word.partOfSpeech && (
             <Badge variant="outline" className="text-xs">
-              {word.partOfSpeech.toLowerCase()}
+              {userWord.word.partOfSpeech.toLowerCase()}
             </Badge>
           )}
           <Badge variant="outline" className="text-xs">
-            {word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
+            {userWord.word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="flex flex-1 items-center justify-center">
-        <p className="text-foreground text-center text-lg leading-relaxed">{word.definition}</p>
+        <p className="text-foreground text-center text-lg leading-relaxed">{userWord.word.definition}</p>
       </CardContent>
     </Card>
   );

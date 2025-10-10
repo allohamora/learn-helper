@@ -3,17 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Word } from '@/types/user-words.types';
+import type { UserWord } from '@/types/user-words.types';
 
 type DefinitionToWordProps = {
-  word: Word;
-  otherWords: Word[];
+  current: UserWord;
+  other: UserWord[];
   onComplete: (failures: number) => void;
 };
 
 type OptionState = 'idle' | 'correct' | 'incorrect';
 
-export const DefinitionToWord: FC<DefinitionToWordProps> = ({ word, otherWords, onComplete }) => {
+export const DefinitionToWord: FC<DefinitionToWordProps> = ({ current, other, onComplete }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [optionStates, setOptionStates] = useState<Record<string, OptionState>>({});
   const [failures, setFailures] = useState(0);
@@ -25,12 +25,12 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ word, otherWords, 
     setOptionStates({});
     setFailures(0);
     setIsAnswered(false);
-  }, [word.id]);
+  }, [current.id]);
 
   const options = useMemo(() => {
     // Create options array with correct answer and distractors
-    const distractors = otherWords.slice(0, Math.min(3, otherWords.length));
-    const allOptions = [word, ...distractors];
+    const distractors = other.slice(0, Math.min(3, other.length));
+    const allOptions = [current, ...distractors];
 
     // Shuffle options using Fisher-Yates algorithm for better randomness
     const shuffled = [...allOptions];
@@ -39,13 +39,13 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ word, otherWords, 
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    return shuffled.map((w) => ({ id: w.id, value: w.value, partOfSpeech: w.partOfSpeech }));
-  }, [word.id, otherWords.map((w) => w.id).join(',')]);
+    return shuffled.map((item) => ({ id: item.id, value: item.word.value, partOfSpeech: item.word.partOfSpeech }));
+  }, [current.id, other.map((item) => item.id).join(',')]);
 
   const handleOptionSelect = (optionId: number) => {
     if (isAnswered) return;
 
-    const isCorrect = optionId === word.id;
+    const isCorrect = optionId === current.id;
     setSelectedOption(optionId.toString());
 
     if (isCorrect) {
@@ -75,7 +75,7 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ word, otherWords, 
       <Card className="bg-card mb-6 shadow-lg">
         <CardHeader>
           <CardTitle className="flex min-h-[120px] items-center justify-center text-center">
-            <p className="text-xl leading-relaxed font-normal">{word.definition}</p>
+            <p className="text-xl leading-relaxed font-normal">{current.word.definition}</p>
           </CardTitle>
         </CardHeader>
 

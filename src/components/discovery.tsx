@@ -103,7 +103,7 @@ export function Discovery() {
           <p className="text-muted-foreground text-sm">Remaining words: {remaining}</p>
         </div>
 
-        <WordDiscoveryCard word={currentWord} />
+        <WordDiscoveryCard userWord={currentWord} />
 
         <div className="mt-8 flex gap-4">
           <Button

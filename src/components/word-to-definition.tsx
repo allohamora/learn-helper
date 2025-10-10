@@ -5,17 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type Word } from '@/types/user-words.types';
+import { List, type UserWord } from '@/types/user-words.types';
 
 type WordToDefinitionProps = {
-  word: Word;
-  otherWords: Word[];
+  current: UserWord;
+  other: UserWord[];
   onComplete: (failures: number) => void;
 };
 
 type OptionState = 'idle' | 'correct' | 'incorrect';
 
-export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, onComplete }) => {
+export const WordToDefinition: FC<WordToDefinitionProps> = ({ current, other, onComplete }) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [optionStates, setOptionStates] = useState<Record<string, OptionState>>({});
   const [failures, setFailures] = useState(0);
@@ -28,12 +28,12 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
     setOptionStates({});
     setFailures(0);
     setIsAnswered(false);
-  }, [word.id]);
+  }, [current.id]);
 
   const options = useMemo(() => {
     // Create options array with correct answer and distractors
-    const distractors = otherWords.slice(0, Math.min(3, otherWords.length));
-    const allOptions = [word, ...distractors];
+    const distractors = other.slice(0, Math.min(3, other.length));
+    const allOptions = [current, ...distractors];
 
     // Shuffle options using Fisher-Yates algorithm for better randomness
     const shuffled = [...allOptions];
@@ -42,13 +42,17 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    return shuffled.map((w) => ({ id: w.id, definition: w.definition, partOfSpeech: w.partOfSpeech }));
-  }, [word.id, otherWords.map((w) => w.id).join(',')]);
+    return shuffled.map((item) => ({
+      id: item.id,
+      definition: item.word.definition,
+      partOfSpeech: item.word.partOfSpeech,
+    }));
+  }, [current.id, other.map((item) => item.id).join(',')]);
 
   const handleOptionSelect = (optionId: number) => {
     if (isAnswered) return;
 
-    const isCorrect = optionId === word.id;
+    const isCorrect = optionId === current.id;
     setSelectedOption(optionId.toString());
 
     if (isCorrect) {
@@ -72,8 +76,8 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
     event.preventDefault();
     event.stopPropagation();
 
-    if (word.pronunciation) {
-      playAudio(word.pronunciation);
+    if (current.word.pronunciation) {
+      playAudio(current.word.pronunciation);
     }
   };
 
@@ -88,14 +92,14 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
         <CardHeader className="space-y-4 pb-4">
           <div className="flex items-start justify-between">
             <CardTitle className="text-3xl leading-tight font-bold">
-              {word.value}
-              {word.spelling && (
-                <span className="text-muted-foreground ml-2 text-lg font-normal">({word.spelling})</span>
+              {current.word.value}
+              {current.word.spelling && (
+                <span className="text-muted-foreground ml-2 text-lg font-normal">({current.word.spelling})</span>
               )}
             </CardTitle>
 
             <div className="flex items-center gap-1">
-              {word.pronunciation && (
+              {current.word.pronunciation && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -108,7 +112,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
                 </Button>
               )}
 
-              {word.link && (
+              {current.word.link && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -116,7 +120,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
                   className="h-8 w-8 shrink-0 p-0"
                   title="View in Oxford Dictionary"
                 >
-                  <a href={word.link} target="_blank" rel="noopener noreferrer">
+                  <a href={current.word.link} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
@@ -126,15 +130,15 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ word, otherWords, 
 
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="text-xs">
-              {word.level}
+              {current.word.level}
             </Badge>
-            {word.partOfSpeech && (
+            {current.word.partOfSpeech && (
               <Badge variant="outline" className="text-xs">
-                {word.partOfSpeech.toLowerCase()}
+                {current.word.partOfSpeech.toLowerCase()}
               </Badge>
             )}
             <Badge variant="outline" className="text-xs">
-              {word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
+              {current.word.list === List.Oxford5000Words ? 'oxford 5000' : 'phrase list'}
             </Badge>
           </div>
         </CardHeader>

@@ -22,6 +22,19 @@ export const ensureUserWordsExists = async (userId: string) => {
   }
 };
 
+const mapUserWords = (rows: { UserWord: typeof UserWord.$inferSelect; Word: typeof Word.$inferSelect | null }[]) => {
+  return rows.map((row) => {
+    if (!row.Word) {
+      throw new Error('Word not found for UserWord');
+    }
+
+    return {
+      word: row.Word,
+      ...row.UserWord,
+    };
+  });
+};
+
 type GetUserWordsBody = AuthParams<{
   level?: Level;
   list?: List;
@@ -68,10 +81,7 @@ export const getUserWords = async ({ userId, level, list, status, cursor, limit 
       .limit(limit + 1);
 
     const nextCursor = result.length > limit ? String(result.at(-1)?.UserWord.id) : undefined;
-    const data = result.slice(0, limit).map((item) => ({
-      ...item.Word,
-      ...item.UserWord,
-    }));
+    const data = mapUserWords(result.slice(0, limit));
 
     return { data, nextCursor };
   };
@@ -107,10 +117,7 @@ export const getWaitingWords = async ({ userId, limit }: AuthParams<{ limit: num
       .orderBy(asc(UserWord.id))
       .limit(limit);
 
-    return result.map((item) => ({
-      ...item.Word,
-      ...item.UserWord,
-    }));
+    return mapUserWords(result);
   };
 
   const [total, data] = await Promise.all([getTotal(), getData()]);
@@ -130,12 +137,7 @@ export const getLearningWords = async ({ userId, limit = 5 }: AuthParams<{ limit
     .orderBy(asc(UserWord.id))
     .limit(limit);
 
-  return {
-    words: result.map((item) => ({
-      ...item.Word,
-      ...item.UserWord,
-    })),
-  };
+  return mapUserWords(result);
 };
 
 export const updateUserWordStatus = async ({

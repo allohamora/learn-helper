@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { Status, type Word } from '@/types/user-words.types';
+import { Status, type UserWord } from '@/types/user-words.types';
 
 type WordsTableProps = {
-  words: Word[];
+  data: UserWord[];
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
   hasNextPage?: boolean;
@@ -18,7 +18,7 @@ type WordsTableProps = {
 };
 
 export const WordsTable: FC<WordsTableProps> = ({
-  words,
+  data,
   isLoading,
   isFetchingNextPage,
   hasNextPage,
@@ -28,13 +28,13 @@ export const WordsTable: FC<WordsTableProps> = ({
   const { isPlaying, playAudio } = useAudioPlayer();
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  const columns = useMemo<ColumnDef<Word>[]>(() => {
-    const baseColumns: ColumnDef<Word>[] = [
+  const columns = useMemo<ColumnDef<UserWord>[]>(() => {
+    const baseColumns: ColumnDef<UserWord>[] = [
       {
-        accessorKey: 'value',
+        accessorKey: 'word.value',
         header: 'Word',
         cell: ({ row }) => {
-          const word = row.original;
+          const { word } = row.original;
           return (
             <div className="min-w-[120px]">
               <div className="font-medium">
@@ -48,12 +48,12 @@ export const WordsTable: FC<WordsTableProps> = ({
         },
       },
       {
-        accessorKey: 'definition',
+        accessorKey: 'word.definition',
         header: 'Definition',
         cell: ({ getValue }) => <div className="text-muted-foreground min-w-[200px] text-sm">{getValue<string>()}</div>,
       },
       {
-        accessorKey: 'level',
+        accessorKey: 'word.level',
         header: 'Level',
         cell: ({ getValue }) => (
           <Badge variant="outline" className="px-2 py-0.5 text-xs">
@@ -65,10 +65,10 @@ export const WordsTable: FC<WordsTableProps> = ({
 
     if (showPartOfSpeech) {
       baseColumns.push({
-        accessorKey: 'partOfSpeech',
+        accessorKey: 'word.partOfSpeech',
         header: 'Part of Speech',
         cell: ({ row }) => {
-          const word = row.original;
+          const { word } = row.original;
           const partOfSpeech = word.partOfSpeech;
           return partOfSpeech ? (
             <Badge variant="outline" className="px-2 py-0.5 text-xs">
@@ -98,7 +98,7 @@ export const WordsTable: FC<WordsTableProps> = ({
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => {
-          const word = row.original;
+          const { word } = row.original;
           return (
             <div className="flex items-center gap-1">
               {word.pronunciation && (
@@ -140,7 +140,7 @@ export const WordsTable: FC<WordsTableProps> = ({
   }, [isPlaying, playAudio, showPartOfSpeech]);
 
   const table = useReactTable({
-    data: words,
+    data,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -170,13 +170,13 @@ export const WordsTable: FC<WordsTableProps> = ({
 
   const getColumnFlex = (columnId: string) => {
     switch (columnId) {
-      case 'value':
+      case 'word_value':
         return '0 0 200px';
-      case 'definition':
+      case 'word_definition':
         return '1 0 400px';
-      case 'level':
+      case 'word_level':
         return '0 0 100px';
-      case 'partOfSpeech':
+      case 'word_partOfSpeech':
         return '0 0 150px';
       case 'status':
         return '0 0 100px';
@@ -253,13 +253,13 @@ export const WordsTable: FC<WordsTableProps> = ({
         </div>
       </div>
 
-      {!hasNextPage && words.length > 0 && (
+      {!hasNextPage && data.length > 0 && (
         <div className="flex items-center justify-center p-4">
           <div className="text-muted-foreground text-sm">You&apos;ve reached the end! No more words to show.</div>
         </div>
       )}
 
-      {words.length === 0 && !isLoading && (
+      {data.length === 0 && !isLoading && (
         <div className="flex items-center justify-center p-8">
           <div className="text-muted-foreground">
             No words found. Try adjusting your filters or add some words to get started.

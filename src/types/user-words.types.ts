@@ -23,4 +23,4 @@ export enum Status {
   Known = 'known', // user already knew the word
 }
 
-export type Word = NonNullable<ActionReturnType<Actions['getUserWords']>['data']>['data'][number];
+export type UserWord = NonNullable<ActionReturnType<Actions['getUserWords']>['data']>['data'][number];

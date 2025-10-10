@@ -105,7 +105,7 @@ export const UserWords: FC = () => {
 
         <TabsContent value={List.Oxford5000Words} className="mt-6">
           <WordsTable
-            words={allWords}
+            data={allWords}
             isLoading={isLoading}
             isFetchingNextPage={isFetchingNextPage}
             hasNextPage={hasNextPage}
@@ -116,7 +116,7 @@ export const UserWords: FC = () => {
 
         <TabsContent value={List.OxfordPhraseList} className="mt-6">
           <WordsTable
-            words={allWords}
+            data={allWords}
             isLoading={isLoading}
             isFetchingNextPage={isFetchingNextPage}
             hasNextPage={hasNextPage}

@@ -26,7 +26,7 @@ export const LearningOrchestrator: FC = () => {
 
   // React Query for loading learning words
   const {
-    data: wordsData,
+    data: words = [],
     isLoading,
     error,
     isSuccess,
@@ -61,8 +61,6 @@ export const LearningOrchestrator: FC = () => {
       console.error('Failed to update word status:', error);
     },
   });
-
-  const words = wordsData?.words || [];
 
   // Update phase based on query results
   useEffect(() => {
@@ -237,17 +235,17 @@ export const LearningOrchestrator: FC = () => {
               <div className="bg-muted/50 mb-6 rounded-lg p-6">
                 <h3 className="mb-4 font-semibold">Session Summary</h3>
                 <div className="space-y-2">
-                  {words.map((word) => {
-                    const defToWordKey = `${word.id}-definition-to-word`;
-                    const wordToDefKey = `${word.id}-word-to-definition`;
+                  {words.map((item) => {
+                    const defToWordKey = `${item.id}-definition-to-word`;
+                    const wordToDefKey = `${item.id}-word-to-definition`;
                     const defToWordFailures = taskResults.get(defToWordKey)?.failures || 0;
                     const wordToDefFailures = taskResults.get(wordToDefKey)?.failures || 0;
                     const totalFailures = defToWordFailures + wordToDefFailures;
                     const status = totalFailures >= 4 ? 'Needs more practice' : 'Ready for review';
 
                     return (
-                      <div key={word.id} className="flex items-center justify-between">
-                        <span className="font-medium">{word.value}</span>
+                      <div key={item.id} className="flex items-center justify-between">
+                        <span className="font-medium">{item.word.value}</span>
                         <span
                           className={cn('text-sm', {
                             'text-orange-600': totalFailures >= 4,
@@ -334,7 +332,7 @@ export const LearningOrchestrator: FC = () => {
       <div className="min-h-[600px]">
         {phase === 'showcase' && showcaseWord && (
           <ShowcaseCard
-            word={showcaseWord}
+            current={showcaseWord}
             onNext={handleShowcaseNext}
             onPrev={handleShowcasePrev}
             onComplete={handleShowcaseComplete}
@@ -346,16 +344,16 @@ export const LearningOrchestrator: FC = () => {
 
         {phase === 'definition-to-word' && currentTaskWord && (
           <DefinitionToWord
-            word={currentTaskWord}
-            otherWords={words.filter((w) => w.id !== currentTaskWord.id)}
+            current={currentTaskWord}
+            other={words.filter((w) => w.id !== currentTaskWord.id)}
             onComplete={handleDefinitionToWordComplete}
           />
         )}
 
         {phase === 'word-to-definition' && currentTaskWord && (
           <WordToDefinition
-            word={currentTaskWord}
-            otherWords={words.filter((w) => w.id !== currentTaskWord.id)}
+            current={currentTaskWord}
+            other={words.filter((w) => w.id !== currentTaskWord.id)}
             onComplete={handleWordToDefinitionComplete}
           />
         )}
