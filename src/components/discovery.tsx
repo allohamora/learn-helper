@@ -77,7 +77,7 @@ export function Discovery() {
       <div className="flex items-center justify-center">
         <div className="text-center">
           <p className="mb-4 text-destructive">{error.message}</p>
-          <Button onClick={() => refetch()}>Try Again</Button>
+          <Button onClick={() => void refetch()}>Try Again</Button>
         </div>
       </div>
     );
@@ -105,7 +105,7 @@ export function Discovery() {
 
         <div className="mt-8 flex gap-4">
           <Button
-            onClick={async () => await handle(Status.Known)}
+            onClick={() => void handle(Status.Known)}
             variant="destructive"
             className="h-12 flex-1 text-base"
             disabled={updateWordMutation.isPending}
@@ -113,7 +113,7 @@ export function Discovery() {
             I Know This
           </Button>
           <Button
-            onClick={async () => await handle(Status.Learning)}
+            onClick={() => void handle(Status.Learning)}
             variant="default"
             className="h-12 flex-1 text-base"
             disabled={updateWordMutation.isPending}
