@@ -8,6 +8,7 @@ import beautifulSort from 'eslint-plugin-beautiful-sort';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginAstro from 'eslint-plugin-astro';
 import pluginTailwind from 'eslint-plugin-tailwindcss';
+import { join } from 'node:path';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -26,6 +27,9 @@ export default tseslint.config(
     settings: {
       react: {
         version: 'detect',
+      },
+      tailwindcss: {
+        config: join(import.meta.dirname, 'src', 'styles', 'global.css'),
       },
     },
     rules: {
