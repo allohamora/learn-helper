@@ -27,7 +27,13 @@ await ensureUserWordsExists(userId);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | Learn Helper</title>
-    <script is:inline src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+    <script>
+      import { scan } from 'react-scan';
+
+      scan({
+        enabled: process.env.NODE_ENV === 'development',
+      });
+    </script>
     <ClientRouter />
     <script>
       const getThemePreference = () => {
