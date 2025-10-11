@@ -8,9 +8,10 @@ import beautifulSort from 'eslint-plugin-beautiful-sort';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginAstro from 'eslint-plugin-astro';
 import pluginTailwind from 'eslint-plugin-tailwindcss';
+import { defineConfig } from 'eslint/config';
 import { join } from 'node:path';
 
-export default tseslint.config(
+export default defineConfig(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs.recommended,
