@@ -64,7 +64,7 @@ export const UserWords: FC = () => {
           <p className="mb-4 text-muted-foreground">
             {error instanceof Error ? error.message : 'Something went wrong'}
           </p>
-          <Button onClick={() => refetch()} variant="outline">
+          <Button onClick={() => void refetch()} variant="outline">
             Try Again
           </Button>
         </div>
