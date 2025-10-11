@@ -3,14 +3,13 @@ import { ClientRouter } from 'astro:transitions';
 import { Toaster } from '@/components/ui/toaster';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components';
 import { ensureUserWordsExists } from '@/repositories/user-word.repository';
+import '@/styles/global.css';
 
 type Props = {
   title: string;
 };
 
 const { title } = Astro.props;
-
-import '@/styles/global.css';
 
 const { userId } = Astro.locals.auth();
 if (!userId) {
