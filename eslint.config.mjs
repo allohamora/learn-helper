@@ -8,17 +8,22 @@ import beautifulSort from 'eslint-plugin-beautiful-sort';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import eslintPluginAstro from 'eslint-plugin-astro';
 import pluginTailwind from 'eslint-plugin-tailwindcss';
+import reactHooks from 'eslint-plugin-react-hooks';
+import { defineConfig } from 'eslint/config';
+import { join } from 'node:path';
 
-export default tseslint.config(
+export default defineConfig(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...eslintPluginAstro.configs.recommended,
   ...pluginTailwind.configs['flat/recommended'],
+  // @ts-ignore react-plugin type issues
   pluginReact.configs.flat.recommended,
   pluginReact.configs.flat['jsx-runtime'],
+  reactHooks.configs.flat.recommended,
   pluginJsxA11y.flatConfigs.recommended,
   eslintPluginPrettierRecommended,
-  { ignores: ['node_modules', 'dist'] },
+  { ignores: ['node_modules', 'dist', '.astro'] },
   {
     files: ['**/*.{ts,tsx,astro}'],
     languageOptions: { globals: { ...globals.browser }, parserOptions: { project: true } },
@@ -26,6 +31,9 @@ export default tseslint.config(
     settings: {
       react: {
         version: 'detect',
+      },
+      tailwindcss: {
+        config: join(import.meta.dirname, 'src', 'styles', 'global.css'),
       },
     },
     rules: {
@@ -40,7 +48,7 @@ export default tseslint.config(
       '@typescript-eslint/no-misused-promises': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-deprecated': 'error',
-      'react/no-unknown-property': ['error', { ignore: ['class', 'set:html'] }],
+      'react/no-unknown-property': ['error', { ignore: ['class', 'set:html', 'is:inline'] }],
       'beautiful-sort/import': [
         'error',
         { special: [], order: ['special', 'namespace', 'default', 'defaultObj', 'obj', 'none'] },

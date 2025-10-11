@@ -21,11 +21,11 @@ export const LearningResult: FC<LearningResultProps> = ({ showcaseTasks, mistake
           </div>
         )}
 
-        <p className="text-muted-foreground mb-6 text-lg">
+        <p className="mb-6 text-lg text-muted-foreground">
           You&apos;ve completed learning {showcaseTasks.length} word{showcaseTasks.length > 1 ? 's' : ''}.
         </p>
 
-        <div className="bg-muted/50 mb-6 rounded-lg p-6">
+        <div className="mb-6 rounded-lg bg-muted/50 p-6">
           <h3 className="mb-4 font-semibold">Session Summary</h3>
           <div className="space-y-2">
             {showcaseTasks.map((task) => {

@@ -18,7 +18,15 @@ export default defineConfig({
       CLERK_SECRET_KEY: envField.string({ context: 'server', access: 'secret' }),
     },
   },
-  integrations: [clerk(), react(), db()],
+  integrations: [
+    clerk(),
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
+    db(),
+  ],
   adapter: node({
     mode: 'standalone',
   }),

@@ -6,10 +6,10 @@ export const IndexPage: FC = () => {
       <div className="mx-auto max-w-3xl">
         <h1 className="mb-6 text-4xl font-bold tracking-tight md:text-6xl">
           Master English with
-          <span className="text-primary block">Learn Helper</span>
+          <span className="block text-primary">Learn Helper</span>
         </h1>
 
-        <p className="text-muted-foreground mb-8 max-w-2xl text-xl">
+        <p className="mb-8 max-w-2xl text-xl text-muted-foreground">
           Discover thousands of Oxford words and phrases. Build your vocabulary with interactive lessons and track your
           progress.
         </p>

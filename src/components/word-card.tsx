@@ -30,7 +30,7 @@ export const WordCard: FC<WordCardProps> = ({ userWord }) => {
           <CardTitle className="text-base leading-tight font-semibold">
             {userWord.word.value}
             {userWord.word.spelling && userWord.word.spelling !== userWord.word.value && (
-              <span className="text-muted-foreground ml-1 text-xs font-normal">({userWord.word.spelling})</span>
+              <span className="ml-1 text-xs font-normal text-muted-foreground">({userWord.word.spelling})</span>
             )}
           </CardTitle>
 

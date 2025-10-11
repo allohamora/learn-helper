@@ -44,13 +44,13 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ data, onMistake, o
         <p className="text-muted-foreground">Select the correct definition for the given word</p>
       </div>
 
-      <Card className="bg-card mb-6 shadow-lg">
+      <Card className="mb-6 bg-card shadow-lg">
         <CardHeader className="space-y-4 pb-4">
           <div className="flex items-start justify-between">
             <CardTitle className="text-3xl leading-tight font-bold">
               {data.value}
               {data.spelling && (
-                <span className="text-muted-foreground ml-2 text-lg font-normal">({data.spelling})</span>
+                <span className="ml-2 text-lg font-normal text-muted-foreground">({data.spelling})</span>
               )}
             </CardTitle>
 
