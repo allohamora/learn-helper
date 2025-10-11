@@ -22,7 +22,7 @@ export default defineConfig({
     clerk(),
     react({
       babel: {
-        plugins: [['babel-plugin-react-compiler']],
+        plugins: ['babel-plugin-react-compiler'],
       },
     }),
     db(),
