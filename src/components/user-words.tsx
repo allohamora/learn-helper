@@ -14,7 +14,7 @@ export const UserWords: FC = () => {
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(
     {
-      queryKey: ['userWords', level, status, list],
+      queryKey: ['getUserWords', level, status, list],
       queryFn: async ({ pageParam }) => {
         const result = await actions.getUserWords({
           level,
