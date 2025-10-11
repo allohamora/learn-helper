@@ -23,7 +23,7 @@ export default defineConfig(
   reactHooks.configs.flat.recommended,
   pluginJsxA11y.flatConfigs.recommended,
   eslintPluginPrettierRecommended,
-  { ignores: ['node_modules', 'dist'] },
+  { ignores: ['node_modules', 'dist', '.astro'] },
   {
     files: ['**/*.{ts,tsx,astro}'],
     languageOptions: { globals: { ...globals.browser }, parserOptions: { project: true } },
