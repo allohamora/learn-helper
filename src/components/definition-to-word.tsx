@@ -32,7 +32,7 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, onMistake, o
         <p className="text-muted-foreground">Select the correct word for the given definition</p>
       </div>
 
-      <Card className="bg-card mb-6 shadow-lg">
+      <Card className="mb-6 bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="flex min-h-[120px] items-center justify-center text-center">
             <p className="text-xl leading-relaxed font-normal">{data.definition}</p>
@@ -62,7 +62,7 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, onMistake, o
                     <div>
                       <span className="text-base font-semibold">{option.value}</span>
                       {option.partOfSpeech && (
-                        <span className="text-muted-foreground ml-2 text-sm">
+                        <span className="ml-2 text-sm text-muted-foreground">
                           ({option.partOfSpeech.toLowerCase()})
                         </span>
                       )}

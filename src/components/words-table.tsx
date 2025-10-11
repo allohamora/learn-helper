@@ -40,7 +40,7 @@ export const WordsTable: FC<WordsTableProps> = ({
               <div className="font-medium">
                 {word.value}
                 {word.spelling && word.spelling !== word.value && (
-                  <span className="text-muted-foreground ml-1 text-xs font-normal">({word.spelling})</span>
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">({word.spelling})</span>
                 )}
               </div>
             </div>
@@ -50,7 +50,7 @@ export const WordsTable: FC<WordsTableProps> = ({
       {
         accessorKey: 'word.definition',
         header: 'Definition',
-        cell: ({ getValue }) => <div className="text-muted-foreground min-w-[200px] text-sm">{getValue<string>()}</div>,
+        cell: ({ getValue }) => <div className="min-w-[200px] text-sm text-muted-foreground">{getValue<string>()}</div>,
       },
       {
         accessorKey: 'word.level',
@@ -75,7 +75,7 @@ export const WordsTable: FC<WordsTableProps> = ({
               {partOfSpeech}
             </Badge>
           ) : (
-            <span className="text-muted-foreground text-xs">—</span>
+            <span className="text-xs text-muted-foreground">—</span>
           );
         },
       });
@@ -198,13 +198,13 @@ export const WordsTable: FC<WordsTableProps> = ({
   return (
     <div className="w-full rounded-lg">
       <div ref={tableContainerRef} className="overflow-auto" style={{ height: '600px' }} onScroll={handleScroll}>
-        <div className="bg-background sticky top-0 z-10 w-full min-w-fit">
+        <div className="sticky top-0 z-10 w-full min-w-fit bg-background">
           {table.getHeaderGroups().map((headerGroup) => (
-            <div key={headerGroup.id} className="border-border flex min-w-fit border-b">
+            <div key={headerGroup.id} className="flex min-w-fit border-b border-border">
               {headerGroup.headers.map((header) => (
                 <div
                   key={header.id}
-                  className="text-muted-foreground flex shrink-0 items-center p-4 text-left text-xs font-medium tracking-wider uppercase"
+                  className="flex shrink-0 items-center p-4 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase"
                   style={{ flex: getColumnFlex(header.id) }}
                 >
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
@@ -220,7 +220,7 @@ export const WordsTable: FC<WordsTableProps> = ({
               return (
                 <div
                   key={row?.id}
-                  className="hover:bg-muted/50 flex w-full min-w-fit items-center pt-2"
+                  className="flex w-full min-w-fit items-center pt-2 hover:bg-muted/50"
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -246,7 +246,7 @@ export const WordsTable: FC<WordsTableProps> = ({
 
             {isFetchingNextPage && (
               <div className="flex items-center justify-center p-4">
-                <div className="text-muted-foreground text-sm">Loading more words...</div>
+                <div className="text-sm text-muted-foreground">Loading more words...</div>
               </div>
             )}
           </div>
@@ -255,7 +255,7 @@ export const WordsTable: FC<WordsTableProps> = ({
 
       {!hasNextPage && data.length > 0 && (
         <div className="flex items-center justify-center p-4">
-          <div className="text-muted-foreground text-sm">You&apos;ve reached the end! No more words to show.</div>
+          <div className="text-sm text-muted-foreground">You&apos;ve reached the end! No more words to show.</div>
         </div>
       )}
 

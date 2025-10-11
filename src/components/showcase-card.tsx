@@ -33,13 +33,13 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
         <p className="text-muted-foreground">Take a moment to familiarize yourself with each word</p>
       </div>
 
-      <Card className="bg-card mb-6 flex min-h-[400px] flex-col shadow-lg">
+      <Card className="mb-6 flex min-h-[400px] flex-col bg-card shadow-lg">
         <CardHeader className="space-y-4 pb-4">
           <div className="flex items-start justify-between">
             <CardTitle className="text-3xl leading-tight font-bold">
               {data.value}
               {data.spelling && (
-                <span className="text-muted-foreground ml-2 text-lg font-normal">({data.spelling})</span>
+                <span className="ml-2 text-lg font-normal text-muted-foreground">({data.spelling})</span>
               )}
             </CardTitle>
 
@@ -90,7 +90,7 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
 
         <CardContent className="flex flex-1 items-center justify-center pt-4">
           <div className="text-center">
-            <p className="text-foreground text-xl leading-relaxed">{data.definition}</p>
+            <p className="text-xl leading-relaxed text-foreground">{data.definition}</p>
           </div>
         </CardContent>
       </Card>

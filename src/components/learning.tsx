@@ -52,7 +52,7 @@ export const Learning: FC = () => {
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
-          <p className="text-muted-foreground mb-6">Failed to load learning words. Please try again.</p>
+          <p className="mb-6 text-muted-foreground">Failed to load learning words. Please try again.</p>
           <Button onClick={() => refetch()} size="lg">
             Try Again
           </Button>
@@ -69,7 +69,7 @@ export const Learning: FC = () => {
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">No Words to Learn</h1>
-          <p className="text-muted-foreground mb-6 text-lg">You have no words to learn at the moment.</p>
+          <p className="mb-6 text-lg text-muted-foreground">You have no words to learn at the moment.</p>
         </div>
       </div>
     );
@@ -117,9 +117,9 @@ export const Learning: FC = () => {
             {idx + 1} of {tasks.length}
           </span>
         </div>
-        <div className="bg-muted mt-2 h-2 w-full rounded-full">
+        <div className="mt-2 h-2 w-full rounded-full bg-muted">
           <div
-            className="bg-primary h-2 rounded-full transition-all duration-300"
+            className="h-2 rounded-full bg-primary transition-all duration-300"
             style={{
               width: `${((idx + 1) / tasks.length) * 100}%`,
             }}

@@ -49,7 +49,7 @@ export const UserWords: FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
-          <h3 className="text-foreground mb-2 text-lg font-semibold">Loading Words...</h3>
+          <h3 className="mb-2 text-lg font-semibold text-foreground">Loading Words...</h3>
           <p className="text-muted-foreground">Please wait while we fetch your words.</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ export const UserWords: FC = () => {
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
           <h3 className="mb-2 text-lg font-semibold text-red-600">Error Loading Words</h3>
-          <p className="text-muted-foreground mb-4">
+          <p className="mb-4 text-muted-foreground">
             {error instanceof Error ? error.message : 'Something went wrong'}
           </p>
           <Button onClick={() => refetch()} variant="outline">
@@ -77,15 +77,15 @@ export const UserWords: FC = () => {
       {data && (
         <div className="flex flex-col gap-6 rounded-lg p-4 sm:flex-row">
           <div className="text-center sm:text-left">
-            <div className="text-foreground text-3xl font-bold">{totalWords}</div>
-            <div className="text-muted-foreground text-sm">total words</div>
+            <div className="text-3xl font-bold text-foreground">{totalWords}</div>
+            <div className="text-sm text-muted-foreground">total words</div>
           </div>
           {!status && (
             <div className="text-center sm:text-left">
               <div className="text-3xl font-bold text-green-600">
                 {totalWords > 0 ? Math.round(((totalWords - learningWords) / totalWords) * 100) : 0}%
               </div>
-              <div className="text-muted-foreground text-sm">progress</div>
+              <div className="text-sm text-muted-foreground">progress</div>
             </div>
           )}
         </div>

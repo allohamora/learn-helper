@@ -76,7 +76,7 @@ export function Discovery() {
     return (
       <div className="flex items-center justify-center">
         <div className="text-center">
-          <p className="text-destructive mb-4">{error.message}</p>
+          <p className="mb-4 text-destructive">{error.message}</p>
           <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       </div>
@@ -88,7 +88,7 @@ export function Discovery() {
       <div className="flex items-center justify-center">
         <div className="text-center">
           <h2 className="mb-4 text-2xl font-bold">Great job!</h2>
-          <p className="text-muted-foreground mb-4">You&apos;ve reviewed all available words.</p>
+          <p className="mb-4 text-muted-foreground">You&apos;ve reviewed all available words.</p>
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ export function Discovery() {
     <div className="space-y-6">
       <div className="mx-auto max-w-md pt-8">
         <div className="mb-8 text-center">
-          <p className="text-muted-foreground text-sm">Remaining words: {remaining}</p>
+          <p className="text-sm text-muted-foreground">Remaining words: {remaining}</p>
         </div>
 
         <WordDiscoveryCard userWord={currentWord} />

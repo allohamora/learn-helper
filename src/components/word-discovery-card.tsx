@@ -24,13 +24,13 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
   };
 
   return (
-    <Card className="bg-card flex h-72 flex-col shadow-lg">
+    <Card className="flex h-72 flex-col bg-card shadow-lg">
       <CardHeader className="space-y-4 pb-4">
         <div className="flex items-start justify-between">
           <CardTitle className="text-2xl leading-tight font-bold">
             {userWord.word.value}
             {userWord.word.spelling && (
-              <span className="text-muted-foreground ml-2 text-base font-normal">({userWord.word.spelling})</span>
+              <span className="ml-2 text-base font-normal text-muted-foreground">({userWord.word.spelling})</span>
             )}
           </CardTitle>
 
@@ -80,7 +80,7 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
       </CardHeader>
 
       <CardContent className="flex flex-1 items-center justify-center">
-        <p className="text-foreground text-center text-lg leading-relaxed">{userWord.word.definition}</p>
+        <p className="text-center text-lg leading-relaxed text-foreground">{userWord.word.definition}</p>
       </CardContent>
     </Card>
   );
