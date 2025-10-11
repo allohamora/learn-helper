@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/layout.astro';
+import { UserWordsPage } from '@/components/page/user-words';
+---
+
+<Layout title="Words">
+  <UserWordsPage client:load />
+</Layout>

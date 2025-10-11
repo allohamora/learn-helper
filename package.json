@@ -4,9 +4,11 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "astro dev --remote",
+    "build": "astro build --remote",
     "preview": "astro preview",
+    "push": "astro db push --remote",
+    "seed": "astro db execute db/seed.ts --remote",
     "astro": "astro",
     "prepare": "husky",
     "format": "prettier . --check",
@@ -17,11 +19,17 @@
     "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix"
   },
   "dependencies": {
+    "@astrojs/db": "^0.18.0",
     "@clerk/astro": "^2.13.0",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-toast": "^1.2.15",
+    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.542.0",
@@ -32,6 +40,7 @@
     "tailwindcss": "4.1.12",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.3.8",
+    "type-fest": "^5.0.1",
     "zod": "^4.1.5"
   },
   "devDependencies": {
