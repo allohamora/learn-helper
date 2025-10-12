@@ -1,11 +1,12 @@
-import { type FC, type MouseEvent, useState } from 'react';
+import { type FC, type KeyboardEvent, type MouseEvent, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowRight, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import type { WriteByPronunciationTask } from '@/types/user-words.types';
+import { SttButton } from './stt-button';
 
 type WriteByPronunciationProps = {
   data: WriteByPronunciationTask['data'];
@@ -46,7 +47,7 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
     onNext();
   };
 
-  const handleKeyPress = (event: React.KeyboardEvent) => {
+  const handleKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && !isChecked && userInput.trim()) {
       handleCheck();
     }
@@ -85,27 +86,21 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
                 onKeyDown={handleKeyPress}
                 placeholder="Type what you hear..."
                 className={cn(
-                  'h-12 text-lg text-center',
+                  'h-12 text-lg',
                   isChecked && isCorrect && 'border-green-500 bg-green-50',
                   isChecked && !isCorrect && 'border-red-500 bg-red-50',
                 )}
                 disabled={isChecked}
               />
-              {isChecked && (
-                <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                  {isCorrect ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-600" />
-                  )}
-                </div>
-              )}
+              <div className="absolute top-1/2 right-2 -translate-y-1/2">
+                <SttButton onText={setUserInput} disabled={isChecked} className={cn('h-8 w-8')} />
+              </div>
             </div>
 
             {isChecked && (
               <div className="text-center">
                 {isCorrect ? (
-                  <p className="font-semibold text-green-600">Correct! Well done!</p>
+                  <p className="font-semibold text-green-600">Correct</p>
                 ) : (
                   <div className="space-y-2">
                     <p className="font-semibold text-red-600">Incorrect</p>
@@ -121,7 +116,7 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
           <div className="flex justify-center">
             {!isChecked ? (
               <Button onClick={handleCheck} size="lg" disabled={!userInput.trim()} className="min-w-32">
-                Check Answer
+                Check
               </Button>
             ) : (
               <Button onClick={handleNext} size="lg" className="min-w-32">
