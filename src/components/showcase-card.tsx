@@ -21,9 +21,7 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
     event.preventDefault();
     event.stopPropagation();
 
-    if (data.pronunciation) {
-      playAudio(data.pronunciation);
-    }
+    playAudio(data.pronunciation);
   };
 
   return (
