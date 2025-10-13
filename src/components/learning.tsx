@@ -1,7 +1,15 @@
-import { type FC, useState } from 'react';
+import { type FC, useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
-import { Status, TaskType } from '@/types/user-words.types';
+import {
+  Status,
+  TaskType,
+  type DefinitionToWordTask,
+  type ShowcaseTask,
+  type UserWord,
+  type WordToDefinitionTask,
+  type WriteByPronunciationTask,
+} from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
 import { WordToDefinition } from './word-to-definition';
@@ -12,15 +20,106 @@ import { Loader } from './ui/loader';
 
 const MISTAKES_THRESHOLD = 2;
 
+const shuffle = <T,>(array: T[]): T[] => {
+  return array
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+};
+
+const toShowcaseTasks = (words: UserWord[]) => {
+  return words.map(
+    (item): ShowcaseTask => ({
+      id: crypto.randomUUID(),
+      type: TaskType.Showcase,
+      data: item.word,
+    }),
+  );
+};
+
+const toWordToDefinitionTasks = (words: UserWord[]) => {
+  return words.map((target): WordToDefinitionTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
+      .slice(0, 3)
+      .map((value) => ({ id: value.id, definition: value.word.definition, isCorrect: false }));
+    const correct = { id: target.id, definition: target.word.definition, isCorrect: true };
+    const options = shuffle([correct, ...wrong]);
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.WordToDefinition,
+      data: {
+        ...target.word,
+        options,
+      },
+    };
+  });
+};
+
+const toDefinitionToWordTasks = (words: UserWord[]) => {
+  return words.map((target): DefinitionToWordTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
+      .slice(0, 3)
+      .map((value) => ({
+        id: value.id,
+        value: value.word.value,
+        partOfSpeech: value.word.partOfSpeech,
+        isCorrect: false,
+      }));
+    const correct = {
+      id: target.id,
+      value: target.word.value,
+      partOfSpeech: target.word.partOfSpeech,
+      isCorrect: true,
+    };
+    const options = shuffle([correct, ...wrong]);
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.DefinitionToWord,
+      data: {
+        id: target.id,
+        definition: target.word.definition,
+        options,
+      },
+    };
+  });
+};
+
+const toWriteByPronunciationTasks = (words: UserWord[]) => {
+  return words.map((target): WriteByPronunciationTask => {
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.WriteByPronunciation,
+      data: {
+        id: target.id,
+        pronunciation: target.word.pronunciation,
+        answer: target.word.value,
+      },
+    };
+  });
+};
+
+const toLearningTasks = (words: UserWord[]) => {
+  const showcaseTasks = toShowcaseTasks(words);
+  const wordToDefinitionTasks = toWordToDefinitionTasks(words);
+  const definitionToWordTasks = toDefinitionToWordTasks(words);
+  const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
+
+  return [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
+};
+
 export const Learning: FC = () => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['getLearningTasks'],
+    queryKey: ['getLearningWords'],
     queryFn: async () => {
-      const result = await actions.getLearningTasks({});
+      const result = await actions.getLearningWords({});
       if (result.error) {
         throw new Error('Failed to load learning tasks');
       }
@@ -28,6 +127,14 @@ export const Learning: FC = () => {
       return result.data;
     },
   });
+
+  const tasks = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+
+    return toLearningTasks(data);
+  }, [data]);
 
   const updateUserWordStatuses = useMutation({
     mutationFn: async (data: { userWordId: number; status: Status }[]) => {
@@ -62,9 +169,6 @@ export const Learning: FC = () => {
     );
   }
 
-  const { showcaseTasks, wordToDefinitionTasks, definitionToWordTasks, writeByPronunciationTasks } = data;
-  const tasks = [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
-
   if (!tasks || tasks.length === 0) {
     return (
       <div className="space-y-6">
@@ -87,12 +191,12 @@ export const Learning: FC = () => {
 
     setIsFinished(true);
 
-    const data = showcaseTasks.map((task) => ({
-      userWordId: task.data.id,
-      status: (mistakes[task.data.id] || 0) >= MISTAKES_THRESHOLD ? Status.Struggling : Status.Reviewing,
+    const body = data.map((item) => ({
+      userWordId: item.id,
+      status: (mistakes[item.id] || 0) >= MISTAKES_THRESHOLD ? Status.Struggling : Status.Reviewing,
     }));
 
-    updateUserWordStatuses.mutate(data);
+    updateUserWordStatuses.mutate(body);
   };
 
   const onPrev = () => {
@@ -153,11 +257,7 @@ export const Learning: FC = () => {
             )}
           </>
         ) : (
-          <LearningResult
-            showcaseTasks={showcaseTasks}
-            mistakes={mistakes}
-            isPending={updateUserWordStatuses.isPending}
-          />
+          <LearningResult userWords={data} mistakes={mistakes} isPending={updateUserWordStatuses.isPending} />
         )}
       </div>
     </div>

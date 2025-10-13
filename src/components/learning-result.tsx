@@ -1,15 +1,15 @@
-import type { ShowcaseTask } from '@/types/user-words.types';
+import type { UserWord } from '@/types/user-words.types';
 import { type FC } from 'react';
 import { Button } from './ui/button';
 import { Loader } from './ui/loader';
 
 export type LearningResultProps = {
-  showcaseTasks: ShowcaseTask[];
+  userWords: UserWord[];
   mistakes: Record<number, number>;
   isPending: boolean;
 };
 
-export const LearningResult: FC<LearningResultProps> = ({ showcaseTasks, mistakes, isPending }) => {
+export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes, isPending }) => {
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-2xl text-center">
@@ -22,17 +22,17 @@ export const LearningResult: FC<LearningResultProps> = ({ showcaseTasks, mistake
         )}
 
         <p className="mb-6 text-lg text-muted-foreground">
-          You&apos;ve completed learning {showcaseTasks.length} word{showcaseTasks.length > 1 ? 's' : ''}.
+          You&apos;ve completed learning {userWords.length} word{userWords.length > 1 ? 's' : ''}.
         </p>
 
         <div className="mb-6 rounded-lg bg-muted/50 p-6">
           <h3 className="mb-4 font-semibold">Session Summary</h3>
           <div className="space-y-2">
-            {showcaseTasks.map((task) => {
-              const mistakeCount = mistakes[task.data.id] || 0;
+            {userWords.map(({ id, word }) => {
+              const mistakeCount = mistakes[id] || 0;
               return (
-                <div key={task.data.id} className="flex items-center justify-between">
-                  <span className="font-medium">{task.data.value}</span>
+                <div key={id} className="flex items-center justify-between">
+                  <span className="font-medium">{word.value}</span>
                   <span
                     className={
                       mistakeCount === 0
