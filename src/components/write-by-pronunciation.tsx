@@ -25,9 +25,7 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
     event.preventDefault();
     event.stopPropagation();
 
-    if (data.pronunciation) {
-      playAudio(data.pronunciation);
-    }
+    playAudio(data.pronunciation);
   };
 
   const handleCheck = () => {
