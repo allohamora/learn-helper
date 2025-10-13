@@ -28,6 +28,7 @@ export enum TaskType {
   Showcase = 'showcase',
   WordToDefinition = 'word-to-definition',
   DefinitionToWord = 'definition-to-word',
+  WriteByPronunciation = 'write-by-pronunciation',
 }
 
 export type ShowcaseTask = {
@@ -63,4 +64,14 @@ export type DefinitionToWordTask = {
   };
 };
 
-export type LearningTask = ShowcaseTask | WordToDefinitionTask | DefinitionToWordTask;
+export type WriteByPronunciationTask = {
+  id: string;
+  type: TaskType.WriteByPronunciation;
+  data: {
+    id: number;
+    pronunciation: string;
+    answer: string;
+  };
+};
+
+export type LearningTask = ShowcaseTask | WordToDefinitionTask | DefinitionToWordTask | WriteByPronunciationTask;

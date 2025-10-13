@@ -5,6 +5,7 @@ import { Status, TaskType } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
 import { WordToDefinition } from './word-to-definition';
+import { WriteByPronunciation } from './write-by-pronunciation';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
@@ -61,8 +62,8 @@ export const Learning: FC = () => {
     );
   }
 
-  const { showcaseTasks, wordToDefinitionTasks, definitionToWordTasks } = data;
-  const tasks = [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks];
+  const { showcaseTasks, wordToDefinitionTasks, definitionToWordTasks, writeByPronunciationTasks } = data;
+  const tasks = [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
 
   if (!tasks || tasks.length === 0) {
     return (
@@ -140,6 +141,15 @@ export const Learning: FC = () => {
 
             {currentTask?.type === TaskType.WordToDefinition && (
               <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
+            {currentTask?.type === TaskType.WriteByPronunciation && (
+              <WriteByPronunciation
+                key={currentTask.id}
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
           </>
         ) : (

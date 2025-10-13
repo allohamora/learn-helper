@@ -6,6 +6,7 @@ import {
   type ShowcaseTask,
   type UserWord,
   type WordToDefinitionTask,
+  type WriteByPronunciationTask,
 } from '@/types/user-words.types';
 import { randomUUID } from 'node:crypto';
 
@@ -77,16 +78,32 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
   });
 };
 
+const toWriteByPronunciationTasks = (words: UserWord[]) => {
+  return words.map((target): WriteByPronunciationTask => {
+    return {
+      id: randomUUID(),
+      type: TaskType.WriteByPronunciation,
+      data: {
+        id: target.id,
+        pronunciation: target.word.pronunciation,
+        answer: target.word.value,
+      },
+    };
+  });
+};
+
 export const getLearningTasks = async (params: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(params);
 
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
+  const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
 
   return {
     showcaseTasks,
     wordToDefinitionTasks,
     definitionToWordTasks,
+    writeByPronunciationTasks,
   };
 };

@@ -32,9 +32,7 @@ export const WordToDefinition: FC<WordToDefinitionProps> = ({ data, onMistake, o
     event.preventDefault();
     event.stopPropagation();
 
-    if (data.pronunciation) {
-      playAudio(data.pronunciation);
-    }
+    playAudio(data.pronunciation);
   };
 
   return (
