@@ -185,7 +185,7 @@ export const updateUserWordStatus = async ({
 };
 
 export const updateUserWord = async (
-  { userId, userWordId, ...data }: { userWordId: number } & Partial<typeof UserWord.$inferSelect>,
+  { userWordId, ...data }: { userWordId: number } & Partial<typeof UserWord.$inferSelect>,
   tx: Transaction = db,
 ) => {
   await tx
