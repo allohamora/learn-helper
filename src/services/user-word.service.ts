@@ -8,18 +8,19 @@ import type { AuthParams } from '@/types/auth.types';
 import { Status } from '@/types/user-words.types';
 
 const REVIEW_AFTER_VALUE = 3;
+const MAX_ENCOUNTER_COUNT = 3;
 
 export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: number }>) => {
   const userWord = await getUserWordById(data);
-  const appearsLeft = userWord.appearsLeft - 1;
+  const encounterCount = userWord.encounterCount + 1;
 
   await decreaseMaxWordsToUnlock(data);
 
-  if (appearsLeft <= 0) {
-    await updateUserWord({ ...data, wordsToUnlock: 0, appearsLeft: 0, status: Status.Learned });
+  if (encounterCount >= MAX_ENCOUNTER_COUNT) {
+    await updateUserWord({ ...data, wordsToUnlock: 0, encounterCount, status: Status.Learned });
   } else {
     const maxWordsToUnlock = await getMaxWordsToUnlock(data);
 
-    await updateUserWord({ ...data, wordsToUnlock: maxWordsToUnlock + REVIEW_AFTER_VALUE, appearsLeft });
+    await updateUserWord({ ...data, wordsToUnlock: maxWordsToUnlock + REVIEW_AFTER_VALUE, encounterCount });
   }
 };
