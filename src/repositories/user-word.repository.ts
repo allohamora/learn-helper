@@ -155,6 +155,17 @@ export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: nu
   return mapUserWords(result);
 };
 
+export const updateUserWordStatus = async ({
+  userId,
+  userWordId,
+  status,
+}: AuthParams<{ userWordId: number; status: Status }>) => {
+  await db
+    .update(UserWord)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(UserWord.id, userWordId), eq(UserWord.userId, userId)));
+};
+
 export const getUserWordById = async ({ userWordId }: { userWordId: number }, tx: Transaction = db) => {
   const result = await tx
     .select()
@@ -171,17 +182,6 @@ export const getUserWordById = async ({ userWordId }: { userWordId: number }, tx
     word: result[0].Word,
     ...result[0].UserWord,
   };
-};
-
-export const updateUserWordStatus = async ({
-  userId,
-  userWordId,
-  status,
-}: AuthParams<{ userWordId: number; status: Status }>) => {
-  await db
-    .update(UserWord)
-    .set({ status, updatedAt: new Date() })
-    .where(and(eq(UserWord.id, userWordId), eq(UserWord.userId, userId)));
 };
 
 export const updateUserWord = async (
