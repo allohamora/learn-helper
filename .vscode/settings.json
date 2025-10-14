@@ -1,0 +1,8 @@
+{
+  "jestrunner.changeDirectoryToWorkspaceRoot": true,
+  "jestrunner.jestCommand": "sh scripts/jest.sh",
+  "jestrunner.debugOptions": {
+    "runtimeExecutable": "sh",
+    "runtimeArgs": ["scripts/jest-debug.sh"]
+  }
+}
