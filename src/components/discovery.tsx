@@ -20,7 +20,12 @@ export function Discovery() {
   } = useQuery({
     queryKey: ['getWaitingWords'],
     queryFn: async () => {
-      return await actions.getWaitingWords.orThrow({});
+      const res = await actions.getWaitingWords.orThrow({});
+
+      setHandled(0);
+      setCurrentIndex(0);
+
+      return res;
     },
   });
 
@@ -48,8 +53,6 @@ export function Discovery() {
       setHandled(handled + 1);
     } else {
       await refetch();
-      setHandled(0);
-      setCurrentIndex(0);
     }
   };
 
