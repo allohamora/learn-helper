@@ -2,6 +2,9 @@ import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray, desc } from 'astro:db';
 
+type Database = typeof db;
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0] | Database;
+
 const isUserWordsExists = async (userId: string) => {
   const res = await db.select().from(UserWord).where(eq(UserWord.userId, userId)).limit(1);
 
@@ -152,11 +155,11 @@ export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: nu
   return mapUserWords(result);
 };
 
-export const getUserWordById = async ({ userId, userWordId }: AuthParams<{ userWordId: number }>) => {
+export const getUserWordById = async ({ userWordId }: { userWordId: number }, tx: Transaction = db) => {
   const result = await db
     .select()
     .from(UserWord)
-    .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)))
+    .where(eq(UserWord.id, userWordId))
     .leftJoin(Word, eq(UserWord.wordId, Word.id))
     .limit(1);
 
@@ -170,19 +173,29 @@ export const getUserWordById = async ({ userId, userWordId }: AuthParams<{ userW
   };
 };
 
-export const updateUserWord = async ({
+export const updateUserWordStatus = async ({
   userId,
   userWordId,
-  ...data
-}: AuthParams<{ userWordId: number } & Partial<typeof UserWord.$inferSelect>>) => {
+  status,
+}: AuthParams<{ userWordId: number; status: Status }>) => {
   await db
     .update(UserWord)
-    .set({ ...data, updatedAt: new Date() })
-    .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)));
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(UserWord.id, userWordId), eq(UserWord.userId, userId)));
 };
 
-export const getMaxWordsToUnlock = async ({ userId }: AuthParams) => {
-  const [res] = await db
+export const updateUserWord = async (
+  { userId, userWordId, ...data }: { userWordId: number } & Partial<typeof UserWord.$inferSelect>,
+  tx: Transaction = db,
+) => {
+  await tx
+    .update(UserWord)
+    .set({ ...data, updatedAt: new Date() })
+    .where(and(eq(UserWord.id, userWordId)));
+};
+
+export const getMaxWordsToUnlock = async ({ userId }: AuthParams, tx: Transaction = db) => {
+  const [res] = await tx
     .select({ wordsToUnlock: UserWord.wordsToUnlock })
     .from(UserWord)
     .where(eq(UserWord.userId, userId))
@@ -196,8 +209,8 @@ export const getMaxWordsToUnlock = async ({ userId }: AuthParams) => {
   return res.wordsToUnlock;
 };
 
-export const decreaseMaxWordsToUnlock = async ({ userId }: AuthParams) => {
-  await db
+export const decreaseMaxWordsToUnlock = async ({ userId }: AuthParams, tx: Transaction = db) => {
+  await tx
     .update(UserWord)
     .set({ wordsToUnlock: sql`${UserWord.wordsToUnlock} - 1`, updatedAt: new Date() })
     .where(and(eq(UserWord.userId, userId), gte(UserWord.wordsToUnlock, 1)));

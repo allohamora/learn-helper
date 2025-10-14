@@ -1,4 +1,9 @@
-import { getLearningWords, getUserWords, getWaitingWords, updateUserWord } from '@/repositories/user-word.repository';
+import {
+  getLearningWords,
+  getUserWords,
+  getWaitingWords,
+  updateUserWordStatus,
+} from '@/repositories/user-word.repository';
 import { moveUserWordToNextStep } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
@@ -38,7 +43,7 @@ export const server = {
       userWordId: z.number(),
       status: z.nativeEnum(Status),
     }),
-    handler: auth(updateUserWord),
+    handler: auth(updateUserWordStatus),
   }),
   getLearningWords: defineAction({
     input: z.object({
