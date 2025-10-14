@@ -1,6 +1,6 @@
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
-import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
+import { db, UserWord, eq, sql, Word, and, asc, gte, inArray, desc } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
   const res = await db.select().from(UserWord).where(eq(UserWord.userId, userId)).limit(1);
@@ -146,19 +146,59 @@ export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: nu
     .from(UserWord)
     .where(and(eq(UserWord.userId, userId), eq(UserWord.status, Status.Learning)))
     .leftJoin(Word, eq(UserWord.wordId, Word.id))
-    .orderBy(asc(UserWord.id))
+    .orderBy(asc(UserWord.wordsToUnlock), asc(UserWord.id))
     .limit(limit);
 
   return mapUserWords(result);
 };
 
-export const updateUserWordStatus = async ({
+export const getUserWordById = async ({ userId, userWordId }: AuthParams<{ userWordId: number }>) => {
+  const result = await db
+    .select()
+    .from(UserWord)
+    .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)))
+    .leftJoin(Word, eq(UserWord.wordId, Word.id))
+    .limit(1);
+
+  if (!result.length || !result[0]?.Word) {
+    throw new Error('UserWord is not found');
+  }
+
+  return {
+    word: result[0].Word,
+    ...result[0].UserWord,
+  };
+};
+
+export const updateUserWord = async ({
   userId,
   userWordId,
-  status,
-}: AuthParams<{ userWordId: number; status: Status }>) => {
+  ...data
+}: AuthParams<{ userWordId: number } & Partial<typeof UserWord.$inferSelect>>) => {
   await db
     .update(UserWord)
-    .set({ status, updatedAt: new Date() })
+    .set({ ...data, updatedAt: new Date() })
     .where(and(eq(UserWord.userId, userId), eq(UserWord.id, userWordId)));
+};
+
+export const getMaxWordsToUnlock = async ({ userId }: AuthParams) => {
+  const [res] = await db
+    .select({ wordsToUnlock: UserWord.wordsToUnlock })
+    .from(UserWord)
+    .where(eq(UserWord.userId, userId))
+    .orderBy(desc(UserWord.wordsToUnlock))
+    .limit(1);
+
+  if (!res) {
+    throw new Error('Failed to get max words to unlock');
+  }
+
+  return res.wordsToUnlock;
+};
+
+export const decreaseMaxWordsToUnlock = async ({ userId }: AuthParams) => {
+  await db
+    .update(UserWord)
+    .set({ wordsToUnlock: sql`${UserWord.wordsToUnlock} - 1`, updatedAt: new Date() })
+    .where(and(eq(UserWord.userId, userId), gte(UserWord.wordsToUnlock, 1)));
 };

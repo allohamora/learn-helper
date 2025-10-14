@@ -1,6 +1,7 @@
 import type { UserWord } from '@/types/user-words.types';
 import { type FC } from 'react';
 import { Button } from './ui/button';
+import { NextStep } from './next-step';
 
 export type LearningResultProps = {
   userWords: UserWord[];
@@ -23,19 +24,22 @@ export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes })
             {userWords.map(({ id, word }) => {
               const mistakeCount = mistakes[id] || 0;
               return (
-                <div key={id} className="flex items-center justify-between">
+                <div key={id} className="flex items-center justify-between gap-4">
                   <span className="font-medium">{word.value}</span>
-                  <span
-                    className={
-                      mistakeCount === 0
-                        ? 'font-semibold text-green-600'
-                        : mistakeCount === 1
-                          ? 'font-semibold text-yellow-600'
-                          : 'font-semibold text-red-600'
-                    }
-                  >
-                    {mistakeCount} mistake{mistakeCount !== 1 ? 's' : ''}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={
+                        mistakeCount === 0
+                          ? 'font-semibold text-green-600'
+                          : mistakeCount === 1
+                            ? 'font-semibold text-yellow-600'
+                            : 'font-semibold text-red-600'
+                      }
+                    >
+                      {mistakeCount} mistake{mistakeCount !== 1 ? 's' : ''}
+                    </span>
+                    <NextStep userWordId={id} />
+                  </div>
                 </div>
               );
             })}
