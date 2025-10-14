@@ -1,4 +1,4 @@
-import { db, UserWord } from 'astro:db';
+import { db, eq, UserWord } from 'astro:db';
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { ensureUserWordsExists, getLearningWords, getUserWordById } from '@/repositories/user-word.repository';
@@ -23,7 +23,7 @@ describe('user-word.service', () => {
   });
 
   afterEach(async () => {
-    await db.delete(UserWord);
+    await db.delete(UserWord).where(eq(UserWord.userId, userId));
   });
 
   describe('integration', () => {
