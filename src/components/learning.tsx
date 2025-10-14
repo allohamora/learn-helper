@@ -17,8 +17,6 @@ import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 
-const MISTAKES_THRESHOLD = 2;
-
 const shuffle = <T,>(array: T[]): T[] => {
   return array
     .map((value) => ({ value, sort: Math.random() }))
