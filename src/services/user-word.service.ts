@@ -7,6 +7,8 @@ import {
 import type { AuthParams } from '@/types/auth.types';
 import { Status } from '@/types/user-words.types';
 
+const REVIEW_AFTER_VALUE = 3;
+
 export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: number }>) => {
   const userWord = await getUserWordById(data);
   const appearsLeft = userWord.appearsLeft - 1;
@@ -18,6 +20,6 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
   } else {
     const maxWordsToUnlock = await getMaxWordsToUnlock(data);
 
-    await updateUserWord({ ...data, wordsToUnlock: maxWordsToUnlock + 3, appearsLeft });
+    await updateUserWord({ ...data, wordsToUnlock: maxWordsToUnlock + REVIEW_AFTER_VALUE, appearsLeft });
   }
 };
