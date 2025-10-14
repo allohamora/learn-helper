@@ -20,11 +20,7 @@ export function Discovery() {
   } = useQuery({
     queryKey: ['getWaitingWords'],
     queryFn: async () => {
-      const result = await actions.getWaitingWords({});
-      if (result.error) {
-        throw new Error('Failed to load words');
-      }
-      return result.data;
+      return await actions.getWaitingWords.orThrow({});
     },
   });
 
@@ -34,12 +30,7 @@ export function Discovery() {
 
   const updateUserWordStatus = useMutation({
     mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
-      const result = await actions.updateUserWordStatus(data);
-      if (result.error) {
-        throw new Error('Failed to update word status');
-      }
-
-      return result.data;
+      return await actions.updateUserWordStatus(data);
     },
   });
 

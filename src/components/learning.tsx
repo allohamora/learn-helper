@@ -118,12 +118,7 @@ export const Learning: FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['getLearningWords'],
     queryFn: async () => {
-      const result = await actions.getLearningWords({});
-      if (result.error) {
-        throw new Error('Failed to load learning tasks');
-      }
-
-      return result.data;
+      return await actions.getLearningWords.orThrow({});
     },
   });
 

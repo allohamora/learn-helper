@@ -16,19 +16,13 @@ export const UserWords: FC = () => {
     {
       queryKey: ['getUserWords', level, status, list],
       queryFn: async ({ pageParam }) => {
-        const result = await actions.getUserWords({
+        return await actions.getUserWords.orThrow({
           level,
           status,
           list,
           cursor: pageParam,
           limit: 50,
         });
-
-        if (result.error) {
-          throw new Error(result.error.message || 'Failed to fetch user words');
-        }
-
-        return result.data;
       },
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       initialPageParam: undefined as string | undefined,
