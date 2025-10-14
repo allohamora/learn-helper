@@ -1,25 +1,17 @@
 import type { UserWord } from '@/types/user-words.types';
 import { type FC } from 'react';
 import { Button } from './ui/button';
-import { Loader } from './ui/loader';
 
 export type LearningResultProps = {
   userWords: UserWord[];
   mistakes: Record<number, number>;
-  isPending: boolean;
 };
 
-export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes, isPending }) => {
+export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes }) => {
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="mb-4 text-3xl font-bold">Learning Session Complete! 🎉</h1>
-
-        {isPending && (
-          <div className="mb-4 flex items-center justify-center">
-            <Loader />
-          </div>
-        )}
 
         <p className="mb-6 text-lg text-muted-foreground">
           You&apos;ve completed learning {userWords.length} word{userWords.length > 1 ? 's' : ''}.
@@ -52,8 +44,8 @@ export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes, i
 
         <div className="flex justify-between">
           <div>
-            <Button disabled={isPending} asChild>
-              <a href="/learning">{isPending ? 'Saving...' : 'Learn More Words'}</a>
+            <Button asChild>
+              <a href="/learning">Learn More Words</a>
             </Button>
           </div>
 

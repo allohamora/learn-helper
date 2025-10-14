@@ -16,8 +16,6 @@ export enum List {
 export enum Status {
   Waiting = 'waiting', // word is waiting to be assigned to learning or known
   Learning = 'learning', // first learning phase
-  Struggling = 'struggling', // after first learning, user had problems with it
-  Reviewing = 'reviewing', // after struggling or learning, user is reviewing it
   Learned = 'learned', // user successfully learned the word
   Known = 'known', // user already knew the word
 }

@@ -2,7 +2,7 @@ import {
   getLearningWords,
   getUserWords,
   getWaitingWords,
-  updateUserWordStatuses,
+  updateUserWordStatus,
 } from '@/repositories/user-word.repository';
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
@@ -37,16 +37,12 @@ export const server = {
     }),
     handler: auth(getWaitingWords),
   }),
-  updateUserWordStatuses: defineAction({
+  updateUserWordStatus: defineAction({
     input: z.object({
-      data: z.array(
-        z.object({
-          userWordId: z.number(),
-          status: z.nativeEnum(Status),
-        }),
-      ),
+      userWordId: z.number(),
+      status: z.nativeEnum(Status),
     }),
-    handler: auth(updateUserWordStatuses),
+    handler: auth(updateUserWordStatus),
   }),
   getLearningWords: defineAction({
     input: z.object({
