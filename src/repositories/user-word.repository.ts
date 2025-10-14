@@ -156,7 +156,7 @@ export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: nu
 };
 
 export const getUserWordById = async ({ userWordId }: { userWordId: number }, tx: Transaction = db) => {
-  const result = await db
+  const result = await tx
     .select()
     .from(UserWord)
     .where(eq(UserWord.id, userWordId))
