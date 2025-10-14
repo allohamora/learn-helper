@@ -207,7 +207,32 @@ export const Learning: FC = () => {
       </div>
 
       <div className="min-h-[600px]">
-        <LearningResult userWords={data} mistakes={mistakes} />
+        {!isFinished ? (
+          <>
+            {currentTask?.type === TaskType.Showcase && (
+              <ShowcaseCard idx={idx} data={currentTask.data} onNext={onNext} onPrev={onPrev} />
+            )}
+
+            {currentTask?.type === TaskType.DefinitionToWord && (
+              <DefinitionToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
+            {currentTask?.type === TaskType.WordToDefinition && (
+              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
+            {currentTask?.type === TaskType.WriteByPronunciation && (
+              <WriteByPronunciation
+                key={currentTask.id}
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
+            )}
+          </>
+        ) : (
+          <LearningResult userWords={data} mistakes={mistakes} />
+        )}
       </div>
     </div>
   );
