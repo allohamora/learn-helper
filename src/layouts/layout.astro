@@ -38,19 +38,21 @@ await ensureUserWordsExists(userId);
       amplitude.add(sessionReplayPlugin());
       amplitude.setUserId((window as unknown as { __USER_ID__: string }).__USER_ID__);
 
-      amplitude.init(PUBLIC_AMPLITUDE_API_KEY, {
-        autocapture: {
-          attribution: true,
-          fileDownloads: true,
-          formInteractions: true,
-          pageViews: true,
-          sessions: true,
-          elementInteractions: true,
-          networkTracking: true,
-          webVitals: true,
-          frustrationInteractions: true,
-        },
-      });
+      if (import.meta.env.PROD) {
+        amplitude.init(PUBLIC_AMPLITUDE_API_KEY, {
+          autocapture: {
+            attribution: true,
+            fileDownloads: true,
+            formInteractions: true,
+            pageViews: true,
+            sessions: true,
+            elementInteractions: true,
+            networkTracking: true,
+            webVitals: true,
+            frustrationInteractions: true,
+          },
+        });
+      }
     </script>
     <script>
       import { scan } from 'react-scan';
