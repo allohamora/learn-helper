@@ -36,10 +36,12 @@ await ensureUserWordsExists(userId);
       import { PUBLIC_AMPLITUDE_API_KEY } from 'astro:env/client';
 
       amplitude.add(sessionReplayPlugin());
-      amplitude.setUserId((window as unknown as { __USER_ID__: string }).__USER_ID__);
+
+      // we need this because we can pass userId with define:vars only to is:inline scripts
+      const userId = (window as unknown as { __USER_ID__: string }).__USER_ID__;
 
       if (import.meta.env.PROD) {
-        amplitude.init(PUBLIC_AMPLITUDE_API_KEY, {
+        amplitude.init(PUBLIC_AMPLITUDE_API_KEY, userId, {
           autocapture: {
             attribution: true,
             fileDownloads: true,
