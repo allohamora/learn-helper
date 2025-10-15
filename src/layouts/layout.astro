@@ -27,11 +27,40 @@ await ensureUserWordsExists(userId);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | Learn Helper</title>
+    <script is:inline define:vars={{ userId }}>
+      window.__USER_ID__ = userId;
+    </script>
+    <script>
+      import * as amplitude from '@amplitude/analytics-browser';
+      import { sessionReplayPlugin } from '@amplitude/plugin-session-replay-browser';
+      import { PUBLIC_AMPLITUDE_API_KEY } from 'astro:env/client';
+
+      if (import.meta.env.PROD) {
+        amplitude.add(sessionReplayPlugin());
+
+        // we need this because we can pass userId with define:vars only to is:inline scripts
+        const userId = (window as unknown as { __USER_ID__: string }).__USER_ID__;
+
+        amplitude.init(PUBLIC_AMPLITUDE_API_KEY, userId, {
+          autocapture: {
+            attribution: true,
+            fileDownloads: true,
+            formInteractions: true,
+            pageViews: true,
+            sessions: true,
+            elementInteractions: true,
+            networkTracking: true,
+            webVitals: true,
+            frustrationInteractions: true,
+          },
+        });
+      }
+    </script>
     <script>
       import { scan } from 'react-scan';
 
       scan({
-        enabled: process.env.NODE_ENV === 'development',
+        enabled: import.meta.env.DEV,
       });
     </script>
     <ClientRouter />

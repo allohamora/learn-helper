@@ -4,6 +4,7 @@ import { type FC } from 'react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
+import { track } from '@amplitude/analytics-browser';
 
 export type NextStepProps = {
   userWordId: number;
@@ -14,6 +15,8 @@ export const NextStep: FC<NextStepProps> = ({ userWordId }) => {
 
   const moveUserWordToNextStep = useMutation({
     mutationFn: async (data: { userWordId: number }) => {
+      track('move_word_to_next_step', data);
+
       return await actions.moveUserWordToNextStep(data);
     },
     onError: () => {
