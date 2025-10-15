@@ -14,6 +14,7 @@ export default defineConfig({
   },
   env: {
     schema: {
+      // just to have errors if these are missing
       PUBLIC_CLERK_PUBLISHABLE_KEY: envField.string({ context: 'client', access: 'public' }),
       CLERK_SECRET_KEY: envField.string({ context: 'server', access: 'secret' }),
       ASTRO_DB_REMOTE_URL: envField.string({ context: 'server', access: 'secret' }),
