@@ -1,8 +1,7 @@
 import { type FC, useMemo, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
 import {
-  Status,
   TaskType,
   type DefinitionToWordTask,
   type ShowcaseTask,
@@ -17,8 +16,6 @@ import { WriteByPronunciation } from './write-by-pronunciation';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
-
-const MISTAKES_THRESHOLD = 2;
 
 const shuffle = <T,>(array: T[]): T[] => {
   return array
@@ -119,12 +116,7 @@ export const Learning: FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['getLearningWords'],
     queryFn: async () => {
-      const result = await actions.getLearningWords({});
-      if (result.error) {
-        throw new Error('Failed to load learning tasks');
-      }
-
-      return result.data;
+      return await actions.getLearningWords.orThrow({});
     },
   });
 
@@ -135,17 +127,6 @@ export const Learning: FC = () => {
 
     return toLearningTasks(data);
   }, [data]);
-
-  const updateUserWordStatuses = useMutation({
-    mutationFn: async (data: { userWordId: number; status: Status }[]) => {
-      const result = await actions.updateUserWordStatuses({ data });
-      if (result.error) {
-        throw new Error('Failed to update word statuses');
-      }
-
-      return result.data;
-    },
-  });
 
   if (isLoading || !data) {
     return (
@@ -190,13 +171,6 @@ export const Learning: FC = () => {
     }
 
     setIsFinished(true);
-
-    const body = data.map((item) => ({
-      userWordId: item.id,
-      status: (mistakes[item.id] || 0) >= MISTAKES_THRESHOLD ? Status.Struggling : Status.Reviewing,
-    }));
-
-    updateUserWordStatuses.mutate(body);
   };
 
   const onPrev = () => {
@@ -257,7 +231,7 @@ export const Learning: FC = () => {
             )}
           </>
         ) : (
-          <LearningResult userWords={data} mistakes={mistakes} isPending={updateUserWordStatuses.isPending} />
+          <LearningResult userWords={data} mistakes={mistakes} />
         )}
       </div>
     </div>

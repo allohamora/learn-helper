@@ -20,8 +20,6 @@ const LEVELS: { value: Level; label: string }[] = [
 const STATUSES: { value: Status; label: string }[] = [
   { value: Status.Waiting, label: 'Waiting' },
   { value: Status.Learning, label: 'Learning' },
-  { value: Status.Struggling, label: 'Struggling' },
-  { value: Status.Reviewing, label: 'Reviewing' },
   { value: Status.Learned, label: 'Learned' },
   { value: Status.Known, label: 'Known' },
 ];

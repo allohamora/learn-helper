@@ -21,6 +21,8 @@ const UserWord = defineTable({
     id: column.number({ primaryKey: true }),
     userId: column.text(),
     wordId: column.number({ references: () => Word.columns.id }),
+    wordsToUnlock: column.number({ default: 0 }),
+    encounterCount: column.number({ default: 0 }),
     status: column.text({
       enum: Object.values(Status) as UnionToTuple<(typeof Status)[keyof typeof Status]>,
       default: Status.Waiting,

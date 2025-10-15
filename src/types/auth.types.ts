@@ -1,3 +1,3 @@
-export type AuthParams<T> = {
+export type AuthParams<T = unknown> = {
   userId: string;
 } & T;

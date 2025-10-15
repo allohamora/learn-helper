@@ -20,11 +20,12 @@ export function Discovery() {
   } = useQuery({
     queryKey: ['getWaitingWords'],
     queryFn: async () => {
-      const result = await actions.getWaitingWords({});
-      if (result.error) {
-        throw new Error('Failed to load words');
-      }
-      return result.data;
+      const res = await actions.getWaitingWords.orThrow({});
+
+      setHandled(0);
+      setCurrentIndex(0);
+
+      return res;
     },
   });
 
@@ -32,14 +33,9 @@ export function Discovery() {
   const total = wordsData?.total || 0;
   const remaining = total - handled;
 
-  const updateWordMutation = useMutation({
-    mutationFn: async ({ userWordId, status }: { userWordId: number; status: DiscoveryStatus }) => {
-      const result = await actions.updateUserWordStatuses({ data: [{ userWordId, status }] });
-      if (result.error) {
-        throw new Error('Failed to update word status');
-      }
-
-      return result.data;
+  const updateUserWordStatus = useMutation({
+    mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
+      return await actions.updateUserWordStatus(data);
     },
   });
 
@@ -47,7 +43,7 @@ export function Discovery() {
     const currentWord = words[currentIndex];
     if (!currentWord) return;
 
-    await updateWordMutation.mutateAsync({
+    await updateUserWordStatus.mutateAsync({
       userWordId: currentWord.id,
       status,
     });
@@ -57,8 +53,6 @@ export function Discovery() {
       setHandled(handled + 1);
     } else {
       await refetch();
-      setHandled(0);
-      setCurrentIndex(0);
     }
   };
 
@@ -108,7 +102,7 @@ export function Discovery() {
             onClick={() => void handle(Status.Known)}
             variant="destructive"
             className="h-12 flex-1 text-base"
-            disabled={updateWordMutation.isPending}
+            disabled={updateUserWordStatus.isPending}
           >
             I Know This
           </Button>
@@ -116,7 +110,7 @@ export function Discovery() {
             onClick={() => void handle(Status.Learning)}
             variant="default"
             className="h-12 flex-1 text-base"
-            disabled={updateWordMutation.isPending}
+            disabled={updateUserWordStatus.isPending}
           >
             Learn This
           </Button>

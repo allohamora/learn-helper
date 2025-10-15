@@ -1,6 +1,9 @@
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
-import { db, UserWord, eq, sql, Word, and, asc, gte, inArray } from 'astro:db';
+import { db, UserWord, eq, sql, Word, and, asc, gte, inArray, desc } from 'astro:db';
+
+type Database = typeof db;
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0] | Database;
 
 const isUserWordsExists = async (userId: string) => {
   const res = await db.select().from(UserWord).where(eq(UserWord.userId, userId)).limit(1);
@@ -146,28 +149,69 @@ export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: nu
     .from(UserWord)
     .where(and(eq(UserWord.userId, userId), eq(UserWord.status, Status.Learning)))
     .leftJoin(Word, eq(UserWord.wordId, Word.id))
-    .orderBy(asc(UserWord.id))
+    .orderBy(asc(UserWord.wordsToUnlock), asc(UserWord.id))
     .limit(limit);
 
   return mapUserWords(result);
 };
 
-export const updateUserWordStatuses = async ({
+export const updateUserWordStatus = async ({
   userId,
-  data,
-}: AuthParams<{ data: { status: Status; userWordId: number }[] }>) => {
-  const state = data.reduce(
-    (state, item) => ({
-      ...state,
-      [item.status]: [...(state[item.status] || []), item.userWordId],
-    }),
-    {} as Record<Status, number[]>,
-  );
+  userWordId,
+  status,
+}: AuthParams<{ userWordId: number; status: Status }>) => {
+  await db
+    .update(UserWord)
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(UserWord.id, userWordId), eq(UserWord.userId, userId)));
+};
 
-  for (const [status, userWordIds] of Object.entries(state) as [Status, number[]][]) {
-    await db
-      .update(UserWord)
-      .set({ status, updatedAt: new Date() })
-      .where(and(eq(UserWord.userId, userId), inArray(UserWord.id, userWordIds)));
+export const getUserWordById = async ({ userWordId }: { userWordId: number }, tx: Transaction = db) => {
+  const result = await tx
+    .select()
+    .from(UserWord)
+    .where(eq(UserWord.id, userWordId))
+    .leftJoin(Word, eq(UserWord.wordId, Word.id))
+    .limit(1);
+
+  if (!result.length || !result[0]?.Word) {
+    throw new Error('UserWord is not found');
   }
+
+  return {
+    word: result[0].Word,
+    ...result[0].UserWord,
+  };
+};
+
+export const updateUserWord = async (
+  { userWordId, ...data }: { userWordId: number } & Partial<typeof UserWord.$inferSelect>,
+  tx: Transaction = db,
+) => {
+  await tx
+    .update(UserWord)
+    .set({ ...data, updatedAt: new Date() })
+    .where(and(eq(UserWord.id, userWordId)));
+};
+
+export const getMaxWordsToUnlock = async ({ userId }: AuthParams, tx: Transaction = db) => {
+  const [res] = await tx
+    .select({ wordsToUnlock: UserWord.wordsToUnlock })
+    .from(UserWord)
+    .where(eq(UserWord.userId, userId))
+    .orderBy(desc(UserWord.wordsToUnlock))
+    .limit(1);
+
+  if (!res) {
+    throw new Error('Failed to get max words to unlock');
+  }
+
+  return res.wordsToUnlock;
+};
+
+export const decreaseMaxWordsToUnlock = async ({ userId }: AuthParams, tx: Transaction = db) => {
+  await tx
+    .update(UserWord)
+    .set({ wordsToUnlock: sql`${UserWord.wordsToUnlock} - 1`, updatedAt: new Date() })
+    .where(and(eq(UserWord.userId, userId), gte(UserWord.wordsToUnlock, 1)));
 };

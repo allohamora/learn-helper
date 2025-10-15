@@ -1,25 +1,18 @@
 import type { UserWord } from '@/types/user-words.types';
 import { type FC } from 'react';
 import { Button } from './ui/button';
-import { Loader } from './ui/loader';
+import { NextStep } from './next-step';
 
 export type LearningResultProps = {
   userWords: UserWord[];
   mistakes: Record<number, number>;
-  isPending: boolean;
 };
 
-export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes, isPending }) => {
+export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes }) => {
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="mb-4 text-3xl font-bold">Learning Session Complete! 🎉</h1>
-
-        {isPending && (
-          <div className="mb-4 flex items-center justify-center">
-            <Loader />
-          </div>
-        )}
 
         <p className="mb-6 text-lg text-muted-foreground">
           You&apos;ve completed learning {userWords.length} word{userWords.length > 1 ? 's' : ''}.
@@ -31,19 +24,22 @@ export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes, i
             {userWords.map(({ id, word }) => {
               const mistakeCount = mistakes[id] || 0;
               return (
-                <div key={id} className="flex items-center justify-between">
+                <div key={id} className="flex items-center justify-between gap-4">
                   <span className="font-medium">{word.value}</span>
-                  <span
-                    className={
-                      mistakeCount === 0
-                        ? 'font-semibold text-green-600'
-                        : mistakeCount === 1
-                          ? 'font-semibold text-yellow-600'
-                          : 'font-semibold text-red-600'
-                    }
-                  >
-                    {mistakeCount} mistake{mistakeCount !== 1 ? 's' : ''}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={
+                        mistakeCount === 0
+                          ? 'font-semibold text-green-600'
+                          : mistakeCount === 1
+                            ? 'font-semibold text-yellow-600'
+                            : 'font-semibold text-red-600'
+                      }
+                    >
+                      {mistakeCount} mistake{mistakeCount !== 1 ? 's' : ''}
+                    </span>
+                    <NextStep userWordId={id} />
+                  </div>
                 </div>
               );
             })}
@@ -52,8 +48,8 @@ export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes, i
 
         <div className="flex justify-between">
           <div>
-            <Button disabled={isPending} asChild>
-              <a href="/learning">{isPending ? 'Saving...' : 'Learn More Words'}</a>
+            <Button asChild>
+              <a href="/learning">Learn More Words</a>
             </Button>
           </div>
 
