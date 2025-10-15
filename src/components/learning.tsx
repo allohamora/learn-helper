@@ -16,6 +16,7 @@ import { WriteByPronunciation } from './write-by-pronunciation';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
+import { track } from '@amplitude/analytics-browser';
 
 const shuffle = <T,>(array: T[]): T[] => {
   return array
@@ -113,6 +114,8 @@ export const Learning: FC = () => {
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
 
+  const startedAt = useMemo(() => new Date(), []);
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['getLearningWords'],
     queryFn: async () => {
@@ -126,6 +129,18 @@ export const Learning: FC = () => {
     }
 
     return toLearningTasks(data);
+  }, [data]);
+
+  const state = useMemo(() => {
+    if (!data) {
+      return {};
+    }
+
+    return data.reduce<Record<number, UserWord>>((state, word) => {
+      state[word.id] = word;
+
+      return state;
+    }, {});
   }, [data]);
 
   if (isLoading || !data) {
@@ -171,6 +186,14 @@ export const Learning: FC = () => {
     }
 
     setIsFinished(true);
+
+    const duration = Date.now() - startedAt.getTime();
+    track('learning_session_complete', {
+      duration,
+      durationMinutes: Number((duration / 60000).toFixed(2)),
+      totalTasks: tasks.length,
+      totalMistakes: Object.values(mistakes).reduce((a, b) => a + b, 0),
+    });
   };
 
   const onPrev = () => {
@@ -185,6 +208,17 @@ export const Learning: FC = () => {
 
   const onMistake = (userWordId: number) => {
     setMistakes({ ...mistakes, [userWordId]: (mistakes[userWordId] || 0) + 1 });
+
+    const userWord = state[userWordId];
+    if (!userWord) {
+      throw new Error('User word is not found');
+    }
+
+    track('word_learning_mistake', {
+      value: userWord.word.value,
+      partOfSpeech: userWord.word.partOfSpeech,
+      type: currentTask?.type,
+    });
   };
 
   return (

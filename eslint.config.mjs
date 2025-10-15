@@ -48,7 +48,7 @@ export default defineConfig(
       '@typescript-eslint/no-misused-promises': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-deprecated': 'error',
-      'react/no-unknown-property': ['error', { ignore: ['class', 'set:html', 'is:inline'] }],
+      'react/no-unknown-property': ['error', { ignore: ['class', 'set:html', 'is:inline', 'define:vars'] }],
       'beautiful-sort/import': [
         'error',
         { special: [], order: ['special', 'namespace', 'default', 'defaultObj', 'obj', 'none'] },
