@@ -6,12 +6,16 @@ import { WordDiscoveryCard } from '@/components/word-discovery-card';
 import { Status } from '@/types/user-words.types';
 import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
+import { Undo2 } from 'lucide-react';
 
-type DiscoveryStatus = typeof Status.Learning | typeof Status.Known;
+const HISTORY_LIMIT = 5;
+
+type DiscoveryStatus = typeof Status.Learning | typeof Status.Known | typeof Status.Waiting;
 
 export function Discovery() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
+  const [history, setHistory] = useState<number[]>([]);
 
   const {
     data: wordsData,
@@ -54,9 +58,25 @@ export function Discovery() {
     if (currentIndex < words.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setHandled(handled + 1);
+      setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));
     } else {
       await refetch();
     }
+  };
+
+  const undo = async () => {
+    const [lastUserWordId, ...rest] = history;
+    if (!lastUserWordId) return;
+
+    await updateUserWordStatus.mutateAsync({
+      userWordId: lastUserWordId,
+      status: Status.Waiting,
+    });
+
+    setHistory(rest);
+    setHandled((prev) => (prev > 0 ? prev - 1 : 0));
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    await refetch();
   };
 
   const currentWord = words[currentIndex];
@@ -94,8 +114,18 @@ export function Discovery() {
   return (
     <div className="space-y-6">
       <div className="mx-auto max-w-md pt-8">
-        <div className="mb-8 text-center">
-          <p className="text-sm text-muted-foreground">Remaining words: {remaining}</p>
+        <div className="mb-8 flex items-center justify-between text-sm">
+          <p className="text-muted-foreground">Remaining words: {remaining}</p>
+          <Button
+            onClick={() => void undo()}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={history.length === 0 || updateUserWordStatus.isPending}
+          >
+            <Undo2 className="h-4 w-4" />
+            Undo
+          </Button>
         </div>
 
         <WordDiscoveryCard userWord={currentWord} />
