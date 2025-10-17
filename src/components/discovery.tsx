@@ -75,8 +75,6 @@ export function Discovery() {
     });
 
     setHistory(rest);
-    setHandled(currentIndex > 0 ? currentIndex - 1 : 0);
-    setCurrentIndex(handled > 0 ? handled - 1 : 0);
     await refetch();
   };
 
