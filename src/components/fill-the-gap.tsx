@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { useState, type FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -15,14 +15,10 @@ export const FillTheGap: FC<FillTheGapProps> = ({ data, onMistake, onNext }) => 
   const [answers, setAnswers] = useState<Set<number>>(new Set());
   const [isFinished, setIsFinished] = useState(false);
 
-  const handleSelect = (idx: number) => {
-    if (isFinished || answers.has(idx)) {
-      return;
-    }
+  const onSelectOption = (optionId: number) => {
+    setAnswers((prev) => new Set(prev).add(optionId));
 
-    setAnswers((prev) => new Set(prev).add(idx));
-
-    if (data.options[idx]?.isCorrect) {
+    if (data.options.find((opt) => opt.id === optionId)?.isCorrect) {
       setIsFinished(true);
     } else {
       onMistake(data.id);
@@ -38,60 +34,55 @@ export const FillTheGap: FC<FillTheGapProps> = ({ data, onMistake, onNext }) => 
 
       <Card className="mb-6 bg-card shadow-lg">
         <CardHeader>
-          <CardTitle className="min-h-[80px] text-center text-lg leading-relaxed font-normal">
-            {data.sentence}
+          <CardTitle className="flex min-h-[120px] items-center justify-center text-center">
+            <p className="text-xl leading-relaxed font-normal">{data.sentence}</p>
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="grid gap-3">
-            {data.options.map((option, idx) => {
-              const isAnswered = answers.has(idx);
-              const isCorrect = option.isCorrect;
-              const isIncorrectSelection = isAnswered && !isCorrect;
+        <CardContent className="space-y-3">
+          <div className="space-y-3">
+            {data.options.map((option) => {
+              const isAnswered = answers.has(option.id);
 
               return (
                 <Button
-                  key={`option-${idx}`}
+                  key={option.id}
                   variant="outline"
                   className={cn(
-                    'justify-start px-4 py-3 h-auto text-left text-base transition-colors duration-200 [&:disabled]:opacity-90',
+                    'w-full justify-start text-left p-4 h-auto transition-colors duration-200 [&:disabled]:opacity-80',
                     {
-                      'border-green-500 text-green-600': isAnswered && isCorrect,
-                      'border-red-500 text-red-500': isIncorrectSelection,
+                      'border-green-500 text-green-500': isAnswered && option.isCorrect,
+                      'border-red-500 text-red-500': isAnswered && !option.isCorrect,
                     },
                   )}
+                  onClick={() => onSelectOption(option.id)}
                   disabled={isFinished || isAnswered}
-                  onClick={() => handleSelect(idx)}
                 >
-                  {option.value}
+                  <div className="flex w-full items-center justify-between">
+                    <div>
+                      <span className="text-base font-semibold">{option.value}</span>
+                      {option.partOfSpeech && (
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          ({option.partOfSpeech.toLowerCase()})
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </Button>
               );
             })}
           </div>
-
-          {!isFinished && answers.size > 0 && (
-            <div className="text-center">
-              <p className="font-semibold text-red-600">Almost there. Try another option.</p>
-            </div>
-          )}
-
-          {isFinished && (
-            <div className="text-center">
-              <p className="font-semibold text-green-600">Great job! That’s the correct answer.</p>
-            </div>
-          )}
-
-          {isFinished && (
-            <div className="flex justify-center">
-              <Button size="lg" onClick={onNext} className="min-w-32">
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {isFinished && (
+        <div className="text-center">
+          <Button onClick={onNext} size="lg" className="px-8">
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

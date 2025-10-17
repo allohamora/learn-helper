@@ -80,7 +80,9 @@ export type FillTheGapTask = {
     id: number;
     sentence: string;
     options: {
+      id: number;
       value: string;
+      partOfSpeech: string | null;
       isCorrect: boolean;
     }[];
   };

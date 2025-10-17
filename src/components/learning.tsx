@@ -104,18 +104,36 @@ const toWriteByPronunciationTasks = (words: UserWord[]) => {
   });
 };
 
-const toFillTheGapTasks = (tasksData: TasksData['fillTheGap']) => {
-  return tasksData.map(
-    (item): FillTheGapTask => ({
+const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']) => {
+  return tasksData.map(({ id, sentence }): FillTheGapTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== id)
+      .slice(0, 3)
+      .map((value) => ({
+        id: value.id,
+        value: value.word.value,
+        partOfSpeech: value.word.partOfSpeech,
+        isCorrect: false,
+      }));
+
+    const found = words.find((word) => word.id === id);
+    if (!found) {
+      throw new Error('Word for FillTheGap task is not found');
+    }
+
+    const correct = { id, value: found.word.value, partOfSpeech: found.word.partOfSpeech, isCorrect: true };
+    const options = shuffle([correct, ...wrong]);
+
+    return {
       id: crypto.randomUUID(),
       type: TaskType.FillTheGap,
       data: {
-        id: item.id,
-        sentence: item.sentence,
-        options: shuffle(item.options),
+        id,
+        sentence,
+        options: shuffle(options),
       },
-    }),
-  );
+    };
+  });
 };
 
 const toLearningTasks = (words: UserWord[], tasksData?: TasksData) => {
@@ -134,7 +152,7 @@ const toLearningTasks = (words: UserWord[], tasksData?: TasksData) => {
     return baseTasks;
   }
 
-  const fillTheGapTasks = toFillTheGapTasks(tasksData.fillTheGap);
+  const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGap);
 
   return [...baseTasks, ...fillTheGapTasks];
 };

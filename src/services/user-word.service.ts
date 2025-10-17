@@ -45,12 +45,6 @@ const schema = z.object({
     z.object({
       id: z.number(),
       sentence: z.string(),
-      options: z.array(
-        z.object({
-          value: z.string(),
-          isCorrect: z.boolean(),
-        }),
-      ),
     }),
   ),
 });
