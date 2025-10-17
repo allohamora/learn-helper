@@ -55,10 +55,11 @@ export function Discovery() {
       status,
     });
 
+    setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));
+
     if (currentIndex < words.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setHandled(handled + 1);
-      setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));
     } else {
       await refetch();
     }
