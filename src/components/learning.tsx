@@ -292,8 +292,6 @@ export const Learning: FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="mb-6 text-2xl font-bold">Learning Session</h1>
-
       <div className="min-h-[600px]">
         {!isFinished ? (
           <>
