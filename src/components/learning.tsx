@@ -130,7 +130,7 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']
       data: {
         id,
         sentence,
-        options: shuffle(options),
+        options,
       },
     };
   });
