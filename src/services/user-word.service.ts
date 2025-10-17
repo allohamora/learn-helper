@@ -69,7 +69,7 @@ const buildAiLearningTasks = async ({ words, limit }: { limit: number; words: Us
       `Generate fill-the-gap sentences for each provided word (exactly ${limit}) using the vocabulary below.`,
       'Requirements:',
       '- Align the language, grammar, and context with the CEFR level of the referenced word.',
-      '- Fill-the-gap sentences must contain a single blank represented as "___" and the missing word must be exactly the target word (case-insensitive match) with exactly 4 options.',
+      '- Fill-the-gap sentences must contain a single blank represented as "___" and the missing word must be exactly the target word (case-insensitive match).',
       '- Return valid JSON that matches the provided schema.',
       '',
       'Words dataset (JSON):',
