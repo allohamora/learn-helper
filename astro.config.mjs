@@ -20,6 +20,7 @@ export default defineConfig({
       ASTRO_DB_REMOTE_URL: envField.string({ context: 'server', access: 'secret' }),
 
       PUBLIC_AMPLITUDE_API_KEY: envField.string({ context: 'client', access: 'public' }),
+      GEMINI_API_KEY: envField.string({ context: 'server', access: 'secret' }),
     },
   },
   integrations: [

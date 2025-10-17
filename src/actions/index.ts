@@ -4,7 +4,7 @@ import {
   getWaitingWords,
   updateUserWordStatus,
 } from '@/repositories/user-word.repository';
-import { moveUserWordToNextStep } from '@/services/user-word.service';
+import { moveUserWordToNextStep, getLearningTasks } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
 import { defineAction, type ActionAPIContext } from 'astro:actions';
@@ -50,6 +50,12 @@ export const server = {
       limit: z.number().min(1).max(10).default(5),
     }),
     handler: auth(getLearningWords),
+  }),
+  getLearningTasks: defineAction({
+    input: z.object({
+      limit: z.number().min(1).max(10).default(5),
+    }),
+    handler: auth(getLearningTasks),
   }),
   moveUserWordToNextStep: defineAction({
     input: z.object({
