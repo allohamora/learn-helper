@@ -4,6 +4,7 @@ import { actions } from 'astro:actions';
 import {
   TaskType,
   type DefinitionToWordTask,
+  type FillTheGapTask,
   type ShowcaseTask,
   type UserWord,
   type WordToDefinitionTask,
@@ -17,6 +18,9 @@ import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
+import { FillTheGap } from './fill-the-gap';
+
+type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 
 const shuffle = <T,>(array: T[]): T[] => {
   return array
@@ -100,13 +104,39 @@ const toWriteByPronunciationTasks = (words: UserWord[]) => {
   });
 };
 
-const toLearningTasks = (words: UserWord[]) => {
+const toFillTheGapTasks = (tasksData: TasksData['fillTheGap']) => {
+  return tasksData.map(
+    (item): FillTheGapTask => ({
+      id: crypto.randomUUID(),
+      type: TaskType.FillTheGap,
+      data: {
+        id: item.id,
+        sentence: item.sentence,
+        options: shuffle(item.options),
+      },
+    }),
+  );
+};
+
+const toLearningTasks = (words: UserWord[], tasksData?: TasksData) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
   const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
 
-  return [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
+  const baseTasks = [
+    ...showcaseTasks,
+    ...wordToDefinitionTasks,
+    ...definitionToWordTasks,
+    ...writeByPronunciationTasks,
+  ];
+  if (!tasksData) {
+    return baseTasks;
+  }
+
+  const fillTheGapTasks = toFillTheGapTasks(tasksData.fillTheGap);
+
+  return [...baseTasks, ...fillTheGapTasks];
 };
 
 export const Learning: FC = () => {
@@ -116,34 +146,41 @@ export const Learning: FC = () => {
 
   const startedAt = useMemo(() => new Date(), []);
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const getLearningWords = useQuery({
     queryKey: ['getLearningWords'],
     queryFn: async () => {
       return await actions.getLearningWords.orThrow({});
     },
   });
 
+  const getLearningTasks = useQuery({
+    queryKey: ['getLearningTasks'],
+    queryFn: async () => {
+      return await actions.getLearningTasks.orThrow({});
+    },
+  });
+
   const tasks = useMemo(() => {
-    if (!data) {
+    if (!getLearningWords.data) {
       return [];
     }
 
-    return toLearningTasks(data);
-  }, [data]);
+    return toLearningTasks(getLearningWords.data, getLearningTasks.data);
+  }, [getLearningWords.data, getLearningTasks.data]);
 
   const state = useMemo(() => {
-    if (!data) {
+    if (!getLearningWords.data) {
       return {};
     }
 
-    return data.reduce<Record<number, UserWord>>((state, word) => {
+    return getLearningWords.data.reduce<Record<number, UserWord>>((state, word) => {
       state[word.id] = word;
 
       return state;
     }, {});
-  }, [data]);
+  }, [getLearningWords.data]);
 
-  if (isLoading || !data) {
+  if (getLearningWords.isLoading || !getLearningWords.data) {
     return (
       <div className="flex items-center justify-center">
         <Loader />
@@ -151,14 +188,14 @@ export const Learning: FC = () => {
     );
   }
 
-  if (error) {
+  if (getLearningWords.error || getLearningTasks.error) {
     return (
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
-          <p className="mb-6 text-muted-foreground">Failed to load learning words. Please try again.</p>
-          <Button onClick={() => void refetch()} size="lg">
-            Try Again
+          <p className="mb-6 text-muted-foreground">Failed to load learning data. Please try again.</p>
+          <Button size="lg" asChild>
+            <a href="/learning">Try Again</a>
           </Button>
         </div>
       </div>
@@ -180,7 +217,7 @@ export const Learning: FC = () => {
 
   const onNext = () => {
     const nextIdx = idx + 1;
-    if (nextIdx < tasks.length) {
+    if (nextIdx < tasks.length || getLearningTasks.isLoading) {
       setIdx(nextIdx);
       return;
     }
@@ -223,22 +260,7 @@ export const Learning: FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Learning Session</h1>
-          <span className="text-muted-foreground">
-            {idx + 1} of {tasks.length}
-          </span>
-        </div>
-        <div className="mt-2 h-2 w-full rounded-full bg-muted">
-          <div
-            className="h-2 rounded-full bg-primary transition-all duration-300"
-            style={{
-              width: `${((idx + 1) / tasks.length) * 100}%`,
-            }}
-          />
-        </div>
-      </div>
+      <h1 className="mb-6 text-2xl font-bold">Learning Session</h1>
 
       <div className="min-h-[600px]">
         {!isFinished ? (
@@ -263,9 +285,19 @@ export const Learning: FC = () => {
                 onMistake={onMistake}
               />
             )}
+
+            {currentTask?.type === TaskType.FillTheGap && (
+              <FillTheGap key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
+            {!currentTask && getLearningTasks.isLoading && (
+              <div className="mt-20 flex items-center justify-center">
+                <Loader />
+              </div>
+            )}
           </>
         ) : (
-          <LearningResult userWords={data} mistakes={mistakes} />
+          <LearningResult userWords={getLearningWords.data} mistakes={mistakes} />
         )}
       </div>
     </div>

@@ -20,6 +20,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/google": "^2.0.23",
     "@amplitude/analytics-browser": "^2.26.0",
     "@amplitude/plugin-session-replay-browser": "^1.22.22",
     "@astrojs/db": "^0.18.0",
@@ -34,6 +35,7 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
+    "ai": "^5.0.75",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",

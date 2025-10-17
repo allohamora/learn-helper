@@ -27,6 +27,7 @@ export enum TaskType {
   WordToDefinition = 'word-to-definition',
   DefinitionToWord = 'definition-to-word',
   WriteByPronunciation = 'write-by-pronunciation',
+  FillTheGap = 'fill-the-gap',
 }
 
 export type ShowcaseTask = {
@@ -72,4 +73,22 @@ export type WriteByPronunciationTask = {
   };
 };
 
-export type LearningTask = ShowcaseTask | WordToDefinitionTask | DefinitionToWordTask | WriteByPronunciationTask;
+export type FillTheGapTask = {
+  id: string;
+  type: TaskType.FillTheGap;
+  data: {
+    id: number;
+    sentence: string;
+    options: {
+      value: string;
+      isCorrect: boolean;
+    }[];
+  };
+};
+
+export type LearningTask =
+  | ShowcaseTask
+  | WordToDefinitionTask
+  | DefinitionToWordTask
+  | WriteByPronunciationTask
+  | FillTheGapTask;
