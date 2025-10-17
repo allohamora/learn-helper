@@ -5,6 +5,7 @@ import {
   TaskType,
   type DefinitionToWordTask,
   type FillTheGapTask,
+  type LearningTask,
   type ShowcaseTask,
   type UserWord,
   type WordToDefinitionTask,
@@ -136,31 +137,24 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']
   });
 };
 
-const toLearningTasks = (words: UserWord[], tasksData?: TasksData) => {
+const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
   const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
 
-  const baseTasks = [
-    ...showcaseTasks,
-    ...wordToDefinitionTasks,
-    ...definitionToWordTasks,
-    ...writeByPronunciationTasks,
-  ];
-  if (!tasksData) {
-    return baseTasks;
-  }
+  return [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
+};
 
-  const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGap);
-
-  return [...baseTasks, ...fillTheGapTasks];
+const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
+  return toFillTheGapTasks(words, tasksData.fillTheGap);
 };
 
 export const Learning: FC = () => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
+  const [retryTasks, setRetryTasks] = useState<LearningTask[]>([]);
 
   const startedAt = useMemo(() => new Date(), []);
 
@@ -178,13 +172,25 @@ export const Learning: FC = () => {
     },
   });
 
-  const tasks = useMemo(() => {
+  // to preserve the same task ids between re-renders
+  const clientTasks = useMemo(() => {
     if (!getLearningWords.data) {
       return [];
     }
 
-    return toLearningTasks(getLearningWords.data, getLearningTasks.data);
+    return toClientTasks(getLearningWords.data);
+  }, [getLearningWords.data]);
+
+  // to preserve the same task ids between re-renders
+  const serverTasks = useMemo(() => {
+    if (!getLearningWords.data || !getLearningTasks.data) {
+      return [];
+    }
+
+    return toServerTasks(getLearningWords.data, getLearningTasks.data);
   }, [getLearningWords.data, getLearningTasks.data]);
+
+  const tasks = [...clientTasks, ...serverTasks, ...retryTasks];
 
   const state = useMemo(() => {
     if (!getLearningWords.data) {
@@ -264,6 +270,14 @@ export const Learning: FC = () => {
   const onMistake = (userWordId: number) => {
     setMistakes({ ...mistakes, [userWordId]: (mistakes[userWordId] || 0) + 1 });
 
+    if (!currentTask) {
+      throw new Error('Current task is not found');
+    }
+
+    if (retryTasks.at(-1)?.id !== currentTask.id) {
+      setRetryTasks([...retryTasks, currentTask]);
+    }
+
     const userWord = state[userWordId];
     if (!userWord) {
       throw new Error('User word is not found');
@@ -278,8 +292,6 @@ export const Learning: FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="mb-6 text-2xl font-bold">Learning Session</h1>
-
       <div className="min-h-[600px]">
         {!isFinished ? (
           <>
@@ -309,7 +321,7 @@ export const Learning: FC = () => {
             )}
 
             {!currentTask && getLearningTasks.isLoading && (
-              <div className="mt-20 flex items-center justify-center">
+              <div className="flex items-center justify-center">
                 <Loader />
               </div>
             )}
