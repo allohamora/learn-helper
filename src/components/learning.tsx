@@ -321,7 +321,7 @@ export const Learning: FC = () => {
             )}
 
             {!currentTask && getLearningTasks.isLoading && (
-              <div className="mt-20 flex items-center justify-center">
+              <div className="flex items-center justify-center">
                 <Loader />
               </div>
             )}
