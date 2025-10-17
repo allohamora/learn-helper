@@ -74,8 +74,8 @@ export function Discovery() {
     });
 
     setHistory(rest);
-    setHandled((prev) => (prev > 0 ? prev - 1 : 0));
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    setHandled(currentIndex > 0 ? currentIndex - 1 : 0);
+    setCurrentIndex(handled > 0 ? handled - 1 : 0);
     await refetch();
   };
 
