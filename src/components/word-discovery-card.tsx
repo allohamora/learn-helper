@@ -34,9 +34,8 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
                 <span className="ml-2 text-base font-normal text-muted-foreground">({userWord.word.spelling})</span>
               )}
             </CardTitle>
-            {userWord.word.uaTranslation && (
-              <div className="mt-1 text-sm text-muted-foreground">{userWord.word.uaTranslation}</div>
-            )}
+
+            <div className="mt-1 text-sm text-muted-foreground">{userWord.word.uaTranslation}</div>
           </div>
 
           <div className="flex items-center gap-1">

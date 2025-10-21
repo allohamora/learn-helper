@@ -94,36 +94,34 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
 };
 
 const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] => {
-  return words
-    .filter((w) => Boolean(w.word.uaTranslation))
-    .map((target): TranslationToWordTask => {
-      const wrong = shuffle(words)
-        .filter((word) => word.id !== target.id)
-        .slice(0, 3)
-        .map((value) => ({
-          id: value.id,
-          value: value.word.value,
-          partOfSpeech: value.word.partOfSpeech,
-          isCorrect: false,
-        }));
-      const correct = {
-        id: target.id,
-        value: target.word.value,
-        partOfSpeech: target.word.partOfSpeech,
-        isCorrect: true,
-      };
-      const options = shuffle([correct, ...wrong]);
+  return words.map((target): TranslationToWordTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
+      .slice(0, 3)
+      .map((value) => ({
+        id: value.id,
+        value: value.word.value,
+        partOfSpeech: value.word.partOfSpeech,
+        isCorrect: false,
+      }));
+    const correct = {
+      id: target.id,
+      value: target.word.value,
+      partOfSpeech: target.word.partOfSpeech,
+      isCorrect: true,
+    };
+    const options = shuffle([correct, ...wrong]);
 
-      return {
-        id: crypto.randomUUID(),
-        type: TaskType.TranslationToWord,
-        data: {
-          id: target.id,
-          translation: target.word.uaTranslation,
-          options,
-        },
-      };
-    });
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.TranslationToWord,
+      data: {
+        id: target.id,
+        translation: target.word.uaTranslation,
+        options,
+      },
+    };
+  });
 };
 
 const toWriteByPronunciationTasks = (words: UserWord[]) => {
