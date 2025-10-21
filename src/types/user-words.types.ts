@@ -26,6 +26,7 @@ export enum TaskType {
   Showcase = 'showcase',
   WordToDefinition = 'word-to-definition',
   DefinitionToWord = 'definition-to-word',
+  TranslationToWord = 'translation-to-word',
   WriteByPronunciation = 'write-by-pronunciation',
   FillTheGap = 'fill-the-gap',
 }
@@ -54,6 +55,21 @@ export type DefinitionToWordTask = {
   data: {
     id: number;
     definition: string;
+    options: {
+      id: number;
+      value: string;
+      partOfSpeech: string | null;
+      isCorrect: boolean;
+    }[];
+  };
+};
+
+export type TranslationToWordTask = {
+  id: string;
+  type: TaskType.TranslationToWord;
+  data: {
+    id: number;
+    translation: string;
     options: {
       id: number;
       value: string;
@@ -92,5 +108,6 @@ export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
   | DefinitionToWordTask
+  | TranslationToWordTask
   | WriteByPronunciationTask
   | FillTheGapTask;

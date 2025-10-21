@@ -4,6 +4,7 @@ import { actions } from 'astro:actions';
 import {
   TaskType,
   type DefinitionToWordTask,
+  type TranslationToWordTask,
   type FillTheGapTask,
   type LearningTask,
   type ShowcaseTask,
@@ -13,6 +14,7 @@ import {
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
+import { TranslationToWord } from './translation-to-word';
 import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
 import { Button } from '@/components/ui/button';
@@ -91,6 +93,39 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
   });
 };
 
+const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] => {
+  return words
+    .filter((w) => Boolean(w.word.uaTranslation))
+    .map((target): TranslationToWordTask => {
+      const wrong = shuffle(words)
+        .filter((word) => word.id !== target.id)
+        .slice(0, 3)
+        .map((value) => ({
+          id: value.id,
+          value: value.word.value,
+          partOfSpeech: value.word.partOfSpeech,
+          isCorrect: false,
+        }));
+      const correct = {
+        id: target.id,
+        value: target.word.value,
+        partOfSpeech: target.word.partOfSpeech,
+        isCorrect: true,
+      };
+      const options = shuffle([correct, ...wrong]);
+
+      return {
+        id: crypto.randomUUID(),
+        type: TaskType.TranslationToWord,
+        data: {
+          id: target.id,
+          translation: target.word.uaTranslation,
+          options,
+        },
+      };
+    });
+};
+
 const toWriteByPronunciationTasks = (words: UserWord[]) => {
   return words.map((target): WriteByPronunciationTask => {
     return {
@@ -141,9 +176,16 @@ const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
+  const translationToWordTasks = toTranslationToWordTasks(words);
   const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
 
-  return [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
+  return [
+    ...showcaseTasks,
+    ...wordToDefinitionTasks,
+    ...definitionToWordTasks,
+    ...translationToWordTasks,
+    ...writeByPronunciationTasks,
+  ];
 };
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
@@ -314,6 +356,10 @@ export const Learning: FC = () => {
                 onNext={onNext}
                 onMistake={onMistake}
               />
+            )}
+
+            {currentTask?.type === TaskType.TranslationToWord && (
+              <TranslationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (
