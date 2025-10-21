@@ -49,7 +49,7 @@ const schema = z.object({
   ),
 });
 
-const buildAiLearningTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -85,5 +85,5 @@ const buildAiLearningTasks = async ({ words, limit }: { limit: number; words: Us
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
 
-  return await buildAiLearningTasks({ words, ...body });
+  return await toFillTheGapTasks({ words, ...body });
 };
