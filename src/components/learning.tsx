@@ -410,12 +410,7 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.TranslateSentence && (
-              <TranslateSentence
-                key={currentTask.id}
-                data={currentTask.data as any}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
+              <TranslateSentence key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (
