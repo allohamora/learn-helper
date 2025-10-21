@@ -38,8 +38,18 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, onMistake, o
   };
 
   const handleKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !isChecked && userInput.trim()) {
+    if (event.key !== 'Enter') {
+      return;
+    }
+
+    if (isChecked) {
+      handleNext();
+      return;
+    }
+
+    if (!isChecked && userInput.trim()) {
       handleCheck();
+      return;
     }
   };
 
@@ -68,10 +78,12 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, onMistake, o
                 placeholder="Type the correct word..."
                 className={cn(
                   'h-12 text-lg',
-                  isChecked && isCorrect && 'border-green-500 bg-green-50',
-                  isChecked && !isCorrect && 'border-red-500 bg-red-50',
+                  isChecked &&
+                    'focus-visible:border focus-visible:ring-0 pointer-events-none cursor-not-allowed opacity-50',
+                  isChecked && isCorrect && 'focus-visible:border-green-500 border-green-500 bg-green-50',
+                  isChecked && !isCorrect && 'focus-visible:border-red-500 border-red-500 bg-red-50',
                 )}
-                disabled={isChecked}
+                readOnly={isChecked}
               />
               <div className="absolute top-1/2 right-2 -translate-y-1/2">
                 <SttButton onText={setUserInput} disabled={isChecked} className={cn('h-8 w-8')} />
