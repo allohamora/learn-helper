@@ -25,7 +25,12 @@ export const LearningResult: FC<LearningResultProps> = ({ userWords, mistakes })
               const mistakeCount = mistakes[id] || 0;
               return (
                 <div key={id} className="flex items-center justify-between gap-4">
-                  <span className="font-medium">{word.value}</span>
+                  <div className="font-medium">
+                    <span>{word.value}</span>
+                    {word.partOfSpeech && (
+                      <span className="ml-2 text-sm text-muted-foreground">({word.partOfSpeech.toLowerCase()})</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3">
                     <span
                       className={

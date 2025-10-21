@@ -12,6 +12,7 @@ import {
   type UserWord,
   type WordToDefinitionTask,
   type WriteByPronunciationTask,
+  type TranslateSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
@@ -19,6 +20,7 @@ import { TranslationToWord } from './translation-to-word';
 import { WordToTranslation } from './word-to-translation';
 import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
+import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
@@ -162,8 +164,8 @@ const toWriteByPronunciationTasks = (words: UserWord[]) => {
   });
 };
 
-const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']) => {
-  return tasksData.map(({ id, sentence }): FillTheGapTask => {
+const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTasks']) => {
+  return tasksData.map(({ id, task }): FillTheGapTask => {
     const wrong = shuffle(words)
       .filter((word) => word.id !== id)
       .slice(0, 3)
@@ -187,8 +189,22 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']
       type: TaskType.FillTheGap,
       data: {
         id,
-        sentence,
+        task,
         options,
+      },
+    };
+  });
+};
+
+const toTranslateSentenceTasks = (tasksData: TasksData['translateSentenceTasks']) => {
+  return tasksData.map(({ id, sentence, options }): TranslateSentenceTask => {
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.TranslateSentence,
+      data: {
+        id,
+        sentence,
+        options: shuffle(options),
       },
     };
   });
@@ -213,7 +229,10 @@ const toClientTasks = (words: UserWord[]) => {
 };
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
-  return toFillTheGapTasks(words, tasksData.fillTheGap);
+  const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
+  const translateSentenceTasks = toTranslateSentenceTasks(tasksData.translateSentenceTasks);
+
+  return [...fillTheGapTasks, ...translateSentenceTasks];
 };
 
 export const Learning: FC = () => {
@@ -388,6 +407,10 @@ export const Learning: FC = () => {
                 onNext={onNext}
                 onMistake={onMistake}
               />
+            )}
+
+            {currentTask?.type === TaskType.TranslateSentence && (
+              <TranslateSentence key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (

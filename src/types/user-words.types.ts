@@ -29,6 +29,7 @@ export enum TaskType {
   WordToTranslation = 'word-to-translation',
   TranslationToWord = 'translation-to-word',
   WriteByPronunciation = 'write-by-pronunciation',
+  TranslateSentence = 'translate-sentence',
   FillTheGap = 'fill-the-gap',
 }
 
@@ -102,12 +103,25 @@ export type WriteByPronunciationTask = {
   };
 };
 
+export type TranslateSentenceTask = {
+  id: string;
+  type: TaskType.TranslateSentence;
+  data: {
+    id: number;
+    sentence: string;
+    options: {
+      value: string;
+      isCorrect: boolean;
+    }[];
+  };
+};
+
 export type FillTheGapTask = {
   id: string;
   type: TaskType.FillTheGap;
   data: {
     id: number;
-    sentence: string;
+    task: string;
     options: {
       id: number;
       value: string;
@@ -124,4 +138,5 @@ export type LearningTask =
   | WordToTranslationTask
   | TranslationToWordTask
   | WriteByPronunciationTask
+  | TranslateSentenceTask
   | FillTheGapTask;
