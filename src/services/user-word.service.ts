@@ -46,7 +46,6 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
     value: word.value,
     partOfSpeech: word.partOfSpeech,
     level: word.level,
-    definition: word.definition,
   }));
 
   const { object } = await generateObject({
