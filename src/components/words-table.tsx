@@ -42,6 +42,9 @@ export const WordsTable: FC<WordsTableProps> = ({
                 {word.spelling && word.spelling !== word.value && (
                   <span className="ml-1 text-xs font-normal text-muted-foreground">({word.spelling})</span>
                 )}
+                {word.uaTranslation && (
+                  <div className="mt-1 text-xs font-medium text-muted-foreground">{word.uaTranslation}</div>
+                )}
               </div>
             </div>
           );
