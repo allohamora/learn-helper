@@ -60,12 +60,10 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
   const { object } = await generateObject({
     model,
     schema,
-    system: [
+    prompt: [
       'You are an experienced English tutor.',
       'Create concise, context-rich practice tasks tailored to the provided vocabulary.',
       'Sentences must sound natural and use modern, neutral tone.',
-    ].join('\n'),
-    prompt: [
       `Generate fill-the-gap sentences for each provided word (exactly ${limit}) using the vocabulary below.`,
       'Requirements:',
       '- Align the language, grammar, and context with the CEFR level of the referenced word.',
