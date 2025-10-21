@@ -35,7 +35,7 @@ export const FillTheGap: FC<FillTheGapProps> = ({ data, onMistake, onNext }) => 
       <Card className="mb-6 bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="flex min-h-[120px] items-center justify-center text-center">
-            <p className="text-xl leading-relaxed font-normal">{data.sentence}</p>
+            <p className="text-xl leading-relaxed font-normal">{data.task}</p>
           </CardTitle>
         </CardHeader>
 

@@ -162,8 +162,8 @@ const toWriteByPronunciationTasks = (words: UserWord[]) => {
   });
 };
 
-const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']) => {
-  return tasksData.map(({ id, sentence }): FillTheGapTask => {
+const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTasks']) => {
+  return tasksData.map(({ id, task }): FillTheGapTask => {
     const wrong = shuffle(words)
       .filter((word) => word.id !== id)
       .slice(0, 3)
@@ -187,7 +187,7 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGap']
       type: TaskType.FillTheGap,
       data: {
         id,
-        sentence,
+        task,
         options,
       },
     };
@@ -213,7 +213,7 @@ const toClientTasks = (words: UserWord[]) => {
 };
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
-  return toFillTheGapTasks(words, tasksData.fillTheGap);
+  return toFillTheGapTasks(words, tasksData.fillTheGapTasks);
 };
 
 export const Learning: FC = () => {

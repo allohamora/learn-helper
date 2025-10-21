@@ -107,7 +107,7 @@ export type FillTheGapTask = {
   type: TaskType.FillTheGap;
   data: {
     id: number;
-    sentence: string;
+    task: string;
     options: {
       id: number;
       value: string;

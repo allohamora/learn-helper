@@ -50,22 +50,20 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
 
   const { object } = await generateObject({
     model,
-    schema: z.object({
-      fillTheGap: z.array(
-        z.object({
-          id: z.number(),
-          sentence: z.string(),
-        }),
-      ),
-    }),
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        task: z.string(),
+      }),
+    ),
     prompt: [
       'You are a professional English tutor experienced in creating learner-friendly practice tasks.',
       'Create concise, context-rich fill-the-gap practice tasks tailored to the provided words.',
       '',
       'Requirements:',
-      `- Sentences must be created for each provided word (exactly ${limit}).`,
-      '- Sentences must sound natural and use modern, neutral tone.',
-      '- Sentences must contain a single blank represented as "___" and the missing word must be exactly the target word (case-insensitive match).',
+      `- Tasks must be created for each provided word (exactly ${limit}).`,
+      '- Tasks must sound natural and use modern, neutral tone.',
+      '- Tasks must contain a single blank represented as "___" and the missing word must be exactly the target word (case-insensitive match).',
       '',
       'Words:',
       '```json',
@@ -79,6 +77,7 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
+  const fillTheGapTasks = await toFillTheGapTasks({ words, ...body });
 
-  return await toFillTheGapTasks({ words, ...body });
+  return { fillTheGapTasks };
 };
