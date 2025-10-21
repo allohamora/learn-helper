@@ -75,9 +75,55 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
   return object;
 };
 
+const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  const wordList = words.map(({ id, word }) => ({
+    id,
+    value: word.value,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level,
+  }));
+
+  const { object } = await generateObject({
+    model,
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        sentence: z.string(),
+        options: z.array(
+          z.object({
+            value: z.string(),
+            isCorrect: z.boolean(),
+          }),
+        ),
+      }),
+    ),
+    prompt: [
+      'You are a professional English teacher who experienced in writing short natural Ukrainian sentences for learners.',
+      'Your task is creating a concise (1-12 words) Ukrainian sentences.',
+      '',
+      'Requirements:',
+      `- Sentences must be created for each provided word (exactly ${limit}).`,
+      '- Sentences must be short, natural, and use modern neutral tone.',
+      '- Options must be provided for each sentence (4 options per sentence).',
+      '- Options must include one correct English translation and three plausible but incorrect translations.',
+      '- Correct option must be English translations of the sentences with the word included.',
+      '',
+      'Words:',
+      '```json',
+      JSON.stringify(wordList),
+      '```',
+    ].join('\n'),
+  });
+
+  return object;
+};
+
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
-  const fillTheGapTasks = await toFillTheGapTasks({ words, ...body });
+  const [fillTheGapTasks, translateSentenceTasks] = await Promise.all([
+    toFillTheGapTasks({ words, ...body }),
+    toTranslateSentenceTasks({ words, ...body }),
+  ]);
 
-  return { fillTheGapTasks };
+  return { fillTheGapTasks, translateSentenceTasks };
 };
