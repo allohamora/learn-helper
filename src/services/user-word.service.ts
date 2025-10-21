@@ -14,12 +14,6 @@ import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
 
-const google = createGoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY,
-});
-
-const model = google('gemini-2.5-flash-lite');
-
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
 
@@ -39,6 +33,12 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
     }
   });
 };
+
+const google = createGoogleGenerativeAI({
+  apiKey: GEMINI_API_KEY,
+});
+
+const model = google('gemini-2.5-flash-lite');
 
 const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
   const wordList = words.map(({ id, word }) => ({
