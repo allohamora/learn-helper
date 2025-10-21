@@ -53,6 +53,7 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
+    partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
   }));
