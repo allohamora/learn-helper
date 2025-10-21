@@ -57,12 +57,7 @@ export type DefinitionToWordTask = {
   data: {
     id: number;
     definition: string;
-    options: {
-      id: number;
-      value: string;
-      partOfSpeech: string | null;
-      isCorrect: boolean;
-    }[];
+    word: string;
   };
 };
 
@@ -84,12 +79,7 @@ export type TranslationToWordTask = {
   data: {
     id: number;
     translation: string;
-    options: {
-      id: number;
-      value: string;
-      partOfSpeech: string | null;
-      isCorrect: boolean;
-    }[];
+    word: string;
   };
 };
 

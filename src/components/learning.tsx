@@ -68,30 +68,13 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
 
 const toDefinitionToWordTasks = (words: UserWord[]) => {
   return words.map((target): DefinitionToWordTask => {
-    const wrong = shuffle(words)
-      .filter((word) => word.id !== target.id)
-      .slice(0, 3)
-      .map((value) => ({
-        id: value.id,
-        value: value.word.value,
-        partOfSpeech: value.word.partOfSpeech,
-        isCorrect: false,
-      }));
-    const correct = {
-      id: target.id,
-      value: target.word.value,
-      partOfSpeech: target.word.partOfSpeech,
-      isCorrect: true,
-    };
-    const options = shuffle([correct, ...wrong]);
-
     return {
       id: crypto.randomUUID(),
       type: TaskType.DefinitionToWord,
       data: {
         id: target.id,
         definition: target.word.definition,
-        options,
+        word: target.word.value,
       },
     };
   });
@@ -99,31 +82,13 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
 
 const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] => {
   return words.map((target): TranslationToWordTask => {
-    const wrong = shuffle(words)
-      .filter((word) => word.id !== target.id)
-      .slice(0, 3)
-      .map((value) => ({
-        id: value.id,
-        value: value.word.value,
-        partOfSpeech: value.word.partOfSpeech,
-        isCorrect: false,
-      }));
-
-    const correct = {
-      id: target.id,
-      value: target.word.value,
-      partOfSpeech: target.word.partOfSpeech,
-      isCorrect: true,
-    };
-    const options = shuffle([correct, ...wrong]);
-
     return {
       id: crypto.randomUUID(),
       type: TaskType.TranslationToWord,
       data: {
         id: target.id,
         translation: target.word.uaTranslation,
-        options,
+        word: target.word.value,
       },
     };
   });
