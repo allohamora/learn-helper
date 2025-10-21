@@ -1,11 +1,9 @@
-import { type FC, type KeyboardEvent, useState } from 'react';
+import { useState, type FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TranslationToWordTask } from '@/types/user-words.types';
-import { SttButton } from './stt-button';
 
 type TranslationToWordProps = {
   data: TranslationToWordTask['data'];
@@ -14,41 +12,24 @@ type TranslationToWordProps = {
 };
 
 export const TranslationToWord: FC<TranslationToWordProps> = ({ data, onMistake, onNext }) => {
-  const [userInput, setUserInput] = useState('');
-  const [isChecked, setIsChecked] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [answers, setAnswers] = useState<Set<number>>(new Set());
+  const [isFinished, setIsFinished] = useState(false);
 
-  const correctOption = data.options.find((o) => o.isCorrect);
-  const correctAnswer = correctOption ? correctOption.value : '';
+  const onSelectOption = (optionId: number) => {
+    setAnswers((prev) => new Set(prev).add(optionId));
 
-  const handleCheck = () => {
-    const normalizedInput = userInput.trim().toLowerCase();
-    const normalizedAnswer = correctAnswer.toLowerCase();
-    const correct = normalizedInput === normalizedAnswer;
-
-    setIsCorrect(correct);
-    setIsChecked(true);
-
-    if (!correct) {
+    if (data.options.find((opt) => opt.id === optionId)?.isCorrect) {
+      setIsFinished(true);
+    } else {
       onMistake(data.id);
-    }
-  };
-
-  const handleNext = () => {
-    onNext();
-  };
-
-  const handleKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !isChecked && userInput.trim()) {
-      handleCheck();
     }
   };
 
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">Write the word for this translation</h2>
-        <p className="text-muted-foreground">Type the English word that matches the translation</p>
+        <h2 className="mb-2 text-xl font-semibold">Which word matches this translation?</h2>
+        <p className="text-muted-foreground">Select the correct word for the given translation</p>
       </div>
 
       <Card className="mb-6 bg-card shadow-lg">
@@ -58,57 +39,50 @@ export const TranslationToWord: FC<TranslationToWordProps> = ({ data, onMistake,
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="relative">
-              <Input
-                type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                onKeyDown={handleKeyPress}
-                placeholder="Type the word..."
-                className={cn(
-                  'h-12 text-lg',
-                  isChecked && isCorrect && 'border-green-500 bg-green-50',
-                  isChecked && !isCorrect && 'border-red-500 bg-red-50',
-                )}
-                disabled={isChecked}
-              />
-              <div className="absolute top-1/2 right-2 -translate-y-1/2">
-                <SttButton onText={setUserInput} disabled={isChecked} className={cn('h-8 w-8')} />
-              </div>
-            </div>
+        <CardContent className="space-y-3">
+          <div className="space-y-3">
+            {data.options.map((option) => {
+              const isAnswered = answers.has(option.id);
 
-            {isChecked && (
-              <div className="text-center">
-                {isCorrect ? (
-                  <p className="font-semibold text-green-600">Correct</p>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="font-semibold text-red-600">Incorrect</p>
-                    <p className="text-muted-foreground">
-                      The correct answer is: <span className="font-semibold text-foreground">{correctAnswer}</span>
-                    </p>
+              return (
+                <Button
+                  key={option.id}
+                  variant="outline"
+                  className={cn(
+                    'w-full justify-start text-left p-4 h-auto transition-colors duration-200 [&:disabled]:opacity-80',
+                    {
+                      'border-green-500 text-green-500': isAnswered && option.isCorrect,
+                      'border-red-500 text-red-500': isAnswered && !option.isCorrect,
+                    },
+                  )}
+                  onClick={() => onSelectOption(option.id)}
+                  disabled={isFinished || isAnswered}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <div>
+                      <span className="text-base font-semibold">{option.value}</span>
+                      {option.partOfSpeech && (
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          ({option.partOfSpeech.toLowerCase()})
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-center">
-            {!isChecked ? (
-              <Button onClick={handleCheck} size="lg" disabled={!userInput.trim()} className="min-w-32">
-                Check
-              </Button>
-            ) : (
-              <Button onClick={handleNext} size="lg" className="min-w-32">
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
+                </Button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
+
+      {isFinished && (
+        <div className="text-center">
+          <Button onClick={onNext} size="lg" className="px-8">
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
