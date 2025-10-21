@@ -86,6 +86,7 @@ const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words
     value: word.value,
     partOfSpeech: word.partOfSpeech,
     level: word.level,
+    definition: word.definition,
   }));
 
   const { object } = await generateObject({
@@ -111,11 +112,9 @@ const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words
       '- The Ukrainian sentence must include or clearly express the meaning of the target English word.',
       '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
       '- Do not use periods at the end of the sentence.',
-      '- Each task must include 4 English options:',
-      '   - 1 correct translation (isCorrect: true).',
-      '   - 3 plausible but incorrect options (isCorrect: false).',
+      '- Each task must include 1 correct translation (isCorrect: true) and 3 plausible but incorrect options (isCorrect: false).',
       '- All English options must sound grammatically correct and natural.',
-      '- Distractors should be close in structure or meaning but not identical.',
+      '- Incorrect options should be close in structure or meaning but not identical.',
       '- The correct option must precisely reflect the meaning of the Ukrainian sentence.',
       '- Avoid using the same topics or repetitive sentence structures across examples.',
       '',
