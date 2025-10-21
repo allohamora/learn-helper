@@ -7,6 +7,7 @@ const Word = defineTable({
     id: column.number({ primaryKey: true }),
     value: column.text(),
     definition: column.text(),
+    uaTranslation: column.text(),
     partOfSpeech: column.text({ optional: true }),
     level: column.text({ enum: Object.values(Level) as UnionToTuple<(typeof Level)[keyof typeof Level]> }),
     spelling: column.text({ optional: true }),
