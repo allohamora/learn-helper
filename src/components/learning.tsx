@@ -5,6 +5,7 @@ import {
   TaskType,
   type DefinitionToWordTask,
   type TranslationToWordTask,
+  type WordToTranslationTask,
   type FillTheGapTask,
   type LearningTask,
   type ShowcaseTask,
@@ -15,6 +16,7 @@ import {
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
 import { TranslationToWord } from './translation-to-word';
+import { WordToTranslation } from './word-to-translation';
 import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
 import { Button } from '@/components/ui/button';
@@ -104,6 +106,7 @@ const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] =>
         partOfSpeech: value.word.partOfSpeech,
         isCorrect: false,
       }));
+
     const correct = {
       id: target.id,
       value: target.word.value,
@@ -118,6 +121,27 @@ const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] =>
       data: {
         id: target.id,
         translation: target.word.uaTranslation,
+        options,
+      },
+    };
+  });
+};
+
+const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] => {
+  return words.map((target): WordToTranslationTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
+      .slice(0, 3)
+      .map((value) => ({ id: value.id, translation: value.word.uaTranslation, isCorrect: false }));
+
+    const correct = { id: target.id, translation: target.word.uaTranslation, isCorrect: true };
+    const options = shuffle([correct, ...wrong]);
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.WordToTranslation,
+      data: {
+        ...target.word,
         options,
       },
     };
@@ -174,6 +198,7 @@ const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
+  const wordToTranslationTasks = toWordToTranslationTasks(words);
   const translationToWordTasks = toTranslationToWordTasks(words);
   const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
 
@@ -181,6 +206,7 @@ const toClientTasks = (words: UserWord[]) => {
     ...showcaseTasks,
     ...wordToDefinitionTasks,
     ...definitionToWordTasks,
+    ...wordToTranslationTasks,
     ...translationToWordTasks,
     ...writeByPronunciationTasks,
   ];
@@ -339,12 +365,20 @@ export const Learning: FC = () => {
               <ShowcaseCard idx={idx} data={currentTask.data} onNext={onNext} onPrev={onPrev} />
             )}
 
+            {currentTask?.type === TaskType.WordToDefinition && (
+              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
             {currentTask?.type === TaskType.DefinitionToWord && (
               <DefinitionToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
-            {currentTask?.type === TaskType.WordToDefinition && (
-              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            {currentTask?.type === TaskType.WordToTranslation && (
+              <WordToTranslation key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
+            {currentTask?.type === TaskType.TranslationToWord && (
+              <TranslationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.WriteByPronunciation && (
@@ -354,10 +388,6 @@ export const Learning: FC = () => {
                 onNext={onNext}
                 onMistake={onMistake}
               />
-            )}
-
-            {currentTask?.type === TaskType.TranslationToWord && (
-              <TranslationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (
