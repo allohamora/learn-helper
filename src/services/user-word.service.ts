@@ -40,15 +40,6 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
   });
 };
 
-const schema = z.object({
-  fillTheGap: z.array(
-    z.object({
-      id: z.number(),
-      sentence: z.string(),
-    }),
-  ),
-});
-
 const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -60,7 +51,14 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
 
   const { object } = await generateObject({
     model,
-    schema,
+    schema: z.object({
+      fillTheGap: z.array(
+        z.object({
+          id: z.number(),
+          sentence: z.string(),
+        }),
+      ),
+    }),
     prompt: [
       'You are a professional English tutor experienced in creating learner-friendly practice tasks.',
       'Create concise, context-rich fill-the-gap practice tasks tailored to the provided words.',
