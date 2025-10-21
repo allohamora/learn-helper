@@ -4,6 +4,8 @@ import { actions } from 'astro:actions';
 import {
   TaskType,
   type DefinitionToWordTask,
+  type TranslationToWordTask,
+  type WordToTranslationTask,
   type FillTheGapTask,
   type LearningTask,
   type ShowcaseTask,
@@ -13,6 +15,8 @@ import {
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { DefinitionToWord } from './definition-to-word';
+import { TranslationToWord } from './translation-to-word';
+import { WordToTranslation } from './word-to-translation';
 import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
 import { Button } from '@/components/ui/button';
@@ -91,6 +95,59 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
   });
 };
 
+const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] => {
+  return words.map((target): TranslationToWordTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
+      .slice(0, 3)
+      .map((value) => ({
+        id: value.id,
+        value: value.word.value,
+        partOfSpeech: value.word.partOfSpeech,
+        isCorrect: false,
+      }));
+
+    const correct = {
+      id: target.id,
+      value: target.word.value,
+      partOfSpeech: target.word.partOfSpeech,
+      isCorrect: true,
+    };
+    const options = shuffle([correct, ...wrong]);
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.TranslationToWord,
+      data: {
+        id: target.id,
+        translation: target.word.uaTranslation,
+        options,
+      },
+    };
+  });
+};
+
+const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] => {
+  return words.map((target): WordToTranslationTask => {
+    const wrong = shuffle(words)
+      .filter((word) => word.id !== target.id)
+      .slice(0, 3)
+      .map((value) => ({ id: value.id, translation: value.word.uaTranslation, isCorrect: false }));
+
+    const correct = { id: target.id, translation: target.word.uaTranslation, isCorrect: true };
+    const options = shuffle([correct, ...wrong]);
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.WordToTranslation,
+      data: {
+        ...target.word,
+        options,
+      },
+    };
+  });
+};
+
 const toWriteByPronunciationTasks = (words: UserWord[]) => {
   return words.map((target): WriteByPronunciationTask => {
     return {
@@ -141,9 +198,18 @@ const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
   const definitionToWordTasks = toDefinitionToWordTasks(words);
+  const wordToTranslationTasks = toWordToTranslationTasks(words);
+  const translationToWordTasks = toTranslationToWordTasks(words);
   const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
 
-  return [...showcaseTasks, ...wordToDefinitionTasks, ...definitionToWordTasks, ...writeByPronunciationTasks];
+  return [
+    ...showcaseTasks,
+    ...wordToDefinitionTasks,
+    ...definitionToWordTasks,
+    ...wordToTranslationTasks,
+    ...translationToWordTasks,
+    ...writeByPronunciationTasks,
+  ];
 };
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
@@ -299,12 +365,20 @@ export const Learning: FC = () => {
               <ShowcaseCard idx={idx} data={currentTask.data} onNext={onNext} onPrev={onPrev} />
             )}
 
+            {currentTask?.type === TaskType.WordToDefinition && (
+              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
             {currentTask?.type === TaskType.DefinitionToWord && (
               <DefinitionToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
-            {currentTask?.type === TaskType.WordToDefinition && (
-              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            {currentTask?.type === TaskType.WordToTranslation && (
+              <WordToTranslation key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            )}
+
+            {currentTask?.type === TaskType.TranslationToWord && (
+              <TranslationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.WriteByPronunciation && (

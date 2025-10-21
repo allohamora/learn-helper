@@ -13,6 +13,7 @@ const getData = async <T>(name: string) => {
 type WordData = {
   value: string; // "visit",
   definition: string; // "an occasion or a period of time when somebody goes to see a place or person and spends time there",
+  uaTranslation: string; // "відвідувати",
   partOfSpeech?: string; // "noun",
   level: Level; // "a1",
   spelling?: string; // "/ˈvɪzɪt/",

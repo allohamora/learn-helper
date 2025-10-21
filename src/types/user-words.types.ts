@@ -26,6 +26,8 @@ export enum TaskType {
   Showcase = 'showcase',
   WordToDefinition = 'word-to-definition',
   DefinitionToWord = 'definition-to-word',
+  WordToTranslation = 'word-to-translation',
+  TranslationToWord = 'translation-to-word',
   WriteByPronunciation = 'write-by-pronunciation',
   FillTheGap = 'fill-the-gap',
 }
@@ -54,6 +56,33 @@ export type DefinitionToWordTask = {
   data: {
     id: number;
     definition: string;
+    options: {
+      id: number;
+      value: string;
+      partOfSpeech: string | null;
+      isCorrect: boolean;
+    }[];
+  };
+};
+
+export type WordToTranslationTask = {
+  id: string;
+  type: TaskType.WordToTranslation;
+  data: typeof db.Word.$inferSelect & {
+    options: {
+      id: number;
+      translation: string;
+      isCorrect: boolean;
+    }[];
+  };
+};
+
+export type TranslationToWordTask = {
+  id: string;
+  type: TaskType.TranslationToWord;
+  data: {
+    id: number;
+    translation: string;
     options: {
       id: number;
       value: string;
@@ -92,5 +121,7 @@ export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
   | DefinitionToWordTask
+  | WordToTranslationTask
+  | TranslationToWordTask
   | WriteByPronunciationTask
   | FillTheGapTask;

@@ -25,14 +25,18 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
 
   return (
     <Card className="flex h-72 flex-col bg-card shadow-lg">
-      <CardHeader className="space-y-4 pb-4">
+      <CardHeader className="space-y-2 pb-4">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-2xl leading-tight font-bold">
-            {userWord.word.value}
-            {userWord.word.spelling && (
-              <span className="ml-2 text-base font-normal text-muted-foreground">({userWord.word.spelling})</span>
-            )}
-          </CardTitle>
+          <div>
+            <CardTitle className="text-2xl leading-tight font-bold">
+              {userWord.word.value}
+              {userWord.word.spelling && (
+                <span className="ml-2 text-base font-normal text-muted-foreground">({userWord.word.spelling})</span>
+              )}
+            </CardTitle>
+
+            <div className="mt-1 text-sm text-muted-foreground">{userWord.word.uaTranslation}</div>
+          </div>
 
           <div className="flex items-center gap-1">
             {userWord.word.pronunciation && (

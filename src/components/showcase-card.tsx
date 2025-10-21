@@ -32,14 +32,18 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
       </div>
 
       <Card className="mb-6 flex min-h-[400px] flex-col bg-card shadow-lg">
-        <CardHeader className="space-y-4 pb-4">
+        <CardHeader className="space-y-2 pb-4">
           <div className="flex items-start justify-between">
-            <CardTitle className="text-3xl leading-tight font-bold">
-              {data.value}
-              {data.spelling && (
-                <span className="ml-2 text-lg font-normal text-muted-foreground">({data.spelling})</span>
-              )}
-            </CardTitle>
+            <div>
+              <CardTitle className="text-3xl leading-tight font-bold">
+                {data.value}
+                {data.spelling && (
+                  <span className="ml-2 text-lg font-normal text-muted-foreground">({data.spelling})</span>
+                )}
+              </CardTitle>
+
+              <div className="mt-1 text-sm text-muted-foreground">{data.uaTranslation}</div>
+            </div>
 
             <div className="flex items-center gap-1">
               {data.pronunciation && (
