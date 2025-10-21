@@ -18,7 +18,7 @@ const google = createGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
 });
 
-const model = google('gemini-2.5-flash');
+const model = google('gemini-2.5-flash-lite');
 
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
