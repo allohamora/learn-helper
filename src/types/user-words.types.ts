@@ -100,27 +100,13 @@ export type WriteByPronunciationTask = {
 export type TranslateEnglishSentenceTask = {
   id: string;
   type: TaskType.TranslateEnglishSentence;
-  data: {
-    id: number;
-    sentence: string;
-    options: {
-      value: string;
-      isCorrect: boolean;
-    }[];
-  };
+  data: TranslateSentenceData;
 };
 
 export type TranslateUkrainianSentenceTask = {
   id: string;
   type: TaskType.TranslateUkrainianSentence;
-  data: {
-    id: number;
-    sentence: string;
-    options: {
-      value: string;
-      isCorrect: boolean;
-    }[];
-  };
+  data: TranslateSentenceData;
 };
 
 export type FillTheGapTask = {
