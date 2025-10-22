@@ -47,7 +47,7 @@ export const TextToWord: FC<TextToWordProps> = ({ title, subtitle, data, onMista
       return;
     }
 
-    if (!isChecked && userInput.trim()) {
+    if (userInput.trim()) {
       handleCheck();
       return;
     }
