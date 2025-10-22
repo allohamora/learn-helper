@@ -105,7 +105,7 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
       }),
     ),
     prompt: [
-      'You are a professional English teacher experienced in creating short natural English sentences for learners and plausible Ukrainian translation options.',
+      'You are a professional English teacher experienced in creating short natural English sentences for learners.',
       'Your task is to create one concise English sentence (1–12 words) and 4 Ukrainian translation options for each provided word.',
       '',
       'Requirements:',
