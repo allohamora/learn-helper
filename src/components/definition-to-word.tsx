@@ -13,8 +13,6 @@ type DefinitionToWordProps = {
   onNext: () => void;
 };
 
-const normalize = (text: string) => text.trim().toLowerCase();
-
 export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, onMistake, onNext }) => {
   const [userInput, setUserInput] = useState('');
   const [isChecked, setIsChecked] = useState(false);
