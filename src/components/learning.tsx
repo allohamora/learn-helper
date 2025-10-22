@@ -15,8 +15,6 @@ import {
   type TranslateSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
-import { WordToTranslation } from './word-to-translation';
-import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
 import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
@@ -25,6 +23,7 @@ import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
 import { FillTheGap } from './fill-the-gap';
 import { TextToWord } from './text-to-word';
+import { WordToOptions } from './word-to-options';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 
@@ -50,8 +49,8 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, definition: value.word.definition, isCorrect: false }));
-    const correct = { id: target.id, definition: target.word.definition, isCorrect: true };
+      .map((value) => ({ id: value.id, value: value.word.definition, isCorrect: false }));
+    const correct = { id: target.id, value: target.word.definition, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -98,9 +97,9 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, translation: value.word.uaTranslation, isCorrect: false }));
+      .map((value) => ({ id: value.id, value: value.word.uaTranslation, isCorrect: false }));
 
-    const correct = { id: target.id, translation: target.word.uaTranslation, isCorrect: true };
+    const correct = { id: target.id, value: target.word.uaTranslation, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -349,7 +348,14 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.WordToDefinition && (
-              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <WordToOptions
+                key={currentTask.id}
+                title="What does this word mean?"
+                subtitle="Select the correct definition for the given word"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.DefinitionToWord && (
@@ -364,7 +370,14 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.WordToTranslation && (
-              <WordToTranslation key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <WordToOptions
+                key={currentTask.id}
+                title="What is the correct translation?"
+                subtitle="Select the Ukrainian translation for the given word"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.TranslationToWord && (

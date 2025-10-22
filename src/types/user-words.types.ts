@@ -39,6 +39,14 @@ export type TextToWordData = {
   word: string;
 };
 
+export type WordToOptionsData = typeof db.Word.$inferSelect & {
+  options: {
+    id: number;
+    value: string;
+    isCorrect: boolean;
+  }[];
+};
+
 export type ShowcaseTask = {
   id: string;
   type: TaskType.Showcase;
@@ -48,13 +56,7 @@ export type ShowcaseTask = {
 export type WordToDefinitionTask = {
   id: string;
   type: TaskType.WordToDefinition;
-  data: typeof db.Word.$inferSelect & {
-    options: {
-      id: number;
-      definition: string;
-      isCorrect: boolean;
-    }[];
-  };
+  data: WordToOptionsData;
 };
 
 export type DefinitionToWordTask = {
@@ -66,13 +68,7 @@ export type DefinitionToWordTask = {
 export type WordToTranslationTask = {
   id: string;
   type: TaskType.WordToTranslation;
-  data: typeof db.Word.$inferSelect & {
-    options: {
-      id: number;
-      translation: string;
-      isCorrect: boolean;
-    }[];
-  };
+  data: WordToOptionsData;
 };
 
 export type TranslationToWordTask = {

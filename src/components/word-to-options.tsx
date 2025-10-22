@@ -5,15 +5,17 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type WordToTranslationTask } from '@/types/user-words.types';
+import { List, type WordToOptionsData } from '@/types/user-words.types';
 
-type WordToTranslationProps = {
-  data: WordToTranslationTask['data'];
+type WordToOptionsProps = {
+  title: string;
+  subtitle: string;
+  data: WordToOptionsData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
 };
 
-export const WordToTranslation: FC<WordToTranslationProps> = ({ data, onMistake, onNext }) => {
+export const WordToOptions: FC<WordToOptionsProps> = ({ data, title, subtitle, onMistake, onNext }) => {
   const [answers, setAnswers] = useState<Set<number>>(new Set());
   const [isFinished, setIsFinished] = useState(false);
   const { playAudio, isPlaying } = useAudioPlayer();
@@ -38,8 +40,8 @@ export const WordToTranslation: FC<WordToTranslationProps> = ({ data, onMistake,
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">What is the correct translation?</h2>
-        <p className="text-muted-foreground">Select the Ukrainian translation for the given word</p>
+        <h2 className="mb-2 text-xl font-semibold">{title}</h2>
+        <p className="text-muted-foreground">{subtitle}</p>
       </div>
 
       <Card className="mb-6 bg-card shadow-lg">
@@ -117,7 +119,7 @@ export const WordToTranslation: FC<WordToTranslationProps> = ({ data, onMistake,
                   disabled={isAnswered || isFinished}
                 >
                   <div className="flex w-full items-start justify-between gap-3">
-                    <span className="flex-1 text-base leading-relaxed">{option.translation}</span>
+                    <span className="flex-1 text-base leading-relaxed">{option.value}</span>
                   </div>
                 </Button>
               );
