@@ -183,11 +183,11 @@ const toClientTasks = (words: UserWord[]) => {
 
   return [
     ...showcaseTasks,
-    ...wordToDefinitionTasks,
-    ...definitionToWordTasks,
-    ...wordToTranslationTasks,
-    ...translationToWordTasks,
-    ...writeByPronunciationTasks,
+    ...shuffle(wordToDefinitionTasks),
+    ...shuffle(definitionToWordTasks),
+    ...shuffle(wordToTranslationTasks),
+    ...shuffle(translationToWordTasks),
+    ...shuffle(writeByPronunciationTasks),
   ];
 };
 
@@ -195,7 +195,7 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
   const translateSentenceTasks = toTranslateSentenceTasks(tasksData.translateSentenceTasks);
 
-  return [...fillTheGapTasks, ...translateSentenceTasks];
+  return [...shuffle(fillTheGapTasks), ...shuffle(translateSentenceTasks)];
 };
 
 export const Learning: FC = () => {
