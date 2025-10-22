@@ -85,7 +85,6 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
-    uaTranslation: word.uaTranslation,
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
@@ -115,7 +114,6 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
       '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
       '- Do not use periods at the end of the sentence.',
       '- Each task must include 4 options: 1 correct Ukrainian translation (isCorrect: true) and 3 plausible but incorrect Ukrainian translations (isCorrect: false).',
-      "- The correct Ukrainian option must match the provided 'uaTranslation' exactly.",
       '- Incorrect options should be close in structure or meaning but not identical.',
       '- All Ukrainian options must look natural and grammatically correct in Ukrainian.',
       '- Avoid using the same topics or repetitive sentence structures across examples.',
