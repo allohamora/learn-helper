@@ -15,10 +15,6 @@ import {
   type TranslateSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
-import { DefinitionToWord } from './definition-to-word';
-import { TranslationToWord } from './translation-to-word';
-import { WordToTranslation } from './word-to-translation';
-import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
 import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
@@ -26,6 +22,8 @@ import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
 import { FillTheGap } from './fill-the-gap';
+import { TextToWord } from './text-to-word';
+import { WordToOptions } from './word-to-options';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 
@@ -51,8 +49,8 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, definition: value.word.definition, isCorrect: false }));
-    const correct = { id: target.id, definition: target.word.definition, isCorrect: true };
+      .map((value) => ({ id: value.id, value: value.word.definition, isCorrect: false }));
+    const correct = { id: target.id, value: target.word.definition, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -68,30 +66,13 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
 
 const toDefinitionToWordTasks = (words: UserWord[]) => {
   return words.map((target): DefinitionToWordTask => {
-    const wrong = shuffle(words)
-      .filter((word) => word.id !== target.id)
-      .slice(0, 3)
-      .map((value) => ({
-        id: value.id,
-        value: value.word.value,
-        partOfSpeech: value.word.partOfSpeech,
-        isCorrect: false,
-      }));
-    const correct = {
-      id: target.id,
-      value: target.word.value,
-      partOfSpeech: target.word.partOfSpeech,
-      isCorrect: true,
-    };
-    const options = shuffle([correct, ...wrong]);
-
     return {
       id: crypto.randomUUID(),
       type: TaskType.DefinitionToWord,
       data: {
         id: target.id,
-        definition: target.word.definition,
-        options,
+        text: target.word.definition,
+        word: target.word.value,
       },
     };
   });
@@ -99,31 +80,13 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
 
 const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] => {
   return words.map((target): TranslationToWordTask => {
-    const wrong = shuffle(words)
-      .filter((word) => word.id !== target.id)
-      .slice(0, 3)
-      .map((value) => ({
-        id: value.id,
-        value: value.word.value,
-        partOfSpeech: value.word.partOfSpeech,
-        isCorrect: false,
-      }));
-
-    const correct = {
-      id: target.id,
-      value: target.word.value,
-      partOfSpeech: target.word.partOfSpeech,
-      isCorrect: true,
-    };
-    const options = shuffle([correct, ...wrong]);
-
     return {
       id: crypto.randomUUID(),
       type: TaskType.TranslationToWord,
       data: {
         id: target.id,
-        translation: target.word.uaTranslation,
-        options,
+        text: target.word.uaTranslation,
+        word: target.word.value,
       },
     };
   });
@@ -134,9 +97,9 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, translation: value.word.uaTranslation, isCorrect: false }));
+      .map((value) => ({ id: value.id, value: value.word.uaTranslation, isCorrect: false }));
 
-    const correct = { id: target.id, translation: target.word.uaTranslation, isCorrect: true };
+    const correct = { id: target.id, value: target.word.uaTranslation, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -385,19 +348,47 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.WordToDefinition && (
-              <WordToDefinition key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <WordToOptions
+                key={currentTask.id}
+                title="What does this word mean?"
+                subtitle="Select the correct definition for the given word"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.DefinitionToWord && (
-              <DefinitionToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <TextToWord
+                key={currentTask.id}
+                title="Which word matches this definition?"
+                subtitle="Type the correct word for the given definition"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.WordToTranslation && (
-              <WordToTranslation key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <WordToOptions
+                key={currentTask.id}
+                title="What is the correct translation?"
+                subtitle="Select the Ukrainian translation for the given word"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.TranslationToWord && (
-              <TranslationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <TextToWord
+                key={currentTask.id}
+                title="Which word matches this translation?"
+                subtitle="Type the correct word for the given translation"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.WriteByPronunciation && (
