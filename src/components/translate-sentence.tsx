@@ -3,15 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TranslateSentenceTask } from '@/types/user-words.types';
+import type { TranslateSentenceData } from '@/types/user-words.types';
 
 type TranslateSentenceProps = {
-  data: TranslateSentenceTask['data'];
+  title: string;
+  subtitle: string;
+  data: TranslateSentenceData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
 };
 
-export const TranslateSentence: FC<TranslateSentenceProps> = ({ data, onMistake, onNext }) => {
+export const TranslateSentence: FC<TranslateSentenceProps> = ({ title, subtitle, data, onMistake, onNext }) => {
   const [answers, setAnswers] = useState<Set<number>>(new Set());
   const [isFinished, setIsFinished] = useState(false);
 
@@ -28,8 +30,8 @@ export const TranslateSentence: FC<TranslateSentenceProps> = ({ data, onMistake,
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">Select the correct translation</h2>
-        <p className="text-muted-foreground">Choose the English sentence that best matches the Ukrainian sentence</p>
+        <h2 className="mb-2 text-xl font-semibold">{title}</h2>
+        <p className="text-muted-foreground">{subtitle}</p>
       </div>
 
       <Card className="mb-6 bg-card shadow-lg">

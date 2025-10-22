@@ -47,13 +47,13 @@ export const server = {
   }),
   getLearningWords: defineAction({
     input: z.object({
-      limit: z.number().min(1).max(10).default(5),
+      limit: z.number().min(1).max(10).default(6),
     }),
     handler: auth(getLearningWords),
   }),
   getLearningTasks: defineAction({
     input: z.object({
-      limit: z.number().min(1).max(10).default(5),
+      limit: z.number().min(1).max(10).default(6),
     }),
     handler: auth(getLearningTasks),
   }),

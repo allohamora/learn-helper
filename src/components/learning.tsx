@@ -12,7 +12,8 @@ import {
   type UserWord,
   type WordToDefinitionTask,
   type WriteByPronunciationTask,
-  type TranslateSentenceTask,
+  type TranslateUkrainianSentenceTask,
+  type TranslateEnglishSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { WriteByPronunciation } from './write-by-pronunciation';
@@ -159,11 +160,25 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTa
   });
 };
 
-const toTranslateSentenceTasks = (tasksData: TasksData['translateSentenceTasks']) => {
-  return tasksData.map(({ id, sentence, options }): TranslateSentenceTask => {
+const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrainianSentenceTasks']) => {
+  return tasksData.map(({ id, sentence, options }): TranslateUkrainianSentenceTask => {
     return {
       id: crypto.randomUUID(),
-      type: TaskType.TranslateSentence,
+      type: TaskType.TranslateUkrainianSentence,
+      data: {
+        id,
+        sentence,
+        options: shuffle(options),
+      },
+    };
+  });
+};
+
+const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishSentenceTasks']) => {
+  return tasksData.map(({ id, sentence, options }): TranslateEnglishSentenceTask => {
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.TranslateEnglishSentence,
       data: {
         id,
         sentence,
@@ -193,9 +208,14 @@ const toClientTasks = (words: UserWord[]) => {
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
-  const translateSentenceTasks = toTranslateSentenceTasks(tasksData.translateSentenceTasks);
+  const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasksData.translateEnglishSentenceTasks);
+  const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
 
-  return [...shuffle(fillTheGapTasks), ...shuffle(translateSentenceTasks)];
+  return [
+    ...shuffle(fillTheGapTasks),
+    ...shuffle(translateEnglishSentenceTasks),
+    ...shuffle(translateUkrainianSentenceTasks),
+  ];
 };
 
 export const Learning: FC = () => {
@@ -400,8 +420,26 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.TranslateSentence && (
-              <TranslateSentence key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            {currentTask?.type === TaskType.TranslateEnglishSentence && (
+              <TranslateSentence
+                key={currentTask.id}
+                title="Select the correct translation"
+                subtitle="Choose the Ukrainian translation that best matches the English sentence"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
+            )}
+
+            {currentTask?.type === TaskType.TranslateUkrainianSentence && (
+              <TranslateSentence
+                key={currentTask.id}
+                title="Select the correct translation"
+                subtitle="Choose the English sentence that best matches the Ukrainian sentence"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (

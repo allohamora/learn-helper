@@ -41,7 +41,7 @@ describe('user-word.service', () => {
         wordsToUnlock: number;
         status: Status;
       }) => {
-        const updated = await getUserWordById({ userId, userWordId });
+        const updated = await getUserWordById({ userWordId });
 
         expect(updated.encounterCount).toBe(encounterCount);
         expect(updated.wordsToUnlock).toEqual(wordsToUnlock);

@@ -81,7 +81,54 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
   return object;
 };
 
-const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  const wordList = words.map(({ id, word }) => ({
+    id,
+    value: word.value,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level,
+    definition: word.definition,
+  }));
+
+  const { object } = await generateObject({
+    model,
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        sentence: z.string(),
+        options: z.array(
+          z.object({
+            value: z.string(),
+            isCorrect: z.boolean(),
+          }),
+        ),
+      }),
+    ),
+    prompt: [
+      'You are a professional English teacher experienced in creating short natural English sentences for learners.',
+      'Your task is to create one concise English sentence (1–12 words) and 4 Ukrainian translation options for each provided word.',
+      '',
+      'Requirements:',
+      `- Generate exactly ${limit} sentences - one for each provided word.`,
+      '- The English sentence must include or clearly express the meaning of the target English word.',
+      '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
+      '- Do not use periods at the end of the sentence.',
+      '- Each task must include 4 options: 1 correct Ukrainian translation (isCorrect: true) and 3 plausible but incorrect Ukrainian translations (isCorrect: false).',
+      '- Incorrect options should be close in structure or meaning but not identical.',
+      '- All Ukrainian options must look natural and grammatically correct in Ukrainian.',
+      '- Avoid using the same topics or repetitive sentence structures across examples.',
+      '',
+      'Words:',
+      '```json',
+      JSON.stringify(wordList),
+      '```',
+    ].join('\n'),
+  });
+
+  return object;
+};
+
+const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -132,10 +179,11 @@ const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
-  const [fillTheGapTasks, translateSentenceTasks] = await Promise.all([
+  const [fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks] = await Promise.all([
     toFillTheGapTasks({ words, ...body }),
-    toTranslateSentenceTasks({ words, ...body }),
+    toTranslateEnglishSentenceTasks({ words, ...body }),
+    toTranslateUkrainianSentenceTasks({ words, ...body }),
   ]);
 
-  return { fillTheGapTasks, translateSentenceTasks };
+  return { fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks };
 };
