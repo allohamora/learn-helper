@@ -29,7 +29,7 @@ export enum TaskType {
   WordToTranslation = 'word-to-translation',
   TranslationToWord = 'translation-to-word',
   WriteByPronunciation = 'write-by-pronunciation',
-  TranslateSentence = 'translate-sentence',
+  TranslateUkrainianSentence = 'translate-ukrainian-sentence',
   FillTheGap = 'fill-the-gap',
 }
 
@@ -42,6 +42,15 @@ export type TextToWordData = {
 export type WordToOptionsData = typeof db.Word.$inferSelect & {
   options: {
     id: number;
+    value: string;
+    isCorrect: boolean;
+  }[];
+};
+
+export type TranslateSentenceData = {
+  id: number;
+  sentence: string;
+  options: {
     value: string;
     isCorrect: boolean;
   }[];
@@ -87,9 +96,9 @@ export type WriteByPronunciationTask = {
   };
 };
 
-export type TranslateSentenceTask = {
+export type TranslateUkrainianSentenceTask = {
   id: string;
-  type: TaskType.TranslateSentence;
+  type: TaskType.TranslateUkrainianSentence;
   data: {
     id: number;
     sentence: string;
@@ -122,5 +131,5 @@ export type LearningTask =
   | WordToTranslationTask
   | TranslationToWordTask
   | WriteByPronunciationTask
-  | TranslateSentenceTask
+  | TranslateUkrainianSentenceTask
   | FillTheGapTask;

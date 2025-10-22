@@ -81,7 +81,7 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
   return object;
 };
 
-const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -132,10 +132,10 @@ const toTranslateSentenceTasks = async ({ words, limit }: { limit: number; words
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
-  const [fillTheGapTasks, translateSentenceTasks] = await Promise.all([
+  const [fillTheGapTasks, translateUkrainianSentenceTasks] = await Promise.all([
     toFillTheGapTasks({ words, ...body }),
-    toTranslateSentenceTasks({ words, ...body }),
+    toTranslateUkrainianSentenceTasks({ words, ...body }),
   ]);
 
-  return { fillTheGapTasks, translateSentenceTasks };
+  return { fillTheGapTasks, translateUkrainianSentenceTasks };
 };

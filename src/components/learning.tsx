@@ -12,7 +12,7 @@ import {
   type UserWord,
   type WordToDefinitionTask,
   type WriteByPronunciationTask,
-  type TranslateSentenceTask,
+  type TranslateUkrainianSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { WriteByPronunciation } from './write-by-pronunciation';
@@ -159,11 +159,11 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTa
   });
 };
 
-const toTranslateSentenceTasks = (tasksData: TasksData['translateSentenceTasks']) => {
-  return tasksData.map(({ id, sentence, options }): TranslateSentenceTask => {
+const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrainianSentenceTasks']) => {
+  return tasksData.map(({ id, sentence, options }): TranslateUkrainianSentenceTask => {
     return {
       id: crypto.randomUUID(),
-      type: TaskType.TranslateSentence,
+      type: TaskType.TranslateUkrainianSentence,
       data: {
         id,
         sentence,
@@ -193,9 +193,9 @@ const toClientTasks = (words: UserWord[]) => {
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
-  const translateSentenceTasks = toTranslateSentenceTasks(tasksData.translateSentenceTasks);
+  const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
 
-  return [...shuffle(fillTheGapTasks), ...shuffle(translateSentenceTasks)];
+  return [...shuffle(fillTheGapTasks), ...shuffle(translateUkrainianSentenceTasks)];
 };
 
 export const Learning: FC = () => {
@@ -400,8 +400,15 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.TranslateSentence && (
-              <TranslateSentence key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+            {currentTask?.type === TaskType.TranslateUkrainianSentence && (
+              <TranslateSentence
+                key={currentTask.id}
+                title="Select the correct translation"
+                subtitle="Choose the English sentence that best matches the Ukrainian sentence"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (
