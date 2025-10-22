@@ -33,6 +33,12 @@ export enum TaskType {
   FillTheGap = 'fill-the-gap',
 }
 
+export type TextToWordData = {
+  id: number;
+  text: string;
+  word: string;
+};
+
 export type ShowcaseTask = {
   id: string;
   type: TaskType.Showcase;
@@ -54,11 +60,7 @@ export type WordToDefinitionTask = {
 export type DefinitionToWordTask = {
   id: string;
   type: TaskType.DefinitionToWord;
-  data: {
-    id: number;
-    definition: string;
-    word: string;
-  };
+  data: TextToWordData;
 };
 
 export type WordToTranslationTask = {
@@ -76,11 +78,7 @@ export type WordToTranslationTask = {
 export type TranslationToWordTask = {
   id: string;
   type: TaskType.TranslationToWord;
-  data: {
-    id: number;
-    translation: string;
-    word: string;
-  };
+  data: TextToWordData;
 };
 
 export type WriteByPronunciationTask = {

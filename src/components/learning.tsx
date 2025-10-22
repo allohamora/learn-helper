@@ -15,8 +15,6 @@ import {
   type TranslateSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
-import { DefinitionToWord } from './definition-to-word';
-import { TranslationToWord } from './translation-to-word';
 import { WordToTranslation } from './word-to-translation';
 import { WordToDefinition } from './word-to-definition';
 import { WriteByPronunciation } from './write-by-pronunciation';
@@ -26,6 +24,7 @@ import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
 import { FillTheGap } from './fill-the-gap';
+import { TextToWord } from './text-to-word';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 
@@ -73,7 +72,7 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
       type: TaskType.DefinitionToWord,
       data: {
         id: target.id,
-        definition: target.word.definition,
+        text: target.word.definition,
         word: target.word.value,
       },
     };
@@ -87,7 +86,7 @@ const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] =>
       type: TaskType.TranslationToWord,
       data: {
         id: target.id,
-        translation: target.word.uaTranslation,
+        text: target.word.uaTranslation,
         word: target.word.value,
       },
     };
@@ -354,7 +353,14 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.DefinitionToWord && (
-              <DefinitionToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <TextToWord
+                key={currentTask.id}
+                title="Which word matches this definition?"
+                subtitle="Type the correct word for the given definition"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.WordToTranslation && (
@@ -362,7 +368,14 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.TranslationToWord && (
-              <TranslationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <TextToWord
+                key={currentTask.id}
+                title="Which word matches this translation?"
+                subtitle="Type the correct word for the given translation"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {currentTask?.type === TaskType.WriteByPronunciation && (

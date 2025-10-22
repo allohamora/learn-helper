@@ -5,32 +5,31 @@ import { Input } from '@/components/ui/input';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SttButton } from './stt-button';
+import type { TextToWordData } from '@/types/user-words.types';
 
 type TextToWordProps = {
   title: string;
   subtitle: string;
-  id: number;
-  text: string;
-  word: string;
+  data: TextToWordData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
 };
 
-export const TextToWord: FC<TextToWordProps> = ({ title, subtitle, id, text, word, onMistake, onNext }) => {
+export const TextToWord: FC<TextToWordProps> = ({ title, subtitle, data, onMistake, onNext }) => {
   const [userInput, setUserInput] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const handleCheck = () => {
     const normalizedInput = userInput.trim().toLowerCase();
-    const normalizedAnswer = word.toLowerCase();
+    const normalizedAnswer = data.word.toLowerCase();
     const correct = normalizedInput === normalizedAnswer;
 
     setIsCorrect(correct);
     setIsChecked(true);
 
     if (!correct) {
-      onMistake(id);
+      onMistake(data.id);
     }
   };
 
@@ -64,7 +63,7 @@ export const TextToWord: FC<TextToWordProps> = ({ title, subtitle, id, text, wor
       <Card className="mb-6 bg-card shadow-lg">
         <CardHeader>
           <CardTitle className="flex min-h-[120px] items-center justify-center text-center">
-            <p className="text-xl leading-relaxed font-normal">{text}</p>
+            <p className="text-xl leading-relaxed font-normal">{data.text}</p>
           </CardTitle>
         </CardHeader>
 
@@ -99,7 +98,7 @@ export const TextToWord: FC<TextToWordProps> = ({ title, subtitle, id, text, wor
                   <div className="space-y-2">
                     <p className="font-semibold text-red-600">Incorrect</p>
                     <p className="text-muted-foreground">
-                      The correct answer is: <span className="font-semibold text-foreground">{word}</span>
+                      The correct answer is: <span className="font-semibold text-foreground">{data.word}</span>
                     </p>
                   </div>
                 )}
