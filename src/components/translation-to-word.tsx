@@ -12,7 +12,7 @@ export const TranslationToWord: FC<TranslationToWordProps> = ({ data, ...props }
   return (
     <TextToWord
       title="Which word matches this translation?"
-      subtitle="Select the correct word for the given translation"
+      subtitle="Type the correct word for the given translation"
       id={data.id}
       text={data.translation}
       word={data.word}

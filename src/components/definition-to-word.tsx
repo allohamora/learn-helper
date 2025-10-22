@@ -12,7 +12,7 @@ export const DefinitionToWord: FC<DefinitionToWordProps> = ({ data, ...props }) 
   return (
     <TextToWord
       title="Which word matches this definition?"
-      subtitle="Select the correct word for the given definition"
+      subtitle="Type the correct word for the given definition"
       id={data.id}
       text={data.definition}
       word={data.word}
