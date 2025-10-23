@@ -111,16 +111,7 @@ export type TranslateUkrainianSentenceTask = {
 export type FillTheGapTask = {
   id: string;
   type: TaskType.FillTheGap;
-  data: {
-    id: number;
-    task: string;
-    options: {
-      id: number;
-      value: string;
-      partOfSpeech: string | null;
-      isCorrect: boolean;
-    }[];
-  };
+  data: TextToWordData;
 };
 
 export type LearningTask =
