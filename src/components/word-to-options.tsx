@@ -20,10 +20,10 @@ export const WordToOptions: FC<WordToOptionsProps> = ({ data, title, subtitle, o
   const [isFinished, setIsFinished] = useState(false);
   const { playAudio, isPlaying } = useAudioPlayer();
 
-  const onSelectOption = (optionId: number) => {
-    setAnswers((prev) => new Set(prev).add(optionId));
+  const onSelectOption = (idx: number) => {
+    setAnswers((prev) => new Set(prev).add(idx));
 
-    if (data.options.find((opt) => opt.id === optionId)?.isCorrect) {
+    if (data.options[idx]?.isCorrect) {
       setIsFinished(true);
     } else {
       onMistake(data.id);
@@ -101,25 +101,25 @@ export const WordToOptions: FC<WordToOptionsProps> = ({ data, title, subtitle, o
 
         <CardContent className="space-y-3">
           <div className="space-y-3">
-            {data.options.map((option) => {
-              const isAnswered = answers.has(option.id);
+            {data.options.map(({ isCorrect, value }, idx) => {
+              const isAnswered = answers.has(idx);
 
               return (
                 <Button
-                  key={option.id}
+                  key={`option-${idx}`}
                   variant="outline"
                   className={cn(
                     'w-full justify-start text-left p-4 h-auto transition-colors duration-200 whitespace-normal [&:disabled]:opacity-80',
                     {
-                      'border-green-500 text-green-500': isAnswered && option.isCorrect,
-                      'border-red-500 text-red-500': isAnswered && !option.isCorrect,
+                      'border-green-500 text-green-500': isAnswered && isCorrect,
+                      'border-red-500 text-red-500': isAnswered && !isCorrect,
                     },
                   )}
-                  onClick={() => onSelectOption(option.id)}
+                  onClick={() => onSelectOption(idx)}
                   disabled={isAnswered || isFinished}
                 >
                   <div className="flex w-full items-start justify-between gap-3">
-                    <span className="flex-1 text-base leading-relaxed">{option.value}</span>
+                    <span className="flex-1 text-base leading-relaxed">{value}</span>
                   </div>
                 </Button>
               );

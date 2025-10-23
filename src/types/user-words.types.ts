@@ -42,7 +42,6 @@ export type TextToWordData = {
 
 export type WordToOptionsData = typeof db.Word.$inferSelect & {
   options: {
-    id: number;
     value: string;
     isCorrect: boolean;
   }[];

@@ -50,8 +50,8 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, value: value.word.definition, isCorrect: false }));
-    const correct = { id: target.id, value: target.word.definition, isCorrect: true };
+      .map((value) => ({ value: value.word.definition, isCorrect: false }));
+    const correct = { value: target.word.definition, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -98,9 +98,9 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, value: value.word.uaTranslation, isCorrect: false }));
+      .map((value) => ({ value: value.word.uaTranslation, isCorrect: false }));
 
-    const correct = { id: target.id, value: target.word.uaTranslation, isCorrect: true };
+    const correct = { value: target.word.uaTranslation, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
