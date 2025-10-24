@@ -15,19 +15,32 @@ type ToWordProps = {
   onNext: () => void;
 };
 
+const unique = (values: string[]) => Array.from(new Set(values));
+
 const toRegexp = (text: string) => {
   const pattern = text
-    // escape regex special chars except parentheses
-    .replace(/[[\]{}+?.\\^$|]/g, '\\$&')
-    // make whitespace before parentheses optional
-    .replace(/ \(/g, ' *(')
-    // allow optional parentheses around the variable part
-    .replace(/\(.*?\)/, '(?:\\(.+?\\))?');
+    .replace(/[.*+?^${}|[\]\\]/g, '\\$&')
+    .replace(/ \(/gim, ' *(')
+    .replace(/\(.*?\)/gim, (match) => {
+      const fullValue = match.replace('(', '').replace(')', '');
+
+      const values = unique([fullValue, ...fullValue.split('/')])
+        .map((value) => `(?:${value})`)
+        .join('|');
+
+      return `(?:\\((?:${values})\\))?`;
+    });
 
   return new RegExp(`^${pattern}$`, 'i');
 };
 
 const normalize = (text: string) => text.toLowerCase().trim();
+
+export const compare = ({ answer, input }: { answer: string; input: string }) => {
+  const pattern = toRegexp(normalize(answer));
+
+  return pattern.test(normalize(input));
+};
 
 export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, data, onMistake, onNext, children }) => {
   const [userInput, setUserInput] = useState('');
@@ -35,8 +48,7 @@ export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, da
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const handleCheck = () => {
-    const pattern = toRegexp(data.word);
-    const correct = pattern.test(normalize(userInput));
+    const correct = compare({ answer: data.word, input: userInput });
 
     setIsCorrect(correct);
     setIsChecked(true);
