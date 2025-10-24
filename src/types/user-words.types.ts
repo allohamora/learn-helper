@@ -32,6 +32,8 @@ export enum TaskType {
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
   FillTheGap = 'fill-the-gap',
+  SynonymToWord = 'synonym-to-word',
+  AntonymToWord = 'antonym-to-word',
 }
 
 export type ToWordData = {
@@ -113,6 +115,18 @@ export type FillTheGapTask = {
   data: TextToWordData;
 };
 
+export type SynonymToWordTask = {
+  id: string;
+  type: TaskType.SynonymToWord;
+  data: TextToWordData;
+};
+
+export type AntonymToWordTask = {
+  id: string;
+  type: TaskType.AntonymToWord;
+  data: TextToWordData;
+};
+
 export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
@@ -122,4 +136,6 @@ export type LearningTask =
   | PronunciationToWordTask
   | TranslateEnglishSentenceTask
   | TranslateUkrainianSentenceTask
-  | FillTheGapTask;
+  | FillTheGapTask
+  | SynonymToWordTask
+  | AntonymToWordTask;
