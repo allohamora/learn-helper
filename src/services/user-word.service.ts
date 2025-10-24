@@ -41,6 +41,10 @@ const google = createGoogleGenerativeAI({
 const model = google('gemini-2.5-flash-lite');
 
 const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  if (!words.length) {
+    return [];
+  }
+
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -86,6 +90,10 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
 };
 
 const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  if (!words.length) {
+    return [];
+  }
+
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -134,6 +142,10 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
 };
 
 const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  if (!words.length) {
+    return [];
+  }
+
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
