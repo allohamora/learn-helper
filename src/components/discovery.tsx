@@ -112,7 +112,7 @@ export function Discovery() {
 
   return (
     <div className="space-y-6">
-      <div className="mx-auto max-w-md pt-8">
+      <div className="mx-auto max-w-md">
         <div className="mb-8 flex items-center justify-between text-sm">
           <p className="text-muted-foreground">Remaining words: {remaining}</p>
           <Button
