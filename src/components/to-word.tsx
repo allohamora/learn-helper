@@ -15,11 +15,19 @@ type ToWordProps = {
   onNext: () => void;
 };
 
-const normalize = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/\(.+?\)/gim, '')
-    .trim();
+const toRegexp = (text: string) => {
+  const pattern = text
+    // escape regex special chars except parentheses
+    .replace(/[[\]{}+?.\\^$|]/g, '\\$&')
+    // make whitespace before parentheses optional
+    .replace(/ \(/g, ' *(')
+    // allow optional parentheses around the variable part
+    .replace(/\(.*?\)/, '(?:\\(.+?\\))?');
+
+  return new RegExp(`^${pattern}$`, 'i');
+};
+
+const normalize = (text: string) => text.toLowerCase().trim();
 
 export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, data, onMistake, onNext, children }) => {
   const [userInput, setUserInput] = useState('');
@@ -27,7 +35,8 @@ export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, da
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const handleCheck = () => {
-    const correct = normalize(data.word) === normalize(userInput);
+    const pattern = toRegexp(data.word);
+    const correct = pattern.test(normalize(userInput));
 
     setIsCorrect(correct);
     setIsChecked(true);
