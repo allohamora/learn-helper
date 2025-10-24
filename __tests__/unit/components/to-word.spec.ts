@@ -41,4 +41,9 @@ describe('compare', () => {
     expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (any) up (sth)' })).toBe(false);
     expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (smb) up (any)' })).toBe(false);
   });
+
+  it('escapes special regex characters', () => {
+    expect(compare({ answer: 'find (sth).*', input: 'find (sth).*' })).toBe(true);
+    expect(compare({ answer: 'find (sth).*', input: 'find (sth)X*' })).toBe(false);
+  });
 });
