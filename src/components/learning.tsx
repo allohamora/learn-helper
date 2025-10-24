@@ -11,12 +11,12 @@ import {
   type ShowcaseTask,
   type UserWord,
   type WordToDefinitionTask,
-  type WriteByPronunciationTask,
+  type PronunciationToWordTask,
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
-import { WriteByPronunciation } from './write-by-pronunciation';
+import { PronunciationToWord } from './pronunciation-to-word';
 import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
@@ -113,15 +113,15 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
   });
 };
 
-const toWriteByPronunciationTasks = (words: UserWord[]) => {
-  return words.map((target): WriteByPronunciationTask => {
+const toPronunciationToWordTasks = (words: UserWord[]) => {
+  return words.map((target): PronunciationToWordTask => {
     return {
       id: crypto.randomUUID(),
-      type: TaskType.WriteByPronunciation,
+      type: TaskType.PronunciationToWord,
       data: {
         id: target.id,
         pronunciation: target.word.pronunciation,
-        answer: target.word.value,
+        word: target.word.value,
       },
     };
   });
@@ -180,7 +180,7 @@ const toClientTasks = (words: UserWord[]) => {
   const definitionToWordTasks = toDefinitionToWordTasks(words);
   const wordToTranslationTasks = toWordToTranslationTasks(words);
   const translationToWordTasks = toTranslationToWordTasks(words);
-  const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
+  const pronunciationToWordTasks = toPronunciationToWordTasks(words);
 
   return [
     ...showcaseTasks,
@@ -188,7 +188,7 @@ const toClientTasks = (words: UserWord[]) => {
     ...shuffle(definitionToWordTasks),
     ...shuffle(wordToTranslationTasks),
     ...shuffle(translationToWordTasks),
-    ...shuffle(writeByPronunciationTasks),
+    ...shuffle(pronunciationToWordTasks),
   ];
 };
 
@@ -397,13 +397,8 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.WriteByPronunciation && (
-              <WriteByPronunciation
-                key={currentTask.id}
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
+            {currentTask?.type === TaskType.PronunciationToWord && (
+              <PronunciationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.TranslateEnglishSentence && (
