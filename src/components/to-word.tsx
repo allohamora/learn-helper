@@ -15,15 +15,19 @@ type ToWordProps = {
   onNext: () => void;
 };
 
+const normalize = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/\(.+?\)/gim, '')
+    .trim();
+
 export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, data, onMistake, onNext, children }) => {
   const [userInput, setUserInput] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const handleCheck = () => {
-    const normalizedInput = userInput.trim().toLowerCase();
-    const normalizedAnswer = data.word.toLowerCase();
-    const correct = normalizedInput === normalizedAnswer;
+    const correct = normalize(data.word) === normalize(userInput);
 
     setIsCorrect(correct);
     setIsChecked(true);
