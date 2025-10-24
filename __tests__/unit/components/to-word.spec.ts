@@ -33,4 +33,12 @@ describe('compare', () => {
     expect(compare({ answer: 'take care of (sth/smb)', input: 'take care of (sth/smb)' })).toBe(true);
     expect(compare({ answer: 'take care of (sth/smb)', input: 'take care of (any)' })).toBe(false);
   });
+
+  it('handles several parentheses', () => {
+    expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (smb) up (sth)' })).toBe(true);
+    expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (sth) up (sth)' })).toBe(true);
+    expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (sth/smb) up (sth)' })).toBe(true);
+    expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (any) up (sth)' })).toBe(false);
+    expect(compare({ answer: 'make (sth/smb) up (sth)', input: 'make (smb) up (any)' })).toBe(false);
+  });
 });

@@ -18,7 +18,7 @@ type ToWordProps = {
 const unique = (values: string[]) => Array.from(new Set(values));
 
 const toRegexp = (text: string) => {
-  const pattern = text.replace(/ \(/g, ' *(').replace(/\(.*?\)/, (match) => {
+  const pattern = text.replace(/ \(/gim, ' *(').replace(/\(.*?\)/gim, (match) => {
     const fullValue = match.replace('(', '').replace(')', '');
 
     const values = unique([fullValue, ...fullValue.split('/')])
