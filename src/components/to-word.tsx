@@ -1,37 +1,54 @@
-import { type FC, type KeyboardEvent, type MouseEvent, useState } from 'react';
+import { useState, type FC, type KeyboardEvent, type PropsWithChildren } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Volume2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAudioPlayer } from '@/hooks/use-audio-player';
-import type { WriteByPronunciationTask } from '@/types/user-words.types';
 import { SttButton } from './stt-button';
+import type { ToWordData } from '@/types/user-words.types';
 
-type WriteByPronunciationProps = {
-  data: WriteByPronunciationTask['data'];
+type ToWordProps = {
+  title: string;
+  subtitle: string;
+  data: ToWordData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
 };
 
-export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMistake, onNext }) => {
+const unique = (values: string[]) => Array.from(new Set(values));
+
+const toRegexp = (text: string) => {
+  const pattern = text
+    .replace(/[.*+?^${}|[\]\\]/g, '\\$&')
+    .replace(/ \(/gim, ' *(')
+    .replace(/\(.*?\)/gim, (match) => {
+      const fullValue = match.replace('(', '').replace(')', '');
+
+      const values = unique([fullValue, ...fullValue.split('/')])
+        .map((value) => `(?:${value})`)
+        .join('|');
+
+      return `(?:\\((?:${values})\\))?`;
+    });
+
+  return new RegExp(`^${pattern}$`, 'i');
+};
+
+const normalize = (text: string) => text.toLowerCase().trim();
+
+export const compare = ({ answer, input }: { answer: string; input: string }) => {
+  const pattern = toRegexp(normalize(answer));
+
+  return pattern.test(normalize(input));
+};
+
+export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, data, onMistake, onNext, children }) => {
   const [userInput, setUserInput] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  const { playAudio, isPlaying } = useAudioPlayer();
-
-  const handlePlayPronunciation = (event: MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    playAudio(data.pronunciation);
-  };
-
   const handleCheck = () => {
-    const normalizedInput = userInput.trim().toLowerCase();
-    const normalizedAnswer = data.answer.toLowerCase();
-    const correct = normalizedInput === normalizedAnswer;
+    const correct = compare({ answer: data.word, input: userInput });
 
     setIsCorrect(correct);
     setIsChecked(true);
@@ -64,24 +81,13 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">Write what you hear</h2>
-        <p className="text-muted-foreground">Listen to the pronunciation and write the word</p>
+        <h2 className="mb-2 text-xl font-semibold">{title}</h2>
+        <p className="text-muted-foreground">{subtitle}</p>
       </div>
 
       <Card className="mb-6 bg-card shadow-lg">
         <CardHeader>
-          <CardTitle className="flex min-h-[120px] items-center justify-center">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handlePlayPronunciation}
-              disabled={isPlaying}
-              className="h-24 w-24 rounded-full"
-              title="Play pronunciation"
-            >
-              <Volume2 className={cn('h-8 w-8', { 'animate-pulse': isPlaying })} />
-            </Button>
-          </CardTitle>
+          <CardTitle className="flex min-h-[120px] items-center justify-center text-center">{children}</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -92,7 +98,7 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Type what you hear..."
+                placeholder="Type the correct word..."
                 className={cn(
                   'h-12 text-lg',
                   isChecked &&
@@ -115,25 +121,25 @@ export const WriteByPronunciation: FC<WriteByPronunciationProps> = ({ data, onMi
                   <div className="space-y-2">
                     <p className="font-semibold text-red-600">Incorrect</p>
                     <p className="text-muted-foreground">
-                      The correct answer is: <span className="font-semibold text-foreground">{data.answer}</span>
+                      The correct answer is: <span className="font-semibold text-foreground">{data.word}</span>
                     </p>
                   </div>
                 )}
               </div>
             )}
-          </div>
 
-          <div className="flex justify-center">
-            {!isChecked ? (
-              <Button onClick={handleCheck} size="lg" disabled={!userInput.trim()} className="min-w-32">
-                Check
-              </Button>
-            ) : (
-              <Button onClick={handleNext} size="lg" className="min-w-32">
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
+            <div className="flex justify-center">
+              {!isChecked ? (
+                <Button onClick={handleCheck} size="lg" disabled={!userInput.trim()} className="min-w-32">
+                  Check
+                </Button>
+              ) : (
+                <Button onClick={handleNext} size="lg" className="min-w-32">
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -22,7 +22,7 @@ export default getViteConfig({
         maxForks: 1,
       },
     },
-    include: ['**/__tests__/integration/**/*.spec.ts'],
+    include: ['**/__tests__/integration/**/*.spec.ts', '**/__tests__/unit/**/*.spec.ts'],
     setupFiles: ['./__tests__/mocks/astro-env.mock.ts'],
   },
   plugins: [tsconfigPathsPlugin()],

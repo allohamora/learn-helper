@@ -41,6 +41,10 @@ const google = createGoogleGenerativeAI({
 const model = google('gemini-2.5-flash-lite');
 
 const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  if (!words.length) {
+    return [];
+  }
+
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -55,23 +59,27 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
       z.object({
         id: z.number(),
         task: z.string(),
+        answer: z.string(),
       }),
     ),
     prompt: [
       'You are a professional English tutor experienced in designing engaging, context-rich fill-the-gap exercises for learners.',
-      'Your task is to create one short, natural English sentence for each provided word, where the target word is replaced with a blank.',
+      'Your task is to create one short, natural English sentence for each provided word or phrase, where the target word/phrase is replaced with a blank.',
       '',
       'Requirements:',
-      `- Generate exactly ${limit} tasks - one for each provided word.`,
+      `- Generate exactly ${limit} tasks - one for each provided word or phrase.`,
       '- Each task must be a single, complete, natural English sentence (5–15 words).',
       '- Each sentence must contain exactly one blank, represented by "___".',
-      '- The missing word must be exactly the target word (case-insensitive match).',
-      '- Do not include the target word anywhere else in the sentence.',
-      '- Use a modern, neutral tone - avoid slang, idioms, or overly complex structures.',
+      '- The missing word/phrase must be exactly the target word/phrase (case-insensitive match).',
+      '- Do not include the target word/phrase anywhere else in the sentence.',
+      '- For phrases, the blank should replace the entire phrase as a unit.',
+      '- Use a modern, neutral tone - avoid slang or overly complex structures.',
       '- Avoid repeating sentence structures or topics across tasks; make each example unique.',
       '- Do not use periods at the end of the sentence.',
+      '- The "answer" field must contain the exact form of the word/phrase that fits the blank in the sentence.',
+      '- If the target is a phrase with placeholders like "agree with sb", "take care of (sth)", the answer should match the sentence context (e.g., "agree with (sb)" → sentence "I ___ you" → answer "agree with").',
       '',
-      'Words:',
+      'Words and Phrases:',
       '```json',
       JSON.stringify(wordList),
       '```',
@@ -82,6 +90,10 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
 };
 
 const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  if (!words.length) {
+    return [];
+  }
+
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -106,11 +118,12 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
     ),
     prompt: [
       'You are a professional English teacher experienced in creating short natural English sentences for learners.',
-      'Your task is to create one concise English sentence (1–12 words) and 4 Ukrainian translation options for each provided word.',
+      'Your task is to create one concise English sentence (1–12 words) and 4 Ukrainian translation options for each provided word or phrase.',
       '',
       'Requirements:',
-      `- Generate exactly ${limit} sentences - one for each provided word.`,
-      '- The English sentence must include or clearly express the meaning of the target English word.',
+      `- Generate exactly ${limit} sentences - one for each provided word or phrase.`,
+      '- The English sentence must include or clearly express the meaning of the target English word or phrase.',
+      '- For phrases, use the complete phrase naturally within the sentence.',
       '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
       '- Do not use periods at the end of the sentence.',
       '- Each task must include 4 options: 1 correct Ukrainian translation (isCorrect: true) and 3 plausible but incorrect Ukrainian translations (isCorrect: false).',
@@ -118,7 +131,7 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
       '- All Ukrainian options must look natural and grammatically correct in Ukrainian.',
       '- Avoid using the same topics or repetitive sentence structures across examples.',
       '',
-      'Words:',
+      'Words and Phrases:',
       '```json',
       JSON.stringify(wordList),
       '```',
@@ -129,6 +142,10 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
 };
 
 const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+  if (!words.length) {
+    return [];
+  }
+
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -153,21 +170,22 @@ const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: numb
     ),
     prompt: [
       'You are a professional English teacher experienced in creating short natural Ukrainian sentences for learners.',
-      'Your task is to create one concise Ukrainian sentence (1–12 words) and 4 English translation options for each provided word.',
+      'Your task is to create one concise Ukrainian sentence (1–12 words) and 4 English translation options for each provided word or phrase.',
       '',
       'Requirements:',
-      `- Generate exactly ${limit} sentences - one for each provided word.`,
-      '- The Ukrainian sentence must include or clearly express the meaning of the target English word.',
+      `- Generate exactly ${limit} sentences - one for each provided word or phrase.`,
+      '- The Ukrainian sentence must include or clearly express the meaning of the target English word or phrase.',
       '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
       '- Do not use periods at the end of the sentence.',
       '- Each task must include 4 options: 1 correct translation (isCorrect: true) and 3 plausible but incorrect translations (isCorrect: false).',
-      '- The correct option must include the target word in English, exactly as given in the input list.',
+      '- The correct option must include the target word or phrase in English, exactly as given in the input list.',
+      '- For phrases, the correct option must include the complete phrase as a unit.',
       '- Incorrect options should be close in structure or meaning but not identical.',
       '- All English options must sound grammatically correct and natural.',
       '- The correct option must precisely reflect the meaning of the Ukrainian sentence.',
       '- Avoid using the same topics or repetitive sentence structures across examples.',
       '',
-      'Words:',
+      'Words and Phrases:',
       '```json',
       JSON.stringify(wordList),
       '```',

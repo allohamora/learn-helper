@@ -11,18 +11,17 @@ import {
   type ShowcaseTask,
   type UserWord,
   type WordToDefinitionTask,
-  type WriteByPronunciationTask,
+  type PronunciationToWordTask,
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
-import { WriteByPronunciation } from './write-by-pronunciation';
+import { PronunciationToWord } from './pronunciation-to-word';
 import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
-import { FillTheGap } from './fill-the-gap';
 import { TextToWord } from './text-to-word';
 import { WordToOptions } from './word-to-options';
 
@@ -50,8 +49,8 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, value: value.word.definition, isCorrect: false }));
-    const correct = { id: target.id, value: target.word.definition, isCorrect: true };
+      .map((value) => ({ value: value.word.definition, isCorrect: false }));
+    const correct = { value: target.word.definition, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -98,9 +97,9 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
     const wrong = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ id: value.id, value: value.word.uaTranslation, isCorrect: false }));
+      .map((value) => ({ value: value.word.uaTranslation, isCorrect: false }));
 
-    const correct = { id: target.id, value: target.word.uaTranslation, isCorrect: true };
+    const correct = { value: target.word.uaTranslation, isCorrect: true };
     const options = shuffle([correct, ...wrong]);
 
     return {
@@ -114,47 +113,34 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
   });
 };
 
-const toWriteByPronunciationTasks = (words: UserWord[]) => {
-  return words.map((target): WriteByPronunciationTask => {
+const toPronunciationToWordTasks = (words: UserWord[]) => {
+  return words.map((target): PronunciationToWordTask => {
     return {
       id: crypto.randomUUID(),
-      type: TaskType.WriteByPronunciation,
+      type: TaskType.PronunciationToWord,
       data: {
         id: target.id,
         pronunciation: target.word.pronunciation,
-        answer: target.word.value,
+        word: target.word.value,
       },
     };
   });
 };
 
 const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTasks']) => {
-  return tasksData.map(({ id, task }): FillTheGapTask => {
-    const wrong = shuffle(words)
-      .filter((word) => word.id !== id)
-      .slice(0, 3)
-      .map((value) => ({
-        id: value.id,
-        value: value.word.value,
-        partOfSpeech: value.word.partOfSpeech,
-        isCorrect: false,
-      }));
-
+  return tasksData.map(({ id, task, answer }): FillTheGapTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
       throw new Error('Word for FillTheGap task is not found');
     }
-
-    const correct = { id, value: found.word.value, partOfSpeech: found.word.partOfSpeech, isCorrect: true };
-    const options = shuffle([correct, ...wrong]);
 
     return {
       id: crypto.randomUUID(),
       type: TaskType.FillTheGap,
       data: {
         id,
-        task,
-        options,
+        text: task,
+        word: answer,
       },
     };
   });
@@ -194,7 +180,7 @@ const toClientTasks = (words: UserWord[]) => {
   const definitionToWordTasks = toDefinitionToWordTasks(words);
   const wordToTranslationTasks = toWordToTranslationTasks(words);
   const translationToWordTasks = toTranslationToWordTasks(words);
-  const writeByPronunciationTasks = toWriteByPronunciationTasks(words);
+  const pronunciationToWordTasks = toPronunciationToWordTasks(words);
 
   return [
     ...showcaseTasks,
@@ -202,19 +188,19 @@ const toClientTasks = (words: UserWord[]) => {
     ...shuffle(definitionToWordTasks),
     ...shuffle(wordToTranslationTasks),
     ...shuffle(translationToWordTasks),
-    ...shuffle(writeByPronunciationTasks),
+    ...shuffle(pronunciationToWordTasks),
   ];
 };
 
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
-  const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
   const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasksData.translateEnglishSentenceTasks);
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
+  const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
 
   return [
-    ...shuffle(fillTheGapTasks),
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
+    ...shuffle(fillTheGapTasks),
   ];
 };
 
@@ -342,9 +328,7 @@ export const Learning: FC = () => {
       throw new Error('Current task is not found');
     }
 
-    if (retryTasks.at(-1)?.id !== currentTask.id) {
-      setRetryTasks([...retryTasks, currentTask]);
-    }
+    setRetryTasks([...retryTasks, { ...currentTask, id: crypto.randomUUID() }]);
 
     const userWord = state[userWordId];
     if (!userWord) {
@@ -411,13 +395,8 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.WriteByPronunciation && (
-              <WriteByPronunciation
-                key={currentTask.id}
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
+            {currentTask?.type === TaskType.PronunciationToWord && (
+              <PronunciationToWord key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
             )}
 
             {currentTask?.type === TaskType.TranslateEnglishSentence && (
@@ -443,7 +422,14 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.FillTheGap && (
-              <FillTheGap key={currentTask.id} data={currentTask.data} onNext={onNext} onMistake={onMistake} />
+              <TextToWord
+                key={currentTask.id}
+                title="Fill the gap"
+                subtitle="Type the correct word for the given sentence"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
             )}
 
             {!currentTask && getLearningTasks.isLoading && (
