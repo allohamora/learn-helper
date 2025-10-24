@@ -29,14 +29,19 @@ const toRegexp = (text: string) => {
 
 const normalize = (text: string) => text.toLowerCase().trim();
 
+export const compare = ({ answer, input }: { answer: string; input: string }) => {
+  const pattern = toRegexp(normalize(answer));
+
+  return pattern.test(normalize(input));
+};
+
 export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, data, onMistake, onNext, children }) => {
   const [userInput, setUserInput] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
   const handleCheck = () => {
-    const pattern = toRegexp(data.word);
-    const correct = pattern.test(normalize(userInput));
+    const correct = compare({ answer: data.word, input: userInput });
 
     setIsCorrect(correct);
     setIsChecked(true);
