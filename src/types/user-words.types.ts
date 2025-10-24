@@ -43,20 +43,18 @@ export type TextToWordData = ToWordData & {
   text: string;
 };
 
-export type WordToOptionsData = typeof db.Word.$inferSelect & {
+export type ToOptionsData = {
+  id: number;
   options: {
     value: string;
     isCorrect: boolean;
   }[];
 };
 
-export type TranslateSentenceData = {
-  id: number;
+export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
+
+export type TranslateSentenceData = ToOptionsData & {
   sentence: string;
-  options: {
-    value: string;
-    isCorrect: boolean;
-  }[];
 };
 
 export type ShowcaseTask = {
