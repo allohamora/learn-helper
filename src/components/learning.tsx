@@ -328,9 +328,7 @@ export const Learning: FC = () => {
       throw new Error('Current task is not found');
     }
 
-    if (retryTasks.at(-1)?.id !== currentTask.id) {
-      setRetryTasks([...retryTasks, currentTask]);
-    }
+    setRetryTasks([...retryTasks, { ...currentTask, id: crypto.randomUUID() }]);
 
     const userWord = state[userWordId];
     if (!userWord) {
