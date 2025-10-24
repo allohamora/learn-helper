@@ -128,7 +128,7 @@ const toWriteByPronunciationTasks = (words: UserWord[]) => {
 };
 
 const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTasks']) => {
-  return tasksData.map(({ id, task }): FillTheGapTask => {
+  return tasksData.map(({ id, task, answer }): FillTheGapTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
       throw new Error('Word for FillTheGap task is not found');
@@ -140,7 +140,7 @@ const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTa
       data: {
         id,
         text: task,
-        word: found.word.value,
+        word: answer,
       },
     };
   });

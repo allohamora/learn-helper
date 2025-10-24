@@ -55,6 +55,7 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
       z.object({
         id: z.number(),
         task: z.string(),
+        answer: z.string(),
       }),
     ),
     prompt: [
@@ -71,6 +72,8 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
       '- Use a modern, neutral tone - avoid slang or overly complex structures.',
       '- Avoid repeating sentence structures or topics across tasks; make each example unique.',
       '- Do not use periods at the end of the sentence.',
+      '- The "answer" field must contain the exact form of the word/phrase that fits the blank in the sentence.',
+      '- If the target is a phrase with placeholders like "agree with sb", "take care of (sth)", the answer should match the sentence context (e.g., "agree with (sb)" → sentence "I ___ you" → answer "agree with").',
       '',
       'Words and Phrases:',
       '```json',
