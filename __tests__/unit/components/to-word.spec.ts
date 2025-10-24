@@ -26,4 +26,11 @@ describe('compare', () => {
     expect(compare({ answer: 'a lot of (sth)', input: 'a lot of (sth)' })).toBe(true);
     expect(compare({ answer: 'a lot of (sth)', input: 'a lot of something' })).toBe(false);
   });
+
+  it('handles several entries with parentheses', () => {
+    expect(compare({ answer: 'take care of (sth/smb)', input: 'take care of (sth)' })).toBe(true);
+    expect(compare({ answer: 'take care of (sth/smb)', input: 'take care of (smb)' })).toBe(true);
+    expect(compare({ answer: 'take care of (sth/smb)', input: 'take care of (sth/smb)' })).toBe(true);
+    expect(compare({ answer: 'take care of (sth/smb)', input: 'take care of (any)' })).toBe(false);
+  });
 });
