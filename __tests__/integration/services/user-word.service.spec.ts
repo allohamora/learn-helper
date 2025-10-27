@@ -1,9 +1,9 @@
-import { db, eq, UserWord } from 'astro:db';
+import { db, eq, and, UserWord, Event, desc } from 'astro:db';
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { ensureUserWordsExists, getLearningWords, getUserWordById } from '@/repositories/user-word.repository';
 import { moveUserWordToNextStep } from '@/services/user-word.service';
-import { Status } from '@/types/user-words.types';
+import { EventType, Status } from '@/types/user-words.types';
 
 describe('user-word.service', () => {
   const userId = randomUUID();
@@ -23,12 +23,29 @@ describe('user-word.service', () => {
   });
 
   afterEach(async () => {
+    await db.delete(Event).where(eq(Event.userId, userId));
     await db.delete(UserWord).where(eq(UserWord.userId, userId));
   });
 
   describe('integration', () => {
     it('cycles learning words correctly through multiple steps', async () => {
       const handled = new Set<number>();
+
+      const expectEvents = async ({ userWordId, count }: { userWordId: number; count: number }) => {
+        const events = await db
+          .select()
+          .from(Event)
+          .where(
+            and(
+              eq(Event.userId, userId),
+              eq(Event.userWordId, userWordId),
+              eq(Event.type, EventType.WordMovedToNextStep),
+            ),
+          )
+          .orderBy(desc(Event.createdAt));
+
+        expect(events.length).toEqual(count);
+      };
 
       const expectUpdate = async ({
         userWordId,
@@ -60,12 +77,17 @@ describe('user-word.service', () => {
 
       await moveUserWordToNextStep({ userId, userWordId: firstWord.id });
 
+      await expectEvents({ userWordId: firstWord.id, count: 1 });
+
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 1, wordsToUnlock: 3, status: Status.Learning });
 
       const secondWord = await getLearningWord();
       expectNewWord(secondWord);
 
       await moveUserWordToNextStep({ userId, userWordId: secondWord.id });
+
+      await expectEvents({ userWordId: firstWord.id, count: 1 });
+      await expectEvents({ userWordId: secondWord.id, count: 1 });
 
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 1, wordsToUnlock: 2, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 1, wordsToUnlock: 5, status: Status.Learning });
@@ -75,6 +97,10 @@ describe('user-word.service', () => {
 
       await moveUserWordToNextStep({ userId, userWordId: thirdWord.id });
 
+      await expectEvents({ userWordId: firstWord.id, count: 1 });
+      await expectEvents({ userWordId: secondWord.id, count: 1 });
+      await expectEvents({ userWordId: thirdWord.id, count: 1 });
+
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 1, wordsToUnlock: 1, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 1, wordsToUnlock: 4, status: Status.Learning });
       await expectUpdate({ userWordId: thirdWord.id, encounterCount: 1, wordsToUnlock: 7, status: Status.Learning });
@@ -83,6 +109,11 @@ describe('user-word.service', () => {
       expectNewWord(fourthWord);
 
       await moveUserWordToNextStep({ userId, userWordId: fourthWord.id });
+
+      await expectEvents({ userWordId: firstWord.id, count: 1 });
+      await expectEvents({ userWordId: secondWord.id, count: 1 });
+      await expectEvents({ userWordId: thirdWord.id, count: 1 });
+      await expectEvents({ userWordId: fourthWord.id, count: 1 });
 
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 1, wordsToUnlock: 0, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 1, wordsToUnlock: 3, status: Status.Learning });
@@ -94,6 +125,11 @@ describe('user-word.service', () => {
 
       await moveUserWordToNextStep({ userId, userWordId: firstWord.id });
 
+      await expectEvents({ userWordId: firstWord.id, count: 2 });
+      await expectEvents({ userWordId: secondWord.id, count: 1 });
+      await expectEvents({ userWordId: thirdWord.id, count: 1 });
+      await expectEvents({ userWordId: fourthWord.id, count: 1 });
+
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 2, wordsToUnlock: 11, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 1, wordsToUnlock: 2, status: Status.Learning });
       await expectUpdate({ userWordId: thirdWord.id, encounterCount: 1, wordsToUnlock: 5, status: Status.Learning });
@@ -103,6 +139,12 @@ describe('user-word.service', () => {
       expectNewWord(sixthWord);
 
       await moveUserWordToNextStep({ userId, userWordId: sixthWord.id });
+
+      await expectEvents({ userWordId: firstWord.id, count: 2 });
+      await expectEvents({ userWordId: secondWord.id, count: 1 });
+      await expectEvents({ userWordId: thirdWord.id, count: 1 });
+      await expectEvents({ userWordId: fourthWord.id, count: 1 });
+      await expectEvents({ userWordId: sixthWord.id, count: 1 });
 
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 2, wordsToUnlock: 10, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 1, wordsToUnlock: 1, status: Status.Learning });
@@ -115,6 +157,13 @@ describe('user-word.service', () => {
 
       await moveUserWordToNextStep({ userId, userWordId: seventhWord.id });
 
+      await expectEvents({ userWordId: firstWord.id, count: 2 });
+      await expectEvents({ userWordId: secondWord.id, count: 1 });
+      await expectEvents({ userWordId: thirdWord.id, count: 1 });
+      await expectEvents({ userWordId: fourthWord.id, count: 1 });
+      await expectEvents({ userWordId: sixthWord.id, count: 1 });
+      await expectEvents({ userWordId: seventhWord.id, count: 1 });
+
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 2, wordsToUnlock: 9, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 1, wordsToUnlock: 0, status: Status.Learning });
       await expectUpdate({ userWordId: thirdWord.id, encounterCount: 1, wordsToUnlock: 3, status: Status.Learning });
@@ -126,6 +175,13 @@ describe('user-word.service', () => {
       expect(eighthWord.id).toBe(secondWord.id);
 
       await moveUserWordToNextStep({ userId, userWordId: eighthWord.id });
+
+      await expectEvents({ userWordId: firstWord.id, count: 2 });
+      await expectEvents({ userWordId: secondWord.id, count: 2 });
+      await expectEvents({ userWordId: thirdWord.id, count: 1 });
+      await expectEvents({ userWordId: fourthWord.id, count: 1 });
+      await expectEvents({ userWordId: sixthWord.id, count: 1 });
+      await expectEvents({ userWordId: seventhWord.id, count: 1 });
 
       await expectUpdate({ userWordId: firstWord.id, encounterCount: 2, wordsToUnlock: 8, status: Status.Learning });
       await expectUpdate({ userWordId: secondWord.id, encounterCount: 2, wordsToUnlock: 17, status: Status.Learning });
@@ -144,6 +200,8 @@ describe('user-word.service', () => {
       expect(seventeenWord.id).toBe(firstWord.id);
 
       await moveUserWordToNextStep({ userId, userWordId: seventeenWord.id });
+
+      await expectEvents({ userWordId: seventeenWord.id, count: 3 });
 
       await expectUpdate({ userWordId: seventeenWord.id, encounterCount: 3, wordsToUnlock: 0, status: Status.Learned });
 
