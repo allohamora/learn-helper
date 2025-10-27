@@ -1,5 +1,5 @@
 import { getLearningWords, getUserWords, getWaitingWords } from '@/repositories/user-word.repository';
-import { createEvents } from '@/services/event.service';
+import { createEvents, getStatistics } from '@/services/event.service';
 import { moveUserWordToNextStep, getLearningTasks, setDiscoveryStatus } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
 import { EventType, Level, List, Status, TaskType } from '@/types/user-words.types';
@@ -93,5 +93,12 @@ export const server = {
       ),
     }),
     handler: auth(createEvents),
+  }),
+  getStatistics: defineAction({
+    input: z.object({
+      dateFrom: z.date().default(() => new Date(new Date().setDate(new Date().getDate() - 7))),
+      dateTo: z.date().default(() => new Date()),
+    }),
+    handler: auth(getStatistics),
   }),
 };
