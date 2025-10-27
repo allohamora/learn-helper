@@ -21,8 +21,6 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.23",
-    "@amplitude/analytics-browser": "^2.26.0",
-    "@amplitude/plugin-session-replay-browser": "^1.22.22",
     "@astrojs/db": "^0.18.0",
     "@clerk/astro": "^2.13.6",
     "@hookform/resolvers": "^5.2.2",

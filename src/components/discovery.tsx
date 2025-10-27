@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { WordDiscoveryCard } from '@/components/word-discovery-card';
 import { Status, type DiscoveryStatus } from '@/types/user-words.types';
 import { Loader } from './ui/loader';
-import { track } from '@amplitude/analytics-browser';
 import { Undo2 } from 'lucide-react';
 
 const HISTORY_LIMIT = 5;
@@ -38,8 +37,6 @@ export function Discovery() {
 
   const setDiscoveryStatus = useMutation({
     mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
-      track('word_status_update', data);
-
       return await actions.setDiscoveryStatus.orThrow(data);
     },
   });

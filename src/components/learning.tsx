@@ -24,7 +24,6 @@ import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
-import { track } from '@amplitude/analytics-browser';
 import { TextToWord } from './text-to-word';
 import { WordToOptions } from './word-to-options';
 import { useCreateEvents } from '@/hooks/use-create-events';
@@ -360,13 +359,6 @@ export const Learning: FC = () => {
         totalMistakes: Object.values(mistakes).reduce((a, b) => a + b, 0),
       },
     });
-
-    track('learning_session_complete', {
-      duration,
-      durationMinutes: Number((duration / 60000).toFixed(2)),
-      totalTasks: tasks.length,
-      totalMistakes: Object.values(mistakes).reduce((a, b) => a + b, 0),
-    });
   };
 
   const onPrev = () => {
@@ -399,12 +391,6 @@ export const Learning: FC = () => {
       data: {
         type: currentTask.type,
       },
-    });
-
-    track('word_learning_mistake', {
-      value: userWord.word.value,
-      partOfSpeech: userWord.word.partOfSpeech,
-      type: currentTask?.type,
     });
   };
 
