@@ -16,6 +16,7 @@ import {
   type TranslateEnglishSentenceTask,
   type SynonymToWordTask,
   type AntonymToWordTask,
+  EventType,
 } from '@/types/user-words.types';
 import { ShowcaseCard } from './showcase-card';
 import { PronunciationToWord } from './pronunciation-to-word';
@@ -26,6 +27,7 @@ import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
 import { TextToWord } from './text-to-word';
 import { WordToOptions } from './word-to-options';
+import { useCreateEvents } from '@/hooks/use-create-events';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 
@@ -270,6 +272,8 @@ export const Learning: FC = () => {
     },
   });
 
+  const { createEvent } = useCreateEvents();
+
   // to preserve the same task ids between re-renders
   const clientTasks = useMemo(() => {
     if (!getLearningWords.data) {
@@ -347,6 +351,16 @@ export const Learning: FC = () => {
     setIsFinished(true);
 
     const duration = Date.now() - startedAt.getTime();
+
+    createEvent({
+      type: EventType.LearningSessionCompleted,
+      data: {
+        duration,
+        totalTasks: tasks.length,
+        totalMistakes: Object.values(mistakes).reduce((a, b) => a + b, 0),
+      },
+    });
+
     track('learning_session_complete', {
       duration,
       durationMinutes: Number((duration / 60000).toFixed(2)),
@@ -378,6 +392,14 @@ export const Learning: FC = () => {
     if (!userWord) {
       throw new Error('User word is not found');
     }
+
+    createEvent({
+      type: EventType.LearningMistakeMade,
+      userWordId,
+      data: {
+        type: currentTask.type,
+      },
+    });
 
     track('word_learning_mistake', {
       value: userWord.word.value,

@@ -1,9 +1,7 @@
 import type { AuthParams } from '@/types/auth.types';
+import type { Transaction } from '@/types/db.types';
 import { Level, List, Status } from '@/types/user-words.types';
 import { db, UserWord, eq, sql, Word, and, asc, gte, inArray, desc } from 'astro:db';
-
-type Database = typeof db;
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0] | Database;
 
 const isUserWordsExists = async (userId: string) => {
   const res = await db.select().from(UserWord).where(eq(UserWord.userId, userId)).limit(1);
@@ -155,12 +153,11 @@ export const getLearningWords = async ({ userId, limit }: AuthParams<{ limit: nu
   return mapUserWords(result);
 };
 
-export const updateUserWordStatus = async ({
-  userId,
-  userWordId,
-  status,
-}: AuthParams<{ userWordId: number; status: Status }>) => {
-  await db
+export const updateUserWordStatus = async (
+  { userId, userWordId, status }: AuthParams<{ userWordId: number; status: Status }>,
+  tx: Transaction = db,
+) => {
+  await tx
     .update(UserWord)
     .set({ status, updatedAt: new Date() })
     .where(and(eq(UserWord.id, userWordId), eq(UserWord.userId, userId)));

@@ -20,6 +20,8 @@ export enum Status {
   Known = 'known', // user already knew the word
 }
 
+export type DiscoveryStatus = typeof Status.Learning | typeof Status.Known | typeof Status.Waiting;
+
 export type UserWord = { word: typeof db.Word.$inferSelect } & typeof db.UserWord.$inferSelect;
 
 export enum TaskType {
@@ -35,6 +37,41 @@ export enum TaskType {
   SynonymToWord = 'synonym-to-word',
   AntonymToWord = 'antonym-to-word',
 }
+
+export enum EventType {
+  DiscoveryWordStatusChanged = 'discovery-word-status-changed',
+  LearningSessionCompleted = 'learning-session-completed',
+  WordMovedToNextStep = 'word-moved-to-next-step',
+  LearningMistakeMade = 'learning-mistake-made',
+}
+
+export type EventBody =
+  | {
+      type: EventType.DiscoveryWordStatusChanged;
+      userWordId: number;
+      data: {
+        status: Status;
+      };
+    }
+  | {
+      type: EventType.LearningSessionCompleted;
+      data: {
+        duration: number; // in ms
+        totalTasks: number;
+        totalMistakes: number;
+      };
+    }
+  | {
+      type: EventType.WordMovedToNextStep;
+      userWordId: number;
+    }
+  | {
+      type: EventType.LearningMistakeMade;
+      userWordId: number;
+      data: {
+        type: TaskType;
+      };
+    };
 
 export type ToWordData = {
   id: number;

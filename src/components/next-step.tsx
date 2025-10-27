@@ -17,7 +17,7 @@ export const NextStep: FC<NextStepProps> = ({ userWordId }) => {
     mutationFn: async (data: { userWordId: number }) => {
       track('move_word_to_next_step', data);
 
-      return await actions.moveUserWordToNextStep(data);
+      return await actions.moveUserWordToNextStep.orThrow(data);
     },
     onError: () => {
       toast({

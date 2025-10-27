@@ -3,9 +3,10 @@ import {
   getMaxWordsToUnlock,
   getUserWordById,
   updateUserWord,
+  updateUserWordStatus,
 } from '@/repositories/user-word.repository';
 import type { AuthParams } from '@/types/auth.types';
-import { Status } from '@/types/user-words.types';
+import { EventType, Status, type DiscoveryStatus } from '@/types/user-words.types';
 import { db } from 'astro:db';
 import { generateObject } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
@@ -13,6 +14,7 @@ import { z } from 'zod';
 import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
+import { deleteDiscoveryWordStatusChangedEvents, insertEvent } from '@/repositories/event.repository';
 
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
@@ -22,6 +24,7 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
     const userWord = await getUserWordById(data, tx);
     const encounterCount = userWord.encounterCount + 1;
 
+    await insertEvent({ type: EventType.WordMovedToNextStep, ...data }, tx);
     await decreaseMaxWordsToUnlock(data, tx);
 
     if (encounterCount >= MAX_ENCOUNTER_COUNT) {
@@ -31,6 +34,26 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
 
       await updateUserWord({ ...data, wordsToUnlock: maxWordsToUnlock + REVIEW_AFTER_VALUE, encounterCount }, tx);
     }
+  });
+};
+
+export const setDiscoveryStatus = async (data: AuthParams<{ userWordId: number; status: DiscoveryStatus }>) => {
+  await db.transaction(async (tx) => {
+    if (data.status === Status.Waiting) {
+      await deleteDiscoveryWordStatusChangedEvents(data, tx);
+    } else {
+      await insertEvent(
+        {
+          type: EventType.DiscoveryWordStatusChanged,
+          userId: data.userId,
+          userWordId: data.userWordId,
+          data: { status: data.status },
+        },
+        tx,
+      );
+    }
+
+    await updateUserWordStatus(data, tx);
   });
 };
 

@@ -1,12 +1,8 @@
-import {
-  getLearningWords,
-  getUserWords,
-  getWaitingWords,
-  updateUserWordStatus,
-} from '@/repositories/user-word.repository';
-import { moveUserWordToNextStep, getLearningTasks } from '@/services/user-word.service';
+import { getLearningWords, getUserWords, getWaitingWords } from '@/repositories/user-word.repository';
+import { createEvents } from '@/services/event.service';
+import { moveUserWordToNextStep, getLearningTasks, setDiscoveryStatus } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
-import { Level, List, Status } from '@/types/user-words.types';
+import { EventType, Level, List, Status, TaskType } from '@/types/user-words.types';
 import { defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro:schema';
 
@@ -38,12 +34,12 @@ export const server = {
     }),
     handler: auth(getWaitingWords),
   }),
-  updateUserWordStatus: defineAction({
+  setDiscoveryStatus: defineAction({
     input: z.object({
       userWordId: z.number(),
-      status: z.nativeEnum(Status),
+      status: z.enum([Status.Known, Status.Learning, Status.Waiting]),
     }),
-    handler: auth(updateUserWordStatus),
+    handler: auth(setDiscoveryStatus),
   }),
   getLearningWords: defineAction({
     input: z.object({
@@ -62,5 +58,40 @@ export const server = {
       userWordId: z.number(),
     }),
     handler: auth(moveUserWordToNextStep),
+  }),
+  createEvents: defineAction({
+    input: z.object({
+      body: z.array(
+        z.union([
+          z.object({
+            type: z.literal(EventType.DiscoveryWordStatusChanged),
+            userWordId: z.number(),
+            data: z.object({
+              status: z.nativeEnum(Status),
+            }),
+          }),
+          z.object({
+            type: z.literal(EventType.LearningSessionCompleted),
+            data: z.object({
+              duration: z.number(), // in ms
+              totalTasks: z.number(),
+              totalMistakes: z.number(),
+            }),
+          }),
+          z.object({
+            type: z.literal(EventType.WordMovedToNextStep),
+            userWordId: z.number(),
+          }),
+          z.object({
+            type: z.literal(EventType.LearningMistakeMade),
+            userWordId: z.number(),
+            data: z.object({
+              type: z.nativeEnum(TaskType),
+            }),
+          }),
+        ]),
+      ),
+    }),
+    handler: auth(createEvents),
   }),
 };

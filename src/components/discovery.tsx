@@ -3,14 +3,12 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
 import { Button } from '@/components/ui/button';
 import { WordDiscoveryCard } from '@/components/word-discovery-card';
-import { Status } from '@/types/user-words.types';
+import { Status, type DiscoveryStatus } from '@/types/user-words.types';
 import { Loader } from './ui/loader';
 import { track } from '@amplitude/analytics-browser';
 import { Undo2 } from 'lucide-react';
 
 const HISTORY_LIMIT = 5;
-
-type DiscoveryStatus = typeof Status.Learning | typeof Status.Known | typeof Status.Waiting;
 
 export function Discovery() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -38,11 +36,11 @@ export function Discovery() {
   const total = wordsData?.total || 0;
   const remaining = total - handled;
 
-  const updateUserWordStatus = useMutation({
+  const setDiscoveryStatus = useMutation({
     mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
       track('word_status_update', data);
 
-      return await actions.updateUserWordStatus(data);
+      return await actions.setDiscoveryStatus.orThrow(data);
     },
   });
 
@@ -50,7 +48,7 @@ export function Discovery() {
     const currentWord = words[currentIndex];
     if (!currentWord) return;
 
-    await updateUserWordStatus.mutateAsync({
+    await setDiscoveryStatus.mutateAsync({
       userWordId: currentWord.id,
       status,
     });
@@ -69,7 +67,7 @@ export function Discovery() {
     const [lastUserWordId, ...rest] = history;
     if (!lastUserWordId) return;
 
-    await updateUserWordStatus.mutateAsync({
+    await setDiscoveryStatus.mutateAsync({
       userWordId: lastUserWordId,
       status: Status.Waiting,
     });
@@ -120,7 +118,7 @@ export function Discovery() {
             variant="outline"
             size="sm"
             className="gap-2"
-            disabled={history.length === 0 || updateUserWordStatus.isPending}
+            disabled={history.length === 0 || setDiscoveryStatus.isPending}
           >
             <Undo2 className="h-4 w-4" />
             Undo
@@ -134,7 +132,7 @@ export function Discovery() {
             onClick={() => void handle(Status.Known)}
             variant="destructive"
             className="h-12 flex-1 text-base"
-            disabled={updateUserWordStatus.isPending}
+            disabled={setDiscoveryStatus.isPending}
           >
             I Know This
           </Button>
@@ -142,7 +140,7 @@ export function Discovery() {
             onClick={() => void handle(Status.Learning)}
             variant="default"
             className="h-12 flex-1 text-base"
-            disabled={updateUserWordStatus.isPending}
+            disabled={setDiscoveryStatus.isPending}
           >
             Learn This
           </Button>
