@@ -39,8 +39,8 @@ describe('event.service', () => {
       const result = await getStatistics({ userId, dateFrom, dateTo });
 
       expect(result.typeStatistics).toEqual([]);
-      expect(result.durationStatistics).toEqual([]);
-      expect(result.discoveryStatistics).toEqual([]);
+      expect(result.durationPerDayStatistics).toEqual([]);
+      expect(result.discoveryPerDayStatistics).toEqual([]);
       expect(result.topMistakes).toEqual([]);
     });
 
@@ -78,12 +78,40 @@ describe('event.service', () => {
       expect(result.typeStatistics).toHaveLength(2);
       expect(result.typeStatistics).toContainEqual({
         type: EventType.LearningSessionCompleted,
+        duration: 8000,
         count: 2,
       });
       expect(result.typeStatistics).toContainEqual({
         type: EventType.LearningMistakeMade,
+        duration: null,
         count: 1,
       });
+    });
+
+    it('returns type statistics for all events regardless of date range', async () => {
+      const dateFrom = new Date('2025-01-15');
+      const dateTo = new Date('2025-01-20');
+
+      await db.insert(Event).values([
+        {
+          userId,
+          type: EventType.LearningSessionCompleted,
+          data: { duration: 5000, totalTasks: 10, totalMistakes: 2 },
+          createdAt: new Date('2025-01-10'), // Before range
+        },
+        {
+          userId,
+          type: EventType.LearningSessionCompleted,
+          data: { duration: 3000, totalTasks: 8, totalMistakes: 1 },
+          createdAt: new Date('2025-01-16'), // Within range
+        },
+      ]);
+
+      const result = await getStatistics({ userId, dateFrom, dateTo });
+
+      // Type statistics should include all events, not filtered by date
+      expect(result.typeStatistics).toHaveLength(1);
+      expect(result.typeStatistics.at(0)?.count).toBe(2);
     });
 
     it('returns duration statistics grouped by date', async () => {
@@ -113,23 +141,22 @@ describe('event.service', () => {
 
       const result = await getStatistics({ userId, dateFrom, dateTo });
 
-      expect(result.durationStatistics).toHaveLength(2);
+      expect(result.durationPerDayStatistics).toHaveLength(2);
 
-      const jan15Stats = result.durationStatistics.find((s) => s.date === '2025-01-15');
+      const jan15Stats = result.durationPerDayStatistics.find((s) => s.date === '2025-01-15');
       expect(jan15Stats).toBeDefined();
       expect(jan15Stats?.count).toBe(2);
       expect(jan15Stats?.duration).toBe(8000);
 
-      const jan16Stats = result.durationStatistics.find((s) => s.date === '2025-01-16');
+      const jan16Stats = result.durationPerDayStatistics.find((s) => s.date === '2025-01-16');
       expect(jan16Stats).toBeDefined();
       expect(jan16Stats?.count).toBe(1);
       expect(jan16Stats?.duration).toBe(4000);
     });
 
-    it('returns discovery statistics grouped by status', async () => {
+    it('returns discovery statistics grouped by status and date', async () => {
       const dateFrom = new Date('2025-01-01');
       const dateTo = new Date('2025-01-31');
-      const createdAt = new Date('2025-01-15');
 
       const userWord = getUserWord();
 
@@ -139,35 +166,39 @@ describe('event.service', () => {
           userWordId: userWord.id,
           type: EventType.DiscoveryWordStatusChanged,
           data: { status: Status.Learning },
-          createdAt,
+          createdAt: new Date('2025-01-15'),
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.DiscoveryWordStatusChanged,
           data: { status: Status.Learning },
-          createdAt,
+          createdAt: new Date('2025-01-15'),
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.DiscoveryWordStatusChanged,
           data: { status: Status.Known },
-          createdAt,
+          createdAt: new Date('2025-01-16'),
         },
       ]);
 
       const result = await getStatistics({ userId, dateFrom, dateTo });
 
-      expect(result.discoveryStatistics).toHaveLength(2);
-      expect(result.discoveryStatistics).toContainEqual({
-        status: Status.Learning,
-        count: 2,
-      });
-      expect(result.discoveryStatistics).toContainEqual({
-        status: Status.Known,
-        count: 1,
-      });
+      expect(result.discoveryPerDayStatistics).toHaveLength(2);
+
+      const jan15Learning = result.discoveryPerDayStatistics.filter(
+        (s) => s.date === '2025-01-15' && s.status === Status.Learning,
+      );
+      expect(jan15Learning).toHaveLength(1);
+      expect(jan15Learning[0]?.count).toBe(2);
+
+      const jan16Known = result.discoveryPerDayStatistics.filter(
+        (s) => s.date === '2025-01-16' && s.status === Status.Known,
+      );
+      expect(jan16Known).toHaveLength(1);
+      expect(jan16Known[0]?.count).toBe(1);
     });
 
     it('returns top mistakes with word details', async () => {
@@ -224,7 +255,44 @@ describe('event.service', () => {
       expect(exampleWordMistakes?.partOfSpeech).toBe(userWord2.word.partOfSpeech);
     });
 
-    it('filters events by date range correctly', async () => {
+    it('returns top mistakes regardless of date range', async () => {
+      const dateFrom = new Date('2025-01-15');
+      const dateTo = new Date('2025-01-20');
+
+      const userWord = getUserWord(0);
+
+      await db.insert(Event).values([
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.LearningMistakeMade,
+          data: { type: TaskType.WordToDefinition },
+          createdAt: new Date('2025-01-10'), // Before range
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.LearningMistakeMade,
+          data: { type: TaskType.DefinitionToWord },
+          createdAt: new Date('2025-01-16'), // Within range
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.LearningMistakeMade,
+          data: { type: TaskType.WordToTranslation },
+          createdAt: new Date('2025-01-25'), // After range
+        },
+      ]);
+
+      const result = await getStatistics({ userId, dateFrom, dateTo });
+
+      // Top mistakes should include all events, not filtered by date
+      expect(result.topMistakes).toHaveLength(1);
+      expect(result.topMistakes[0]?.count).toBe(3);
+    });
+
+    it('filters per-day events by date range correctly', async () => {
       const dateFrom = new Date('2025-01-15');
       const dateTo = new Date('2025-01-20');
 
@@ -251,10 +319,9 @@ describe('event.service', () => {
 
       const result = await getStatistics({ userId, dateFrom, dateTo });
 
-      expect(result.typeStatistics).toHaveLength(1);
-      expect(result.typeStatistics.at(0)?.count).toBe(1);
-      expect(result.durationStatistics).toHaveLength(1);
-      expect(result.durationStatistics.at(0)?.duration).toBe(3000);
+      // Per-day statistics should be filtered by date
+      expect(result.durationPerDayStatistics).toHaveLength(1);
+      expect(result.durationPerDayStatistics.at(0)?.duration).toBe(3000);
     });
 
     it('only returns statistics for the specified user', async () => {
@@ -323,13 +390,79 @@ describe('event.service', () => {
       const result = await getStatistics({ userId, dateFrom, dateTo });
 
       expect(result.typeStatistics).toBeDefined();
-      expect(result.durationStatistics).toBeDefined();
-      expect(result.discoveryStatistics).toBeDefined();
+      expect(result.durationPerDayStatistics).toBeDefined();
+      expect(result.discoveryPerDayStatistics).toBeDefined();
       expect(result.topMistakes).toBeDefined();
 
       expect(result.typeStatistics.length).toBeGreaterThan(0);
-      expect(result.discoveryStatistics.length).toBeGreaterThan(0);
+      expect(result.discoveryPerDayStatistics.length).toBeGreaterThan(0);
       expect(result.topMistakes.length).toBeGreaterThan(0);
+    });
+
+    it('handles multiple days of discovery statistics correctly', async () => {
+      const dateFrom = new Date('2025-01-01');
+      const dateTo = new Date('2025-01-31');
+
+      const userWord = getUserWord();
+
+      await db.insert(Event).values([
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.DiscoveryWordStatusChanged,
+          data: { status: Status.Known },
+          createdAt: new Date('2025-01-15'),
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.DiscoveryWordStatusChanged,
+          data: { status: Status.Learning },
+          createdAt: new Date('2025-01-15'),
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.DiscoveryWordStatusChanged,
+          data: { status: Status.Known },
+          createdAt: new Date('2025-01-16'),
+        },
+      ]);
+
+      const result = await getStatistics({ userId, dateFrom, dateTo });
+
+      expect(result.discoveryPerDayStatistics).toHaveLength(3);
+
+      // Check each status/date combination
+      const results = result.discoveryPerDayStatistics;
+      expect(results.filter((r) => r.date === '2025-01-15' && r.status === Status.Known)).toHaveLength(1);
+      expect(results.filter((r) => r.date === '2025-01-15' && r.status === Status.Learning)).toHaveLength(1);
+      expect(results.filter((r) => r.date === '2025-01-16' && r.status === Status.Known)).toHaveLength(1);
+    });
+
+    it('limits top mistakes to 20 results', async () => {
+      const dateFrom = new Date('2025-01-01');
+      const dateTo = new Date('2025-01-31');
+      const createdAt = new Date('2025-01-15');
+
+      // Create events for all available user words (5)
+      const insertPromises = userWords.map((userWord) =>
+        db.insert(Event).values({
+          userId,
+          userWordId: userWord.id,
+          type: EventType.LearningMistakeMade,
+          data: { type: TaskType.WordToDefinition },
+          createdAt,
+        }),
+      );
+
+      await Promise.all(insertPromises);
+
+      const result = await getStatistics({ userId, dateFrom, dateTo });
+
+      // Should return all 5, but verify the limit would work with more
+      expect(result.topMistakes.length).toBeLessThanOrEqual(20);
+      expect(result.topMistakes).toHaveLength(5);
     });
   });
 });

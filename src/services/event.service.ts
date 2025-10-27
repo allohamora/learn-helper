@@ -1,5 +1,6 @@
 import {
-  getDiscoveryStatistics,
+  getDiscoveryPerDayStatistics,
+  getDurationPerDayStatistics,
   getDurationStatistics,
   getTopMistakes,
   getTypeStatistics,
@@ -18,17 +19,17 @@ export const createEvents = async (input: AuthParams<{ body: EventBody[] }>) => 
 };
 
 export const getStatistics = async (data: AuthParams<{ dateFrom: Date; dateTo: Date }>) => {
-  const [typeStatistics, durationStatistics, discoveryStatistics, topMistakes] = await Promise.all([
+  const [typeStatistics, durationPerDayStatistics, discoveryPerDayStatistics, topMistakes] = await Promise.all([
     getTypeStatistics(data),
-    getDurationStatistics(data),
-    getDiscoveryStatistics(data),
+    getDurationPerDayStatistics(data),
+    getDiscoveryPerDayStatistics(data),
     getTopMistakes(data),
   ]);
 
   return {
     typeStatistics,
-    durationStatistics,
-    discoveryStatistics,
+    durationPerDayStatistics,
+    discoveryPerDayStatistics,
     topMistakes,
   };
 };

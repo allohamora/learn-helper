@@ -26,15 +26,28 @@ export const deleteDiscoveryWordStatusChangedEvents = async (
     );
 };
 
-export const getTypeStatistics = async ({ userId, dateFrom, dateTo }: AuthParams<{ dateFrom: Date; dateTo: Date }>) => {
+export const getTypeStatistics = async ({ userId }: AuthParams) => {
   return await db
-    .select({ count: sql<number>`count(*)`, type: Event.type })
+    .select({ count: sql<number>`count(*)`, duration: sql<number>`SUM(${Event.data}->>'duration')`, type: Event.type })
     .from(Event)
-    .where(and(eq(Event.userId, userId), and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo))))
+    .where(eq(Event.userId, userId))
     .groupBy(Event.type);
 };
 
-export const getDurationStatistics = async ({
+export const getDurationStatistics = async ({ userId }: AuthParams) => {
+  const [res] = await db
+    .select({ totalDuration: sql<number>`SUM(${Event.data}->>'duration')` })
+    .from(Event)
+    .where(and(eq(Event.userId, userId), eq(Event.type, EventType.LearningSessionCompleted)));
+
+  if (!res) {
+    throw new Error('Failed to get duration statistics');
+  }
+
+  return res.totalDuration;
+};
+
+export const getDurationPerDayStatistics = async ({
   userId,
   dateFrom,
   dateTo,
@@ -46,17 +59,27 @@ export const getDurationStatistics = async ({
       duration: sql<number>`SUM(${Event.data}->>'duration')`,
     })
     .from(Event)
-    .where(and(eq(Event.userId, userId), and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo))))
+    .where(
+      and(
+        eq(Event.userId, userId),
+        eq(Event.type, EventType.LearningSessionCompleted),
+        and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
+      ),
+    )
     .groupBy(Event.type, sql`date(${Event.createdAt})`);
 };
 
-export const getDiscoveryStatistics = async ({
+export const getDiscoveryPerDayStatistics = async ({
   userId,
   dateFrom,
   dateTo,
 }: AuthParams<{ dateFrom: Date; dateTo: Date }>) => {
   return await db
-    .select({ count: sql<number>`count(*)`, status: sql<DiscoveryStatus>`${Event.data}->>'status'` })
+    .select({
+      count: sql<number>`count(*)`,
+      date: sql<string>`date(${Event.createdAt})`,
+      status: sql<DiscoveryStatus>`${Event.data}->>'status'`,
+    })
     .from(Event)
     .where(
       and(
@@ -66,21 +89,14 @@ export const getDiscoveryStatistics = async ({
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
     )
-    .groupBy(sql`${Event.data}->>'status'`);
+    .groupBy(sql`${Event.data}->>'status'`, sql`date(${Event.createdAt})`);
 };
 
-export const getTopMistakes = async ({ userId, dateFrom, dateTo }: AuthParams<{ dateFrom: Date; dateTo: Date }>) => {
+export const getTopMistakes = async ({ userId }: AuthParams) => {
   return await db
     .select({ count: sql<number>`count(*)`, value: Word.value, partOfSpeech: Word.partOfSpeech })
     .from(Event)
-    .where(
-      and(
-        eq(Event.userId, userId),
-        isNotNull(Event.userWordId),
-        eq(Event.type, EventType.LearningMistakeMade),
-        and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
-      ),
-    )
+    .where(and(eq(Event.userId, userId), isNotNull(Event.userWordId), eq(Event.type, EventType.LearningMistakeMade)))
     .groupBy(Event.userWordId)
     .leftJoin(UserWord, eq(Event.userWordId, UserWord.id))
     .leftJoin(Word, eq(UserWord.wordId, Word.id))
