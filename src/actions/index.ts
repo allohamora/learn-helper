@@ -65,7 +65,7 @@ export const server = {
       body: z.array(
         z.union([
           z.object({
-            type: z.literal(EventType.DiscoveryWordStatusChanged),
+            type: z.literal(EventType.WordDiscovered),
             userWordId: z.number(),
             data: z.object({
               status: z.nativeEnum(Status),

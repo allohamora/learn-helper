@@ -1,7 +1,7 @@
 import type { Status, TaskType } from './user-words.types';
 
 export enum EventType {
-  DiscoveryWordStatusChanged = 'discovery-word-status-changed',
+  WordDiscovered = 'word-discovered',
   LearningSessionCompleted = 'learning-session-completed',
   WordMovedToNextStep = 'word-moved-to-next-step',
   LearningMistakeMade = 'learning-mistake-made',
@@ -9,7 +9,7 @@ export enum EventType {
 
 export type EventBody =
   | {
-      type: EventType.DiscoveryWordStatusChanged;
+      type: EventType.WordDiscovered;
       userWordId: number;
       data: {
         status: Status;

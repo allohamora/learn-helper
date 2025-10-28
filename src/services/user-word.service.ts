@@ -45,7 +45,7 @@ export const setDiscoveryStatus = async (data: AuthParams<{ userWordId: number; 
     } else {
       await insertEvent(
         {
-          type: EventType.DiscoveryWordStatusChanged,
+          type: EventType.WordDiscovered,
           userId: data.userId,
           userWordId: data.userWordId,
           data: { status: data.status },

@@ -12,19 +12,13 @@ export const insertEvent = async (data: AuthParams<EventBody>, tx: Transaction =
   await insertEvents([data], tx);
 };
 
-export const deleteDiscoveryWordStatusChangedEvents = async (
+export const deleteWordDiscoveredEvents = async (
   { userId, userWordId }: AuthParams<{ userWordId: number }>,
   tx: Transaction = db,
 ) => {
   await tx
     .delete(Event)
-    .where(
-      and(
-        eq(Event.userId, userId),
-        eq(Event.userWordId, userWordId),
-        eq(Event.type, EventType.DiscoveryWordStatusChanged),
-      ),
-    );
+    .where(and(eq(Event.userId, userId), eq(Event.userWordId, userWordId), eq(Event.type, EventType.WordDiscovered)));
 };
 
 export const getTypeStatistics = async ({ userId }: AuthParams) => {
@@ -73,7 +67,7 @@ export const getDiscoveryPerDayStatistics = async ({
       and(
         eq(Event.userId, userId),
         isNotNull(Event.userWordId),
-        eq(Event.type, EventType.DiscoveryWordStatusChanged),
+        eq(Event.type, EventType.WordDiscovered),
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
     )

@@ -13,14 +13,14 @@ import { Button } from './ui/button';
 import { Loader } from './ui/loader';
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  [EventType.DiscoveryWordStatusChanged]: 'Discovered',
+  [EventType.WordDiscovered]: 'Discovered',
   [EventType.LearningSessionCompleted]: 'Sessions',
   [EventType.WordMovedToNextStep]: 'Progressed',
   [EventType.LearningMistakeMade]: 'Mistakes',
 };
 
 const EVENT_TYPE_DESCRIPTIONS: Record<EventType, string> = {
-  [EventType.DiscoveryWordStatusChanged]: 'words categorized',
+  [EventType.WordDiscovered]: 'words categorized',
   [EventType.LearningSessionCompleted]: 'sessions completed',
   [EventType.WordMovedToNextStep]: 'words advanced',
   [EventType.LearningMistakeMade]: 'errors made',
@@ -55,7 +55,7 @@ type DiscoveryPerDayStatistics = StatisticsData['discoveryPerDayStatistics'];
 
 const buildTypeStatistics = (typeStatistics: TypeStatistics) => {
   const state = {
-    [EventType.DiscoveryWordStatusChanged]: 0,
+    [EventType.WordDiscovered]: 0,
     [EventType.LearningSessionCompleted]: 0,
     [EventType.WordMovedToNextStep]: 0,
     [EventType.LearningMistakeMade]: 0,
