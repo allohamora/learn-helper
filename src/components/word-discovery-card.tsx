@@ -24,14 +24,14 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
   };
 
   return (
-    <Card className="flex h-64 flex-col gap-4 bg-card shadow-lg md:h-72 md:gap-6">
+    <Card className="flex h-64 flex-col gap-4 bg-card py-4 shadow-lg md:h-72 md:gap-6 md:py-6">
       <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-xl leading-tight font-bold md:text-2xl">
               {userWord.word.value}
               {userWord.word.spelling && (
-                <span className="ml-2 text-sm font-normal text-muted-foreground md:text-base">
+                <span className="ml-2 text-base font-normal text-muted-foreground md:text-lg">
                   ({userWord.word.spelling})
                 </span>
               )}
@@ -47,7 +47,7 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
                 size="sm"
                 onClick={handlePlayPronunciation}
                 disabled={isPlaying}
-                className="h-9 w-9 shrink-0 p-0 md:h-8 md:w-8"
+                className="h-8 w-8 shrink-0 p-0"
                 title="Play pronunciation"
               >
                 <Volume2 className={cn('h-4 w-4', { 'animate-pulse': isPlaying })} />
@@ -59,7 +59,7 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
                 variant="ghost"
                 size="sm"
                 asChild
-                className="h-9 w-9 shrink-0 p-0 md:h-8 md:w-8"
+                className="h-8 w-8 shrink-0 p-0"
                 title="View in Oxford Dictionary"
               >
                 <a href={userWord.word.link} target="_blank" rel="noopener noreferrer">
@@ -86,7 +86,7 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
       </CardHeader>
 
       <CardContent className="flex flex-1 items-center justify-center px-4 md:px-6">
-        <p className="text-center text-base leading-relaxed text-foreground md:text-lg">{userWord.word.definition}</p>
+        <p className="text-center leading-relaxed text-foreground md:text-lg">{userWord.word.definition}</p>
       </CardContent>
     </Card>
   );
