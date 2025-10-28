@@ -34,19 +34,6 @@ export const getTypeStatistics = async ({ userId }: AuthParams) => {
     .groupBy(Event.type);
 };
 
-export const getDurationStatistics = async ({ userId }: AuthParams) => {
-  const [res] = await db
-    .select({ totalDuration: sql<number>`SUM(${Event.data}->>'duration')` })
-    .from(Event)
-    .where(and(eq(Event.userId, userId), eq(Event.type, EventType.LearningSessionCompleted)));
-
-  if (!res) {
-    throw new Error('Failed to get duration statistics');
-  }
-
-  return res.totalDuration;
-};
-
 export const getDurationPerDayStatistics = async ({
   userId,
   dateFrom,

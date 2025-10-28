@@ -1,7 +1,6 @@
 import {
   getDiscoveryPerDayStatistics,
   getDurationPerDayStatistics,
-  getDurationStatistics,
   getTopMistakes,
   getTypeStatistics,
   insertEvents,
