@@ -67,19 +67,19 @@ export const UserWords: FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {data && (
-        <div className="flex flex-col gap-6 rounded-lg p-4 sm:flex-row">
+        <div className="flex flex-row justify-center gap-4 rounded-lg sm:gap-6 md:justify-start md:p-4">
           <div className="text-center sm:text-left">
-            <div className="text-3xl font-bold text-foreground">{totalWords}</div>
-            <div className="text-sm text-muted-foreground">total words</div>
+            <div className="text-2xl font-bold text-foreground md:text-3xl">{totalWords}</div>
+            <div className="text-xs text-muted-foreground md:text-sm">total words</div>
           </div>
           {!status && (
             <div className="text-center sm:text-left">
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-green-600 md:text-3xl">
                 {totalWords > 0 ? Math.round(((totalWords - learningWords) / totalWords) * 100) : 0}%
               </div>
-              <div className="text-sm text-muted-foreground">progress</div>
+              <div className="text-xs text-muted-foreground md:text-sm">progress</div>
             </div>
           )}
         </div>
@@ -97,7 +97,7 @@ export const UserWords: FC = () => {
           )}
         </div>
 
-        <TabsContent value={List.Oxford5000Words} className="mt-6">
+        <TabsContent value={List.Oxford5000Words} className="mt-4 md:mt-6">
           <WordsTable
             data={allWords}
             isLoading={isLoading}
@@ -108,7 +108,7 @@ export const UserWords: FC = () => {
           />
         </TabsContent>
 
-        <TabsContent value={List.OxfordPhraseList} className="mt-6">
+        <TabsContent value={List.OxfordPhraseList} className="mt-4 md:mt-6">
           <WordsTable
             data={allWords}
             isLoading={isLoading}
