@@ -26,16 +26,16 @@ const STATUSES: { value: Status; label: string }[] = [
 
 export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, status, onLevelChange, onStatusChange }) => {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
       <div className="flex items-center gap-2">
-        <label htmlFor="level-filter" className="text-sm font-medium">
+        <label htmlFor="level-filter" className="shrink-0 text-xs font-medium sm:text-sm">
           Level:
         </label>
         <Select
           value={level || 'all'}
           onValueChange={(value) => onLevelChange(value === 'all' ? undefined : (value as Level))}
         >
-          <SelectTrigger id="level-filter" className="w-[200px]">
+          <SelectTrigger id="level-filter" className="w-full sm:w-[200px]">
             <SelectValue placeholder="All levels" />
           </SelectTrigger>
           <SelectContent>
@@ -50,14 +50,14 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, status, onL
       </div>
 
       <div className="flex items-center gap-2">
-        <label htmlFor="status-filter" className="text-sm font-medium">
+        <label htmlFor="status-filter" className="shrink-0 text-xs font-medium sm:text-sm">
           Status:
         </label>
         <Select
           value={status || 'all'}
           onValueChange={(value) => onStatusChange(value === 'all' ? undefined : (value as Status))}
         >
-          <SelectTrigger id="status-filter" className="w-[180px]">
+          <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>

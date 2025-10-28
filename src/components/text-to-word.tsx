@@ -13,7 +13,7 @@ type TextToWordProps = {
 export const TextToWord: FC<TextToWordProps> = ({ data: { text, ...data }, ...props }) => {
   return (
     <ToWord data={data} {...props}>
-      <p className="text-xl leading-relaxed font-normal">{text}</p>
+      <p className="text-lg leading-relaxed font-normal md:text-xl">{text}</p>
     </ToWord>
   );
 };

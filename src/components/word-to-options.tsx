@@ -28,11 +28,13 @@ export const WordToOptions: FC<WordToOptionsProps> = ({ data, ...props }) => {
 
   return (
     <ToOptions data={data} {...props}>
-      <div className="space-y-4">
+      <div className="space-y-2 md:space-y-4">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-3xl leading-tight font-bold">
+          <CardTitle className="text-xl leading-tight font-bold md:text-3xl">
             {data.value}
-            {data.spelling && <span className="ml-2 text-lg font-normal text-muted-foreground">({data.spelling})</span>}
+            {data.spelling && (
+              <span className="ml-2 text-base font-normal text-muted-foreground md:text-lg">({data.spelling})</span>
+            )}
           </CardTitle>
 
           <div className="flex items-center gap-1">

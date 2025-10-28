@@ -80,17 +80,19 @@ export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, da
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">{title}</h2>
-        <p className="text-muted-foreground">{subtitle}</p>
+      <div className="mb-4 text-center md:mb-6">
+        <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
-      <Card className="mb-6 bg-card shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex min-h-[120px] items-center justify-center text-center">{children}</CardTitle>
+      <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
+        <CardHeader className="px-4 md:px-6">
+          <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
+            {children}
+          </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 px-4 md:px-6">
           <div className="space-y-4">
             <div className="relative">
               <Input
@@ -100,7 +102,7 @@ export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, da
                 onKeyDown={handleKeyPress}
                 placeholder="Type the correct word..."
                 className={cn(
-                  'h-12 text-lg',
+                  'h-12 text-base md:text-lg',
                   isChecked &&
                     'focus-visible:border focus-visible:ring-0 pointer-events-none cursor-not-allowed opacity-50',
                   isChecked && isCorrect && 'focus-visible:border-green-500 border-green-500 bg-green-50',

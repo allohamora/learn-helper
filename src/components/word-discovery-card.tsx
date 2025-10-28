@@ -24,21 +24,23 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
   };
 
   return (
-    <Card className="flex h-72 flex-col bg-card shadow-lg">
-      <CardHeader className="space-y-2 pb-4">
+    <Card className="flex h-64 flex-col gap-4 bg-card py-4 shadow-lg md:h-72 md:gap-6 md:py-6">
+      <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-2xl leading-tight font-bold">
+            <CardTitle className="text-xl leading-tight font-bold md:text-2xl">
               {userWord.word.value}
               {userWord.word.spelling && (
-                <span className="ml-2 text-base font-normal text-muted-foreground">({userWord.word.spelling})</span>
+                <span className="ml-2 text-base font-normal text-muted-foreground md:text-lg">
+                  ({userWord.word.spelling})
+                </span>
               )}
             </CardTitle>
 
             <div className="mt-1 text-sm text-muted-foreground">{userWord.word.uaTranslation}</div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {userWord.word.pronunciation && (
               <Button
                 variant="ghost"
@@ -83,8 +85,8 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-1 items-center justify-center">
-        <p className="text-center text-lg leading-relaxed text-foreground">{userWord.word.definition}</p>
+      <CardContent className="flex flex-1 items-center justify-center px-4 md:px-6">
+        <p className="text-center leading-relaxed text-foreground md:text-lg">{userWord.word.definition}</p>
       </CardContent>
     </Card>
   );
