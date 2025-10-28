@@ -111,9 +111,9 @@ export function Discovery() {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <div className="mx-auto max-w-md">
-        <div className="mb-8 flex items-center justify-between text-sm">
+        <div className="mb-4 flex items-center justify-between text-sm md:mb-8">
           <p className="text-muted-foreground">Remaining words: {remaining}</p>
           <Button
             onClick={() => void undo()}
@@ -129,11 +129,11 @@ export function Discovery() {
 
         <WordDiscoveryCard userWord={currentWord} />
 
-        <div className="mt-8 flex gap-4">
+        <div className="mt-4 flex gap-3 md:mt-8 md:gap-4">
           <Button
             onClick={() => void handle(Status.Known)}
             variant="destructive"
-            className="h-12 flex-1 text-base"
+            className="h-11 flex-1 text-base md:h-12"
             disabled={updateUserWordStatus.isPending}
           >
             I Know This
@@ -141,7 +141,7 @@ export function Discovery() {
           <Button
             onClick={() => void handle(Status.Learning)}
             variant="default"
-            className="h-12 flex-1 text-base"
+            className="h-11 flex-1 text-base md:h-12"
             disabled={updateUserWordStatus.isPending}
           >
             Learn This
