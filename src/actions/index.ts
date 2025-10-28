@@ -2,7 +2,8 @@ import { getLearningWords, getUserWords, getWaitingWords } from '@/repositories/
 import { createEvents, getStatistics } from '@/services/event.service';
 import { moveUserWordToNextStep, getLearningTasks, setDiscoveryStatus } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
-import { EventType, Level, List, Status, TaskType } from '@/types/user-words.types';
+import { Level, List, Status, TaskType } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 import { defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro:schema';
 

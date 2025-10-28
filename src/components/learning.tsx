@@ -16,8 +16,8 @@ import {
   type TranslateEnglishSentenceTask,
   type SynonymToWordTask,
   type AntonymToWordTask,
-  EventType,
 } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
 import { PronunciationToWord } from './pronunciation-to-word';
 import { TranslateSentence } from './translate-sentence';

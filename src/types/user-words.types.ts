@@ -38,41 +38,6 @@ export enum TaskType {
   AntonymToWord = 'antonym-to-word',
 }
 
-export enum EventType {
-  DiscoveryWordStatusChanged = 'discovery-word-status-changed',
-  LearningSessionCompleted = 'learning-session-completed',
-  WordMovedToNextStep = 'word-moved-to-next-step',
-  LearningMistakeMade = 'learning-mistake-made',
-}
-
-export type EventBody =
-  | {
-      type: EventType.DiscoveryWordStatusChanged;
-      userWordId: number;
-      data: {
-        status: Status;
-      };
-    }
-  | {
-      type: EventType.LearningSessionCompleted;
-      data: {
-        duration: number; // in ms
-        totalTasks: number;
-        totalMistakes: number;
-      };
-    }
-  | {
-      type: EventType.WordMovedToNextStep;
-      userWordId: number;
-    }
-  | {
-      type: EventType.LearningMistakeMade;
-      userWordId: number;
-      data: {
-        type: TaskType;
-      };
-    };
-
 export type ToWordData = {
   id: number;
   word: string;

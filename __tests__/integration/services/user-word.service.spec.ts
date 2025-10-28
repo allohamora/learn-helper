@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { ensureUserWordsExists, getLearningWords, getUserWordById } from '@/repositories/user-word.repository';
 import { moveUserWordToNextStep } from '@/services/user-word.service';
-import { EventType, Status } from '@/types/user-words.types';
+import { Status } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 
 describe('user-word.service', () => {
   const userId = randomUUID();

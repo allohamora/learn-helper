@@ -1,4 +1,5 @@
-import { EventType, Level, List, Status } from '@/types/user-words.types';
+import { Level, List, Status } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 import { column, defineDb, defineTable, NOW } from 'astro:db';
 import type { UnionToTuple } from 'type-fest';
 

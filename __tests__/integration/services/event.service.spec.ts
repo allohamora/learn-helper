@@ -2,8 +2,9 @@ import { db, eq, Event, UserWord } from 'astro:db';
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { getStatistics } from '@/services/event.service';
-import { EventType, Status, TaskType, type UserWord as UserWordMapped } from '@/types/user-words.types';
+import { Status, TaskType, type UserWord as UserWordMapped } from '@/types/user-words.types';
 import { ensureUserWordsExists, getUserWords } from '@/repositories/user-word.repository';
+import { EventType } from '@/types/event.types';
 
 describe('event.service', () => {
   const userId = randomUUID();

@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { useMemo, type FC } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
-import { EventType, type DiscoveryStatus } from '@/types/user-words.types';
+import { type DiscoveryStatus } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 import { Button } from './ui/button';
 import { Loader } from './ui/loader';
 

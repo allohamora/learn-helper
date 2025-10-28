@@ -1,4 +1,4 @@
-import type { EventBody } from '@/types/user-words.types';
+import type { EventBody } from '@/types/event.types';
 import { useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
 
