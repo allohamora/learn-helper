@@ -9,6 +9,7 @@ import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status } from '@/types/user-words.types';
 import { defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro:schema';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 const auth = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
   return async (data: T, context: ActionAPIContext) => {
@@ -18,6 +19,23 @@ const auth = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
     }
 
     return await fn({ ...data, userId });
+  };
+};
+
+const rateLimit = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
+  const rateLimiter = new RateLimiterMemory({
+    points: 10,
+    duration: 60,
+  });
+
+  return async (data: AuthParams<T>) => {
+    try {
+      await rateLimiter.consume(data.userId);
+
+      return await fn(data);
+    } catch (error) {
+      throw new Error('Too many requests, please try again later.');
+    }
   };
 };
 
@@ -55,7 +73,7 @@ export const server = {
     input: z.object({
       limit: z.number().min(1).max(10).default(6),
     }),
-    handler: auth(getLearningTasks),
+    handler: auth(rateLimit(getLearningTasks)),
   }),
   moveUserWordToNextStep: defineAction({
     input: z.object({
