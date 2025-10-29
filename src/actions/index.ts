@@ -33,15 +33,16 @@ const rateLimit = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
 
   return async (data: AuthParams<T>) => {
     try {
+      // throws a plain object with metadata about the rate limit
       await rateLimiter.consume(data.userId);
-
-      return await fn(data);
-    } catch (error) {
+    } catch {
       throw new ActionError({
         code: 'TOO_MANY_REQUESTS',
         message: 'Too many requests, please try again later.',
       });
     }
+
+    return await fn(data);
   };
 };
 
