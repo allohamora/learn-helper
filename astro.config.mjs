@@ -13,6 +13,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
   env: {
+    validateSecrets: true,
     schema: {
       // just to have errors if these are missing
       PUBLIC_CLERK_PUBLISHABLE_KEY: envField.string({ context: 'client', access: 'public' }),
