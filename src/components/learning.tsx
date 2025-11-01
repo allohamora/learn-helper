@@ -213,8 +213,7 @@ export const Learning: FC = () => {
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [retryTasks, setRetryTasks] = useState<LearningTask[]>([]);
-
-  const startedAt = useMemo(() => new Date(), [idx]);
+  const [startedAt, setStartedAt] = useState(new Date());
 
   const getLearningWords = useQuery({
     queryKey: ['getLearningWords'],
@@ -318,6 +317,8 @@ export const Learning: FC = () => {
         duration,
       });
     }
+
+    setStartedAt(new Date());
   };
 
   const onNext = () => {
