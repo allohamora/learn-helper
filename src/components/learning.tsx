@@ -299,29 +299,31 @@ export const Learning: FC = () => {
 
   const currentTask = tasks[idx];
 
-  const onNext = () => {
+  const createTaskCompletedEvent = () => {
     // type-guard
     if (!currentTask) {
       throw new Error('Current task is not found');
     }
 
+    const duration = Date.now() - startedAt.getTime();
+    if (currentTask.type !== TaskType.Showcase) {
+      createEvent({
+        type: isRetryId(currentTask.id) ? EventType.RetryLearningTaskCompleted : EventType.LearningTaskCompleted,
+        duration,
+        taskType: currentTask.type,
+      });
+    } else {
+      createEvent({
+        type: EventType.ShowcaseTaskCompleted,
+        duration,
+      });
+    }
+  };
+
+  const onNext = () => {
     const nextIdx = idx + 1;
     if (nextIdx < tasks.length || getLearningTasks.isLoading) {
-      const duration = Date.now() - startedAt.getTime();
-
-      if (currentTask.type !== TaskType.Showcase) {
-        createEvent({
-          type: isRetryId(currentTask.id) ? EventType.RetryLearningTaskCompleted : EventType.LearningTaskCompleted,
-          duration,
-          taskType: currentTask.type,
-        });
-      } else {
-        createEvent({
-          type: EventType.ShowcaseTaskCompleted,
-          duration,
-        });
-      }
-
+      createTaskCompletedEvent();
       setIdx(nextIdx);
       return;
     }
