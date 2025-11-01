@@ -4,7 +4,7 @@ ssh pi@raspberrypi.local -t 'bash -i -c "
   git checkout master &&
   git pull &&
   npm ci &&
-  npm run push &&
   npm run build &&
+  npm run push &&
   pm2 restart learn-helper --update-env
 "'
