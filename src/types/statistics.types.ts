@@ -8,6 +8,7 @@ export type LearningPerDayStatistics = {
   date: string; // YYYY-MM-DD
   completedTasks: number;
   completedRetries: number;
+  completedShowcases: number;
   mistakesMade: number;
   durationMs: number;
 };
@@ -17,6 +18,8 @@ export type Statistics = {
     totalDiscoveredWords: number;
     totalMistakesMade: number;
     totalCompletedTasks: number;
+    totalRetriesCompleted: number;
+    totalShowcasesCompleted: number;
     totalWordsMovedToNextStep: number;
 
     totalLearningDurationMs: number;

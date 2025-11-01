@@ -307,14 +307,22 @@ export const Learning: FC = () => {
 
     const nextIdx = idx + 1;
     if (nextIdx < tasks.length || getLearningTasks.isLoading) {
-      createEvent({
-        type: EventType.LearningTaskCompleted,
-        data: {
-          duration: Date.now() - startedAt.getTime(),
-          taskType: currentTask.type,
-          isRetry: isRetryId(currentTask.id),
-        },
-      });
+      if (currentTask.type !== TaskType.Showcase) {
+        createEvent({
+          type: isRetryId(currentTask.id) ? EventType.RetryLearningTaskCompleted : EventType.LearningTaskCompleted,
+          data: {
+            duration: Date.now() - startedAt.getTime(),
+            taskType: currentTask.type,
+          },
+        });
+      } else {
+        createEvent({
+          type: EventType.ShowcaseTaskCompleted,
+          data: {
+            duration: Date.now() - startedAt.getTime(),
+          },
+        });
+      }
 
       setIdx(nextIdx);
       return;

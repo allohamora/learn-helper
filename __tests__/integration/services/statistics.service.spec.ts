@@ -41,6 +41,8 @@ describe('statistics.service', () => {
         totalDiscoveredWords: 0,
         totalMistakesMade: 0,
         totalCompletedTasks: 0,
+        totalRetriesCompleted: 0,
+        totalShowcasesCompleted: 0,
         totalWordsMovedToNextStep: 0,
         totalLearningDurationMs: 0,
         averageTimePerTaskMs: 0,
@@ -57,6 +59,7 @@ describe('statistics.service', () => {
       for (const day of result.learningPerDay) {
         expect(day.completedTasks).toBe(0);
         expect(day.completedRetries).toBe(0);
+        expect(day.completedShowcases).toBe(0);
         expect(day.mistakesMade).toBe(0);
         expect(day.durationMs).toBe(0);
       }
@@ -83,7 +86,7 @@ describe('statistics.service', () => {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 5000, isRetry: false, taskType: TaskType.WordToDefinition },
+          data: { duration: 5000, taskType: TaskType.WordToDefinition },
         },
         {
           userId,
@@ -112,8 +115,8 @@ describe('statistics.service', () => {
         {
           userId: otherUserId,
           userWordId: otherUserWord.id,
-          type: EventType.LearningTaskCompleted,
-          data: { duration: 3000, isRetry: true, taskType: TaskType.DefinitionToWord },
+          type: EventType.RetryLearningTaskCompleted,
+          data: { duration: 3000, taskType: TaskType.DefinitionToWord },
         },
         {
           userId: otherUserId,
@@ -149,6 +152,7 @@ describe('statistics.service', () => {
       expect(result.learningPerDay).toHaveLength(7);
       expect(result.learningPerDay.at(-1)?.completedTasks).toBe(1);
       expect(result.learningPerDay.at(-1)?.completedRetries).toBe(0);
+      expect(result.learningPerDay.at(-1)?.completedShowcases).toBe(0);
       expect(result.learningPerDay.at(-1)?.mistakesMade).toBe(1);
       expect(result.learningPerDay.at(-1)?.durationMs).toBe(5000);
 
@@ -205,13 +209,25 @@ describe('statistics.service', () => {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 5000, isRetry: false, taskType: TaskType.WordToDefinition },
+          data: { duration: 5000, taskType: TaskType.WordToDefinition },
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.ShowcaseTaskCompleted,
+          data: { duration: 1000, taskType: TaskType.Showcase },
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.ShowcaseTaskCompleted,
+          data: { duration: 1000, taskType: TaskType.Showcase },
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 3000, isRetry: false, taskType: TaskType.DefinitionToWord },
+          data: { duration: 3000, taskType: TaskType.DefinitionToWord },
         },
         {
           userId,
@@ -226,14 +242,14 @@ describe('statistics.service', () => {
         {
           userId,
           userWordId: userWord.id,
-          type: EventType.LearningTaskCompleted,
-          data: { duration: 5000, isRetry: true, taskType: TaskType.WordToTranslation },
+          type: EventType.RetryLearningTaskCompleted,
+          data: { duration: 5000, taskType: TaskType.WordToTranslation },
         },
         {
           userId,
           userWordId: userWord.id,
-          type: EventType.LearningTaskCompleted,
-          data: { duration: 1000, isRetry: true, taskType: TaskType.TranslationToWord },
+          type: EventType.RetryLearningTaskCompleted,
+          data: { duration: 1000, taskType: TaskType.TranslationToWord },
         },
       ]);
 
@@ -241,10 +257,12 @@ describe('statistics.service', () => {
       expect(result.general).toEqual({
         totalDiscoveredWords: 2,
         totalMistakesMade: 2,
-        totalCompletedTasks: 4,
+        totalCompletedTasks: 2,
+        totalRetriesCompleted: 2,
+        totalShowcasesCompleted: 2,
         totalWordsMovedToNextStep: 2,
-        totalLearningDurationMs: 14000,
-        averageTimePerTaskMs: 3500,
+        totalLearningDurationMs: 16000,
+        averageTimePerTaskMs: 4000,
       });
     });
 
@@ -266,7 +284,7 @@ describe('statistics.service', () => {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 5000, isRetry: false, taskType: TaskType.WordToDefinition },
+          data: { duration: 5000, taskType: TaskType.WordToDefinition },
           createdAt: today,
         },
 
@@ -281,7 +299,7 @@ describe('statistics.service', () => {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 3000, isRetry: false, taskType: TaskType.DefinitionToWord },
+          data: { duration: 3000, taskType: TaskType.DefinitionToWord },
           createdAt: outsideRangeDate,
         },
       ]);
@@ -370,28 +388,42 @@ describe('statistics.service', () => {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 5000, isRetry: false, taskType: TaskType.WordToDefinition },
+          data: { duration: 5000, taskType: TaskType.WordToDefinition },
           createdAt: today,
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 3000, isRetry: false, taskType: TaskType.DefinitionToWord },
+          data: { duration: 3000, taskType: TaskType.DefinitionToWord },
           createdAt: today,
         },
         {
           userId,
           userWordId: userWord.id,
-          type: EventType.LearningTaskCompleted,
-          data: { duration: 2000, isRetry: true, taskType: TaskType.WordToTranslation },
+          type: EventType.RetryLearningTaskCompleted,
+          data: { duration: 2000, taskType: TaskType.WordToTranslation },
           createdAt: today,
         },
         {
           userId,
           userWordId: userWord.id,
-          type: EventType.LearningTaskCompleted,
-          data: { duration: 1000, isRetry: true, taskType: TaskType.WordToTranslation },
+          type: EventType.RetryLearningTaskCompleted,
+          data: { duration: 1000, taskType: TaskType.WordToTranslation },
+          createdAt: today,
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.ShowcaseTaskCompleted,
+          data: { duration: 2000, taskType: TaskType.WordToTranslation },
+          createdAt: today,
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.ShowcaseTaskCompleted,
+          data: { duration: 1000, taskType: TaskType.WordToTranslation },
           createdAt: today,
         },
         {
@@ -412,7 +444,7 @@ describe('statistics.service', () => {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
-          data: { duration: 4000, isRetry: false, taskType: TaskType.TranslationToWord },
+          data: { duration: 4000, taskType: TaskType.TranslationToWord },
           createdAt: yesterday,
         },
         {
@@ -430,13 +462,15 @@ describe('statistics.service', () => {
       expect(todayStats).toBeDefined();
       expect(todayStats?.completedTasks).toBe(2);
       expect(todayStats?.completedRetries).toBe(2);
+      expect(todayStats?.completedShowcases).toBe(2);
       expect(todayStats?.mistakesMade).toBe(2);
-      expect(todayStats?.durationMs).toBe(11000);
+      expect(todayStats?.durationMs).toBe(14000);
 
       const yesterdayStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(yesterday));
       expect(yesterdayStats).toBeDefined();
       expect(yesterdayStats?.completedTasks).toBe(1);
       expect(yesterdayStats?.completedRetries).toBe(0);
+      expect(yesterdayStats?.completedShowcases).toBe(0);
       expect(yesterdayStats?.mistakesMade).toBe(1);
       expect(yesterdayStats?.durationMs).toBe(4000);
     });

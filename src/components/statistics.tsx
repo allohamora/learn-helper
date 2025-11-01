@@ -31,13 +31,17 @@ const learningChartConfig = {
     label: 'Retry Tasks',
     color: 'var(--chart-2)',
   },
+  completedShowcases: {
+    label: 'Showcase Tasks',
+    color: 'var(--chart-3)',
+  },
   mistakesMade: {
     label: 'Mistakes',
-    color: 'var(--chart-3)',
+    color: 'var(--chart-4)',
   },
   durationMin: {
     label: 'Duration (min)',
-    color: 'var(--chart-4)',
+    color: 'var(--chart-5)',
   },
 } satisfies ChartConfig;
 
@@ -66,6 +70,8 @@ export const Statistics: FC = () => {
     },
   });
 
+  console.log(data);
+
   if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center">
@@ -89,7 +95,7 @@ export const Statistics: FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="gap-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
@@ -125,8 +131,30 @@ export const Statistics: FC = () => {
 
         <Card className="gap-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Words Progressed</CardTitle>
+            <CardTitle className="text-sm font-medium">Retries Completed</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{general.totalRetriesCompleted.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">retry tasks finished</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Showcases Completed</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{general.totalShowcasesCompleted.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">showcase tasks finished</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Words Progressed</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{general.totalWordsMovedToNextStep.toLocaleString()}</div>
@@ -227,7 +255,7 @@ export const Statistics: FC = () => {
               </Badge>
             </div>
             <CardDescription className="text-sm">
-              Daily tasks completed, retries, mistakes made, and time spent
+              Daily tasks completed, retries, showcases, mistakes made, and time spent
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
@@ -248,6 +276,10 @@ export const Statistics: FC = () => {
                   <linearGradient id="fillRetries" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-completedRetries)" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="var(--color-completedRetries)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillShowcases" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-completedShowcases)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-completedShowcases)" stopOpacity={0.05} />
                   </linearGradient>
                   <linearGradient id="fillMistakes" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-mistakesMade)" stopOpacity={0.3} />
@@ -276,6 +308,15 @@ export const Statistics: FC = () => {
                   type="monotone"
                   fill="url(#fillRetries)"
                   stroke="var(--color-completedRetries)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="completedShowcases"
+                  type="monotone"
+                  fill="url(#fillShowcases)"
+                  stroke="var(--color-completedShowcases)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}

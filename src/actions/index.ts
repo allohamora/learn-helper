@@ -105,11 +105,16 @@ export const server = {
             }),
           }),
           z.object({
-            type: z.literal(EventType.LearningTaskCompleted),
+            type: z.enum([EventType.LearningTaskCompleted, EventType.RetryLearningTaskCompleted]),
             data: z.object({
               duration: z.number(),
               taskType: z.nativeEnum(TaskType),
-              isRetry: z.boolean(),
+            }),
+          }),
+          z.object({
+            type: z.literal(EventType.ShowcaseTaskCompleted),
+            data: z.object({
+              duration: z.number(),
             }),
           }),
           z.object({

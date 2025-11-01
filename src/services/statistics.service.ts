@@ -15,6 +15,8 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalDiscoveredWords: 0,
     totalMistakesMade: 0,
     totalCompletedTasks: 0,
+    totalRetriesCompleted: 0,
+    totalShowcasesCompleted: 0,
     totalWordsMovedToNextStep: 0,
 
     totalLearningDurationMs: 0,
@@ -33,8 +35,16 @@ const getGeneralStatistics = async (data: AuthParams) => {
         continue;
       case EventType.LearningTaskCompleted:
         result.totalCompletedTasks = item.count;
-        result.totalLearningDurationMs = item.duration;
-        result.averageTimePerTaskMs = Math.round(result.totalLearningDurationMs / result.totalCompletedTasks);
+        result.totalLearningDurationMs += item.duration;
+        result.averageTimePerTaskMs = Math.round(item.duration / item.count);
+        continue;
+      case EventType.ShowcaseTaskCompleted:
+        result.totalShowcasesCompleted = item.count;
+        result.totalLearningDurationMs += item.duration;
+        continue;
+      case EventType.RetryLearningTaskCompleted:
+        result.totalRetriesCompleted = item.count;
+        result.totalLearningDurationMs += item.duration;
         continue;
       case EventType.WordMovedToNextStep:
         result.totalWordsMovedToNextStep = item.count;
@@ -95,6 +105,7 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
         date,
         completedTasks: 0,
         completedRetries: 0,
+        completedShowcases: 0,
         mistakesMade: 0,
         durationMs: 0,
       },
@@ -111,12 +122,15 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
 
     switch (item.type) {
       case EventType.LearningTaskCompleted:
-        if (item.isRetry) {
-          target.completedRetries = item.count;
-        } else {
-          target.completedTasks = item.count;
-        }
-
+        target.completedTasks = item.count;
+        target.durationMs += item.duration;
+        continue;
+      case EventType.ShowcaseTaskCompleted:
+        target.completedShowcases = item.count;
+        target.durationMs += item.duration;
+        continue;
+      case EventType.RetryLearningTaskCompleted:
+        target.completedRetries = item.count;
         target.durationMs += item.duration;
         continue;
       case EventType.LearningMistakeMade:
