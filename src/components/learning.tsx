@@ -307,20 +307,18 @@ export const Learning: FC = () => {
 
     const nextIdx = idx + 1;
     if (nextIdx < tasks.length || getLearningTasks.isLoading) {
+      const duration = Date.now() - startedAt.getTime();
+
       if (currentTask.type !== TaskType.Showcase) {
         createEvent({
           type: isRetryId(currentTask.id) ? EventType.RetryLearningTaskCompleted : EventType.LearningTaskCompleted,
-          data: {
-            duration: Date.now() - startedAt.getTime(),
-            taskType: currentTask.type,
-          },
+          duration,
+          taskType: currentTask.type,
         });
       } else {
         createEvent({
           type: EventType.ShowcaseTaskCompleted,
-          data: {
-            duration: Date.now() - startedAt.getTime(),
-          },
+          duration,
         });
       }
 
@@ -358,9 +356,7 @@ export const Learning: FC = () => {
     createEvent({
       type: EventType.LearningMistakeMade,
       userWordId,
-      data: {
-        taskType: currentTask.type,
-      },
+      taskType: currentTask.type,
     });
   };
 

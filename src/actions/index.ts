@@ -93,29 +93,21 @@ export const server = {
           z.object({
             type: z.literal(EventType.WordDiscovered),
             userWordId: z.number(),
-            data: z.object({
-              status: z.nativeEnum(Status),
-            }),
+            status: z.nativeEnum(Status),
           }),
           z.object({
             type: z.literal(EventType.LearningMistakeMade),
             userWordId: z.number(),
-            data: z.object({
-              taskType: z.nativeEnum(TaskType),
-            }),
+            taskType: z.nativeEnum(TaskType),
           }),
           z.object({
             type: z.enum([EventType.LearningTaskCompleted, EventType.RetryLearningTaskCompleted]),
-            data: z.object({
-              duration: z.number(),
-              taskType: z.nativeEnum(TaskType),
-            }),
+            duration: z.number(),
+            taskType: z.nativeEnum(TaskType),
           }),
           z.object({
             type: z.literal(EventType.ShowcaseTaskCompleted),
-            data: z.object({
-              duration: z.number(),
-            }),
+            duration: z.number(),
           }),
           z.object({
             type: z.literal(EventType.WordMovedToNextStep),

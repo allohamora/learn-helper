@@ -1,4 +1,4 @@
-import { Level, List, Status } from '@/types/user-words.types';
+import { Level, List, Status, TaskType } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { column, defineDb, defineTable, NOW } from 'astro:db';
 import type { UnionToTuple } from 'type-fest';
@@ -39,7 +39,15 @@ const Event = defineTable({
     userId: column.text(),
     userWordId: column.number({ optional: true, references: () => UserWord.columns.id }),
     type: column.text({ enum: Object.values(EventType) as UnionToTuple<(typeof EventType)[keyof typeof EventType]> }),
-    data: column.json({ optional: true }),
+    status: column.text({
+      enum: Object.values(Status) as UnionToTuple<(typeof Status)[keyof typeof Status]>,
+      optional: true,
+    }),
+    taskType: column.text({
+      enum: Object.values(TaskType) as UnionToTuple<(typeof TaskType)[keyof typeof TaskType]>,
+      optional: true,
+    }),
+    duration: column.number({ optional: true }), // in ms
     createdAt: column.date({ default: NOW }),
   },
 });

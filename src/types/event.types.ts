@@ -13,29 +13,21 @@ export type EventBody =
   | {
       type: EventType.WordDiscovered;
       userWordId: number;
-      data: {
-        status: Status;
-      };
+      status: Status;
     }
   | {
       type: EventType.LearningMistakeMade;
       userWordId: number;
-      data: {
-        taskType: TaskType;
-      };
+      taskType: TaskType;
     }
   | {
       type: EventType.ShowcaseTaskCompleted;
-      data: {
-        duration: number; // in ms
-      };
+      duration: number; // in ms
     }
   | {
       type: EventType.LearningTaskCompleted | EventType.RetryLearningTaskCompleted;
-      data: {
-        duration: number; // in ms
-        taskType: TaskType;
-      };
+      duration: number; // in ms
+      taskType: TaskType;
     }
   | {
       type: EventType.WordMovedToNextStep;

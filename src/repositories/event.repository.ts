@@ -23,7 +23,7 @@ export const deleteWordDiscoveredEvents = async (
 
 export const getGroupedByTypeEvents = async ({ userId }: AuthParams) => {
   return await db
-    .select({ count: sql<number>`count(*)`, duration: sql<number>`SUM(${Event.data}->>'duration')`, type: Event.type })
+    .select({ count: sql<number>`count(*)`, duration: sql<number>`SUM(${Event.duration})`, type: Event.type })
     .from(Event)
     .where(eq(Event.userId, userId))
     .groupBy(Event.type);
@@ -38,7 +38,7 @@ export const getGroupedByDayDiscoveryEvents = async ({
     .select({
       count: sql<number>`count(*)`,
       date: sql<string>`date(${Event.createdAt})`,
-      status: sql<DiscoveryStatus>`${Event.data}->>'status'`,
+      status: Event.status,
     })
     .from(Event)
     .where(
@@ -49,7 +49,7 @@ export const getGroupedByDayDiscoveryEvents = async ({
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
     )
-    .groupBy(sql`${Event.data}->>'status'`, sql`date(${Event.createdAt})`);
+    .groupBy(Event.status, sql`date(${Event.createdAt})`);
 };
 
 export const getGroupedByDayLearningEvents = async ({
@@ -62,7 +62,7 @@ export const getGroupedByDayLearningEvents = async ({
       type: Event.type,
       count: sql<number>`count(*)`,
       date: sql<string>`date(${Event.createdAt})`,
-      duration: sql<number>`SUM(${Event.data}->>'duration')`,
+      duration: sql<number>`SUM(${Event.duration})`,
     })
     .from(Event)
     .where(

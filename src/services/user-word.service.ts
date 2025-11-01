@@ -48,7 +48,7 @@ export const setDiscoveryStatus = async (data: AuthParams<{ userWordId: number; 
           type: EventType.WordDiscovered,
           userId: data.userId,
           userWordId: data.userWordId,
-          data: { status: data.status },
+          status: data.status,
         },
         tx,
       );
