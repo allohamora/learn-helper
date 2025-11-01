@@ -26,19 +26,19 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">Let&apos;s learn these words</h2>
-        <p className="text-muted-foreground">Take a moment to familiarize yourself with each word</p>
+      <div className="mb-4 text-center md:mb-6">
+        <h2 className="mb-2 text-lg font-semibold md:text-xl">Let&apos;s learn these words</h2>
+        <p className="text-sm text-muted-foreground">Take a moment to familiarize yourself with each word</p>
       </div>
 
-      <Card className="mb-6 flex min-h-[400px] flex-col bg-card shadow-lg">
-        <CardHeader className="space-y-2 pb-4">
+      <Card className="mb-4 flex min-h-64 flex-col gap-4 bg-card py-4 shadow-lg md:mb-6 md:min-h-[400px] md:gap-6 md:py-6">
+        <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-3xl leading-tight font-bold">
+              <CardTitle className="text-xl leading-tight font-bold md:text-3xl">
                 {data.value}
                 {data.spelling && (
-                  <span className="ml-2 text-lg font-normal text-muted-foreground">({data.spelling})</span>
+                  <span className="ml-2 text-base font-normal text-muted-foreground md:text-lg">({data.spelling})</span>
                 )}
               </CardTitle>
 
@@ -90,9 +90,9 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-1 items-center justify-center pt-4">
+        <CardContent className="flex flex-1 items-center justify-center px-4 md:px-6">
           <div className="text-center">
-            <p className="text-xl leading-relaxed text-foreground">{data.definition}</p>
+            <p className="leading-relaxed text-foreground md:text-xl">{data.definition}</p>
           </div>
         </CardContent>
       </Card>

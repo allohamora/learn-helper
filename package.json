@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev --remote",
+    "start": "node ./dist/server/entry.mjs",
     "build": "astro build --remote",
     "preview": "astro preview",
     "push": "astro db push --remote",
@@ -37,6 +38,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",
+    "rate-limiter-flexible": "^8.1.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-hook-form": "^7.65.0",

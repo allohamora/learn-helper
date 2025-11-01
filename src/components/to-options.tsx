@@ -36,15 +36,15 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 text-center">
-        <h2 className="mb-2 text-xl font-semibold">{title}</h2>
-        <p className="text-muted-foreground">{subtitle}</p>
+      <div className="mb-4 text-center md:mb-6">
+        <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
-      <Card className="mb-6 bg-card shadow-lg">
-        <CardHeader>{children}</CardHeader>
+      <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
+        <CardHeader className="px-4 md:px-6">{children}</CardHeader>
 
-        <CardContent>
+        <CardContent className="px-4 md:px-6">
           <div className="space-y-3">
             {data.options.map(({ isCorrect, value }, idx) => {
               const isAnswered = answers.has(idx);
@@ -64,7 +64,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
                   disabled={isAnswered || isFinished}
                 >
                   <div className="flex w-full items-start justify-between gap-3">
-                    <span className="flex-1 text-base leading-relaxed">{value}</span>
+                    <span className="flex-1 text-sm leading-relaxed md:text-base">{value}</span>
                   </div>
                 </Button>
               );
