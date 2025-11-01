@@ -70,8 +70,6 @@ export const Statistics: FC = () => {
     },
   });
 
-  console.log(data);
-
   if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center">
