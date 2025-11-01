@@ -38,6 +38,7 @@ export const getGroupedByDayDiscoveryEvents = async ({
     .select({
       count: sql<number>`count(*)`,
       date: sql<string>`date(${Event.createdAt})`,
+      duration: sql<number>`SUM(${Event.duration})`,
       status: Event.status,
     })
     .from(Event)

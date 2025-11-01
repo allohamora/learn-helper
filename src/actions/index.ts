@@ -65,6 +65,7 @@ export const server = {
     input: z.object({
       userWordId: z.number(),
       status: z.enum([Status.Known, Status.Learning, Status.Waiting]),
+      duration: z.number(), // in ms
     }),
     handler: auth(setDiscoveryStatus),
   }),
@@ -94,6 +95,7 @@ export const server = {
             type: z.literal(EventType.WordDiscovered),
             userWordId: z.number(),
             status: z.nativeEnum(Status),
+            duration: z.number(),
           }),
           z.object({
             type: z.literal(EventType.LearningMistakeMade),

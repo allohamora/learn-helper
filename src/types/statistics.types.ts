@@ -2,6 +2,7 @@ export type DiscoveringPerDayStatistics = {
   date: string; // YYYY-MM-DD
   learningCount: number;
   knownCount: number;
+  durationMs: number;
 };
 
 export type LearningPerDayStatistics = {
@@ -23,7 +24,10 @@ export type Statistics = {
     totalWordsMovedToNextStep: number;
 
     totalLearningDurationMs: number;
+    totalDiscoveringDurationMs: number;
+
     averageTimePerTaskMs: number;
+    averageTimePerDiscoveryMs: number;
   };
   discoveringPerDay: DiscoveringPerDayStatistics[];
   learningPerDay: LearningPerDayStatistics[];

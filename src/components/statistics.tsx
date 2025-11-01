@@ -20,6 +20,10 @@ const discoveringChartConfig = {
     label: 'Known',
     color: 'var(--chart-2)',
   },
+  durationMin: {
+    label: 'Duration (min)',
+    color: 'var(--chart-3)',
+  },
 } satisfies ChartConfig;
 
 const learningChartConfig = {
@@ -93,7 +97,7 @@ export const Statistics: FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="gap-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
@@ -159,9 +163,7 @@ export const Statistics: FC = () => {
             <p className="text-xs text-muted-foreground">words advanced</p>
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
         <Card className="gap-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Learning Time</CardTitle>
@@ -175,12 +177,36 @@ export const Statistics: FC = () => {
 
         <Card className="gap-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Discovery Time</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatDuration(general.totalDiscoveringDurationMs)}</div>
+            <p className="text-xs text-muted-foreground">time spent discovering</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Time Per Task</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatDuration(general.averageTimePerTaskMs)}</div>
             <p className="text-xs text-muted-foreground">average task duration</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Time Per Discovery</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatDuration(general.averageTimePerDiscoveryMs)}</div>
+            <p className="text-xs text-muted-foreground">average discovery duration</p>
           </CardContent>
         </Card>
       </div>
@@ -195,7 +221,9 @@ export const Statistics: FC = () => {
                 Last 7 days
               </Badge>
             </div>
-            <CardDescription className="text-sm">Daily progression of known and learning words</CardDescription>
+            <CardDescription className="text-sm">
+              Daily progression of known and learning words with time spent
+            </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
             <ChartContainer config={discoveringChartConfig}>
@@ -204,6 +232,7 @@ export const Statistics: FC = () => {
                 data={data.discoveringPerDay.map((item) => ({
                   ...item,
                   date: toDateWithoutYear(item.date),
+                  durationMin: Math.round(item.durationMs / 60000),
                 }))}
               >
                 <defs>
@@ -214,6 +243,10 @@ export const Statistics: FC = () => {
                   <linearGradient id="fillKnown" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-knownCount)" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="var(--color-knownCount)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillDiscoveryDuration" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-durationMin)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-durationMin)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
@@ -234,6 +267,15 @@ export const Statistics: FC = () => {
                   type="monotone"
                   fill="url(#fillKnown)"
                   stroke="var(--color-knownCount)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="durationMin"
+                  type="monotone"
+                  fill="url(#fillDiscoveryDuration)"
+                  stroke="var(--color-durationMin)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}

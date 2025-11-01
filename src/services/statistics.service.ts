@@ -20,7 +20,10 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalWordsMovedToNextStep: 0,
 
     totalLearningDurationMs: 0,
+    totalDiscoveringDurationMs: 0,
+
     averageTimePerTaskMs: 0,
+    averageTimePerDiscoveryMs: 0,
   };
 
   const groupedByTypeEvents = await getGroupedByTypeEvents(data);
@@ -29,6 +32,8 @@ const getGeneralStatistics = async (data: AuthParams) => {
     switch (item.type) {
       case EventType.WordDiscovered:
         result.totalDiscoveredWords = item.count;
+        result.totalDiscoveringDurationMs = item.duration;
+        result.averageTimePerDiscoveryMs = Math.round(item.duration / item.count);
         continue;
       case EventType.LearningMistakeMade:
         result.totalMistakesMade = item.count;
@@ -71,7 +76,7 @@ const getDates = ({ dateTo, dateFrom }: { dateTo: Date; dateFrom: Date }) => {
 
 const getDiscoveringPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
   const state = getDates(data).reduce(
-    (state, date) => ({ ...state, [date]: { date, learningCount: 0, knownCount: 0 } }),
+    (state, date) => ({ ...state, [date]: { date, learningCount: 0, knownCount: 0, durationMs: 0 } }),
     {} as Record<string, DiscoveringPerDayStatistics>,
   );
 
@@ -81,6 +86,8 @@ const getDiscoveringPerDayStatistics = async (data: AuthParams<{ dateTo: Date; d
     if (!target) {
       throw new Error(`Date ${item.date} is missing in the state`);
     }
+
+    target.durationMs += item.duration;
 
     switch (item.status) {
       case Status.Learning:

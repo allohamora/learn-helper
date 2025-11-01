@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ export function Discovery() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
+
+  const startedAt = useMemo(() => new Date(), [currentIndex]);
 
   const {
     data: wordsData,
@@ -37,7 +39,7 @@ export function Discovery() {
 
   const setDiscoveryStatus = useMutation({
     mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
-      return await actions.setDiscoveryStatus.orThrow(data);
+      return await actions.setDiscoveryStatus.orThrow({ ...data, duration: Date.now() - startedAt.getTime() });
     },
   });
 

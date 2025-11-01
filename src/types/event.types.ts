@@ -14,6 +14,7 @@ export type EventBody =
       type: EventType.WordDiscovered;
       userWordId: number;
       status: Status;
+      duration: number; // in ms
     }
   | {
       type: EventType.LearningMistakeMade;

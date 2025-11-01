@@ -45,7 +45,9 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 0,
         totalWordsMovedToNextStep: 0,
         totalLearningDurationMs: 0,
+        totalDiscoveringDurationMs: 0,
         averageTimePerTaskMs: 0,
+        averageTimePerDiscoveryMs: 0,
       });
       expect(result.discoveringPerDay).toHaveLength(7);
       expect(result.learningPerDay).toHaveLength(7);
@@ -54,6 +56,7 @@ describe('statistics.service', () => {
       for (const day of result.discoveringPerDay) {
         expect(day.learningCount).toBe(0);
         expect(day.knownCount).toBe(0);
+        expect(day.durationMs).toBe(0);
       }
 
       for (const day of result.learningPerDay) {
@@ -81,6 +84,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 3000,
         },
         {
           userId,
@@ -140,7 +144,9 @@ describe('statistics.service', () => {
       expect(result.general.totalMistakesMade).toBe(1);
       expect(result.general.totalWordsMovedToNextStep).toBe(1);
       expect(result.general.totalLearningDurationMs).toBe(5000);
+      expect(result.general.totalDiscoveringDurationMs).toBe(3000);
       expect(result.general.averageTimePerTaskMs).toBe(5000);
+      expect(result.general.averageTimePerDiscoveryMs).toBe(3000);
 
       expect(result.discoveringPerDay).toHaveLength(7);
       expect(result.discoveringPerDay.at(-1)?.learningCount).toBe(1);
@@ -188,12 +194,14 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 3000,
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Known,
+          duration: 2000,
         },
         {
           userId,
@@ -268,7 +276,9 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 2,
         totalWordsMovedToNextStep: 2,
         totalLearningDurationMs: 16000,
+        totalDiscoveringDurationMs: 5000,
         averageTimePerTaskMs: 4000,
+        averageTimePerDiscoveryMs: 2500,
       });
     });
 
@@ -284,6 +294,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 2000,
           createdAt: today,
         },
         {
@@ -300,6 +311,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 1000,
           createdAt: outsideRangeDate,
         },
         {
@@ -316,10 +328,13 @@ describe('statistics.service', () => {
       expect(result.general.totalDiscoveredWords).toBe(2);
       expect(result.general.totalCompletedTasks).toBe(2);
       expect(result.general.totalLearningDurationMs).toBe(8000);
+      expect(result.general.totalDiscoveringDurationMs).toBe(3000);
+      expect(result.general.averageTimePerDiscoveryMs).toBe(1500);
 
       const todayStats = result.discoveringPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayStats).toBeDefined();
       expect(todayStats?.learningCount).toBe(1);
+      expect(todayStats?.durationMs).toBe(2000);
 
       const todayLearningStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayLearningStats).toBeDefined();
@@ -341,6 +356,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 2000,
           createdAt: today,
         },
         {
@@ -348,6 +364,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 1000,
           createdAt: today,
         },
         {
@@ -355,6 +372,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Known,
+          duration: 1500,
           createdAt: yesterday,
         },
         {
@@ -362,6 +380,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Known,
+          duration: 500,
           createdAt: yesterday,
         },
         {
@@ -369,6 +388,7 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.WordDiscovered,
           status: Status.Learning,
+          duration: 3000,
           createdAt: yesterday,
         },
       ]);
@@ -379,11 +399,13 @@ describe('statistics.service', () => {
       expect(todayStats).toBeDefined();
       expect(todayStats?.learningCount).toBe(2);
       expect(todayStats?.knownCount).toBe(0);
+      expect(todayStats?.durationMs).toBe(3000);
 
       const yesterdayStats = result.discoveringPerDay.find((day) => day.date === toDateOnlyString(yesterday));
       expect(yesterdayStats).toBeDefined();
       expect(yesterdayStats?.learningCount).toBe(1);
       expect(yesterdayStats?.knownCount).toBe(2);
+      expect(yesterdayStats?.durationMs).toBe(5000);
     });
 
     it('returns correct learning per day statistics within date range', async () => {
