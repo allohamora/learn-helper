@@ -3,7 +3,7 @@ ssh pi@raspberrypi.local -t 'bash -i -c "
   set -e &&
   cd ~/projects/learn-helper &&
   git checkout master &&
-  git pull &&
+  git pull origin master &&
   npm ci &&
   npm run build &&
   npm run push &&
