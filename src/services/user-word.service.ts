@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
-import { deleteDiscoveryWordStatusChangedEvents, insertEvent } from '@/repositories/event.repository';
+import { deleteWordDiscoveredEvents, insertEvent } from '@/repositories/event.repository';
 
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
@@ -41,7 +41,7 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
 export const setDiscoveryStatus = async (data: AuthParams<{ userWordId: number; status: DiscoveryStatus }>) => {
   await db.transaction(async (tx) => {
     if (data.status === Status.Waiting) {
-      await deleteDiscoveryWordStatusChangedEvents(data, tx);
+      await deleteWordDiscoveredEvents(data, tx);
     } else {
       await insertEvent(
         {

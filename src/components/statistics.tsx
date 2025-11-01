@@ -1,152 +1,61 @@
-import { AlertCircle, Calendar, Clock } from 'lucide-react';
+import { Calendar, TrendingUp, Target, Award, Clock, BarChart3 } from 'lucide-react';
 import { CartesianGrid, XAxis, YAxis, Area, AreaChart } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
-import { useMemo, type FC } from 'react';
+import { type FC } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
-import { type DiscoveryStatus } from '@/types/user-words.types';
-import { EventType } from '@/types/event.types';
 import { Button } from './ui/button';
 import { Loader } from './ui/loader';
+import { toDateWithoutYear } from '@/utils/date.utils';
 
-const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  [EventType.WordDiscovered]: 'Discovered',
-  [EventType.LearningSessionCompleted]: 'Sessions',
-  [EventType.WordMovedToNextStep]: 'Progressed',
-  [EventType.LearningMistakeMade]: 'Mistakes',
-};
-
-const EVENT_TYPE_DESCRIPTIONS: Record<EventType, string> = {
-  [EventType.WordDiscovered]: 'words categorized',
-  [EventType.LearningSessionCompleted]: 'sessions completed',
-  [EventType.WordMovedToNextStep]: 'words advanced',
-  [EventType.LearningMistakeMade]: 'errors made',
-};
-
-const durationChartConfig = {
-  duration: {
-    label: 'Minutes',
+const discoveringChartConfig = {
+  learningCount: {
+    label: 'Learning',
     color: 'var(--chart-1)',
   },
-  count: {
-    label: 'Sessions',
+  knownCount: {
+    label: 'Known',
     color: 'var(--chart-2)',
   },
 } satisfies ChartConfig;
 
-const discoveryChartConfig = {
-  known: {
-    label: 'Known',
+const learningChartConfig = {
+  completedTasks: {
+    label: 'Tasks Completed',
+    color: 'var(--chart-1)',
+  },
+  completedRetries: {
+    label: 'Retry Tasks',
+    color: 'var(--chart-2)',
+  },
+  mistakesMade: {
+    label: 'Mistakes',
     color: 'var(--chart-3)',
   },
-  learning: {
-    label: 'Learning',
+  durationMin: {
+    label: 'Duration (min)',
     color: 'var(--chart-4)',
   },
 } satisfies ChartConfig;
 
-type StatisticsData = Awaited<ReturnType<typeof actions.getStatistics.orThrow>>;
-type TypeStatistics = StatisticsData['typeStatistics'];
-type DurationPerDayStatistics = StatisticsData['durationPerDayStatistics'];
-type DiscoveryPerDayStatistics = StatisticsData['discoveryPerDayStatistics'];
-
-const buildTypeStatistics = (typeStatistics: TypeStatistics) => {
-  const state = {
-    [EventType.WordDiscovered]: 0,
-    [EventType.LearningSessionCompleted]: 0,
-    [EventType.WordMovedToNextStep]: 0,
-    [EventType.LearningMistakeMade]: 0,
-  };
-
-  for (const stat of typeStatistics) {
-    state[stat.type as EventType] = stat.count;
-  }
-
-  return Object.entries(state).map(([type, count]) => ({
-    type,
-    count,
-  }));
-};
-
-const getDates = () => {
-  return Array.from({ length: 7 }).map((_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-
-    return date.toISOString().split('T')[0] as string;
-  });
-};
-
-const withoutYear = (dateString: string) => {
-  const [, month, day] = dateString.split('-');
-  return `${month}-${day}`;
-};
-
-const buildDurationPerDayStatistics = (durationPerDayStatistics: DurationPerDayStatistics) => {
-  const dates = getDates();
-  const dateMap: Record<string, { date: string; duration: number; count: number }> = {};
-
-  for (const date of dates) {
-    dateMap[date] = { date: withoutYear(date), duration: 0, count: 0 };
-  }
-
-  for (const { date, duration, count } of durationPerDayStatistics) {
-    dateMap[date] = {
-      date: withoutYear(date),
-      duration: Number((duration / 60000).toFixed(2)), // Convert ms to minutes
-      count,
-    };
-  }
-
-  return Object.values(dateMap);
-};
-
-const buildDiscoveryPerDayStatistics = (discoveryPerDayStatistics: DiscoveryPerDayStatistics) => {
-  const dates = getDates();
-  const dateMap: Record<string, { date: string } & { [key in DiscoveryStatus]: number }> = {};
-
-  for (const date of dates) {
-    dateMap[date] = { date: withoutYear(date), known: 0, learning: 0, waiting: 0 };
-  }
-
-  for (const { date, status, count } of discoveryPerDayStatistics) {
-    if (!dateMap[date]) {
-      throw new Error(`Unexpected date ${date} in discovery statistics`);
-    }
-
-    dateMap[date][status] = count;
-  }
-
-  return Object.values(dateMap);
-};
-
-const buildDurationStatistics = (typeStatistics: TypeStatistics) => {
-  const durationStat = typeStatistics.find((stat) => stat.type === EventType.LearningSessionCompleted);
-  const durationStatistics = durationStat ? durationStat.duration : 0;
-
-  const totalMinutes = Math.round(durationStatistics / 60000);
+const formatDuration = (milliseconds: number) => {
+  const totalMinutes = Math.round(milliseconds / 60000);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
+  const seconds = Math.floor((milliseconds % 60000) / 1000);
 
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-};
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
 
-const dataToStatistics = ({
-  typeStatistics,
-  durationPerDayStatistics,
-  discoveryPerDayStatistics,
-  topMistakes,
-}: Awaited<ReturnType<typeof actions.getStatistics.orThrow>>) => {
-  return {
-    typeStatistics: buildTypeStatistics(typeStatistics),
-    durationPerDayStatistics: buildDurationPerDayStatistics(durationPerDayStatistics),
-    discoveryPerDayStatistics: buildDiscoveryPerDayStatistics(discoveryPerDayStatistics),
-    durationStatistics: buildDurationStatistics(typeStatistics),
-    topMistakes,
-  };
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+
+  return `${seconds}s`;
 };
 
 export const Statistics: FC = () => {
@@ -176,47 +85,81 @@ export const Statistics: FC = () => {
     );
   }
 
-  const { typeStatistics, durationPerDayStatistics, discoveryPerDayStatistics, durationStatistics, topMistakes } =
-    dataToStatistics(data);
+  const { general, topMistakes } = data;
 
   return (
     <div className="space-y-8">
-      <div className="space-y-4">
-        <Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium">Total Learning Time</h3>
-                </div>
-                <div className="flex justify-center gap-2">
-                  <span className="text-4xl font-bold tracking-tight">{durationStatistics}</span>
-                </div>
-              </div>
-            </div>
+            <div className="text-2xl font-bold">{general.totalDiscoveredWords.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">words categorized</p>
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {typeStatistics.map((stat) => {
-            return (
-              <Card key={stat.type} className="gap-2">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>{EVENT_TYPE_LABELS[stat.type as EventType]}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold tracking-tight">{stat.count.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">{EVENT_TYPE_DESCRIPTIONS[stat.type as EventType]}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tasks Completed</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{general.totalCompletedTasks.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">learning tasks finished</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Mistakes Made</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{general.totalMistakesMade.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">errors to learn from</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Words Progressed</CardTitle>
+            <Award className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{general.totalWordsMovedToNextStep.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">words advanced</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Charts Grid */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Learning Time</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatDuration(general.totalLearningDurationMs)}</div>
+            <p className="text-xs text-muted-foreground">time spent learning</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Time Per Task</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatDuration(general.averageTimePerTaskMs)}</div>
+            <p className="text-xs text-muted-foreground">average task duration</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Discovery Statistics Chart */}
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-between">
@@ -229,16 +172,22 @@ export const Statistics: FC = () => {
             <CardDescription className="text-sm">Daily progression of known and learning words</CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
-            <ChartContainer config={discoveryChartConfig}>
-              <AreaChart accessibilityLayer data={discoveryPerDayStatistics}>
+            <ChartContainer config={discoveringChartConfig}>
+              <AreaChart
+                accessibilityLayer
+                data={data.discoveringPerDay.map((item) => ({
+                  ...item,
+                  date: toDateWithoutYear(item.date),
+                }))}
+              >
                 <defs>
-                  <linearGradient id="fillKnown" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-known)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--color-known)" stopOpacity={0.05} />
-                  </linearGradient>
                   <linearGradient id="fillLearning" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-learning)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--color-learning)" stopOpacity={0.05} />
+                    <stop offset="5%" stopColor="var(--color-learningCount)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-learningCount)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillKnown" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-knownCount)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-knownCount)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
@@ -246,19 +195,19 @@ export const Statistics: FC = () => {
                 <YAxis tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
                 <Area
-                  dataKey="known"
+                  dataKey="learningCount"
                   type="monotone"
-                  fill="url(#fillKnown)"
-                  stroke="var(--color-known)"
+                  fill="url(#fillLearning)"
+                  stroke="var(--color-learningCount)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
                 />
                 <Area
-                  dataKey="learning"
+                  dataKey="knownCount"
                   type="monotone"
-                  fill="url(#fillLearning)"
-                  stroke="var(--color-learning)"
+                  fill="url(#fillKnown)"
+                  stroke="var(--color-knownCount)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
@@ -268,7 +217,6 @@ export const Statistics: FC = () => {
           </CardContent>
         </Card>
 
-        {/* Duration Chart */}
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-between">
@@ -278,19 +226,36 @@ export const Statistics: FC = () => {
                 Last 7 days
               </Badge>
             </div>
-            <CardDescription className="text-sm">Daily sessions and total time spent learning</CardDescription>
+            <CardDescription className="text-sm">
+              Daily tasks completed, retries, mistakes made, and time spent
+            </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
-            <ChartContainer config={durationChartConfig}>
-              <AreaChart accessibilityLayer data={durationPerDayStatistics}>
+            <ChartContainer config={learningChartConfig}>
+              <AreaChart
+                accessibilityLayer
+                data={data.learningPerDay.map((item) => ({
+                  ...item,
+                  date: toDateWithoutYear(item.date),
+                  durationMin: Math.round(item.durationMs / 60000),
+                }))}
+              >
                 <defs>
-                  <linearGradient id="fillDuration" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-duration)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--color-duration)" stopOpacity={0.05} />
+                  <linearGradient id="fillTasks" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-completedTasks)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-completedTasks)" stopOpacity={0.05} />
                   </linearGradient>
-                  <linearGradient id="fillCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--color-count)" stopOpacity={0.05} />
+                  <linearGradient id="fillRetries" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-completedRetries)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-completedRetries)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillMistakes" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-mistakesMade)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-mistakesMade)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillDuration" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-durationMin)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-durationMin)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
@@ -298,19 +263,37 @@ export const Statistics: FC = () => {
                 <YAxis tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
                 <Area
-                  dataKey="duration"
+                  dataKey="completedTasks"
                   type="monotone"
-                  fill="url(#fillDuration)"
-                  stroke="var(--color-duration)"
+                  fill="url(#fillTasks)"
+                  stroke="var(--color-completedTasks)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
                 />
                 <Area
-                  dataKey="count"
+                  dataKey="completedRetries"
                   type="monotone"
-                  fill="url(#fillCount)"
-                  stroke="var(--color-count)"
+                  fill="url(#fillRetries)"
+                  stroke="var(--color-completedRetries)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="mistakesMade"
+                  type="monotone"
+                  fill="url(#fillMistakes)"
+                  stroke="var(--color-mistakesMade)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="durationMin"
+                  type="monotone"
+                  fill="url(#fillDuration)"
+                  stroke="var(--color-durationMin)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
@@ -332,48 +315,54 @@ export const Statistics: FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-muted/40">
-            <table className="w-full">
-              <thead className="bg-muted/30">
-                <tr className="border-b border-muted/40">
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                    Rank
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                    Word
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
-                    Mistakes
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-muted/40">
-                {topMistakes.map((mistake, index) => (
-                  <tr key={`${mistake.value}-${index}`} className="transition-colors hover:bg-muted/20">
-                    <td className="px-4 py-3">
-                      <Badge variant={index < 3 ? 'destructive' : 'secondary'} className="font-mono text-xs">
-                        #{index + 1}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-semibold">{mistake.value}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className="text-xs font-normal">
-                        {mistake.partOfSpeech}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="inline-flex items-center justify-center rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
-                        {mistake.count}
-                      </span>
-                    </td>
+          {topMistakes.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No mistakes recorded yet. Keep practicing!</p>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-lg border border-muted/40">
+              <table className="w-full">
+                <thead className="bg-muted/30">
+                  <tr className="border-b border-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Rank
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Word
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Mistakes
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-muted/40">
+                  {topMistakes.map((mistake, index) => (
+                    <tr key={`${mistake.value}-${index}`} className="transition-colors hover:bg-muted/20">
+                      <td className="px-4 py-3">
+                        <Badge variant={index < 3 ? 'destructive' : 'secondary'} className="font-mono text-xs">
+                          #{index + 1}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold">{mistake.value || 'Unknown'}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {mistake.partOfSpeech || 'Unknown'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center justify-center rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
+                          {mistake.count}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

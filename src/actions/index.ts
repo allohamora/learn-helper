@@ -1,5 +1,5 @@
 import { getLearningWords, getUserWords, getWaitingWords } from '@/repositories/user-word.repository';
-import { createEvents, getStatistics } from '@/services/event.service';
+import { createEvents } from '@/services/event.service';
 import { moveUserWordToNextStep, getLearningTasks, setDiscoveryStatus } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status, TaskType } from '@/types/user-words.types';
@@ -7,6 +7,7 @@ import { EventType } from '@/types/event.types';
 import { ActionError, defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro:schema';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { getStatistics } from '@/services/statistics.service';
 
 const auth = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
   return async (data: T, context: ActionAPIContext) => {
@@ -88,7 +89,7 @@ export const server = {
   createEvents: defineAction({
     input: z.object({
       body: z.array(
-        z.union([
+        z.discriminatedUnion('type', [
           z.object({
             type: z.literal(EventType.WordDiscovered),
             userWordId: z.number(),
@@ -97,23 +98,23 @@ export const server = {
             }),
           }),
           z.object({
-            type: z.literal(EventType.LearningSessionCompleted),
+            type: z.literal(EventType.LearningMistakeMade),
+            userWordId: z.number(),
             data: z.object({
-              duration: z.number(), // in ms
-              totalTasks: z.number(),
-              totalMistakes: z.number(),
+              taskType: z.nativeEnum(TaskType),
+            }),
+          }),
+          z.object({
+            type: z.literal(EventType.LearningTaskCompleted),
+            data: z.object({
+              duration: z.number(),
+              taskType: z.nativeEnum(TaskType),
+              isRetry: z.boolean(),
             }),
           }),
           z.object({
             type: z.literal(EventType.WordMovedToNextStep),
             userWordId: z.number(),
-          }),
-          z.object({
-            type: z.literal(EventType.LearningMistakeMade),
-            userWordId: z.number(),
-            data: z.object({
-              type: z.nativeEnum(TaskType),
-            }),
           }),
         ]),
       ),
@@ -121,10 +122,7 @@ export const server = {
     handler: auth(createEvents),
   }),
   getStatistics: defineAction({
-    input: z.object({
-      dateFrom: z.date().default(() => new Date(new Date().setDate(new Date().getDate() - 7))),
-      dateTo: z.date().default(() => new Date()),
-    }),
+    input: z.object({}),
     handler: auth(getStatistics),
   }),
 };

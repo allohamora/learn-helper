@@ -205,13 +205,16 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   ];
 };
 
+const getRetryId = () => `retry-${crypto.randomUUID()}`;
+const isRetryId = (id: string) => id.startsWith('retry-');
+
 export const Learning: FC = () => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [retryTasks, setRetryTasks] = useState<LearningTask[]>([]);
 
-  const startedAt = useMemo(() => new Date(), []);
+  const startedAt = useMemo(() => new Date(), [idx]);
 
   const getLearningWords = useQuery({
     queryKey: ['getLearningWords'],
@@ -297,24 +300,27 @@ export const Learning: FC = () => {
   const currentTask = tasks[idx];
 
   const onNext = () => {
+    // type-guard
+    if (!currentTask) {
+      throw new Error('Current task is not found');
+    }
+
     const nextIdx = idx + 1;
     if (nextIdx < tasks.length || getLearningTasks.isLoading) {
+      createEvent({
+        type: EventType.LearningTaskCompleted,
+        data: {
+          duration: Date.now() - startedAt.getTime(),
+          taskType: currentTask.type,
+          isRetry: isRetryId(currentTask.id),
+        },
+      });
+
       setIdx(nextIdx);
       return;
     }
 
     setIsFinished(true);
-
-    const duration = Date.now() - startedAt.getTime();
-
-    createEvent({
-      type: EventType.LearningSessionCompleted,
-      data: {
-        duration,
-        totalTasks: tasks.length,
-        totalMistakes: Object.values(mistakes).reduce((a, b) => a + b, 0),
-      },
-    });
   };
 
   const onPrev = () => {
@@ -334,7 +340,7 @@ export const Learning: FC = () => {
       throw new Error('Current task is not found');
     }
 
-    setRetryTasks([...retryTasks, { ...currentTask, id: crypto.randomUUID() }]);
+    setRetryTasks([...retryTasks, { ...currentTask, id: getRetryId() }]);
 
     const userWord = state[userWordId];
     if (!userWord) {
@@ -345,7 +351,7 @@ export const Learning: FC = () => {
       type: EventType.LearningMistakeMade,
       userWordId,
       data: {
-        type: currentTask.type,
+        taskType: currentTask.type,
       },
     });
   };
