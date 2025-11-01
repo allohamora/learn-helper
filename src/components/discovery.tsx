@@ -13,8 +13,7 @@ export function Discovery() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
-
-  const startedAt = useMemo(() => new Date(), [currentIndex]);
+  const [startedAt, setStartedAt] = useState(new Date());
 
   const {
     data: wordsData,
@@ -38,8 +37,8 @@ export function Discovery() {
   const remaining = total - handled;
 
   const setDiscoveryStatus = useMutation({
-    mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
-      return await actions.setDiscoveryStatus.orThrow({ ...data, duration: Date.now() - startedAt.getTime() });
+    mutationFn: async (data: { userWordId: number; status: DiscoveryStatus; duration: number }) => {
+      return await actions.setDiscoveryStatus.orThrow(data);
     },
   });
 
@@ -50,8 +49,10 @@ export function Discovery() {
     await setDiscoveryStatus.mutateAsync({
       userWordId: currentWord.id,
       status,
+      duration: Date.now() - startedAt.getTime(),
     });
 
+    setStartedAt(new Date());
     setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));
 
     if (currentIndex < words.length - 1) {
@@ -69,6 +70,7 @@ export function Discovery() {
     await setDiscoveryStatus.mutateAsync({
       userWordId: lastUserWordId,
       status: Status.Waiting,
+      duration: Date.now() - startedAt.getTime(),
     });
 
     setHistory(rest);
