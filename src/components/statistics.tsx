@@ -10,6 +10,7 @@ import { actions } from 'astro:actions';
 import { Button } from './ui/button';
 import { Loader } from './ui/loader';
 import { toDateWithoutYear } from '@/utils/date.utils';
+import { useMediaQuery } from 'usehooks-ts';
 
 const discoveringChartConfig = {
   learningCount: {
@@ -74,6 +75,8 @@ export const Statistics: FC = () => {
     },
   });
 
+  const isPhoneScreen = useMediaQuery('(max-width: 640px)');
+
   if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center">
@@ -96,69 +99,69 @@ export const Statistics: FC = () => {
   const { general, topMistakes } = data;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalDiscoveredWords.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">words categorized</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Tasks Completed</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalCompletedTasks.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">learning tasks finished</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Mistakes Made</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalMistakesMade.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">errors to learn from</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Retries Completed</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalRetriesCompleted.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">retry tasks finished</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Showcases Completed</CardTitle>
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalShowcasesCompleted.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">showcase tasks finished</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Words Progressed</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalWordsMovedToNextStep.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">words advanced</p>
           </CardContent>
@@ -166,54 +169,54 @@ export const Statistics: FC = () => {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Total Learning Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{formatDuration(general.totalLearningDurationMs)}</div>
             <p className="text-xs text-muted-foreground">time spent learning</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Total Discovery Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{formatDuration(general.totalDiscoveringDurationMs)}</div>
             <p className="text-xs text-muted-foreground">time spent discovering</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Average Time Per Task</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{formatDuration(general.averageTimePerTaskMs)}</div>
             <p className="text-xs text-muted-foreground">average task duration</p>
           </CardContent>
         </Card>
 
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Average Time Per Discovery</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{formatDuration(general.averageTimePerDiscoveryMs)}</div>
             <p className="text-xs text-muted-foreground">average discovery duration</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="space-y-1">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+        <Card className="py-4 md:py-6">
+          <CardHeader className="space-y-1 px-4 md:px-6">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Word Discovery</CardTitle>
               <Badge variant="secondary" className="font-normal">
@@ -225,7 +228,7 @@ export const Statistics: FC = () => {
               Daily progression of known and learning words with time spent
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="px-4 pt-2 md:px-6">
             <ChartContainer config={discoveringChartConfig}>
               <AreaChart
                 accessibilityLayer
@@ -250,8 +253,15 @@ export const Statistics: FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
-                <YAxis tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
+                <XAxis
+                  hide={isPhoneScreen}
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  className="text-xs"
+                />
+                <YAxis hide={isPhoneScreen} tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
                 <Area
                   dataKey="learningCount"
@@ -285,8 +295,8 @@ export const Statistics: FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="space-y-1">
+        <Card className="py-4 md:py-6">
+          <CardHeader className="space-y-1 px-4 md:px-6">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Learning Activity</CardTitle>
               <Badge variant="secondary" className="font-normal">
@@ -331,8 +341,15 @@ export const Statistics: FC = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
-                <YAxis tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
+                <XAxis
+                  hide={isPhoneScreen}
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  className="text-xs"
+                />
+                <YAxis hide={isPhoneScreen} tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
                 <Area
                   dataKey="completedTasks"
@@ -385,9 +402,8 @@ export const Statistics: FC = () => {
         </Card>
       </div>
 
-      {/* Top Mistakes Table */}
-      <Card className="border-muted/40">
-        <CardHeader className="space-y-1">
+      <Card className="border-muted/40 py-4 md:py-6">
+        <CardHeader className="space-y-1 px-4 md:px-6">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold">Most Challenging Words</CardTitle>
           </div>
@@ -395,13 +411,13 @@ export const Statistics: FC = () => {
             Words that need more practice based on mistake frequency
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden px-4 md:px-6">
           {topMistakes.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <p>No mistakes recorded yet. Keep practicing!</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-muted/40">
+            <div className="overflow-auto rounded-lg border border-muted/40">
               <table className="w-full">
                 <thead className="bg-muted/30">
                   <tr className="border-b border-muted/40">
