@@ -23,7 +23,7 @@ describe('statistics.service', () => {
 
   beforeEach(async () => {
     await ensureUserWordsExists(userId);
-    await db.update(UserWord).set({ status: Status.Learning });
+    await db.update(UserWord).set({ status: Status.Learning }).where(eq(UserWord.userId, userId));
 
     userWords = await getUserWords({ userId, limit: 5 }).then(({ data }) => data);
   });
