@@ -514,6 +514,7 @@ describe('statistics.service', () => {
       const userWord1 = getUserWord(0);
       const userWord2 = getUserWord(1);
       const userWord3 = getUserWord(2);
+      const userWord4 = getUserWord(3);
 
       await db.insert(Event).values([
         {
@@ -554,23 +555,52 @@ describe('statistics.service', () => {
           type: EventType.LearningMistakeMade,
           taskType: TaskType.WordToDefinition,
         },
+
+        {
+          userId,
+          userWordId: userWord4.id,
+          type: EventType.LearningMistakeMade,
+          taskType: TaskType.WordToDefinition,
+        },
+        {
+          userId,
+          userWordId: userWord4.id,
+          type: EventType.LearningMistakeMade,
+          taskType: TaskType.WordToDefinition,
+        },
+        {
+          userId,
+          userWordId: userWord4.id,
+          type: EventType.LearningMistakeMade,
+          taskType: TaskType.WordToDefinition,
+        },
+        {
+          userId,
+          userWordId: userWord4.id,
+          type: EventType.LearningMistakeMade,
+          taskType: TaskType.WordToDefinition,
+        },
       ]);
 
       const result = await getStatistics({ userId });
 
-      expect(result.topMistakes).toHaveLength(3);
+      expect(result.topMistakes).toHaveLength(4);
 
-      expect(result.topMistakes[0]?.count).toBe(3);
-      expect(result.topMistakes[0]?.value).toBe(userWord1.word.value);
-      expect(result.topMistakes[0]?.partOfSpeech).toBe(userWord1.word.partOfSpeech);
+      expect(result.topMistakes[0]?.count).toBe(4);
+      expect(result.topMistakes[0]?.value).toBe(userWord4.word.value);
+      expect(result.topMistakes[0]?.partOfSpeech).toBe(userWord4.word.partOfSpeech);
 
-      expect(result.topMistakes[1]?.count).toBe(2);
-      expect(result.topMistakes[1]?.value).toBe(userWord2.word.value);
-      expect(result.topMistakes[1]?.partOfSpeech).toBe(userWord2.word.partOfSpeech);
+      expect(result.topMistakes[1]?.count).toBe(3);
+      expect(result.topMistakes[1]?.value).toBe(userWord1.word.value);
+      expect(result.topMistakes[1]?.partOfSpeech).toBe(userWord1.word.partOfSpeech);
 
-      expect(result.topMistakes[2]?.count).toBe(1);
-      expect(result.topMistakes[2]?.value).toBe(userWord3.word.value);
-      expect(result.topMistakes[2]?.partOfSpeech).toBe(userWord3.word.partOfSpeech);
+      expect(result.topMistakes[2]?.count).toBe(2);
+      expect(result.topMistakes[2]?.value).toBe(userWord2.word.value);
+      expect(result.topMistakes[2]?.partOfSpeech).toBe(userWord2.word.partOfSpeech);
+
+      expect(result.topMistakes[3]?.count).toBe(1);
+      expect(result.topMistakes[3]?.value).toBe(userWord3.word.value);
+      expect(result.topMistakes[3]?.partOfSpeech).toBe(userWord3.word.partOfSpeech);
     });
 
     it('limits top mistakes to 20 results', async () => {
