@@ -91,5 +91,6 @@ export const getTopMistakes = async ({ userId, limit }: AuthParams<{ limit: numb
     .groupBy(Event.userWordId)
     .leftJoin(UserWord, eq(Event.userWordId, UserWord.id))
     .leftJoin(Word, eq(UserWord.wordId, Word.id))
+    .orderBy(sql`count(*) DESC`)
     .limit(limit);
 };
