@@ -322,9 +322,10 @@ export const Learning: FC = () => {
   };
 
   const onNext = () => {
+    createTaskCompletedEvent();
+
     const nextIdx = idx + 1;
     if (nextIdx < tasks.length || getLearningTasks.isLoading) {
-      createTaskCompletedEvent();
       setIdx(nextIdx);
       return;
     }
