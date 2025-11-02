@@ -2,7 +2,7 @@ import type { AuthParams } from '@/types/auth.types';
 import type { Transaction } from '@/types/db.types';
 import { type DiscoveryStatus } from '@/types/user-words.types';
 import { EventType, type EventBody } from '@/types/event.types';
-import { and, db, eq, Event, gte, inArray, isNotNull, lte, or, sql, UserWord, Word } from 'astro:db';
+import { and, db, eq, Event, gte, inArray, isNotNull, lte, sql, UserWord, Word } from 'astro:db';
 
 export const insertEvents = async (data: AuthParams<EventBody>[], tx: Transaction = db) => {
   await tx.insert(Event).values(data);
@@ -69,14 +69,12 @@ export const getGroupedByDayLearningEvents = async ({
     .where(
       and(
         eq(Event.userId, userId),
-        or(
-          inArray(Event.type, [
-            EventType.LearningMistakeMade,
-            EventType.LearningTaskCompleted,
-            EventType.ShowcaseTaskCompleted,
-            EventType.RetryLearningTaskCompleted,
-          ]),
-        ),
+        inArray(Event.type, [
+          EventType.LearningMistakeMade,
+          EventType.LearningTaskCompleted,
+          EventType.ShowcaseTaskCompleted,
+          EventType.RetryLearningTaskCompleted,
+        ]),
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
     )
