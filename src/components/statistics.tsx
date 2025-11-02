@@ -1,4 +1,4 @@
-import { Calendar, TrendingUp, Target, Award, Clock, BarChart3 } from 'lucide-react';
+import { Calendar, TrendingUp, Search, Clock, CircleAlert, BookOpen, RotateCcw, Trophy, Timer } from 'lucide-react';
 import { CartesianGrid, XAxis, YAxis, Area, AreaChart } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,7 +104,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Search className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalDiscoveredWords.toLocaleString()}</div>
@@ -115,7 +115,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Tasks Completed</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalCompletedTasks.toLocaleString()}</div>
@@ -126,7 +126,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Mistakes Made</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <CircleAlert className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalMistakesMade.toLocaleString()}</div>
@@ -137,7 +137,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Retries Completed</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <RotateCcw className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalRetriesCompleted.toLocaleString()}</div>
@@ -148,7 +148,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Showcases Completed</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalShowcasesCompleted.toLocaleString()}</div>
@@ -194,7 +194,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Average Time Per Task</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{formatDuration(general.averageTimePerTaskMs)}</div>
@@ -205,7 +205,7 @@ export const Statistics: FC = () => {
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Average Time Per Discovery</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{formatDuration(general.averageTimePerDiscoveryMs)}</div>
