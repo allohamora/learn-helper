@@ -212,7 +212,7 @@ export const Learning: FC = () => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
-  const [retryTasks, setRetryTasks] = useState<LearningTask[]>([]);
+  const [retryTasks, setRetryTasks] = useState<(LearningTask & { originalTaskId: string })[]>([]);
   const [startedAt, setStartedAt] = useState(new Date());
 
   const getLearningWords = useQuery({
@@ -349,7 +349,9 @@ export const Learning: FC = () => {
       throw new Error('Current task is not found');
     }
 
-    setRetryTasks([...retryTasks, { ...currentTask, id: getRetryId() }]);
+    if (retryTasks.at(-1)?.originalTaskId !== currentTask.id) {
+      setRetryTasks([...retryTasks, { ...currentTask, id: getRetryId(), originalTaskId: currentTask.id }]);
+    }
 
     const userWord = state[userWordId];
     if (!userWord) {
