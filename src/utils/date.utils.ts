@@ -10,6 +10,11 @@ export const toDateOnlyString = (date: Date) => {
 
 export const toDateWithoutYear = (dateString: string) => {
   const [, month, day] = dateString.split('-');
+  // type-guard
+  if (!month || !day) {
+    throw new Error('Failed to format date without year');
+  }
+
   return `${month}-${day}`;
 };
 
