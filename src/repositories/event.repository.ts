@@ -1,6 +1,5 @@
 import type { AuthParams } from '@/types/auth.types';
 import type { Transaction } from '@/types/db.types';
-import { type DiscoveryStatus } from '@/types/user-words.types';
 import { EventType, type EventBody } from '@/types/event.types';
 import { and, db, eq, Event, gte, inArray, isNotNull, lte, sql, UserWord, Word } from 'astro:db';
 
