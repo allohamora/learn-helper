@@ -3,7 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import { Toaster } from '@/components/ui/toaster';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components';
 import { ensureUserWordsExists } from '@/repositories/user-word.repository';
-import { BarChart3, Book, Lightbulb, Search } from 'lucide-react';
+import { BarChart, Book, Lightbulb, Search } from 'lucide-react';
 import '@/styles/global.css';
 
 type Props = {
@@ -85,7 +85,7 @@ await ensureUserWordsExists(userId);
             href="/statistics"
             class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
           >
-            <BarChart3 className="size-5 md:size-4" />
+            <BarChart className="size-5 md:size-4" />
             <span class="hidden text-xs md:inline md:text-sm">Statistics</span>
           </a>
         </div>
