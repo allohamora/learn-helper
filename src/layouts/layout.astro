@@ -3,6 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import { Toaster } from '@/components/ui/toaster';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components';
 import { ensureUserWordsExists } from '@/repositories/user-word.repository';
+import { BarChart, Book, Lightbulb, Search } from 'lucide-react';
 import '@/styles/global.css';
 
 type Props = {
@@ -27,35 +28,6 @@ await ensureUserWordsExists(userId);
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | Learn Helper</title>
-    <script is:inline define:vars={{ userId }}>
-      window.__USER_ID__ = userId;
-    </script>
-    <script>
-      import * as amplitude from '@amplitude/analytics-browser';
-      import { sessionReplayPlugin } from '@amplitude/plugin-session-replay-browser';
-      import { PUBLIC_AMPLITUDE_API_KEY } from 'astro:env/client';
-
-      if (import.meta.env.PROD) {
-        amplitude.add(sessionReplayPlugin());
-
-        // we need this because we can pass userId with define:vars only to is:inline scripts
-        const userId = (window as unknown as { __USER_ID__: string }).__USER_ID__;
-
-        amplitude.init(PUBLIC_AMPLITUDE_API_KEY, userId, {
-          autocapture: {
-            attribution: true,
-            fileDownloads: true,
-            formInteractions: true,
-            pageViews: true,
-            sessions: true,
-            elementInteractions: true,
-            networkTracking: true,
-            webVitals: true,
-            frustrationInteractions: true,
-          },
-        });
-      }
-    </script>
     <script>
       import { scan } from 'react-scan';
 
@@ -83,15 +55,39 @@ await ensureUserWordsExists(userId);
       class="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
       <div class="container flex h-14 justify-between md:justify-start">
-        <a href="/" class="flex items-center space-x-2">
-          <img src="/favicon.svg" alt="Learn Helper Logo" class="size-6" />
-          <span class="hidden font-bold md:inline">Learn Helper</span>
-        </a>
-
-        <div class="flex items-center space-x-6 md:ml-6">
-          <a href="/words" class="text-foreground transition-colors hover:text-primary"> Words </a>
-          <a href="/learning" class="text-foreground transition-colors hover:text-primary"> Learning </a>
-          <a href="/discovery" class="text-foreground transition-colors hover:text-primary"> Discovery </a>
+        <div class="flex items-center space-x-2 md:space-x-6">
+          <a href="/" class="flex items-center p-2 md:space-x-2 md:p-0">
+            <img src="/favicon.svg" alt="Learn Helper Logo" class="size-6" aria-hidden="true" />
+            <span class="hidden font-bold md:inline">Learn Helper</span>
+          </a>
+          <a
+            href="/words"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <Book className="size-5 md:size-4" aria-hidden="true" />
+            <span class="hidden text-xs md:inline md:text-sm">Words</span>
+          </a>
+          <a
+            href="/learning"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <Lightbulb className="size-5 md:size-4" aria-hidden="true" />
+            <span class="hidden text-xs md:inline md:text-sm">Learning</span>
+          </a>
+          <a
+            href="/discovery"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <Search className="size-5 md:size-4" aria-hidden="true" />
+            <span class="hidden text-xs md:inline md:text-sm">Discovery</span>
+          </a>
+          <a
+            href="/statistics"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <BarChart className="size-5 md:size-4" aria-hidden="true" />
+            <span class="hidden text-xs md:inline md:text-sm">Statistics</span>
+          </a>
         </div>
 
         <div class="flex items-center md:ml-auto">

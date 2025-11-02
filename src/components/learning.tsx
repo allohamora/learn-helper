@@ -15,15 +15,16 @@ import {
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
 } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
 import { PronunciationToWord } from './pronunciation-to-word';
 import { TranslateSentence } from './translate-sentence';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
-import { track } from '@amplitude/analytics-browser';
 import { TextToWord } from './text-to-word';
 import { WordToOptions } from './word-to-options';
+import { useCreateEvents } from '@/hooks/use-create-events';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 
@@ -204,13 +205,15 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   ];
 };
 
+const getRetryId = () => `retry-${crypto.randomUUID()}`;
+const isRetryId = (id: string) => id.startsWith('retry-');
+
 export const Learning: FC = () => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<number, number>>({});
   const [isFinished, setIsFinished] = useState(false);
-  const [retryTasks, setRetryTasks] = useState<LearningTask[]>([]);
-
-  const startedAt = useMemo(() => new Date(), []);
+  const [retryTasks, setRetryTasks] = useState<(LearningTask & { originalTaskId: string })[]>([]);
+  const [startedAt, setStartedAt] = useState(new Date());
 
   const getLearningWords = useQuery({
     queryKey: ['getLearningWords'],
@@ -225,6 +228,8 @@ export const Learning: FC = () => {
       return await actions.getLearningTasks.orThrow({});
     },
   });
+
+  const { createEvent } = useCreateEvents();
 
   // to preserve the same task ids between re-renders
   const clientTasks = useMemo(() => {
@@ -293,7 +298,32 @@ export const Learning: FC = () => {
 
   const currentTask = tasks[idx];
 
+  const createTaskCompletedEvent = () => {
+    // type-guard
+    if (!currentTask) {
+      throw new Error('Current task is not found');
+    }
+
+    const durationMs = Date.now() - startedAt.getTime();
+    if (currentTask.type !== TaskType.Showcase) {
+      createEvent({
+        type: isRetryId(currentTask.id) ? EventType.RetryLearningTaskCompleted : EventType.LearningTaskCompleted,
+        durationMs,
+        taskType: currentTask.type,
+      });
+    } else {
+      createEvent({
+        type: EventType.ShowcaseTaskCompleted,
+        durationMs,
+      });
+    }
+
+    setStartedAt(new Date());
+  };
+
   const onNext = () => {
+    createTaskCompletedEvent();
+
     const nextIdx = idx + 1;
     if (nextIdx < tasks.length || getLearningTasks.isLoading) {
       setIdx(nextIdx);
@@ -301,14 +331,6 @@ export const Learning: FC = () => {
     }
 
     setIsFinished(true);
-
-    const duration = Date.now() - startedAt.getTime();
-    track('learning_session_complete', {
-      duration,
-      durationMinutes: Number((duration / 60000).toFixed(2)),
-      totalTasks: tasks.length,
-      totalMistakes: Object.values(mistakes).reduce((a, b) => a + b, 0),
-    });
   };
 
   const onPrev = () => {
@@ -328,17 +350,19 @@ export const Learning: FC = () => {
       throw new Error('Current task is not found');
     }
 
-    setRetryTasks([...retryTasks, { ...currentTask, id: crypto.randomUUID() }]);
+    if (retryTasks.at(-1)?.originalTaskId !== currentTask.id) {
+      setRetryTasks([...retryTasks, { ...currentTask, id: getRetryId(), originalTaskId: currentTask.id }]);
+    }
 
     const userWord = state[userWordId];
     if (!userWord) {
       throw new Error('User word is not found');
     }
 
-    track('word_learning_mistake', {
-      value: userWord.word.value,
-      partOfSpeech: userWord.word.partOfSpeech,
-      type: currentTask?.type,
+    createEvent({
+      type: EventType.LearningMistakeMade,
+      userWordId,
+      taskType: currentTask.type,
     });
   };
 

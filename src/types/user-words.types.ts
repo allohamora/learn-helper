@@ -20,6 +20,8 @@ export enum Status {
   Known = 'known', // user already knew the word
 }
 
+export type DiscoveryStatus = typeof Status.Learning | typeof Status.Known | typeof Status.Waiting;
+
 export type UserWord = { word: typeof db.Word.$inferSelect } & typeof db.UserWord.$inferSelect;
 
 export enum TaskType {

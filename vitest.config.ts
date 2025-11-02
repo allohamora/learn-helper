@@ -1,9 +1,6 @@
 /// <reference types="vitest" />
 import tsconfigPathsPlugin from 'vite-tsconfig-paths';
 import { getViteConfig } from 'astro/config';
-import { parse } from 'dotenv';
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 
 export default getViteConfig({
   test: {

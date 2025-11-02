@@ -1,15 +1,13 @@
-import {
-  getLearningWords,
-  getUserWords,
-  getWaitingWords,
-  updateUserWordStatus,
-} from '@/repositories/user-word.repository';
-import { moveUserWordToNextStep, getLearningTasks } from '@/services/user-word.service';
+import { getLearningWords, getUserWords, getWaitingWords } from '@/repositories/user-word.repository';
+import { createEvents } from '@/services/event.service';
+import { moveUserWordToNextStep, getLearningTasks, setDiscoveryStatus } from '@/services/user-word.service';
 import type { AuthParams } from '@/types/auth.types';
-import { Level, List, Status } from '@/types/user-words.types';
+import { Level, List, Status, TaskType } from '@/types/user-words.types';
+import { EventType } from '@/types/event.types';
 import { ActionError, defineAction, type ActionAPIContext } from 'astro:actions';
 import { z } from 'astro:schema';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { getStatistics } from '@/services/statistics.service';
 
 const auth = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
   return async (data: T, context: ActionAPIContext) => {
@@ -63,12 +61,12 @@ export const server = {
     }),
     handler: auth(getWaitingWords),
   }),
-  updateUserWordStatus: defineAction({
-    input: z.object({
-      userWordId: z.number(),
-      status: z.nativeEnum(Status),
-    }),
-    handler: auth(updateUserWordStatus),
+  setDiscoveryStatus: defineAction({
+    input: z.discriminatedUnion('status', [
+      z.object({ status: z.literal(Status.Waiting), userWordId: z.number() }),
+      z.object({ status: z.enum([Status.Known, Status.Learning]), durationMs: z.number(), userWordId: z.number() }),
+    ]),
+    handler: auth(setDiscoveryStatus),
   }),
   getLearningWords: defineAction({
     input: z.object({
@@ -87,5 +85,42 @@ export const server = {
       userWordId: z.number(),
     }),
     handler: auth(moveUserWordToNextStep),
+  }),
+  createEvents: defineAction({
+    input: z.object({
+      body: z.array(
+        z.discriminatedUnion('type', [
+          z.object({
+            type: z.literal(EventType.WordDiscovered),
+            userWordId: z.number(),
+            status: z.nativeEnum(Status),
+            durationMs: z.number(),
+          }),
+          z.object({
+            type: z.literal(EventType.LearningMistakeMade),
+            userWordId: z.number(),
+            taskType: z.nativeEnum(TaskType),
+          }),
+          z.object({
+            type: z.enum([EventType.LearningTaskCompleted, EventType.RetryLearningTaskCompleted]),
+            durationMs: z.number(),
+            taskType: z.nativeEnum(TaskType),
+          }),
+          z.object({
+            type: z.literal(EventType.ShowcaseTaskCompleted),
+            durationMs: z.number(),
+          }),
+          z.object({
+            type: z.literal(EventType.WordMovedToNextStep),
+            userWordId: z.number(),
+          }),
+        ]),
+      ),
+    }),
+    handler: auth(createEvents),
+  }),
+  getStatistics: defineAction({
+    input: z.object({}),
+    handler: auth(getStatistics),
   }),
 };

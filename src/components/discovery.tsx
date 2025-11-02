@@ -3,19 +3,17 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { actions } from 'astro:actions';
 import { Button } from '@/components/ui/button';
 import { WordDiscoveryCard } from '@/components/word-discovery-card';
-import { Status } from '@/types/user-words.types';
+import { Status, type DiscoveryStatus } from '@/types/user-words.types';
 import { Loader } from './ui/loader';
-import { track } from '@amplitude/analytics-browser';
 import { Undo2 } from 'lucide-react';
 
 const HISTORY_LIMIT = 5;
-
-type DiscoveryStatus = typeof Status.Learning | typeof Status.Known | typeof Status.Waiting;
 
 export function Discovery() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
   const [history, setHistory] = useState<number[]>([]);
+  const [startedAt, setStartedAt] = useState(new Date());
 
   const {
     data: wordsData,
@@ -38,11 +36,9 @@ export function Discovery() {
   const total = wordsData?.total || 0;
   const remaining = total - handled;
 
-  const updateUserWordStatus = useMutation({
-    mutationFn: async (data: { userWordId: number; status: DiscoveryStatus }) => {
-      track('word_status_update', data);
-
-      return await actions.updateUserWordStatus(data);
+  const setDiscoveryStatus = useMutation({
+    mutationFn: async (data: Parameters<typeof actions.setDiscoveryStatus.orThrow>[0]) => {
+      return await actions.setDiscoveryStatus.orThrow(data);
     },
   });
 
@@ -50,9 +46,10 @@ export function Discovery() {
     const currentWord = words[currentIndex];
     if (!currentWord) return;
 
-    await updateUserWordStatus.mutateAsync({
+    await setDiscoveryStatus.mutateAsync({
       userWordId: currentWord.id,
       status,
+      durationMs: Date.now() - startedAt.getTime(),
     });
 
     setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));
@@ -63,19 +60,23 @@ export function Discovery() {
     } else {
       await refetch();
     }
+
+    setStartedAt(new Date());
   };
 
   const undo = async () => {
     const [lastUserWordId, ...rest] = history;
     if (!lastUserWordId) return;
 
-    await updateUserWordStatus.mutateAsync({
+    await setDiscoveryStatus.mutateAsync({
       userWordId: lastUserWordId,
       status: Status.Waiting,
     });
 
     setHistory(rest);
     await refetch();
+
+    setStartedAt(new Date());
   };
 
   const currentWord = words[currentIndex];
@@ -120,7 +121,7 @@ export function Discovery() {
             variant="outline"
             size="sm"
             className="gap-2"
-            disabled={history.length === 0 || updateUserWordStatus.isPending}
+            disabled={history.length === 0 || setDiscoveryStatus.isPending}
           >
             <Undo2 className="h-4 w-4" />
             Undo
@@ -134,7 +135,7 @@ export function Discovery() {
             onClick={() => void handle(Status.Known)}
             variant="destructive"
             className="h-11 flex-1 text-base md:h-12"
-            disabled={updateUserWordStatus.isPending}
+            disabled={setDiscoveryStatus.isPending}
           >
             I Know This
           </Button>
@@ -142,7 +143,7 @@ export function Discovery() {
             onClick={() => void handle(Status.Learning)}
             variant="default"
             className="h-11 flex-1 text-base md:h-12"
-            disabled={updateUserWordStatus.isPending}
+            disabled={setDiscoveryStatus.isPending}
           >
             Learn This
           </Button>

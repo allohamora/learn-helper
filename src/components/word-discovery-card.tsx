@@ -24,7 +24,7 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
   };
 
   return (
-    <Card className="flex h-64 flex-col gap-4 bg-card py-4 shadow-lg md:h-72 md:gap-6 md:py-6">
+    <Card className="flex min-h-64 flex-col gap-4 bg-card py-4 shadow-lg md:min-h-72 md:gap-6 md:py-6">
       <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
         <div className="flex items-start justify-between">
           <div>
