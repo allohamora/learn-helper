@@ -64,7 +64,7 @@ export const server = {
   setDiscoveryStatus: defineAction({
     input: z.discriminatedUnion('status', [
       z.object({ status: z.literal(Status.Waiting), userWordId: z.number() }),
-      z.object({ status: z.enum([Status.Known, Status.Learning]), duration: z.number(), userWordId: z.number() }),
+      z.object({ status: z.enum([Status.Known, Status.Learning]), durationMs: z.number(), userWordId: z.number() }),
     ]),
     handler: auth(setDiscoveryStatus),
   }),
@@ -94,7 +94,7 @@ export const server = {
             type: z.literal(EventType.WordDiscovered),
             userWordId: z.number(),
             status: z.nativeEnum(Status),
-            duration: z.number(),
+            durationMs: z.number(),
           }),
           z.object({
             type: z.literal(EventType.LearningMistakeMade),
@@ -103,12 +103,12 @@ export const server = {
           }),
           z.object({
             type: z.enum([EventType.LearningTaskCompleted, EventType.RetryLearningTaskCompleted]),
-            duration: z.number(),
+            durationMs: z.number(),
             taskType: z.nativeEnum(TaskType),
           }),
           z.object({
             type: z.literal(EventType.ShowcaseTaskCompleted),
-            duration: z.number(),
+            durationMs: z.number(),
           }),
           z.object({
             type: z.literal(EventType.WordMovedToNextStep),

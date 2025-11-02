@@ -47,7 +47,7 @@ const Event = defineTable({
       enum: Object.values(TaskType) as UnionToTuple<(typeof TaskType)[keyof typeof TaskType]>,
       optional: true,
     }),
-    duration: column.number({ optional: true }), // in ms
+    durationMs: column.number({ optional: true }),
     createdAt: column.date({ default: NOW }),
   },
 });

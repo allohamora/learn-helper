@@ -42,7 +42,7 @@ export const setDiscoveryStatus = async (
   data: AuthParams<
     { userWordId: number } & (
       | { status: Status.Waiting }
-      | { status: Exclude<DiscoveryStatus, Status.Waiting>; duration: number }
+      | { status: Exclude<DiscoveryStatus, Status.Waiting>; durationMs: number }
     )
   >,
 ) => {
@@ -53,10 +53,7 @@ export const setDiscoveryStatus = async (
       await insertEvent(
         {
           type: EventType.WordDiscovered,
-          userId: data.userId,
-          userWordId: data.userWordId,
-          status: data.status,
-          duration: data.duration,
+          ...data,
         },
         tx,
       );

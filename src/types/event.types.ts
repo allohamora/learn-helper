@@ -14,7 +14,7 @@ export type EventBody =
       type: EventType.WordDiscovered;
       userWordId: number;
       status: Status;
-      duration: number; // in ms
+      durationMs: number;
     }
   | {
       type: EventType.LearningMistakeMade;
@@ -23,11 +23,11 @@ export type EventBody =
     }
   | {
       type: EventType.ShowcaseTaskCompleted;
-      duration: number; // in ms
+      durationMs: number;
     }
   | {
       type: EventType.LearningTaskCompleted | EventType.RetryLearningTaskCompleted;
-      duration: number; // in ms
+      durationMs: number;
       taskType: TaskType;
     }
   | {

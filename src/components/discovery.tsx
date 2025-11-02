@@ -49,7 +49,7 @@ export function Discovery() {
     await setDiscoveryStatus.mutateAsync({
       userWordId: currentWord.id,
       status,
-      duration: Date.now() - startedAt.getTime(),
+      durationMs: Date.now() - startedAt.getTime(),
     });
 
     setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));

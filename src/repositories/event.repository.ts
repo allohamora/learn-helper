@@ -24,7 +24,7 @@ export const getGroupedByTypeEvents = async ({ userId }: AuthParams) => {
   return await db
     .select({
       count: sql<number>`count(*)`,
-      duration: sql<number | null>`SUM(${Event.duration})`,
+      durationMs: sql<number | null>`SUM(${Event.durationMs})`,
       type: Event.type,
     })
     .from(Event)
@@ -41,7 +41,7 @@ export const getGroupedByDayDiscoveryEvents = async ({
     .select({
       count: sql<number>`count(*)`,
       date: sql<string>`date(${Event.createdAt})`,
-      duration: sql<number | null>`SUM(${Event.duration})`,
+      durationMs: sql<number | null>`SUM(${Event.durationMs})`,
       status: Event.status,
     })
     .from(Event)
@@ -66,7 +66,7 @@ export const getGroupedByDayLearningEvents = async ({
       type: Event.type,
       count: sql<number>`count(*)`,
       date: sql<string>`date(${Event.createdAt})`,
-      duration: sql<number | null>`SUM(${Event.duration})`,
+      durationMs: sql<number | null>`SUM(${Event.durationMs})`,
     })
     .from(Event)
     .where(

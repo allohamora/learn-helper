@@ -304,17 +304,17 @@ export const Learning: FC = () => {
       throw new Error('Current task is not found');
     }
 
-    const duration = Date.now() - startedAt.getTime();
+    const durationMs = Date.now() - startedAt.getTime();
     if (currentTask.type !== TaskType.Showcase) {
       createEvent({
         type: isRetryId(currentTask.id) ? EventType.RetryLearningTaskCompleted : EventType.LearningTaskCompleted,
-        duration,
+        durationMs,
         taskType: currentTask.type,
       });
     } else {
       createEvent({
         type: EventType.ShowcaseTaskCompleted,
-        duration,
+        durationMs,
       });
     }
 

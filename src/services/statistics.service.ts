@@ -31,41 +31,41 @@ const getGeneralStatistics = async (data: AuthParams) => {
   for (const item of groupedByTypeEvents) {
     switch (item.type) {
       case EventType.WordDiscovered:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for WordDiscovered event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for WordDiscovered event: ${JSON.stringify(item)}`);
         }
 
         result.totalDiscoveredWords = item.count;
-        result.totalDiscoveringDurationMs = item.duration;
-        result.averageTimePerDiscoveryMs = Math.round(item.duration / item.count);
+        result.totalDiscoveringDurationMs = item.durationMs;
+        result.averageTimePerDiscoveryMs = Math.round(item.durationMs / item.count);
         continue;
       case EventType.LearningMistakeMade:
         result.totalMistakesMade = item.count;
         continue;
       case EventType.LearningTaskCompleted:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for LearningTaskCompleted event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for LearningTaskCompleted event: ${JSON.stringify(item)}`);
         }
 
         result.totalCompletedTasks = item.count;
-        result.totalLearningDurationMs += item.duration;
-        result.averageTimePerTaskMs = Math.round(item.duration / item.count);
+        result.totalLearningDurationMs += item.durationMs;
+        result.averageTimePerTaskMs = Math.round(item.durationMs / item.count);
         continue;
       case EventType.ShowcaseTaskCompleted:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for ShowcaseTaskCompleted event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for ShowcaseTaskCompleted event: ${JSON.stringify(item)}`);
         }
 
         result.totalShowcasesCompleted = item.count;
-        result.totalLearningDurationMs += item.duration;
+        result.totalLearningDurationMs += item.durationMs;
         continue;
       case EventType.RetryLearningTaskCompleted:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for RetryLearningTaskCompleted event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for RetryLearningTaskCompleted event: ${JSON.stringify(item)}`);
         }
 
         result.totalRetriesCompleted = item.count;
-        result.totalLearningDurationMs += item.duration;
+        result.totalLearningDurationMs += item.durationMs;
         continue;
       case EventType.WordMovedToNextStep:
         result.totalWordsMovedToNextStep = item.count;
@@ -103,11 +103,11 @@ const getDiscoveringPerDayStatistics = async (data: AuthParams<{ dateTo: Date; d
       throw new Error(`Date ${item.date} is missing in the state`);
     }
 
-    if (item.duration === null) {
-      throw new Error(`Duration is null for discovery event: ${JSON.stringify(item)}`);
+    if (item.durationMs === null) {
+      throw new Error(`DurationMs is null for discovery event: ${JSON.stringify(item)}`);
     }
 
-    target.durationMs += item.duration;
+    target.durationMs += item.durationMs;
 
     switch (item.status) {
       case Status.Learning:
@@ -149,28 +149,28 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
 
     switch (item.type) {
       case EventType.LearningTaskCompleted:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for learning event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for learning event: ${JSON.stringify(item)}`);
         }
 
         target.completedTasks = item.count;
-        target.durationMs += item.duration;
+        target.durationMs += item.durationMs;
         continue;
       case EventType.ShowcaseTaskCompleted:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for learning event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for learning event: ${JSON.stringify(item)}`);
         }
 
         target.completedShowcases = item.count;
-        target.durationMs += item.duration;
+        target.durationMs += item.durationMs;
         continue;
       case EventType.RetryLearningTaskCompleted:
-        if (item.duration === null) {
-          throw new Error(`Duration is null for learning event: ${JSON.stringify(item)}`);
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for learning event: ${JSON.stringify(item)}`);
         }
 
         target.completedRetries = item.count;
-        target.durationMs += item.duration;
+        target.durationMs += item.durationMs;
         continue;
       case EventType.LearningMistakeMade:
         target.mistakesMade = item.count;
