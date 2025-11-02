@@ -77,14 +77,6 @@ export const Statistics: FC = () => {
 
   const isPhoneScreen = useMediaQuery('(max-width: 640px)');
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex items-center justify-center">
@@ -92,6 +84,14 @@ export const Statistics: FC = () => {
           <p className="mb-4 text-destructive">{error.message}</p>
           <Button onClick={() => void refetch()}>Try Again</Button>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoading || !data) {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader />
       </div>
     );
   }
