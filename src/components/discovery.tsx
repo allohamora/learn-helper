@@ -73,6 +73,7 @@ export function Discovery() {
       duration: Date.now() - startedAt.getTime(),
     });
 
+    setStartedAt(new Date());
     setHistory(rest);
     await refetch();
   };
