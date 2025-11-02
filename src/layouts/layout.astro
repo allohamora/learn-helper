@@ -3,6 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import { Toaster } from '@/components/ui/toaster';
 import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components';
 import { ensureUserWordsExists } from '@/repositories/user-word.repository';
+import { BarChart3, Book, Lightbulb, Search } from 'lucide-react';
 import '@/styles/global.css';
 
 type Props = {
@@ -54,16 +55,39 @@ await ensureUserWordsExists(userId);
       class="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
       <div class="container flex h-14 justify-between md:justify-start">
-        <a href="/" class="flex items-center space-x-2">
-          <img src="/favicon.svg" alt="Learn Helper Logo" class="size-6" />
-          <span class="hidden font-bold md:inline">Learn Helper</span>
-        </a>
-
-        <div class="flex items-center space-x-6 md:ml-6">
-          <a href="/words" class="text-foreground transition-colors hover:text-primary"> Words </a>
-          <a href="/learning" class="text-foreground transition-colors hover:text-primary"> Learning </a>
-          <a href="/discovery" class="text-foreground transition-colors hover:text-primary"> Discovery </a>
-          <a href="/statistics" class="text-foreground transition-colors hover:text-primary"> Statistics </a>
+        <div class="flex items-center space-x-2 md:space-x-6">
+          <a href="/" class="flex items-center p-2 md:space-x-2 md:p-0">
+            <img src="/favicon.svg" alt="Learn Helper Logo" class="size-6" />
+            <span class="hidden font-bold md:inline">Learn Helper</span>
+          </a>
+          <a
+            href="/words"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <Book className="size-5 md:size-4" />
+            <span class="hidden text-xs md:inline md:text-sm">Words</span>
+          </a>
+          <a
+            href="/learning"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <Lightbulb className="size-5 md:size-4" />
+            <span class="hidden text-xs md:inline md:text-sm">Learning</span>
+          </a>
+          <a
+            href="/discovery"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <Search className="size-5 md:size-4" />
+            <span class="hidden text-xs md:inline md:text-sm">Discovery</span>
+          </a>
+          <a
+            href="/statistics"
+            class="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <BarChart3 className="size-5 md:size-4" />
+            <span class="hidden text-xs md:inline md:text-sm">Statistics</span>
+          </a>
         </div>
 
         <div class="flex items-center md:ml-auto">
