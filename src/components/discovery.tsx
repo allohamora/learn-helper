@@ -52,7 +52,6 @@ export function Discovery() {
       duration: Date.now() - startedAt.getTime(),
     });
 
-    setStartedAt(new Date());
     setHistory((prev) => [currentWord.id, ...prev].slice(0, HISTORY_LIMIT));
 
     if (currentIndex < words.length - 1) {
@@ -61,6 +60,8 @@ export function Discovery() {
     } else {
       await refetch();
     }
+
+    setStartedAt(new Date());
   };
 
   const undo = async () => {
@@ -73,9 +74,10 @@ export function Discovery() {
       duration: Date.now() - startedAt.getTime(),
     });
 
-    setStartedAt(new Date());
     setHistory(rest);
     await refetch();
+
+    setStartedAt(new Date());
   };
 
   const currentWord = words[currentIndex];
