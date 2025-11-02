@@ -37,7 +37,7 @@ export function Discovery() {
   const remaining = total - handled;
 
   const setDiscoveryStatus = useMutation({
-    mutationFn: async (data: { userWordId: number; status: DiscoveryStatus; duration: number }) => {
+    mutationFn: async (data: Parameters<typeof actions.setDiscoveryStatus.orThrow>[0]) => {
       return await actions.setDiscoveryStatus.orThrow(data);
     },
   });
@@ -71,7 +71,6 @@ export function Discovery() {
     await setDiscoveryStatus.mutateAsync({
       userWordId: lastUserWordId,
       status: Status.Waiting,
-      duration: Date.now() - startedAt.getTime(),
     });
 
     setHistory(rest);

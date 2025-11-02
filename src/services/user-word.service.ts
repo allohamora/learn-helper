@@ -39,7 +39,12 @@ export const moveUserWordToNextStep = async (data: AuthParams<{ userWordId: numb
 };
 
 export const setDiscoveryStatus = async (
-  data: AuthParams<{ userWordId: number; status: DiscoveryStatus; duration: number }>,
+  data: AuthParams<
+    { userWordId: number } & (
+      | { status: Status.Waiting }
+      | { status: Exclude<DiscoveryStatus, Status.Waiting>; duration: number }
+    )
+  >,
 ) => {
   await db.transaction(async (tx) => {
     if (data.status === Status.Waiting) {

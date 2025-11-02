@@ -62,11 +62,10 @@ export const server = {
     handler: auth(getWaitingWords),
   }),
   setDiscoveryStatus: defineAction({
-    input: z.object({
-      userWordId: z.number(),
-      status: z.enum([Status.Known, Status.Learning, Status.Waiting]),
-      duration: z.number(), // in ms
-    }),
+    input: z.discriminatedUnion('status', [
+      z.object({ status: z.literal(Status.Waiting), userWordId: z.number() }),
+      z.object({ status: z.enum([Status.Known, Status.Learning]), duration: z.number(), userWordId: z.number() }),
+    ]),
     handler: auth(setDiscoveryStatus),
   }),
   getLearningWords: defineAction({
