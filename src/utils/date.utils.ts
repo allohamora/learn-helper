@@ -1,3 +1,17 @@
+export const endOfDay = (date = new Date()) => {
+  const result = new Date(date);
+  result.setUTCHours(23, 59, 59, 999);
+
+  return result;
+};
+
+export const startOfDay = (date = new Date()) => {
+  const result = new Date(date);
+  result.setUTCHours(0, 0, 0, 0);
+
+  return result;
+};
+
 export const toDateOnlyString = (date: Date) => {
   const [dateOnly] = date.toISOString().split('T');
   // type-guard
@@ -18,9 +32,9 @@ export const toDateWithoutYear = (dateString: string) => {
   return `${month}-${day}`;
 };
 
-export const daysAgo = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
+export const daysAgo = (days: number, date = new Date()) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() - days);
 
-  return date;
+  return result;
 };

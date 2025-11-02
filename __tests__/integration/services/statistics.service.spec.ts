@@ -5,7 +5,7 @@ import { getStatistics } from '@/services/statistics.service';
 import { Status, TaskType, type UserWord as UserWordMapped } from '@/types/user-words.types';
 import { ensureUserWordsExists, getUserWords } from '@/repositories/user-word.repository';
 import { EventType } from '@/types/event.types';
-import { daysAgo, toDateOnlyString } from '@/utils/date.utils';
+import { daysAgo, endOfDay, startOfDay, toDateOnlyString } from '@/utils/date.utils';
 
 describe('statistics.service', () => {
   const userId = randomUUID();
@@ -411,7 +411,7 @@ describe('statistics.service', () => {
     it('returns correct learning per day statistics within date range', async () => {
       const userWord = getUserWord();
       const today = new Date();
-      const yesterday = daysAgo(1);
+      const weekAgo = daysAgo(6);
 
       await db.insert(Event).values([
         {
@@ -420,7 +420,6 @@ describe('statistics.service', () => {
           type: EventType.LearningTaskCompleted,
           durationMs: 5000,
           taskType: TaskType.WordToDefinition,
-          createdAt: today,
         },
         {
           userId,
@@ -428,7 +427,6 @@ describe('statistics.service', () => {
           type: EventType.LearningTaskCompleted,
           durationMs: 3000,
           taskType: TaskType.DefinitionToWord,
-          createdAt: today,
         },
         {
           userId,
@@ -436,7 +434,6 @@ describe('statistics.service', () => {
           type: EventType.RetryLearningTaskCompleted,
           durationMs: 2000,
           taskType: TaskType.WordToTranslation,
-          createdAt: today,
         },
         {
           userId,
@@ -444,21 +441,19 @@ describe('statistics.service', () => {
           type: EventType.RetryLearningTaskCompleted,
           durationMs: 1000,
           taskType: TaskType.WordToTranslation,
-          createdAt: today,
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.ShowcaseTaskCompleted,
           durationMs: 2000,
-          createdAt: today,
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.ShowcaseTaskCompleted,
           durationMs: 1000,
-          createdAt: today,
+          createdAt: startOfDay(today),
         },
         {
           userId,
@@ -472,22 +467,30 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.LearningMistakeMade,
           taskType: TaskType.DefinitionToWord,
-          createdAt: today,
+          createdAt: endOfDay(today),
         },
+
         {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningTaskCompleted,
           durationMs: 4000,
           taskType: TaskType.TranslationToWord,
-          createdAt: yesterday,
+          createdAt: startOfDay(weekAgo),
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.LearningMistakeMade,
           taskType: TaskType.WordToTranslation,
-          createdAt: yesterday,
+          createdAt: weekAgo,
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.LearningMistakeMade,
+          taskType: TaskType.WordToTranslation,
+          createdAt: endOfDay(weekAgo),
         },
       ]);
 
@@ -501,13 +504,13 @@ describe('statistics.service', () => {
       expect(todayStats?.mistakesMade).toBe(2);
       expect(todayStats?.durationMs).toBe(14000);
 
-      const yesterdayStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(yesterday));
-      expect(yesterdayStats).toBeDefined();
-      expect(yesterdayStats?.completedTasks).toBe(1);
-      expect(yesterdayStats?.completedRetries).toBe(0);
-      expect(yesterdayStats?.completedShowcases).toBe(0);
-      expect(yesterdayStats?.mistakesMade).toBe(1);
-      expect(yesterdayStats?.durationMs).toBe(4000);
+      const weekAgoStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
+      expect(weekAgoStats).toBeDefined();
+      expect(weekAgoStats?.completedTasks).toBe(1);
+      expect(weekAgoStats?.completedRetries).toBe(0);
+      expect(weekAgoStats?.completedShowcases).toBe(0);
+      expect(weekAgoStats?.mistakesMade).toBe(2);
+      expect(weekAgoStats?.durationMs).toBe(4000);
     });
 
     it('returns top mistakes with word details', async () => {

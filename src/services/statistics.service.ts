@@ -8,7 +8,7 @@ import type { AuthParams } from '@/types/auth.types';
 import { EventType } from '@/types/event.types';
 import type { DiscoveringPerDayStatistics, LearningPerDayStatistics, Statistics } from '@/types/statistics.types';
 import { Status } from '@/types/user-words.types';
-import { daysAgo, toDateOnlyString } from '@/utils/date.utils';
+import { daysAgo, endOfDay, startOfDay, toDateOnlyString } from '@/utils/date.utils';
 
 const getGeneralStatistics = async (data: AuthParams) => {
   const result: Statistics['general'] = {
@@ -82,7 +82,7 @@ const getDates = ({ dateTo, dateFrom }: { dateTo: Date; dateFrom: Date }) => {
   const dates: string[] = [];
   const currentDate = new Date(dateFrom);
 
-  while (currentDate <= dateTo) {
+  while (currentDate.getTime() <= dateTo.getTime()) {
     dates.push(toDateOnlyString(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
@@ -184,8 +184,8 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
 };
 
 export const getStatistics = async ({ userId }: AuthParams) => {
-  const dateTo = new Date();
-  const dateFrom = daysAgo(6);
+  const dateTo = endOfDay(new Date());
+  const dateFrom = daysAgo(6, startOfDay(dateTo));
   const data = { userId, dateFrom, dateTo };
 
   const [general, discoveringPerDay, learningPerDay, topMistakes] = await Promise.all([
