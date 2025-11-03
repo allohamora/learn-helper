@@ -333,16 +333,6 @@ export const Learning: FC = () => {
     setIsFinished(true);
   };
 
-  const onPrev = () => {
-    const nextIdx = idx - 1;
-    if (nextIdx < 0) {
-      console.warn('Already at the first task');
-      return;
-    }
-
-    setIdx(nextIdx);
-  };
-
   const onMistake = (userWordId: number) => {
     setMistakes({ ...mistakes, [userWordId]: (mistakes[userWordId] || 0) + 1 });
 
@@ -371,9 +361,7 @@ export const Learning: FC = () => {
       <div>
         {!isFinished ? (
           <>
-            {currentTask?.type === TaskType.Showcase && (
-              <ShowcaseCard idx={idx} data={currentTask.data} onNext={onNext} onPrev={onPrev} />
-            )}
+            {currentTask?.type === TaskType.Showcase && <ShowcaseCard data={currentTask.data} onNext={onNext} />}
 
             {currentTask?.type === TaskType.WordToDefinition && (
               <WordToOptions

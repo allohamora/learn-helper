@@ -8,13 +8,11 @@ import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { List, type ShowcaseTask } from '@/types/user-words.types';
 
 type ShowcaseCardProps = {
-  onNext?: () => void;
-  onPrev?: () => void;
-  idx: number;
+  onNext: () => void;
   data: ShowcaseTask['data'];
 };
 
-export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data }) => {
+export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, data }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
 
   const handlePlayPronunciation = (event: MouseEvent) => {
@@ -97,13 +95,8 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, onPrev, idx, data 
         </CardContent>
       </Card>
 
-      <div className="flex items-center justify-between">
-        <Button onClick={onPrev} variant="outline" disabled={idx === 0} className="px-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Previous
-        </Button>
-
-        <Button onClick={onNext} className="px-6">
+      <div className="text-center">
+        <Button onClick={onNext} size="lg" className="px-8">
           Next
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
