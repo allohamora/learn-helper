@@ -16,6 +16,7 @@ import {
   type TranslateEnglishSentenceTask,
   type ContinueDialogTask,
   type SynonymAntonymTask,
+  type FixSentenceTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
@@ -212,6 +213,20 @@ const toSynonymAntonymTasks = (words: UserWord[], tasksData: TasksData['synonymA
   });
 };
 
+const toFixSentenceTasks = (tasksData: TasksData['fixSentenceTasks']) => {
+  return tasksData.map(({ id, sentence, options }): FixSentenceTask => {
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.FixSentence,
+      data: {
+        id,
+        sentence,
+        options: shuffle(options),
+      },
+    };
+  });
+};
+
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -236,6 +251,7 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
   const continueDialogTasks = toContinueDialogTasks(tasksData.continueDialogTasks);
   const synonymAntonymTasks = toSynonymAntonymTasks(words, tasksData.synonymAntonymTasks);
+  const fixSentenceTasks = toFixSentenceTasks(tasksData.fixSentenceTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
@@ -243,6 +259,7 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
     ...shuffle(fillTheGapTasks),
     ...shuffle(continueDialogTasks),
     ...shuffle(synonymAntonymTasks),
+    ...shuffle(fixSentenceTasks),
   ];
 };
 
@@ -501,6 +518,17 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What word matches this synonym and antonym?"
                 subtitle="Type the word that has both the given synonym and antonym"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
+            )}
+
+            {currentTask?.type === TaskType.FixSentence && (
+              <SentenceToOptions
+                key={currentTask.id}
+                title="Fix the sentence"
+                subtitle="Choose the corrected version of the sentence"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
