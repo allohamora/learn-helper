@@ -15,6 +15,7 @@ import {
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
   type ContinueDialogTask,
+  type SynonymAntonymTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
@@ -25,6 +26,7 @@ import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 import { TextToWord } from './text-to-word';
 import { WordToOptions } from './word-to-options';
+import { SynonymAntonymToWord } from './synonym-antonym-to-word';
 import { useCreateEvents } from '@/hooks/use-create-events';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
@@ -190,6 +192,26 @@ const toContinueDialogTasks = (tasksData: TasksData['continueDialogTasks']) => {
   });
 };
 
+const toSynonymAntonymTasks = (words: UserWord[], tasksData: TasksData['synonymAntonymTasks']) => {
+  return tasksData.map(({ id, synonym, antonym }): SynonymAntonymTask => {
+    const found = words.find((word) => word.id === id);
+    if (!found) {
+      throw new Error('Word for SynonymAntonym task is not found');
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.SynonymAntonym,
+      data: {
+        id,
+        word: found.word.value,
+        synonym,
+        antonym,
+      },
+    };
+  });
+};
+
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -213,12 +235,14 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
   const continueDialogTasks = toContinueDialogTasks(tasksData.continueDialogTasks);
+  const synonymAntonymTasks = toSynonymAntonymTasks(words, tasksData.synonymAntonymTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillTheGapTasks),
     ...shuffle(continueDialogTasks),
+    ...shuffle(synonymAntonymTasks),
   ];
 };
 
@@ -466,6 +490,17 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Continue the dialog"
                 subtitle="Choose the response that best continues the conversation"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
+            )}
+
+            {currentTask?.type === TaskType.SynonymAntonym && (
+              <SynonymAntonymToWord
+                key={currentTask.id}
+                title="What word matches this synonym and antonym?"
+                subtitle="Type the word that has both the given synonym and antonym"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

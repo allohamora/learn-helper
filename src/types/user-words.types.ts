@@ -35,6 +35,7 @@ export enum TaskType {
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
   FillTheGap = 'fill-the-gap',
   ContinueDialog = 'continue-dialog',
+  SynonymAntonym = 'synonym-antonym',
 }
 
 export type ToWordData = {
@@ -122,6 +123,17 @@ export type ContinueDialogTask = {
   data: SentenceData;
 };
 
+export type SynonymAntonymData = ToWordData & {
+  synonym: string;
+  antonym: string;
+};
+
+export type SynonymAntonymTask = {
+  id: string;
+  type: TaskType.SynonymAntonym;
+  data: SynonymAntonymData;
+};
+
 export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
@@ -132,4 +144,5 @@ export type LearningTask =
   | TranslateEnglishSentenceTask
   | TranslateUkrainianSentenceTask
   | FillTheGapTask
-  | ContinueDialogTask;
+  | ContinueDialogTask
+  | SynonymAntonymTask;

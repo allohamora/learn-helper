@@ -280,16 +280,75 @@ const toContinueDialogTasks = async (words: UserWord[]) => {
   return object;
 };
 
+const toSynonymAntonymTasks = async (words: UserWord[]) => {
+  if (!words.length) {
+    return [];
+  }
+
+  const wordList = words.map(({ id, word }) => ({
+    id,
+    value: word.value,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level,
+    definition: word.definition,
+  }));
+
+  const { object } = await generateObject({
+    model,
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        synonym: z.string(),
+        antonym: z.string(),
+      }),
+    ),
+    prompt: [
+      'You are a professional English teacher experienced in vocabulary exercises for learners.',
+      'Your task is to provide one synonym and one antonym for each provided word or phrase.',
+      '',
+      'Requirements:',
+      `- Generate exactly ${words.length} pairs - one for each provided word or phrase.`,
+      '- For each word or phrase, provide one synonym (a word with similar meaning) and one antonym (a word with opposite meaning).',
+      '- The synonym and antonym must be appropriate for the target word/phrase in its most common meaning.',
+      '- Use common, well-known synonyms and antonyms that learners would recognize.',
+      '- The synonym and antonym should be single words when possible, or short phrases if necessary.',
+      '- Ensure the synonym and antonym are at a similar difficulty level to the target word.',
+      '- If a word has multiple meanings, use the primary meaning indicated by the definition.',
+      '- Do not use the target word itself in the synonym or antonym.',
+      '- Use ids from the input list as ids for the tasks.',
+      '',
+      'Words and Phrases:',
+      '```json',
+      JSON.stringify(wordList),
+      '```',
+    ].join('\n'),
+  });
+
+  return object;
+};
+
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
 
-  const [fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks, continueDialogTasks] =
-    await Promise.all([
-      toFillTheGapTasks(words),
-      toTranslateEnglishSentenceTasks(words),
-      toTranslateUkrainianSentenceTasks(words),
-      toContinueDialogTasks(words),
-    ]);
+  const [
+    fillTheGapTasks,
+    translateEnglishSentenceTasks,
+    translateUkrainianSentenceTasks,
+    continueDialogTasks,
+    synonymAntonymTasks,
+  ] = await Promise.all([
+    toFillTheGapTasks(words),
+    toTranslateEnglishSentenceTasks(words),
+    toTranslateUkrainianSentenceTasks(words),
+    toContinueDialogTasks(words),
+    toSynonymAntonymTasks(words),
+  ]);
 
-  return { fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks, continueDialogTasks };
+  return {
+    fillTheGapTasks,
+    translateEnglishSentenceTasks,
+    translateUkrainianSentenceTasks,
+    continueDialogTasks,
+    synonymAntonymTasks,
+  };
 };
