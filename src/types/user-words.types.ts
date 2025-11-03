@@ -118,12 +118,6 @@ export type FillTheGapTask = {
   data: TextToWordData;
 };
 
-export type ContinueDialogTask = {
-  id: string;
-  type: TaskType.ContinueDialog;
-  data: SentenceData;
-};
-
 export type SynonymAntonymData = ToWordData & {
   synonym: string;
   antonym: string;
@@ -133,6 +127,12 @@ export type SynonymAntonymTask = {
   id: string;
   type: TaskType.SynonymAntonym;
   data: SynonymAntonymData;
+};
+
+export type ContinueDialogTask = {
+  id: string;
+  type: TaskType.ContinueDialog;
+  data: SentenceData;
 };
 
 export type FixSentenceTask = {
@@ -151,6 +151,6 @@ export type LearningTask =
   | TranslateEnglishSentenceTask
   | TranslateUkrainianSentenceTask
   | FillTheGapTask
-  | ContinueDialogTask
   | SynonymAntonymTask
+  | ContinueDialogTask
   | FixSentenceTask;

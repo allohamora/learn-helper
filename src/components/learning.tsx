@@ -249,16 +249,16 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasksData.translateEnglishSentenceTasks);
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
-  const continueDialogTasks = toContinueDialogTasks(tasksData.continueDialogTasks);
   const synonymAntonymTasks = toSynonymAntonymTasks(words, tasksData.synonymAntonymTasks);
+  const continueDialogTasks = toContinueDialogTasks(tasksData.continueDialogTasks);
   const fixSentenceTasks = toFixSentenceTasks(tasksData.fixSentenceTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillTheGapTasks),
-    ...shuffle(continueDialogTasks),
     ...shuffle(synonymAntonymTasks),
+    ...shuffle(continueDialogTasks),
     ...shuffle(fixSentenceTasks),
   ];
 };
@@ -502,22 +502,22 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.ContinueDialog && (
-              <SentenceToOptions
+            {currentTask?.type === TaskType.SynonymAntonym && (
+              <SynonymAntonymToWord
                 key={currentTask.id}
-                title="Continue the dialog"
-                subtitle="Choose the response that best continues the conversation"
+                title="What word matches this synonym and antonym?"
+                subtitle="Type the word that has both the given synonym and antonym"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
               />
             )}
 
-            {currentTask?.type === TaskType.SynonymAntonym && (
-              <SynonymAntonymToWord
+            {currentTask?.type === TaskType.ContinueDialog && (
+              <SentenceToOptions
                 key={currentTask.id}
-                title="What word matches this synonym and antonym?"
-                subtitle="Type the word that has both the given synonym and antonym"
+                title="Continue the dialog"
+                subtitle="Choose the response that best continues the conversation"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
