@@ -14,11 +14,12 @@ import {
   type PronunciationToWordTask,
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
+  type ContinueDialogTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
 import { PronunciationToWord } from './pronunciation-to-word';
-import { TranslateSentence } from './translate-sentence';
+import { SentenceToOptions } from './sentence-to-options';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
@@ -175,6 +176,20 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
   });
 };
 
+const toContinueDialogTasks = (tasksData: TasksData['continueDialogTasks']) => {
+  return tasksData.map(({ id, sentence, options }): ContinueDialogTask => {
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.ContinueDialog,
+      data: {
+        id,
+        sentence,
+        options: shuffle(options),
+      },
+    };
+  });
+};
+
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -197,11 +212,13 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasksData.translateEnglishSentenceTasks);
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
+  const continueDialogTasks = toContinueDialogTasks(tasksData.continueDialogTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillTheGapTasks),
+    ...shuffle(continueDialogTasks),
   ];
 };
 
@@ -412,7 +429,7 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.TranslateEnglishSentence && (
-              <TranslateSentence
+              <SentenceToOptions
                 key={currentTask.id}
                 title="Select the correct translation"
                 subtitle="Choose the Ukrainian translation that best matches the English sentence"
@@ -423,7 +440,7 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.TranslateUkrainianSentence && (
-              <TranslateSentence
+              <SentenceToOptions
                 key={currentTask.id}
                 title="Select the correct translation"
                 subtitle="Choose the English sentence that best matches the Ukrainian sentence"
@@ -438,6 +455,17 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Fill the gap"
                 subtitle="Type the correct word for the given sentence"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
+            )}
+
+            {currentTask?.type === TaskType.ContinueDialog && (
+              <SentenceToOptions
+                key={currentTask.id}
+                title="Continue the dialog"
+                subtitle="Choose the response that best continues the conversation"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

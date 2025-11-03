@@ -34,6 +34,7 @@ export enum TaskType {
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
   FillTheGap = 'fill-the-gap',
+  ContinueDialog = 'continue-dialog',
 }
 
 export type ToWordData = {
@@ -55,7 +56,7 @@ export type ToOptionsData = {
 
 export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
 
-export type TranslateSentenceData = ToOptionsData & {
+export type SentenceData = ToOptionsData & {
   sentence: string;
 };
 
@@ -100,19 +101,25 @@ export type PronunciationToWordTask = {
 export type TranslateEnglishSentenceTask = {
   id: string;
   type: TaskType.TranslateEnglishSentence;
-  data: TranslateSentenceData;
+  data: SentenceData;
 };
 
 export type TranslateUkrainianSentenceTask = {
   id: string;
   type: TaskType.TranslateUkrainianSentence;
-  data: TranslateSentenceData;
+  data: SentenceData;
 };
 
 export type FillTheGapTask = {
   id: string;
   type: TaskType.FillTheGap;
   data: TextToWordData;
+};
+
+export type ContinueDialogTask = {
+  id: string;
+  type: TaskType.ContinueDialog;
+  data: SentenceData;
 };
 
 export type LearningTask =
@@ -124,4 +131,5 @@ export type LearningTask =
   | PronunciationToWordTask
   | TranslateEnglishSentenceTask
   | TranslateUkrainianSentenceTask
-  | FillTheGapTask;
+  | FillTheGapTask
+  | ContinueDialogTask;

@@ -224,13 +224,72 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
   return object;
 };
 
+const toContinueDialogTasks = async (words: UserWord[]) => {
+  if (!words.length) {
+    return [];
+  }
+
+  const wordList = words.map(({ id, word }) => ({
+    id,
+    value: word.value,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level,
+    definition: word.definition,
+  }));
+
+  const { object } = await generateObject({
+    model,
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        sentence: z.string(),
+        options: z.array(
+          z.object({
+            value: z.string(),
+            isCorrect: z.boolean(),
+          }),
+        ),
+      }),
+    ),
+    prompt: [
+      'You are a professional English teacher experienced in creating dialog continuation exercises for learners.',
+      'Your task is to create one complete English sentence (3–15 words) and 4 similar response options for each provided word or phrase.',
+      '',
+      'Requirements:',
+      `- Generate exactly ${words.length} tasks - one for each provided word or phrase.`,
+      '- The sentence must be a standalone question, statement, or conversational opener that naturally leads to a response using the target word or phrase.',
+      '- The sentence must create a specific context where only ONE grammatical form is correct.',
+      '- Each task must include 4 similar response options: 1 grammatically correct (isCorrect: true) that uses the target word/phrase correctly and continues the dialog naturally, and 3 with grammar mistakes (isCorrect: false).',
+      '- All 4 options must be similar in meaning and attempt to continue the dialog, and all must use or reference the target word or phrase.',
+      '- Grammar mistakes in incorrect options must be clearly wrong: wrong word choice, incorrect verb tense/form, wrong preposition that breaks grammar/collocation, incorrect word order, missing/incorrect articles, wrong plural/singular forms, or incorrect collocations.',
+      '- Do not use synonyms and antonyms as mistakes.',
+      '- Mistakes should be realistic errors that learners might make, but they must be unambiguously incorrect in the given context.',
+      '- All options must be complete sentences, not fragments.',
+      '- Sentences must be natural and use a modern, neutral tone.',
+      '- Do not use periods at the end of the sentence or options.',
+      '- Use ids from the input list as ids for the tasks.',
+      '- Avoid using the same topics or repetitive sentence structures across examples.',
+      '',
+      'Words and Phrases:',
+      '```json',
+      JSON.stringify(wordList),
+      '```',
+    ].join('\n'),
+  });
+
+  return object;
+};
+
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
-  const [fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks] = await Promise.all([
-    toFillTheGapTasks(words),
-    toTranslateEnglishSentenceTasks(words),
-    toTranslateUkrainianSentenceTasks(words),
-  ]);
 
-  return { fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks };
+  const [fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks, continueDialogTasks] =
+    await Promise.all([
+      toFillTheGapTasks(words),
+      toTranslateEnglishSentenceTasks(words),
+      toTranslateUkrainianSentenceTasks(words),
+      toContinueDialogTasks(words),
+    ]);
+
+  return { fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks, continueDialogTasks };
 };
