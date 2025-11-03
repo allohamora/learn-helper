@@ -69,7 +69,7 @@ const google = createGoogleGenerativeAI({
 
 const model = google('gemini-2.5-flash-lite');
 
-const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+const toFillTheGapTasks = async (words: UserWord[]) => {
   if (!words.length) {
     return [];
   }
@@ -96,7 +96,7 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
       'Your task is to create one short, natural English sentence for each provided word or phrase, where the target word/phrase is replaced with a blank.',
       '',
       'Requirements:',
-      `- Generate exactly ${limit} tasks - one for each provided word or phrase.`,
+      `- Generate exactly ${words.length} tasks - one for each provided word or phrase.`,
       '- Each task must be a single, complete, natural English sentence (5–15 words).',
       '- Each sentence must contain exactly one blank, represented by "___".',
       '- The missing word/phrase must be exactly the target word/phrase (case-insensitive match).',
@@ -118,7 +118,7 @@ const toFillTheGapTasks = async ({ words, limit }: { limit: number; words: UserW
   return object;
 };
 
-const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
   if (!words.length) {
     return [];
   }
@@ -150,7 +150,7 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
       'Your task is to create one concise English sentence (1–12 words) and 4 Ukrainian translation options for each provided word or phrase.',
       '',
       'Requirements:',
-      `- Generate exactly ${limit} sentences - one for each provided word or phrase.`,
+      `- Generate exactly ${words.length} sentences - one for each provided word or phrase.`,
       '- The English sentence must include or clearly express the meaning of the target English word or phrase.',
       '- For phrases, use the complete phrase naturally within the sentence.',
       '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
@@ -170,7 +170,7 @@ const toTranslateEnglishSentenceTasks = async ({ words, limit }: { limit: number
   return object;
 };
 
-const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: number; words: UserWord[] }) => {
+const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
   if (!words.length) {
     return [];
   }
@@ -202,7 +202,7 @@ const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: numb
       'Your task is to create one concise Ukrainian sentence (1–12 words) and 4 English translation options for each provided word or phrase.',
       '',
       'Requirements:',
-      `- Generate exactly ${limit} sentences - one for each provided word or phrase.`,
+      `- Generate exactly ${words.length} sentences - one for each provided word or phrase.`,
       '- The Ukrainian sentence must include or clearly express the meaning of the target English word or phrase.',
       '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
       '- Do not use periods at the end of the sentence.',
@@ -227,9 +227,9 @@ const toTranslateUkrainianSentenceTasks = async ({ words, limit }: { limit: numb
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
   const [fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks] = await Promise.all([
-    toFillTheGapTasks({ words, ...body }),
-    toTranslateEnglishSentenceTasks({ words, ...body }),
-    toTranslateUkrainianSentenceTasks({ words, ...body }),
+    toFillTheGapTasks(words),
+    toTranslateEnglishSentenceTasks(words),
+    toTranslateUkrainianSentenceTasks(words),
   ]);
 
   return { fillTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks };
