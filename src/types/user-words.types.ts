@@ -33,10 +33,10 @@ export enum TaskType {
   PronunciationToWord = 'pronunciation-to-word',
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
-  FillTheGap = 'fill-the-gap',
-  ContinueDialog = 'continue-dialog',
-  SynonymAntonym = 'synonym-antonym',
-  FixSentence = 'fix-sentence',
+  FillInTheGap = 'fill-in-the-gap',
+  ContinueTheDialog = 'continue-the-dialog',
+  SynonymAndAntonym = 'synonym-and-antonym',
+  FixTheSentence = 'fix-the-sentence',
 }
 
 export type ToWordData = {
@@ -112,32 +112,32 @@ export type TranslateUkrainianSentenceTask = {
   data: SentenceData;
 };
 
-export type FillTheGapTask = {
+export type FillInTheGapTask = {
   id: string;
-  type: TaskType.FillTheGap;
+  type: TaskType.FillInTheGap;
   data: TextToWordData;
 };
 
-export type SynonymAntonymData = ToWordData & {
+export type SynonymAndAntonymData = ToWordData & {
   synonym: string;
   antonym: string;
 };
 
-export type SynonymAntonymTask = {
+export type SynonymAndAntonymTask = {
   id: string;
-  type: TaskType.SynonymAntonym;
-  data: SynonymAntonymData;
+  type: TaskType.SynonymAndAntonym;
+  data: SynonymAndAntonymData;
 };
 
-export type ContinueDialogTask = {
+export type ContinueTheDialogTask = {
   id: string;
-  type: TaskType.ContinueDialog;
+  type: TaskType.ContinueTheDialog;
   data: SentenceData;
 };
 
-export type FixSentenceTask = {
+export type FixTheSentenceTask = {
   id: string;
-  type: TaskType.FixSentence;
+  type: TaskType.FixTheSentence;
   data: SentenceData;
 };
 
@@ -150,7 +150,7 @@ export type LearningTask =
   | PronunciationToWordTask
   | TranslateEnglishSentenceTask
   | TranslateUkrainianSentenceTask
-  | FillTheGapTask
-  | SynonymAntonymTask
-  | ContinueDialogTask
-  | FixSentenceTask;
+  | FillInTheGapTask
+  | SynonymAndAntonymTask
+  | ContinueTheDialogTask
+  | FixTheSentenceTask;

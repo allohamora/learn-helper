@@ -1,16 +1,16 @@
 import { type FC } from 'react';
-import type { SynonymAntonymData } from '@/types/user-words.types';
+import type { SynonymAndAntonymData } from '@/types/user-words.types';
 import { ToWord } from './to-word';
 
-type SynonymAntonymToWordProps = {
+type SynonymAndAntonymToWordProps = {
   title: string;
   subtitle: string;
-  data: SynonymAntonymData;
+  data: SynonymAndAntonymData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
 };
 
-export const SynonymAntonymToWord: FC<SynonymAntonymToWordProps> = ({
+export const SynonymAndAntonymToWord: FC<SynonymAndAntonymToWordProps> = ({
   data: { synonym, antonym, ...data },
   ...props
 }) => {

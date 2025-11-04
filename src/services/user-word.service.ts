@@ -69,7 +69,7 @@ const google = createGoogleGenerativeAI({
 
 const model = google('gemini-2.5-flash-lite');
 
-const toFillTheGapTasks = async (words: UserWord[]) => {
+const toFillInTheGapTasks = async (words: UserWord[]) => {
   if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
@@ -90,7 +90,7 @@ const toFillTheGapTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates concise, natural fill-the-gap exercises for learners.',
+      'You are a professional English teacher who creates concise, natural fill-in-the-gap exercises for learners.',
       'For each provided English word or phrase, generate one English sentence where the target word or phrase is replaced by a blank.',
       '',
       'Requirements:',
@@ -217,7 +217,7 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
   return object;
 };
 
-const toSynonymAntonymTasks = async (words: UserWord[]) => {
+const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
   if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
@@ -262,7 +262,7 @@ const toSynonymAntonymTasks = async (words: UserWord[]) => {
   return object;
 };
 
-const toContinueDialogTasks = async (words: UserWord[]) => {
+const toContinueTheDialogTasks = async (words: UserWord[]) => {
   if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
@@ -288,7 +288,7 @@ const toContinueDialogTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates dialog continuation exercises for learners.',
+      'You are a professional English teacher who creates continue-the-dialog exercises for learners.',
       'For each provided English word or phrase, generate one English sentence (3–15 words) and four response options.',
       '',
       'Requirements:',
@@ -315,7 +315,7 @@ const toContinueDialogTasks = async (words: UserWord[]) => {
   return object;
 };
 
-const toFixSentenceTasks = async (words: UserWord[]) => {
+const toFixTheSentenceTasks = async (words: UserWord[]) => {
   if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
@@ -341,7 +341,7 @@ const toFixSentenceTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates grammar correction exercises for learners.',
+      'You are a professional English teacher who creates fix-the-sentence exercises for learners.',
       'For each provided English word or phrase, generate one sentence with exactly 3 grammar mistakes and four full-sentence correction options.',
       '',
       'Requirements:',
@@ -370,27 +370,27 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
 
   const [
-    fillTheGapTasks,
+    fillInTheGapTasks,
     translateEnglishSentenceTasks,
     translateUkrainianSentenceTasks,
-    synonymAntonymTasks,
-    continueDialogTasks,
-    fixSentenceTasks,
+    synonymAndAntonymTasks,
+    continueTheDialogTasks,
+    fixTheSentenceTasks,
   ] = await Promise.all([
-    toFillTheGapTasks(words),
+    toFillInTheGapTasks(words),
     toTranslateEnglishSentenceTasks(words),
     toTranslateUkrainianSentenceTasks(words),
-    toSynonymAntonymTasks(words),
-    toContinueDialogTasks(words),
-    toFixSentenceTasks(words),
+    toSynonymAndAntonymTasks(words),
+    toContinueTheDialogTasks(words),
+    toFixTheSentenceTasks(words),
   ]);
 
   return {
-    fillTheGapTasks,
+    fillInTheGapTasks,
     translateEnglishSentenceTasks,
     translateUkrainianSentenceTasks,
-    synonymAntonymTasks,
-    continueDialogTasks,
-    fixSentenceTasks,
+    synonymAndAntonymTasks,
+    continueTheDialogTasks,
+    fixTheSentenceTasks,
   };
 };

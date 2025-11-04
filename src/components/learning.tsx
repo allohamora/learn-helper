@@ -6,7 +6,7 @@ import {
   type DefinitionToWordTask,
   type TranslationToWordTask,
   type WordToTranslationTask,
-  type FillTheGapTask,
+  type FillInTheGapTask,
   type LearningTask,
   type ShowcaseTask,
   type UserWord,
@@ -14,9 +14,9 @@ import {
   type PronunciationToWordTask,
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
-  type ContinueDialogTask,
-  type SynonymAntonymTask,
-  type FixSentenceTask,
+  type ContinueTheDialogTask,
+  type SynonymAndAntonymTask,
+  type FixTheSentenceTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
@@ -27,7 +27,7 @@ import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
 import { TextToWord } from './text-to-word';
 import { WordToOptions } from './word-to-options';
-import { SynonymAntonymToWord } from './synonym-antonym-to-word';
+import { SynonymAndAntonymToWord } from './synonym-and-antonym-to-word';
 import { useCreateEvents } from '@/hooks/use-create-events';
 
 type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
@@ -132,16 +132,16 @@ const toPronunciationToWordTasks = (words: UserWord[]) => {
   });
 };
 
-const toFillTheGapTasks = (words: UserWord[], tasksData: TasksData['fillTheGapTasks']) => {
-  return tasksData.map(({ id, task, answer }): FillTheGapTask => {
+const toFillInTheGapTasks = (words: UserWord[], tasksData: TasksData['fillInTheGapTasks']) => {
+  return tasksData.map(({ id, task, answer }): FillInTheGapTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
-      throw new Error('Word for FillTheGap task is not found');
+      throw new Error('Word for FillInTheGap task is not found');
     }
 
     return {
       id: crypto.randomUUID(),
-      type: TaskType.FillTheGap,
+      type: TaskType.FillInTheGap,
       data: {
         id,
         text: task,
@@ -179,11 +179,11 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
   });
 };
 
-const toContinueDialogTasks = (tasksData: TasksData['continueDialogTasks']) => {
-  return tasksData.map(({ id, sentence, options }): ContinueDialogTask => {
+const toContinueTheDialogTasks = (tasksData: TasksData['continueTheDialogTasks']) => {
+  return tasksData.map(({ id, sentence, options }): ContinueTheDialogTask => {
     return {
       id: crypto.randomUUID(),
-      type: TaskType.ContinueDialog,
+      type: TaskType.ContinueTheDialog,
       data: {
         id,
         sentence,
@@ -193,16 +193,16 @@ const toContinueDialogTasks = (tasksData: TasksData['continueDialogTasks']) => {
   });
 };
 
-const toSynonymAntonymTasks = (words: UserWord[], tasksData: TasksData['synonymAntonymTasks']) => {
-  return tasksData.map(({ id, synonym, antonym }): SynonymAntonymTask => {
+const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synonymAndAntonymTasks']) => {
+  return tasksData.map(({ id, synonym, antonym }): SynonymAndAntonymTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
-      throw new Error('Word for SynonymAntonym task is not found');
+      throw new Error('Word for SynonymAndAntonym task is not found');
     }
 
     return {
       id: crypto.randomUUID(),
-      type: TaskType.SynonymAntonym,
+      type: TaskType.SynonymAndAntonym,
       data: {
         id,
         word: found.word.value,
@@ -213,11 +213,11 @@ const toSynonymAntonymTasks = (words: UserWord[], tasksData: TasksData['synonymA
   });
 };
 
-const toFixSentenceTasks = (tasksData: TasksData['fixSentenceTasks']) => {
-  return tasksData.map(({ id, sentence, options }): FixSentenceTask => {
+const toFixTheSentenceTasks = (tasksData: TasksData['fixTheSentenceTasks']) => {
+  return tasksData.map(({ id, sentence, options }): FixTheSentenceTask => {
     return {
       id: crypto.randomUUID(),
-      type: TaskType.FixSentence,
+      type: TaskType.FixTheSentence,
       data: {
         id,
         sentence,
@@ -248,18 +248,18 @@ const toClientTasks = (words: UserWord[]) => {
 const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasksData.translateEnglishSentenceTasks);
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
-  const fillTheGapTasks = toFillTheGapTasks(words, tasksData.fillTheGapTasks);
-  const synonymAntonymTasks = toSynonymAntonymTasks(words, tasksData.synonymAntonymTasks);
-  const continueDialogTasks = toContinueDialogTasks(tasksData.continueDialogTasks);
-  const fixSentenceTasks = toFixSentenceTasks(tasksData.fixSentenceTasks);
+  const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
+  const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
+  const continueTheDialogTasks = toContinueTheDialogTasks(tasksData.continueTheDialogTasks);
+  const fixTheSentenceTasks = toFixTheSentenceTasks(tasksData.fixTheSentenceTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
-    ...shuffle(fillTheGapTasks),
-    ...shuffle(synonymAntonymTasks),
-    ...shuffle(continueDialogTasks),
-    ...shuffle(fixSentenceTasks),
+    ...shuffle(fillInTheGapTasks),
+    ...shuffle(synonymAndAntonymTasks),
+    ...shuffle(continueTheDialogTasks),
+    ...shuffle(fixTheSentenceTasks),
   ];
 };
 
@@ -491,10 +491,10 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.FillTheGap && (
+            {currentTask?.type === TaskType.FillInTheGap && (
               <TextToWord
                 key={currentTask.id}
-                title="Fill the gap"
+                title="Fill in the gap"
                 subtitle="Type the correct word for the given sentence"
                 data={currentTask.data}
                 onNext={onNext}
@@ -502,8 +502,8 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.SynonymAntonym && (
-              <SynonymAntonymToWord
+            {currentTask?.type === TaskType.SynonymAndAntonym && (
+              <SynonymAndAntonymToWord
                 key={currentTask.id}
                 title="What word matches this synonym and antonym?"
                 subtitle="Type the word that has both the given synonym and antonym"
@@ -513,7 +513,7 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.ContinueDialog && (
+            {currentTask?.type === TaskType.ContinueTheDialog && (
               <SentenceToOptions
                 key={currentTask.id}
                 title="Continue the dialog"
@@ -524,7 +524,7 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.FixSentence && (
+            {currentTask?.type === TaskType.FixTheSentence && (
               <SentenceToOptions
                 key={currentTask.id}
                 title="Fix the sentence"
