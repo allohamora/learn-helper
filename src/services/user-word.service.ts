@@ -218,9 +218,7 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
 };
 
 const toSynonymAntonymTasks = async (words: UserWord[]) => {
-  if (!words.length) {
-    return [];
-  }
+  if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -240,18 +238,19 @@ const toSynonymAntonymTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher experienced in vocabulary exercises for learners.',
-      'Your task is to provide one synonym and one antonym for each provided word or phrase.',
+      'You are a professional English teacher who creates vocabulary-building exercises for learners.',
+      'For each provided English word or phrase, generate one synonym and one antonym based on its most common meaning.',
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} pairs - one for each provided word or phrase.`,
-      '- For each word or phrase, provide one synonym (a word with similar meaning) and one antonym (a word with opposite meaning).',
-      '- The synonym and antonym must be appropriate for the target word/phrase in its most common meaning.',
-      '- Use common, well-known synonyms and antonyms that learners would recognize.',
-      '- The synonym and antonym should be single words when possible, or short phrases if necessary.',
-      '- Ensure the synonym and antonym are at a similar difficulty level to the target word.',
-      '- If a word has multiple meanings, use the primary meaning indicated by the definition.',
-      '- Do not use the target word itself in the synonym or antonym.',
+      `- Generate exactly ${words.length} entries, one for each input item, using the same ids.`,
+      '- Provide one synonym (similar meaning) and one antonym (opposite meaning) for each target word or phrase.',
+      '- Use clear, common, and learner-friendly vocabulary.',
+      '- Prefer single-word answers; use short phrases only when necessary.',
+      '- The synonym and antonym must match the part of speech and approximate difficulty of the target word.',
+      '- If a word has multiple meanings, use the primary one indicated by the provided definition.',
+      '- Do not repeat the target word itself as a synonym or antonym.',
+      '- Keep all outputs natural, lowercase (unless proper nouns), and free of quotes or punctuation.',
+      '- Avoid rare, archaic, or overly technical words.',
       '- Use ids from the input list as ids for the tasks.',
       '',
       'Words and Phrases:',
