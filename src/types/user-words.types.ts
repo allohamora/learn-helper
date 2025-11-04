@@ -34,7 +34,6 @@ export enum TaskType {
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
   FillInTheGap = 'fill-in-the-gap',
-  ContinueTheDialog = 'continue-the-dialog',
   SynonymAndAntonym = 'synonym-and-antonym',
   FixTheSentence = 'fix-the-sentence',
 }
@@ -129,12 +128,6 @@ export type SynonymAndAntonymTask = {
   data: SynonymAndAntonymData;
 };
 
-export type ContinueTheDialogTask = {
-  id: string;
-  type: TaskType.ContinueTheDialog;
-  data: SentenceData;
-};
-
 export type FixTheSentenceTask = {
   id: string;
   type: TaskType.FixTheSentence;
@@ -152,5 +145,4 @@ export type LearningTask =
   | TranslateUkrainianSentenceTask
   | FillInTheGapTask
   | SynonymAndAntonymTask
-  | ContinueTheDialogTask
   | FixTheSentenceTask;

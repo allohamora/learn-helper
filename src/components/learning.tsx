@@ -14,7 +14,6 @@ import {
   type PronunciationToWordTask,
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
-  type ContinueTheDialogTask,
   type SynonymAndAntonymTask,
   type FixTheSentenceTask,
 } from '@/types/user-words.types';
@@ -179,20 +178,6 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
   });
 };
 
-const toContinueTheDialogTasks = (tasksData: TasksData['continueTheDialogTasks']) => {
-  return tasksData.map(({ id, sentence, options }): ContinueTheDialogTask => {
-    return {
-      id: crypto.randomUUID(),
-      type: TaskType.ContinueTheDialog,
-      data: {
-        id,
-        sentence,
-        options: shuffle(options),
-      },
-    };
-  });
-};
-
 const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synonymAndAntonymTasks']) => {
   return tasksData.map(({ id, synonym, antonym }): SynonymAndAntonymTask => {
     const found = words.find((word) => word.id === id);
@@ -250,7 +235,6 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
-  const continueTheDialogTasks = toContinueTheDialogTasks(tasksData.continueTheDialogTasks);
   const fixTheSentenceTasks = toFixTheSentenceTasks(tasksData.fixTheSentenceTasks);
 
   return [
@@ -258,7 +242,6 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
-    ...shuffle(continueTheDialogTasks),
     ...shuffle(fixTheSentenceTasks),
   ];
 };
@@ -507,17 +490,6 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What word matches this synonym and antonym?"
                 subtitle="Type the word that has both the given synonym and antonym"
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
-            )}
-
-            {currentTask?.type === TaskType.ContinueTheDialog && (
-              <SentenceToOptions
-                key={currentTask.id}
-                title="Continue the dialog"
-                subtitle="Choose the response that best continues the conversation"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
