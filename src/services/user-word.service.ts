@@ -262,79 +262,21 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
   return object;
 };
 
-const toFixTheSentenceTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object } = await generateObject({
-    model,
-    schema: z.array(
-      z.object({
-        id: z.number(),
-        sentence: z.string(),
-        options: z.array(
-          z.object({
-            value: z.string(),
-            isCorrect: z.boolean(),
-          }),
-        ),
-      }),
-    ),
-    prompt: [
-      'You are a professional English teacher who creates fix-the-sentence exercises for learners.',
-      'For each provided English word or phrase, generate one sentence with exactly 3 grammar mistakes and four full-sentence correction options.',
-      '',
-      'Requirements:',
-      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
-      '- Each sentence and its correction options must naturally include the provided word or phrase.',
-      '- The provided word or phrase must appear in the sentence exactly as given or in its correct grammatical form within at least one of the options.',
-      '- The sentence field must contain exactly 3 clear grammar mistakes (e.g., wrong tense, plural/singular mismatch, missing article, wrong adverb/adjective form, etc.).',
-      '- The options field must contain 4 full-sentence correction options.',
-      '- Exactly one option must be fully correct (isCorrect: true).',
-      '- The other three must contain small grammatical or lexical mistakes (isCorrect: false).',
-      '- Options must not be identical to the original incorrect sentence.',
-      '- Do not include periods at the end of the sentence or options.',
-      '- Avoid repeating topics or sentence structures across tasks.',
-      '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
-    ].join('\n'),
-  });
-
-  return object;
-};
-
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
 
-  const [
-    fillInTheGapTasks,
-    translateEnglishSentenceTasks,
-    translateUkrainianSentenceTasks,
-    synonymAndAntonymTasks,
-    fixTheSentenceTasks,
-  ] = await Promise.all([
-    toFillInTheGapTasks(words),
-    toTranslateEnglishSentenceTasks(words),
-    toTranslateUkrainianSentenceTasks(words),
-    toSynonymAndAntonymTasks(words),
-    toFixTheSentenceTasks(words),
-  ]);
+  const [fillInTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks, synonymAndAntonymTasks] =
+    await Promise.all([
+      toFillInTheGapTasks(words),
+      toTranslateEnglishSentenceTasks(words),
+      toTranslateUkrainianSentenceTasks(words),
+      toSynonymAndAntonymTasks(words),
+    ]);
 
   return {
     fillInTheGapTasks,
     translateEnglishSentenceTasks,
     translateUkrainianSentenceTasks,
     synonymAndAntonymTasks,
-    fixTheSentenceTasks,
   };
 };

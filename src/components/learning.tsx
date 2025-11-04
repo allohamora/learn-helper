@@ -15,7 +15,6 @@ import {
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
   type SynonymAndAntonymTask,
-  type FixTheSentenceTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
@@ -198,20 +197,6 @@ const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synon
   });
 };
 
-const toFixTheSentenceTasks = (tasksData: TasksData['fixTheSentenceTasks']) => {
-  return tasksData.map(({ id, sentence, options }): FixTheSentenceTask => {
-    return {
-      id: crypto.randomUUID(),
-      type: TaskType.FixTheSentence,
-      data: {
-        id,
-        sentence,
-        options: shuffle(options),
-      },
-    };
-  });
-};
-
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -235,14 +220,12 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
-  const fixTheSentenceTasks = toFixTheSentenceTasks(tasksData.fixTheSentenceTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
-    ...shuffle(fixTheSentenceTasks),
   ];
 };
 
@@ -490,17 +473,6 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What word matches this synonym and antonym?"
                 subtitle="Type the word that has both the given synonym and antonym"
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
-            )}
-
-            {currentTask?.type === TaskType.FixTheSentence && (
-              <SentenceToOptions
-                key={currentTask.id}
-                title="Fix the sentence"
-                subtitle="Choose the corrected version of the sentence"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
