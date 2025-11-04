@@ -15,6 +15,7 @@ import {
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
   type SynonymAndAntonymTask,
+  type FindIncorrectSentenceTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
@@ -197,6 +198,25 @@ const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synon
   });
 };
 
+const toFindIncorrectSentenceTasks = (words: UserWord[], tasksData: TasksData['findIncorrectSentenceTasks']) => {
+  return tasksData.map(({ id, options }): FindIncorrectSentenceTask => {
+    const found = words.find((word) => word.id === id);
+    if (!found) {
+      throw new Error('Word for FindIncorrectSentence task is not found');
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      type: TaskType.FindIncorrectSentence,
+      data: {
+        ...found.word,
+        id,
+        options: shuffle(options),
+      },
+    };
+  });
+};
+
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -220,12 +240,14 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
+  const findIncorrectSentenceTasks = toFindIncorrectSentenceTasks(words, tasksData.findIncorrectSentenceTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
+    ...shuffle(findIncorrectSentenceTasks),
   ];
 };
 
@@ -473,6 +495,17 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What word matches this synonym and antonym?"
                 subtitle="Type the word that has both the given synonym and antonym"
+                data={currentTask.data}
+                onNext={onNext}
+                onMistake={onMistake}
+              />
+            )}
+
+            {currentTask?.type === TaskType.FindIncorrectSentence && (
+              <WordToOptions
+                key={currentTask.id}
+                title="Find the incorrect sentence"
+                subtitle="Choose the sentence where the word or phrase is used incorrectly"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

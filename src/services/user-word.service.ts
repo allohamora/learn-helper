@@ -262,21 +262,81 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
   return object;
 };
 
+const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
+  if (!words.length) return [];
+
+  const wordList = words.map(({ id, word }) => ({
+    id,
+    value: word.value,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level,
+    definition: word.definition,
+  }));
+
+  const { object } = await generateObject({
+    model,
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        options: z.array(
+          z.object({
+            value: z.string(),
+            isAnswer: z.boolean(),
+            description: z.string().optional(),
+          }),
+        ),
+      }),
+    ),
+    prompt: [
+      'You are a professional English teacher who creates mistake detection exercises for learners.',
+      'For each provided English word or phrase, generate four sentences where three use the word correctly and one uses it incorrectly.',
+      '',
+      'Requirements:',
+      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
+      '- Each task must include 4 sentence options, all using or referencing the target word or phrase.',
+      '- Exactly three sentences must use the word/phrase CORRECTLY (isAnswer: false) - they must accurately demonstrate proper usage, meaning, or context of the word/phrase.',
+      '- Exactly one sentence must use the word/phrase INCORRECTLY (isAnswer: true) - this is the answer the user should select. It must be clearly wrong but plausible (wrong preposition, incorrect collocation, wrong grammatical form, wrong context, or misuse of meaning).',
+      '- The sentence with isAnswer: true MUST be grammatically incorrect or use the word/phrase incorrectly. Do NOT mark correct sentences as isAnswer: true.',
+      '- Do NOT mark sentences as incorrect just because they are "less natural" or "less idiomatic". A sentence is only incorrect if it is grammatically wrong or uses the word/phrase in a way that breaks clear rules of English usage.',
+      '- The incorrect usage must be OBVIOUS and CLEAR - use blatant mistakes that learners can easily identify. If a sentence is grammatically correct but just sounds less natural, it should be marked as correct (isAnswer: false).',
+      '- All sentences must be complete, natural English sentences (3–15 words).',
+      '- The description field must be a short explanation of why the sentence is incorrect.',
+      '- The target word or phrase must appear in each sentence.',
+      '- Do not include periods at the end of sentences.',
+      '- Avoid repeating topics or patterns across tasks.',
+      '',
+      'Words and Phrases:',
+      '```json',
+      JSON.stringify(wordList),
+      '```',
+    ].join('\n'),
+  });
+
+  return object;
+};
+
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
 
-  const [fillInTheGapTasks, translateEnglishSentenceTasks, translateUkrainianSentenceTasks, synonymAndAntonymTasks] =
-    await Promise.all([
-      toFillInTheGapTasks(words),
-      toTranslateEnglishSentenceTasks(words),
-      toTranslateUkrainianSentenceTasks(words),
-      toSynonymAndAntonymTasks(words),
-    ]);
+  const [
+    fillInTheGapTasks,
+    translateEnglishSentenceTasks,
+    translateUkrainianSentenceTasks,
+    synonymAndAntonymTasks,
+    findIncorrectSentenceTasks,
+  ] = await Promise.all([
+    toFillInTheGapTasks(words),
+    toTranslateEnglishSentenceTasks(words),
+    toTranslateUkrainianSentenceTasks(words),
+    toSynonymAndAntonymTasks(words),
+    toFindIncorrectSentenceTasks(words),
+  ]);
 
   return {
     fillInTheGapTasks,
     translateEnglishSentenceTasks,
     translateUkrainianSentenceTasks,
     synonymAndAntonymTasks,
+    findIncorrectSentenceTasks,
   };
 };
