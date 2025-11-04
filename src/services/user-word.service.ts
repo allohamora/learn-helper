@@ -251,7 +251,6 @@ const toSynonymAntonymTasks = async (words: UserWord[]) => {
       '- Do not repeat the target word itself as a synonym or antonym.',
       '- Keep all outputs natural, lowercase (unless proper nouns), and free of quotes or punctuation.',
       '- Avoid rare, archaic, or overly technical words.',
-      '- Use ids from the input list as ids for the tasks.',
       '',
       'Words and Phrases:',
       '```json',
