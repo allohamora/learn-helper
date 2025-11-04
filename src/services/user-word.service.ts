@@ -70,9 +70,7 @@ const google = createGoogleGenerativeAI({
 const model = google('gemini-2.5-flash-lite');
 
 const toFillTheGapTasks = async (words: UserWord[]) => {
-  if (!words.length) {
-    return [];
-  }
+  if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -92,22 +90,21 @@ const toFillTheGapTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English tutor experienced in designing engaging, context-rich fill-the-gap exercises for learners.',
-      'Your task is to create one short, natural English sentence for each provided word or phrase, where the target word/phrase is replaced with a blank.',
+      'You are a professional English teacher who creates concise, natural fill-the-gap exercises for learners.',
+      'For each provided English word or phrase, generate one English sentence where the target word or phrase is replaced by a blank.',
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks - one for each provided word or phrase.`,
+      `- Generate exactly ${words.length} tasks, one for each input item, using the same ids.`,
       '- Each task must be a single, complete, natural English sentence (5–15 words).',
-      '- Each sentence must contain exactly one blank, represented by "___".',
-      '- The missing word/phrase must be exactly the target word/phrase (case-insensitive match).',
+      '- The sentence must contain exactly one blank represented as "___".',
+      '- The missing word or phrase must be exactly the target word/phrase (case-insensitive).',
       '- Do not include the target word/phrase anywhere else in the sentence.',
-      '- For phrases, the blank should replace the entire phrase as a unit.',
-      '- Use a modern, neutral tone - avoid slang or overly complex structures.',
-      '- Avoid repeating sentence structures or topics across tasks; make each example unique.',
-      '- Do not use periods at the end of the sentence.',
-      '- The "answer" field must contain the exact form of the word/phrase that fits the blank in the sentence.',
-      '- Use ids from the input list as ids for the tasks.',
-      '- If the target is a phrase with placeholders like "agree with sb", "take care of (sth)", the answer should match the sentence context (e.g., "agree with (sb)" → sentence "I ___ you" → answer "agree with").',
+      '- For phrases, replace the entire phrase with the blank as one unit.',
+      '- Use a natural, modern tone — avoid slang or overly formal expressions.',
+      '- Make each sentence unique; avoid repeating structures or contexts.',
+      '- Do not end sentences with a period.',
+      '- The "answer" field must contain the exact form of the missing word or phrase that correctly fits the blank.',
+      '- If the target phrase has placeholders (e.g., "agree with (sb)", "take care of (sth)"), adapt the sentence naturally (e.g., target "agree with (sb)" → sentence "I ___ you" → answer "agree with").',
       '',
       'Words and Phrases:',
       '```json',
