@@ -136,7 +136,7 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
         options: z.array(
           z.object({
             value: z.string(),
-            isCorrect: z.boolean(),
+            isAnswer: z.boolean(),
           }),
         ),
       }),
@@ -150,7 +150,7 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
       '- The English sentence must include or clearly express the meaning of the target English word or phrase.',
       '- If the input is a phrase, use the full phrase naturally within the sentence.',
       '- Sentences must be concise (1–12 words), modern, natural, and without periods.',
-      '- Each task must include 4 Ukrainian options: 1 correct translation (isCorrect: true) and 3 incorrect but plausible ones (isCorrect: false).',
+      '- Each task must include 4 Ukrainian options: 1 correct translation (isAnswer: true) and 3 incorrect but plausible ones (isAnswer: false).',
       '- The correct translation must precisely reflect the meaning of the English sentence.',
       '- Incorrect translations must be grammatically correct and natural but differ slightly in meaning (e.g., wrong preposition, verb, or adjective).',
       '- All Ukrainian sentences must sound fluent and natural for native speakers.',
@@ -186,7 +186,7 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
         options: z.array(
           z.object({
             value: z.string(),
-            isCorrect: z.boolean(),
+            isAnswer: z.boolean(),
           }),
         ),
       }),
@@ -199,7 +199,7 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
       `- Generate exactly ${words.length} tasks, one per input item, reusing input ids.`,
       '- The Ukrainian sentence must include or clearly express the meaning of the target English word or phrase.',
       '- Sentences must be short (1–12 words), natural, modern, and without periods.',
-      '- Each task must include 4 full-sentence English options: 1 correct (isCorrect: true) and 3 incorrect (isCorrect: false).',
+      '- Each task must include 4 full-sentence English options: 1 correct (isAnswer: true) and 3 incorrect (isAnswer: false).',
       '- All options must be complete, natural English sentences, not single words or fragments.',
       '- The correct option must include the exact English word or phrase from the input (match exactly, case-sensitive).',
       '- The correct option must accurately reflect the meaning of the Ukrainian sentence.',

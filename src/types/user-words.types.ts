@@ -50,7 +50,7 @@ export type ToOptionsData = {
   id: number;
   options: {
     value: string;
-    isCorrect: boolean;
+    isAnswer: boolean;
   }[];
 };
 

@@ -49,12 +49,12 @@ const toShowcaseTasks = (words: UserWord[]) => {
 
 const toWordToDefinitionTasks = (words: UserWord[]) => {
   return words.map((target): WordToDefinitionTask => {
-    const wrong = shuffle(words)
+    const alternatives = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ value: value.word.definition, isCorrect: false }));
-    const correct = { value: target.word.definition, isCorrect: true };
-    const options = shuffle([correct, ...wrong]);
+      .map((value) => ({ value: value.word.definition, isAnswer: false }));
+    const answer = { value: target.word.definition, isAnswer: true };
+    const options = shuffle([answer, ...alternatives]);
 
     return {
       id: crypto.randomUUID(),
@@ -97,13 +97,13 @@ const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] =>
 
 const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] => {
   return words.map((target): WordToTranslationTask => {
-    const wrong = shuffle(words)
+    const alternatives = shuffle(words)
       .filter((word) => word.id !== target.id)
       .slice(0, 3)
-      .map((value) => ({ value: value.word.uaTranslation, isCorrect: false }));
+      .map((value) => ({ value: value.word.uaTranslation, isAnswer: false }));
 
-    const correct = { value: target.word.uaTranslation, isCorrect: true };
-    const options = shuffle([correct, ...wrong]);
+    const answer = { value: target.word.uaTranslation, isAnswer: true };
+    const options = shuffle([answer, ...alternatives]);
 
     return {
       id: crypto.randomUUID(),

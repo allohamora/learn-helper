@@ -27,7 +27,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
   const onSelectOption = (idx: number) => {
     setAnswers((prev) => new Set(prev).add(idx));
 
-    if (data.options[idx]?.isCorrect) {
+    if (data.options[idx]?.isAnswer) {
       setIsFinished(true);
     } else {
       onMistake(data.id);
@@ -46,7 +46,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
 
         <CardContent className="px-4 md:px-6">
           <div className="space-y-3">
-            {data.options.map(({ isCorrect, value }, idx) => {
+            {data.options.map(({ isAnswer, value }, idx) => {
               const isAnswered = answers.has(idx);
 
               return (
@@ -56,8 +56,8 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
                   className={cn(
                     'w-full justify-start text-left p-4 h-auto transition-colors duration-200 whitespace-normal [&:disabled]:opacity-80',
                     {
-                      'border-green-500 text-green-500': isAnswered && isCorrect,
-                      'border-red-500 text-red-500': isAnswered && !isCorrect,
+                      'border-green-500 text-green-500': isAnswered && isAnswer,
+                      'border-red-500 text-red-500': isAnswered && !isAnswer,
                     },
                   )}
                   onClick={() => onSelectOption(idx)}
