@@ -263,9 +263,7 @@ const toSynonymAntonymTasks = async (words: UserWord[]) => {
 };
 
 const toContinueDialogTasks = async (words: UserWord[]) => {
-  if (!words.length) {
-    return [];
-  }
+  if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -290,11 +288,11 @@ const toContinueDialogTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher experienced in creating dialog continuation exercises for learners.',
-      'Your task is to create one complete English sentence (3–15 words) and 4 similar response options for each provided word or phrase.',
+      'You are a professional English teacher who creates dialog continuation exercises for learners.',
+      'For each provided English word or phrase, generate one English sentence (3–15 words) and four response options.',
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks - one for each provided word or phrase.`,
+      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
       '- The sentence must be a standalone question, statement, or conversational opener that naturally leads to a response using the target word or phrase.',
       '- The sentence must create a specific context where only ONE grammatical form is correct.',
       '- Each task must include 4 similar response options: 1 grammatically correct (isCorrect: true) that uses the target word/phrase correctly and continues the dialog naturally, and 3 with grammar mistakes (isCorrect: false).',
@@ -305,8 +303,7 @@ const toContinueDialogTasks = async (words: UserWord[]) => {
       '- All options must be complete sentences, not fragments.',
       '- Sentences must be natural and use a modern, neutral tone.',
       '- Do not use periods at the end of the sentence or options.',
-      '- Use ids from the input list as ids for the tasks.',
-      '- Avoid using the same topics or repetitive sentence structures across examples.',
+      '- Avoid repeating topics or sentence structures across tasks.',
       '',
       'Words and Phrases:',
       '```json',
@@ -319,9 +316,7 @@ const toContinueDialogTasks = async (words: UserWord[]) => {
 };
 
 const toFixSentenceTasks = async (words: UserWord[]) => {
-  if (!words.length) {
-    return [];
-  }
+  if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -346,21 +341,20 @@ const toFixSentenceTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher experienced in creating grammar correction exercises for learners.',
-      'Your task is to create one sentence with exactly 3 obvious grammar mistakes and 4 full-sentence correction options for each provided word or phrase.',
+      'You are a professional English teacher who creates grammar correction exercises for learners.',
+      'For each provided English word or phrase, generate one sentence with exactly 3 grammar mistakes and four full-sentence correction options.',
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks - one for each provided word or phrase.`,
-      '- Each `sentence` and its correction options must naturally include the provided word or phrase.',
-      '- The provided word or phrase must appear in the `sentence` exactly as given or in its correct grammatical form within at least one of the options.',
-      '- The `sentence` field must contain exactly 3 clear grammar mistakes (e.g., wrong tense, plural/singular mismatch, missing article, wrong adverb/adjective form, etc.).',
-      '- The `options` field must contain 4 full-sentence correction options.',
+      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
+      '- Each sentence and its correction options must naturally include the provided word or phrase.',
+      '- The provided word or phrase must appear in the sentence exactly as given or in its correct grammatical form within at least one of the options.',
+      '- The sentence field must contain exactly 3 clear grammar mistakes (e.g., wrong tense, plural/singular mismatch, missing article, wrong adverb/adjective form, etc.).',
+      '- The options field must contain 4 full-sentence correction options.',
       '- Exactly one option must be fully correct (isCorrect: true).',
       '- The other three must contain small grammatical or lexical mistakes (isCorrect: false).',
       '- Options must not be identical to the original incorrect sentence.',
       '- Do not include periods at the end of the sentence or options.',
-      '- Use ids from the input list as ids for the tasks.',
-      '- Avoid repetitive topics or sentence structures.',
+      '- Avoid repeating topics or sentence structures across tasks.',
       '',
       'Words and Phrases:',
       '```json',
