@@ -120,9 +120,7 @@ const toFillTheGapTasks = async (words: UserWord[]) => {
 };
 
 const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
-  if (!words.length) {
-    return [];
-  }
+  if (!words.length) return [];
 
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -147,20 +145,19 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
       }),
     ),
     prompt: [
-      'You are a professional English teacher experienced in creating short natural English sentences for learners.',
-      'Your task is to create one concise English sentence (1–12 words) and 4 Ukrainian translation options for each provided word or phrase.',
+      'You are a professional English teacher who creates short, natural English sentences for learners.',
+      'For each given English word or phrase, generate one English sentence (1–12 words) and four Ukrainian translation options.',
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} sentences - one for each provided word or phrase.`,
+      `- Generate exactly ${words.length} tasks, one per input item, keeping the same ids.`,
       '- The English sentence must include or clearly express the meaning of the target English word or phrase.',
-      '- For phrases, use the complete phrase naturally within the sentence.',
-      '- Sentences must be short (1–12 words), natural, and use a modern, neutral tone.',
-      '- Do not use periods at the end of the sentence.',
-      '- Each task must include 4 options: 1 correct Ukrainian translation (isCorrect: true) and 3 plausible but incorrect Ukrainian translations (isCorrect: false).',
-      '- Incorrect options should be close in structure or meaning but not identical.',
-      '- All Ukrainian options must look natural and grammatically correct in Ukrainian.',
-      '- Use ids from the input list as ids for the tasks.',
-      '- Avoid using the same topics or repetitive sentence structures across examples.',
+      '- If the input is a phrase, use the full phrase naturally within the sentence.',
+      '- Sentences must be concise (1–12 words), modern, natural, and without periods.',
+      '- Each task must include 4 Ukrainian options: 1 correct translation (isCorrect: true) and 3 incorrect but plausible ones (isCorrect: false).',
+      '- The correct translation must precisely reflect the meaning of the English sentence.',
+      '- Incorrect translations must be grammatically correct and natural but differ slightly in meaning (e.g., wrong preposition, verb, or adjective).',
+      '- All Ukrainian sentences must sound fluent and natural for native speakers.',
+      '- Avoid repeating topics, subjects, or sentence patterns across tasks.',
       '',
       'Words and Phrases:',
       '```json',
