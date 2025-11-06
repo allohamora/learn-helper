@@ -134,7 +134,12 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
 
             <div className="flex justify-center">
               {!isChecked ? (
-                <Button onClick={handleCheck} size="lg" disabled={selectedWords.length === 0} className="min-w-32">
+                <Button
+                  onClick={handleCheck}
+                  size="lg"
+                  disabled={selectedWords.length !== data.words.length}
+                  className="min-w-32"
+                >
                   Check
                 </Button>
               ) : (
