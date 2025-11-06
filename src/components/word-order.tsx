@@ -67,7 +67,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
           <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
             <div className="flex flex-wrap items-center justify-center gap-2">
               {selectedWords.length === 0 ? (
-                <span className="text-muted-foreground">Click words below to build the sentence</span>
+                <span className="text-muted-foreground">Select words below to build the sentence</span>
               ) : (
                 selectedWords.map((word, index) => {
                   const isCorrectPosition = isChecked && word.idx === index;

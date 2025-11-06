@@ -543,7 +543,7 @@ export const Learning: FC = () => {
               <WordOrder
                 key={currentTask.id}
                 title="Arrange the words in the correct order"
-                subtitle="Click words to build the sentence in the correct order"
+                subtitle="Select words to build the sentence in the correct order"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
