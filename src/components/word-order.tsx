@@ -30,11 +30,8 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
     setAvailableWords(availableWords.filter((_, idx) => idx !== index));
   };
 
-  const handleRemoveWord = (index: number) => {
+  const handleRemoveWord = (word: Word, index: number) => {
     if (isChecked) return;
-
-    const word = selectedWords[index];
-    if (word === undefined) return;
 
     setSelectedWords(selectedWords.filter((_, idx) => idx !== index));
     setAvailableWords([...availableWords, word]);
@@ -75,7 +72,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
                     <button
                       key={`${word.value}-${word.idx}-${index}`}
                       type="button"
-                      onClick={() => !isChecked && handleRemoveWord(index)}
+                      onClick={() => handleRemoveWord(word, index)}
                       disabled={isChecked}
                       className={cn(
                         'inline-flex items-center rounded-md bg-primary/10 px-3 py-1.5 text-base font-medium transition-colors md:text-lg',
