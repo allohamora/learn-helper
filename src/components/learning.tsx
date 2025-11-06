@@ -520,7 +520,7 @@ export const Learning: FC = () => {
             {currentTask?.type === TaskType.SynonymAndAntonym && (
               <SynonymAndAntonymToWord
                 key={currentTask.id}
-                title="What word matches this synonym and antonym?"
+                title="What word matches this?"
                 subtitle="Type the word that has both the given synonym and antonym"
                 data={currentTask.data}
                 onNext={onNext}
