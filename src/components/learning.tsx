@@ -16,7 +16,6 @@ import {
   type TranslateEnglishSentenceTask,
   type SynonymAndAntonymTask,
   type FindIncorrectSentenceTask,
-  type UsageDescriptionToWordTask,
   type WordOrderTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
@@ -220,25 +219,6 @@ const toFindIncorrectSentenceTasks = (words: UserWord[], tasksData: TasksData['f
   });
 };
 
-const toUsageDescriptionToWordTasks = (words: UserWord[], tasksData: TasksData['usageDescriptionToWordTasks']) => {
-  return tasksData.map(({ id, description }): UsageDescriptionToWordTask => {
-    const found = words.find((word) => word.id === id);
-    if (!found) {
-      throw new Error('Word for UsageDescriptionToWord task is not found');
-    }
-
-    return {
-      id: crypto.randomUUID(),
-      type: TaskType.UsageDescriptionToWord,
-      data: {
-        id,
-        text: description,
-        word: found.word.value,
-      },
-    };
-  });
-};
-
 const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTasks']) => {
   return tasksData.map(({ id, sentence }): WordOrderTask => {
     const found = words.find((word) => word.id === id);
@@ -286,7 +266,6 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
   const findIncorrectSentenceTasks = toFindIncorrectSentenceTasks(words, tasksData.findIncorrectSentenceTasks);
-  const usageDescriptionToWordTasks = toUsageDescriptionToWordTasks(words, tasksData.usageDescriptionToWordTasks);
   const wordOrderTasks = toWordOrderTasks(words, tasksData.wordOrderTasks);
 
   return [
@@ -295,7 +274,6 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
     ...shuffle(findIncorrectSentenceTasks),
-    ...shuffle(usageDescriptionToWordTasks),
     ...shuffle(wordOrderTasks),
   ];
 };
@@ -555,17 +533,6 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Find the incorrect sentence"
                 subtitle="Choose the sentence where the word or phrase is used incorrectly"
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
-            )}
-
-            {currentTask?.type === TaskType.UsageDescriptionToWord && (
-              <TextToWord
-                key={currentTask.id}
-                title="Which word matches this usage?"
-                subtitle="Type the word that matches the given usage description"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

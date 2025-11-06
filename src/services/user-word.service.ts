@@ -315,48 +315,6 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
   return object;
 };
 
-const toUsageDescriptionToWordTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object } = await generateObject({
-    model,
-    schema: z.array(
-      z.object({
-        id: z.number(),
-        description: z.string(),
-      }),
-    ),
-    prompt: [
-      'You are a professional English teacher who creates usage-based vocabulary exercises for learners.',
-      'For each provided English word or phrase, generate a description that explains when or in what situations to use this word.',
-      '',
-      'Requirements:',
-      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
-      '- The description must start with "Use this word when..." or "Use this word to..." or similar phrasing that indicates when to use the word.',
-      '- Focus on the context, situation, or purpose for using the word rather than its definition.',
-      '- The description should help learners understand when it is appropriate to use this word.',
-      '- Keep descriptions concise (10-30 words) and clear.',
-      '- Use natural, learner-friendly language.',
-      '- Avoid repeating sentence patterns across tasks.',
-      '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
-    ].join('\n'),
-  });
-
-  return object;
-};
-
 const toWordOrderTasks = async (words: UserWord[]) => {
   if (!words.length) return [];
 
@@ -412,7 +370,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateUkrainianSentenceTasks,
     synonymAndAntonymTasks,
     findIncorrectSentenceTasks,
-    usageDescriptionToWordTasks,
     wordOrderTasks,
   ] = await Promise.all([
     toFillInTheGapTasks(words),
@@ -420,7 +377,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     toTranslateUkrainianSentenceTasks(words),
     toSynonymAndAntonymTasks(words),
     toFindIncorrectSentenceTasks(words),
-    toUsageDescriptionToWordTasks(words),
     toWordOrderTasks(words),
   ]);
 
@@ -430,7 +386,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateUkrainianSentenceTasks,
     synonymAndAntonymTasks,
     findIncorrectSentenceTasks,
-    usageDescriptionToWordTasks,
     wordOrderTasks,
   };
 };
