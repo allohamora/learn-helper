@@ -36,7 +36,7 @@ type TasksData = Awaited<ReturnType<typeof actions.getLearningTasks.orThrow>>;
 const shuffle = <T,>(array: T[]): T[] => {
   return array
     .map((value) => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
+    .toSorted((a, b) => a.sort - b.sort)
     .map(({ value }) => value);
 };
 
