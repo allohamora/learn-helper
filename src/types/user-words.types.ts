@@ -33,7 +33,10 @@ export enum TaskType {
   PronunciationToWord = 'pronunciation-to-word',
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
-  FillTheGap = 'fill-the-gap',
+  FillInTheGap = 'fill-in-the-gap',
+  SynonymAndAntonym = 'synonym-and-antonym',
+  FindIncorrectSentence = 'find-incorrect-sentence',
+  WordOrder = 'word-order',
 }
 
 export type ToWordData = {
@@ -49,13 +52,14 @@ export type ToOptionsData = {
   id: number;
   options: {
     value: string;
-    isCorrect: boolean;
+    isAnswer: boolean;
+    description?: string;
   }[];
 };
 
 export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
 
-export type TranslateSentenceData = ToOptionsData & {
+export type SentenceData = ToOptionsData & {
   sentence: string;
 };
 
@@ -100,19 +104,45 @@ export type PronunciationToWordTask = {
 export type TranslateEnglishSentenceTask = {
   id: string;
   type: TaskType.TranslateEnglishSentence;
-  data: TranslateSentenceData;
+  data: SentenceData;
 };
 
 export type TranslateUkrainianSentenceTask = {
   id: string;
   type: TaskType.TranslateUkrainianSentence;
-  data: TranslateSentenceData;
+  data: SentenceData;
 };
 
-export type FillTheGapTask = {
+export type FillInTheGapTask = {
   id: string;
-  type: TaskType.FillTheGap;
+  type: TaskType.FillInTheGap;
   data: TextToWordData;
+};
+
+export type SynonymAndAntonymData = ToWordData & {
+  synonym: string;
+  antonym: string;
+};
+
+export type SynonymAndAntonymTask = {
+  id: string;
+  type: TaskType.SynonymAndAntonym;
+  data: SynonymAndAntonymData;
+};
+
+export type FindIncorrectSentenceTask = {
+  id: string;
+  type: TaskType.FindIncorrectSentence;
+  data: WordToOptionsData;
+};
+
+export type WordOrderTask = {
+  id: string;
+  type: TaskType.WordOrder;
+  data: {
+    id: number;
+    words: { idx: number; value: string }[];
+  };
 };
 
 export type LearningTask =
@@ -124,4 +154,7 @@ export type LearningTask =
   | PronunciationToWordTask
   | TranslateEnglishSentenceTask
   | TranslateUkrainianSentenceTask
-  | FillTheGapTask;
+  | FillInTheGapTask
+  | SynonymAndAntonymTask
+  | FindIncorrectSentenceTask
+  | WordOrderTask;
