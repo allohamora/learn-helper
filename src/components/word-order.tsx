@@ -117,7 +117,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
             {isChecked && (
               <div className="text-center">
                 {isCorrect ? (
-                  <p className="font-semibold text-green-600">Correct! Well done.</p>
+                  <p className="font-semibold text-green-600">Correct</p>
                 ) : (
                   <div className="space-y-2">
                     <p className="font-semibold text-red-600">Incorrect</p>
