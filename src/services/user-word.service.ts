@@ -300,7 +300,7 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
       '- Do NOT mark sentences as incorrect just because they are "less natural" or "less idiomatic". A sentence is only incorrect if it is grammatically wrong or uses the word/phrase in a way that breaks clear rules of English usage.',
       '- The incorrect usage must be OBVIOUS and CLEAR - use blatant mistakes that learners can easily identify. If a sentence is grammatically correct but just sounds less natural, it should be marked as correct (isAnswer: false).',
       '- All sentences must be complete, natural English sentences (3–15 words).',
-      '- The description field must be a short explanation of why the sentence is incorrect.',
+      '- The description field must only be provided for the incorrect sentence (isAnswer: true) and should be a short explanation of why it is incorrect.',
       '- The target word or phrase must appear in each sentence.',
       '- Do not include periods at the end of sentences.',
       '- Avoid repeating topics or patterns across tasks.',
