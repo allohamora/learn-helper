@@ -37,6 +37,7 @@ export enum TaskType {
   SynonymAndAntonym = 'synonym-and-antonym',
   FindIncorrectSentence = 'find-incorrect-sentence',
   UsageDescriptionToWord = 'usage-description-to-word',
+  WordOrder = 'word-order',
 }
 
 export type ToWordData = {
@@ -142,6 +143,15 @@ export type UsageDescriptionToWordTask = {
   data: TextToWordData;
 };
 
+export type WordOrderTask = {
+  id: string;
+  type: TaskType.WordOrder;
+  data: {
+    id: number;
+    words: { idx: number; value: string }[];
+  };
+};
+
 export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
@@ -154,4 +164,5 @@ export type LearningTask =
   | FillInTheGapTask
   | SynonymAndAntonymTask
   | FindIncorrectSentenceTask
-  | UsageDescriptionToWordTask;
+  | UsageDescriptionToWordTask
+  | WordOrderTask;

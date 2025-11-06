@@ -357,6 +357,52 @@ const toUsageDescriptionToWordTasks = async (words: UserWord[]) => {
   return object;
 };
 
+const toWordOrderTasks = async (words: UserWord[]) => {
+  if (!words.length) return [];
+
+  const wordList = words.map(({ id, word }) => ({
+    id,
+    value: word.value,
+    partOfSpeech: word.partOfSpeech,
+    level: word.level,
+    definition: word.definition,
+  }));
+
+  const { object } = await generateObject({
+    model,
+    schema: z.array(
+      z.object({
+        id: z.number(),
+        sentence: z.string(),
+      }),
+    ),
+    prompt: [
+      'You are a professional English teacher who creates word order exercises for learners.',
+      'For each provided English word or phrase, generate a sentence that needs to be arranged in the correct order.',
+      '',
+      'Requirements:',
+      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
+      '- Each task must include the target word or phrase as part of a complete, natural English sentence.',
+      '- The sentence must be a single string with words separated by spaces.',
+      '- The sentence must contain all words in the CORRECT order (this is the answer).',
+      '- Include articles (a, an, the), prepositions, and other function words as separate words.',
+      '- Each word should be separated by a single space.',
+      '- The sentence must be natural, modern English (5-15 words total).',
+      '- The target word or phrase must appear in the sentence.',
+      '- Do not include punctuation marks in the sentence.',
+      '- Capitalize first word that starts the sentence.',
+      '- Make sentences unique; avoid repeating structures or contexts.',
+      '',
+      'Words and Phrases:',
+      '```json',
+      JSON.stringify(wordList),
+      '```',
+    ].join('\n'),
+  });
+
+  return object;
+};
+
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
 
@@ -367,6 +413,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     synonymAndAntonymTasks,
     findIncorrectSentenceTasks,
     usageDescriptionToWordTasks,
+    wordOrderTasks,
   ] = await Promise.all([
     toFillInTheGapTasks(words),
     toTranslateEnglishSentenceTasks(words),
@@ -374,6 +421,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     toSynonymAndAntonymTasks(words),
     toFindIncorrectSentenceTasks(words),
     toUsageDescriptionToWordTasks(words),
+    toWordOrderTasks(words),
   ]);
 
   return {
@@ -383,5 +431,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     synonymAndAntonymTasks,
     findIncorrectSentenceTasks,
     usageDescriptionToWordTasks,
+    wordOrderTasks,
   };
 };
