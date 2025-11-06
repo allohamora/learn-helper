@@ -100,7 +100,7 @@ const toFillInTheGapTasks = async (words: UserWord[]) => {
       '- The missing word or phrase must be exactly the target word/phrase (case-insensitive).',
       '- Do not include the target word/phrase anywhere else in the sentence.',
       '- For phrases, replace the entire phrase with the blank as one unit.',
-      '- Use a natural, modern tone — avoid slang or overly formal expressions.',
+      '- Use a natural, modern tone - avoid slang or overly formal expressions.',
       '- Make each sentence unique; avoid repeating structures or contexts.',
       '- Do not end sentences with a period.',
       '- The "answer" field must contain the exact form of the missing word or phrase that correctly fits the blank.',
