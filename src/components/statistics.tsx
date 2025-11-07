@@ -247,7 +247,7 @@ export const Statistics: FC = () => {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
         <Card className="py-4 md:py-6">
           <CardHeader className="space-y-1 px-4 md:px-6">
             <div className="flex items-center justify-between">
@@ -261,7 +261,7 @@ export const Statistics: FC = () => {
               Daily progression of known and learning words with time spent
             </CardDescription>
           </CardHeader>
-          <CardContent className="px-4 pt-2 md:px-6">
+          <CardContent className="mt-auto px-4 pt-2 md:px-6">
             <ChartContainer config={discoveringChartConfig}>
               <AreaChart
                 accessibilityLayer
@@ -341,7 +341,7 @@ export const Statistics: FC = () => {
               Daily tasks completed, retries, showcases, mistakes made, and time spent
             </CardDescription>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="mt-auto px-4 pt-2 md:px-6">
             <ChartContainer config={learningChartConfig}>
               <AreaChart
                 accessibilityLayer
@@ -445,7 +445,7 @@ export const Statistics: FC = () => {
             </div>
             <CardDescription className="text-sm">Daily spend for generated learning tasks</CardDescription>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="mt-auto px-4 pt-2 md:px-6">
             <ChartContainer config={costChartConfig}>
               <AreaChart
                 accessibilityLayer
