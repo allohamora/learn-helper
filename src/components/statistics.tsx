@@ -217,7 +217,7 @@ export const Statistics: FC = () => {
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalInputTokens}</div>
-            <p className="text-xs text-muted-foreground">tokens sent to AI</p>
+            <p className="text-xs text-muted-foreground">tokens sent to llm</p>
           </CardContent>
         </Card>
 
@@ -228,7 +228,7 @@ export const Statistics: FC = () => {
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalOutputTokens}</div>
-            <p className="text-xs text-muted-foreground">tokens received from AI</p>
+            <p className="text-xs text-muted-foreground">tokens received from llm</p>
           </CardContent>
         </Card>
       </div>
