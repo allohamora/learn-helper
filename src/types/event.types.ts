@@ -7,6 +7,7 @@ export enum EventType {
   LearningTaskCompleted = 'learning-task-completed',
   RetryLearningTaskCompleted = 'retry-learning-task-completed',
   WordMovedToNextStep = 'word-moved-to-next-step',
+  TaskCost = 'task-cost',
 }
 
 export type EventBody =
@@ -33,4 +34,12 @@ export type EventBody =
   | {
       type: EventType.WordMovedToNextStep;
       userWordId: number;
+    }
+  | {
+      type: EventType.TaskCost;
+      taskType: TaskType;
+      userWordIds: number[];
+      costInNanoDollars: number;
+      inputTokens?: number;
+      outputTokens?: number;
     };

@@ -6,16 +6,16 @@ import {
   updateUserWordStatus,
 } from '@/repositories/user-word.repository';
 import type { AuthParams } from '@/types/auth.types';
-import { Status, type DiscoveryStatus } from '@/types/user-words.types';
-import { EventType } from '@/types/event.types';
+import { Status, TaskType, type DiscoveryStatus } from '@/types/user-words.types';
+import { EventType, type EventBody } from '@/types/event.types';
 import { db } from 'astro:db';
-import { generateObject } from 'ai';
+import { generateObject, type LanguageModelUsage } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
-import { deleteWordDiscoveredEvents, insertEvent } from '@/repositories/event.repository';
+import { deleteWordDiscoveredEvents, insertEvent, insertEvents } from '@/repositories/event.repository';
 
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
@@ -69,9 +69,17 @@ const google = createGoogleGenerativeAI({
 
 const model = google('gemini-2.5-flash-lite');
 
-const toFillInTheGapTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
+const INPUT_NANO_DOLLARS_PER_TOKEN = 100;
+const OUTPUT_NANO_DOLLARS_PER_TOKEN = 400;
 
+const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: LanguageModelUsage) => {
+  const inputCostInNanoDollars = inputTokens * INPUT_NANO_DOLLARS_PER_TOKEN;
+  const outputCostInNanoDollars = outputTokens * OUTPUT_NANO_DOLLARS_PER_TOKEN;
+
+  return inputCostInNanoDollars + outputCostInNanoDollars;
+};
+
+const toFillInTheGapTasks = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -80,7 +88,7 @@ const toFillInTheGapTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -113,12 +121,17 @@ const toFillInTheGapTasks = async (words: UserWord[]) => {
     ].join('\n'),
   });
 
-  return object;
+  const cost = {
+    taskType: TaskType.FillInTheGap,
+    costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  };
+
+  return { object, cost };
 };
 
 const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -127,7 +140,7 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -163,12 +176,17 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
     ].join('\n'),
   });
 
-  return object;
+  const cost = {
+    taskType: TaskType.TranslateEnglishSentence,
+    costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  };
+
+  return { object, cost };
 };
 
 const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -177,7 +195,7 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -214,12 +232,17 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
     ].join('\n'),
   });
 
-  return object;
+  const cost = {
+    taskType: TaskType.TranslateUkrainianSentence,
+    costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  };
+
+  return { object, cost };
 };
 
 const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -228,7 +251,7 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -259,12 +282,17 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
     ].join('\n'),
   });
 
-  return object;
+  const cost = {
+    taskType: TaskType.SynonymAndAntonym,
+    costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  };
+
+  return { object, cost };
 };
 
 const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -273,7 +301,7 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -312,12 +340,17 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
     ].join('\n'),
   });
 
-  return object;
+  const cost = {
+    taskType: TaskType.FindIncorrectSentence,
+    costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  };
+
+  return { object, cost };
 };
 
 const toWordOrderTasks = async (words: UserWord[]) => {
-  if (!words.length) return [];
-
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -326,7 +359,7 @@ const toWordOrderTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object } = await generateObject({
+  const { object, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -358,11 +391,28 @@ const toWordOrderTasks = async (words: UserWord[]) => {
     ].join('\n'),
   });
 
-  return object;
+  const cost = {
+    taskType: TaskType.WordOrder,
+    costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  };
+
+  return { object, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const words = await getLearningWords(body);
+  if (!words.length) {
+    return {
+      fillInTheGapTasks: [],
+      translateEnglishSentenceTasks: [],
+      translateUkrainianSentenceTasks: [],
+      synonymAndAntonymTasks: [],
+      findIncorrectSentenceTasks: [],
+      wordOrderTasks: [],
+    };
+  }
 
   const [
     fillInTheGapTasks,
@@ -380,12 +430,27 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     toWordOrderTasks(words),
   ]);
 
+  const events = [
+    fillInTheGapTasks.cost,
+    translateEnglishSentenceTasks.cost,
+    translateUkrainianSentenceTasks.cost,
+    synonymAndAntonymTasks.cost,
+    findIncorrectSentenceTasks.cost,
+    wordOrderTasks.cost,
+  ].map((cost) => ({
+    ...cost,
+    type: EventType.TaskCost as const,
+    userId: body.userId,
+    userWordIds: words.map(({ id }) => id),
+  }));
+  await insertEvents(events);
+
   return {
-    fillInTheGapTasks,
-    translateEnglishSentenceTasks,
-    translateUkrainianSentenceTasks,
-    synonymAndAntonymTasks,
-    findIncorrectSentenceTasks,
-    wordOrderTasks,
+    fillInTheGapTasks: fillInTheGapTasks.object,
+    translateEnglishSentenceTasks: translateEnglishSentenceTasks.object,
+    translateUkrainianSentenceTasks: translateUkrainianSentenceTasks.object,
+    synonymAndAntonymTasks: synonymAndAntonymTasks.object,
+    findIncorrectSentenceTasks: findIncorrectSentenceTasks.object,
+    wordOrderTasks: wordOrderTasks.object,
   };
 };

@@ -202,9 +202,7 @@ function ChartTooltipContent({
                         <span className="text-muted-foreground">{itemConfig?.label || item.name}</span>
                       </div>
                       {item.value !== undefined && item.value !== null && (
-                        <span className="font-mono font-medium text-foreground tabular-nums">
-                          {item.value.toLocaleString()}
-                        </span>
+                        <span className="font-mono font-medium text-foreground tabular-nums">{String(item.value)}</span>
                       )}
                     </div>
                   </>
