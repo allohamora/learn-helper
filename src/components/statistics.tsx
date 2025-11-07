@@ -191,12 +191,12 @@ export const Statistics: FC = () => {
 
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
-            <CardTitle className="text-sm font-medium">Learning Task Spend</CardTitle>
+            <CardTitle className="text-sm font-medium">Task Cost</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)}$</div>
-            <p className="text-xs text-muted-foreground">total cost of generated tasks</p>
+            <p className="text-xs text-muted-foreground">cost of generated tasks</p>
           </CardContent>
         </Card>
       </div>
