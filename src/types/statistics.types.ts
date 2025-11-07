@@ -14,6 +14,11 @@ export type LearningPerDayStatistics = {
   durationMs: number;
 };
 
+export type CostPerDayStatistics = {
+  date: string; // YYYY-MM-DD
+  costInNanoDollars: number;
+};
+
 export type Statistics = {
   general: {
     totalDiscoveredWords: number;
@@ -22,6 +27,7 @@ export type Statistics = {
     totalRetriesCompleted: number;
     totalShowcasesCompleted: number;
     totalWordsMovedToNextStep: number;
+    totalTaskCostsInNanoDollars: number;
 
     totalLearningDurationMs: number;
     totalDiscoveringDurationMs: number;
@@ -31,6 +37,7 @@ export type Statistics = {
   };
   discoveringPerDay: DiscoveringPerDayStatistics[];
   learningPerDay: LearningPerDayStatistics[];
+  costPerDay: CostPerDayStatistics[];
   topMistakes: {
     count: number;
     value: string | null;

@@ -1,4 +1,15 @@
-import { Calendar, TrendingUp, Search, Clock, CircleAlert, BookOpen, RotateCcw, Trophy, Timer } from 'lucide-react';
+import {
+  Calendar,
+  TrendingUp,
+  Search,
+  Clock,
+  CircleAlert,
+  BookOpen,
+  RotateCcw,
+  Trophy,
+  Timer,
+  DollarSign,
+} from 'lucide-react';
 import { CartesianGrid, XAxis, YAxis, Area, AreaChart } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +61,13 @@ const learningChartConfig = {
   },
 } satisfies ChartConfig;
 
+const costChartConfig = {
+  costInDollars: {
+    label: 'Task Cost (USD)',
+    color: 'var(--chart-1)',
+  },
+} satisfies ChartConfig;
+
 const formatDuration = (milliseconds: number) => {
   const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
   const hours = Math.floor(totalSeconds / 3600);
@@ -65,6 +83,10 @@ const formatDuration = (milliseconds: number) => {
   }
 
   return `${seconds}s`;
+};
+
+const nanoDollarsToDollars = (nanoDollars: number) => {
+  return nanoDollars / 1_000_000_000;
 };
 
 export const Statistics: FC = () => {
@@ -164,6 +186,17 @@ export const Statistics: FC = () => {
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalWordsMovedToNextStep.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">words advanced</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
+            <CardTitle className="text-sm font-medium">Learning Task Spend</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="px-4 md:px-6">
+            <div className="text-2xl font-bold">{nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)}$</div>
+            <p className="text-xs text-muted-foreground">total cost of generated tasks</p>
           </CardContent>
         </Card>
       </div>
@@ -392,6 +425,57 @@ export const Statistics: FC = () => {
                   type="monotone"
                   fill="url(#fillDuration)"
                   stroke="var(--color-durationMin)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="py-4 md:py-6">
+          <CardHeader className="space-y-1 px-4 md:px-6">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold">Task Cost</CardTitle>
+              <Badge variant="secondary" className="font-normal">
+                <Calendar className="mr-1 h-3 w-3" />
+                Last 7 days
+              </Badge>
+            </div>
+            <CardDescription className="text-sm">Daily spend for generated learning tasks</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <ChartContainer config={costChartConfig}>
+              <AreaChart
+                accessibilityLayer
+                data={data.costPerDay.map((item) => ({
+                  date: toDateWithoutYear(item.date),
+                  costInDollars: nanoDollarsToDollars(item.costInNanoDollars),
+                }))}
+              >
+                <defs>
+                  <linearGradient id="fillCost" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-costInDollars)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-costInDollars)" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                <XAxis
+                  hide={isPhoneScreen}
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  className="text-xs"
+                />
+                <YAxis hide={isPhoneScreen} tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
+                <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
+                <Area
+                  dataKey="costInDollars"
+                  type="monotone"
+                  fill="url(#fillCost)"
+                  stroke="var(--color-costInDollars)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}

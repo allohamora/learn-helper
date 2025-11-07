@@ -1,12 +1,18 @@
 import {
   getGroupedByDayDiscoveryEvents,
   getGroupedByDayLearningEvents,
+  getGroupedByDayTaskCostEvents,
   getGroupedByTypeEvents,
   getTopMistakes,
 } from '@/repositories/event.repository';
 import type { AuthParams } from '@/types/auth.types';
 import { EventType } from '@/types/event.types';
-import type { DiscoveringPerDayStatistics, LearningPerDayStatistics, Statistics } from '@/types/statistics.types';
+import type {
+  CostPerDayStatistics,
+  DiscoveringPerDayStatistics,
+  LearningPerDayStatistics,
+  Statistics,
+} from '@/types/statistics.types';
 import { Status } from '@/types/user-words.types';
 import { daysAgo, endOfDay, startOfDay, toDateOnlyString } from '@/utils/date.utils';
 
@@ -18,6 +24,7 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalRetriesCompleted: 0,
     totalShowcasesCompleted: 0,
     totalWordsMovedToNextStep: 0,
+    totalTaskCostsInNanoDollars: 0,
 
     totalLearningDurationMs: 0,
     totalDiscoveringDurationMs: 0,
@@ -69,6 +76,13 @@ const getGeneralStatistics = async (data: AuthParams) => {
         continue;
       case EventType.WordMovedToNextStep:
         result.totalWordsMovedToNextStep = item.count;
+        continue;
+      case EventType.TaskCost:
+        if (item.costInNanoDollars === null) {
+          throw new Error(`CostInNanoDollars is null for TaskCost event: ${JSON.stringify(item)}`);
+        }
+
+        result.totalTaskCostsInNanoDollars += item.costInNanoDollars;
         continue;
       default:
         throw new Error(`Unknown event type: ${item.type}`);
@@ -183,15 +197,39 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
   return Object.values(state);
 };
 
+const getCostPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
+  const state = getDates(data).reduce(
+    (state, date) => ({ ...state, [date]: { date, costInNanoDollars: 0 } }),
+    {} as Record<string, CostPerDayStatistics>,
+  );
+
+  const groupedByDayTaskCostEvents = await getGroupedByDayTaskCostEvents(data);
+  for (const item of groupedByDayTaskCostEvents) {
+    const target = state[item.date];
+    if (!target) {
+      throw new Error(`Date ${item.date} is missing in the state`);
+    }
+
+    if (item.costInNanoDollars === null) {
+      throw new Error(`CostInNanoDollars is null for task cost event: ${JSON.stringify(item)}`);
+    }
+
+    target.costInNanoDollars += item.costInNanoDollars;
+  }
+
+  return Object.values(state);
+};
+
 export const getStatistics = async ({ userId }: AuthParams) => {
   const dateTo = endOfDay(new Date());
   const dateFrom = daysAgo(6, startOfDay(dateTo));
   const data = { userId, dateFrom, dateTo };
 
-  const [general, discoveringPerDay, learningPerDay, topMistakes] = await Promise.all([
+  const [general, discoveringPerDay, learningPerDay, costPerDay, topMistakes] = await Promise.all([
     getGeneralStatistics(data),
     getDiscoveringPerDayStatistics(data),
     getLearningPerDayStatistics(data),
+    getCostPerDayStatistics(data),
     getTopMistakes({ userId, limit: 20 }),
   ]);
 
@@ -199,6 +237,7 @@ export const getStatistics = async ({ userId }: AuthParams) => {
     general,
     discoveringPerDay,
     learningPerDay,
+    costPerDay,
     topMistakes,
   } satisfies Statistics;
 };

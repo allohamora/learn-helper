@@ -25,6 +25,7 @@ export const getGroupedByTypeEvents = async ({ userId }: AuthParams) => {
     .select({
       count: sql<number>`count(*)`,
       durationMs: sql<number | null>`SUM(${Event.durationMs})`,
+      costInNanoDollars: sql<number | null>`SUM(${Event.costInNanoDollars})`,
       type: Event.type,
     })
     .from(Event)
@@ -82,6 +83,27 @@ export const getGroupedByDayLearningEvents = async ({
       ),
     )
     .groupBy(Event.type, sql`date(${Event.createdAt})`);
+};
+
+export const getGroupedByDayTaskCostEvents = async ({
+  userId,
+  dateFrom,
+  dateTo,
+}: AuthParams<{ dateFrom: Date; dateTo: Date }>) => {
+  return await db
+    .select({
+      date: sql<string>`date(${Event.createdAt})`,
+      costInNanoDollars: sql<number | null>`SUM(${Event.costInNanoDollars})`,
+    })
+    .from(Event)
+    .where(
+      and(
+        eq(Event.userId, userId),
+        eq(Event.type, EventType.TaskCost),
+        and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
+      ),
+    )
+    .groupBy(sql`date(${Event.createdAt})`);
 };
 
 export const getTopMistakes = async ({ userId, limit }: AuthParams<{ limit: number }>) => {
