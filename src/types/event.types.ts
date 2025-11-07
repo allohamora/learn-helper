@@ -40,4 +40,6 @@ export type EventBody =
       taskType: TaskType;
       userWordIds: number[];
       costInNanoDollars: number;
+      inputTokens?: number;
+      outputTokens?: number;
     };

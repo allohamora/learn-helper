@@ -26,6 +26,8 @@ export const getGroupedByTypeEvents = async ({ userId }: AuthParams) => {
       count: sql<number>`count(*)`,
       durationMs: sql<number | null>`SUM(${Event.durationMs})`,
       costInNanoDollars: sql<number | null>`SUM(${Event.costInNanoDollars})`,
+      inputTokens: sql<number | null>`SUM(${Event.inputTokens})`,
+      outputTokens: sql<number | null>`SUM(${Event.outputTokens})`,
       type: Event.type,
     })
     .from(Event)
@@ -94,6 +96,8 @@ export const getGroupedByDayTaskCostEvents = async ({
     .select({
       date: sql<string>`date(${Event.createdAt})`,
       costInNanoDollars: sql<number | null>`SUM(${Event.costInNanoDollars})`,
+      inputTokens: sql<number | null>`SUM(${Event.inputTokens})`,
+      outputTokens: sql<number | null>`SUM(${Event.outputTokens})`,
     })
     .from(Event)
     .where(

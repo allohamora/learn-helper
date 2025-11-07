@@ -9,6 +9,8 @@ import {
   Trophy,
   Timer,
   DollarSign,
+  Database,
+  ArrowDownUp,
 } from 'lucide-react';
 import { CartesianGrid, XAxis, YAxis, Area, AreaChart } from 'recharts';
 
@@ -65,6 +67,14 @@ const costChartConfig = {
   costInDollars: {
     label: 'Task Cost',
     color: 'var(--chart-1)',
+  },
+  inputTokens: {
+    label: 'Input Tokens',
+    color: 'var(--chart-2)',
+  },
+  outputTokens: {
+    label: 'Output Tokens',
+    color: 'var(--chart-3)',
   },
 } satisfies ChartConfig;
 
@@ -197,6 +207,28 @@ export const Statistics: FC = () => {
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)}$</div>
             <p className="text-xs text-muted-foreground">cost of generated tasks</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
+            <CardTitle className="text-sm font-medium">Input Tokens</CardTitle>
+            <Database className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="px-4 md:px-6">
+            <div className="text-2xl font-bold">{general.totalInputTokens}</div>
+            <p className="text-xs text-muted-foreground">tokens sent to AI</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
+            <CardTitle className="text-sm font-medium">Output Tokens</CardTitle>
+            <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="px-4 md:px-6">
+            <div className="text-2xl font-bold">{general.totalOutputTokens}</div>
+            <p className="text-xs text-muted-foreground">tokens received from AI</p>
           </CardContent>
         </Card>
       </div>
@@ -443,7 +475,9 @@ export const Statistics: FC = () => {
                 Last 7 days
               </Badge>
             </div>
-            <CardDescription className="text-sm">Daily spend for generated learning tasks</CardDescription>
+            <CardDescription className="text-sm">
+              Daily spend, input tokens, and output tokens for generated learning tasks
+            </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto px-4 pt-2 md:px-6">
             <ChartContainer config={costChartConfig}>
@@ -452,12 +486,22 @@ export const Statistics: FC = () => {
                 data={data.costPerDay.map((item) => ({
                   date: toDateWithoutYear(item.date),
                   costInDollars: nanoDollarsToDollars(item.costInNanoDollars),
+                  inputTokens: item.inputTokens,
+                  outputTokens: item.outputTokens,
                 }))}
               >
                 <defs>
                   <linearGradient id="fillCost" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-costInDollars)" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="var(--color-costInDollars)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillInputTokens" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-inputTokens)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-inputTokens)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillOutputTokens" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-outputTokens)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-outputTokens)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
@@ -476,6 +520,24 @@ export const Statistics: FC = () => {
                   type="monotone"
                   fill="url(#fillCost)"
                   stroke="var(--color-costInDollars)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="inputTokens"
+                  type="monotone"
+                  fill="url(#fillInputTokens)"
+                  stroke="var(--color-inputTokens)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="outputTokens"
+                  type="monotone"
+                  fill="url(#fillOutputTokens)"
+                  stroke="var(--color-outputTokens)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}

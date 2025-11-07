@@ -45,6 +45,8 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 0,
         totalWordsMovedToNextStep: 0,
         totalTaskCostsInNanoDollars: 0,
+        totalInputTokens: 0,
+        totalOutputTokens: 0,
         totalLearningDurationMs: 0,
         totalDiscoveringDurationMs: 0,
         averageTimePerTaskMs: 0,
@@ -71,6 +73,8 @@ describe('statistics.service', () => {
 
       for (const day of result.costPerDay) {
         expect(day.costInNanoDollars).toBe(0);
+        expect(day.inputTokens).toBe(0);
+        expect(day.outputTokens).toBe(0);
       }
     });
 
@@ -115,6 +119,8 @@ describe('statistics.service', () => {
           type: EventType.TaskCost,
           taskType: TaskType.WordToDefinition,
           costInNanoDollars: 5_000_000_000,
+          inputTokens: 1000,
+          outputTokens: 2000,
         },
 
         {
@@ -152,6 +158,8 @@ describe('statistics.service', () => {
           type: EventType.TaskCost,
           taskType: TaskType.WordToTranslation,
           costInNanoDollars: 10_000_000_000,
+          inputTokens: 2000,
+          outputTokens: 4000,
         },
       ]);
 
@@ -162,6 +170,8 @@ describe('statistics.service', () => {
       expect(result.general.totalMistakesMade).toBe(1);
       expect(result.general.totalWordsMovedToNextStep).toBe(1);
       expect(result.general.totalTaskCostsInNanoDollars).toBe(5_000_000_000);
+      expect(result.general.totalInputTokens).toBe(1000);
+      expect(result.general.totalOutputTokens).toBe(2000);
       expect(result.general.totalLearningDurationMs).toBe(5000);
       expect(result.general.totalDiscoveringDurationMs).toBe(3000);
       expect(result.general.averageTimePerTaskMs).toBe(5000);
@@ -293,6 +303,8 @@ describe('statistics.service', () => {
           taskType: TaskType.WordToDefinition,
           userWordIds: [userWord.id],
           costInNanoDollars: 3_500_000_000,
+          inputTokens: 1500,
+          outputTokens: 3000,
         },
         {
           userId,
@@ -300,6 +312,8 @@ describe('statistics.service', () => {
           taskType: TaskType.DefinitionToWord,
           userWordIds: [userWord.id],
           costInNanoDollars: 1_500_000_000,
+          inputTokens: 500,
+          outputTokens: 1000,
         },
       ]);
 
@@ -312,6 +326,8 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 2,
         totalWordsMovedToNextStep: 2,
         totalTaskCostsInNanoDollars: 5_000_000_000,
+        totalInputTokens: 2000,
+        totalOutputTokens: 4000,
         totalLearningDurationMs: 16000,
         totalDiscoveringDurationMs: 5000,
         averageTimePerTaskMs: 4000,
@@ -348,6 +364,8 @@ describe('statistics.service', () => {
           taskType: TaskType.WordToDefinition,
           userWordIds: [userWord.id],
           costInNanoDollars: 1_000_000,
+          inputTokens: 100,
+          outputTokens: 200,
           createdAt: today,
         },
 
@@ -373,6 +391,8 @@ describe('statistics.service', () => {
           taskType: TaskType.WordToDefinition,
           userWordIds: [userWord.id],
           costInNanoDollars: 2_000_000,
+          inputTokens: 200,
+          outputTokens: 400,
           createdAt: outsideRangeDate,
         },
       ]);
@@ -384,6 +404,8 @@ describe('statistics.service', () => {
       expect(result.general.totalDiscoveringDurationMs).toBe(3000);
       expect(result.general.averageTimePerDiscoveryMs).toBe(1500);
       expect(result.general.totalTaskCostsInNanoDollars).toBe(3_000_000);
+      expect(result.general.totalInputTokens).toBe(300);
+      expect(result.general.totalOutputTokens).toBe(600);
 
       const todayStats = result.discoveringPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayStats).toBeDefined();
@@ -398,6 +420,8 @@ describe('statistics.service', () => {
       const todayCostStats = result.costPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayCostStats).toBeDefined();
       expect(todayCostStats?.costInNanoDollars).toBe(1_000_000);
+      expect(todayCostStats?.inputTokens).toBe(100);
+      expect(todayCostStats?.outputTokens).toBe(200);
 
       const outsideRangeStats = result.discoveringPerDay.find((day) => day.date === toDateOnlyString(outsideRangeDate));
       expect(outsideRangeStats).toBeUndefined();
@@ -459,6 +483,8 @@ describe('statistics.service', () => {
       expect(todayStats?.knownCount).toBe(0);
       expect(todayStats?.durationMs).toBe(3000);
       expect(result.costPerDay.find((day) => day.date === toDateOnlyString(today))?.costInNanoDollars).toBe(0);
+      expect(result.costPerDay.find((day) => day.date === toDateOnlyString(today))?.inputTokens).toBe(0);
+      expect(result.costPerDay.find((day) => day.date === toDateOnlyString(today))?.outputTokens).toBe(0);
 
       const yesterdayStats = result.discoveringPerDay.find((day) => day.date === toDateOnlyString(yesterday));
       expect(yesterdayStats).toBeDefined();
@@ -466,6 +492,8 @@ describe('statistics.service', () => {
       expect(yesterdayStats?.knownCount).toBe(2);
       expect(yesterdayStats?.durationMs).toBe(5000);
       expect(result.costPerDay.find((day) => day.date === toDateOnlyString(yesterday))?.costInNanoDollars).toBe(0);
+      expect(result.costPerDay.find((day) => day.date === toDateOnlyString(yesterday))?.inputTokens).toBe(0);
+      expect(result.costPerDay.find((day) => day.date === toDateOnlyString(yesterday))?.outputTokens).toBe(0);
     });
 
     it('returns correct learning per day statistics within date range', async () => {
@@ -586,6 +614,8 @@ describe('statistics.service', () => {
           taskType: TaskType.WordToDefinition,
           userWordIds: [userWord.id],
           costInNanoDollars: 2_000_000_000,
+          inputTokens: 2000,
+          outputTokens: 4000,
           createdAt: today,
         },
         {
@@ -594,6 +624,8 @@ describe('statistics.service', () => {
           taskType: TaskType.DefinitionToWord,
           userWordIds: [userWord.id],
           costInNanoDollars: 4_000_000_000,
+          inputTokens: 4000,
+          outputTokens: 8000,
           createdAt: today,
         },
         {
@@ -602,6 +634,8 @@ describe('statistics.service', () => {
           taskType: TaskType.WordToTranslation,
           userWordIds: [userWord.id],
           costInNanoDollars: 1_500_000_000,
+          inputTokens: 1500,
+          outputTokens: 3000,
           createdAt: weekAgo,
         },
         {
@@ -610,6 +644,8 @@ describe('statistics.service', () => {
           taskType: TaskType.TranslationToWord,
           userWordIds: [userWord.id],
           costInNanoDollars: 1_000_000_000,
+          inputTokens: 1000,
+          outputTokens: 2000,
           createdAt: outsideRangeDate,
         },
       ]);
@@ -619,10 +655,14 @@ describe('statistics.service', () => {
       const todayStats = result.costPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayStats).toBeDefined();
       expect(todayStats?.costInNanoDollars).toBe(6_000_000_000);
+      expect(todayStats?.inputTokens).toBe(6000);
+      expect(todayStats?.outputTokens).toBe(12000);
 
       const weekAgoStats = result.costPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
       expect(weekAgoStats).toBeDefined();
       expect(weekAgoStats?.costInNanoDollars).toBe(1_500_000_000);
+      expect(weekAgoStats?.inputTokens).toBe(1500);
+      expect(weekAgoStats?.outputTokens).toBe(3000);
 
       const outsideRangeStats = result.costPerDay.find((day) => day.date === toDateOnlyString(outsideRangeDate));
       expect(outsideRangeStats).toBeUndefined();

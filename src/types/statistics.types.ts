@@ -17,6 +17,8 @@ export type LearningPerDayStatistics = {
 export type CostPerDayStatistics = {
   date: string; // YYYY-MM-DD
   costInNanoDollars: number;
+  inputTokens: number;
+  outputTokens: number;
 };
 
 export type Statistics = {
@@ -28,6 +30,8 @@ export type Statistics = {
     totalShowcasesCompleted: number;
     totalWordsMovedToNextStep: number;
     totalTaskCostsInNanoDollars: number;
+    totalInputTokens: number;
+    totalOutputTokens: number;
 
     totalLearningDurationMs: number;
     totalDiscoveringDurationMs: number;

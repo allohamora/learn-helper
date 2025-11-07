@@ -50,6 +50,8 @@ const Event = defineTable({
     }),
     durationMs: column.number({ optional: true }),
     costInNanoDollars: column.number({ optional: true }),
+    inputTokens: column.number({ optional: true }),
+    outputTokens: column.number({ optional: true }),
     createdAt: column.date({ default: NOW }),
   },
 });

@@ -124,6 +124,8 @@ const toFillInTheGapTasks = async (words: UserWord[]) => {
   const cost = {
     taskType: TaskType.FillInTheGap,
     costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   };
 
   return { object, cost };
@@ -177,6 +179,8 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
   const cost = {
     taskType: TaskType.TranslateEnglishSentence,
     costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   };
 
   return { object, cost };
@@ -231,6 +235,8 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
   const cost = {
     taskType: TaskType.TranslateUkrainianSentence,
     costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   };
 
   return { object, cost };
@@ -279,6 +285,8 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
   const cost = {
     taskType: TaskType.SynonymAndAntonym,
     costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   };
 
   return { object, cost };
@@ -335,6 +343,8 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
   const cost = {
     taskType: TaskType.FindIncorrectSentence,
     costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   };
 
   return { object, cost };
@@ -384,6 +394,8 @@ const toWordOrderTasks = async (words: UserWord[]) => {
   const cost = {
     taskType: TaskType.WordOrder,
     costInNanoDollars: calculateCostInNanoDollars(usage),
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   };
 
   return { object, cost };

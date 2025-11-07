@@ -25,6 +25,8 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalShowcasesCompleted: 0,
     totalWordsMovedToNextStep: 0,
     totalTaskCostsInNanoDollars: 0,
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
 
     totalLearningDurationMs: 0,
     totalDiscoveringDurationMs: 0,
@@ -83,6 +85,8 @@ const getGeneralStatistics = async (data: AuthParams) => {
         }
 
         result.totalTaskCostsInNanoDollars += item.costInNanoDollars;
+        result.totalInputTokens += item.inputTokens ?? 0;
+        result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
       default:
         throw new Error(`Unknown event type: ${item.type}`);
@@ -199,7 +203,7 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
 
 const getCostPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
   const state = getDates(data).reduce(
-    (state, date) => ({ ...state, [date]: { date, costInNanoDollars: 0 } }),
+    (state, date) => ({ ...state, [date]: { date, costInNanoDollars: 0, inputTokens: 0, outputTokens: 0 } }),
     {} as Record<string, CostPerDayStatistics>,
   );
 
@@ -215,6 +219,8 @@ const getCostPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom
     }
 
     target.costInNanoDollars += item.costInNanoDollars;
+    target.inputTokens += item.inputTokens ?? 0;
+    target.outputTokens += item.outputTokens ?? 0;
   }
 
   return Object.values(state);
