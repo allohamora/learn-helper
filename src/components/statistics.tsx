@@ -63,7 +63,7 @@ const learningChartConfig = {
 
 const costChartConfig = {
   costInDollars: {
-    label: 'Task Cost (USD)',
+    label: 'Task Cost',
     color: 'var(--chart-1)',
   },
 } satisfies ChartConfig;
