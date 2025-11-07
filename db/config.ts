@@ -38,6 +38,7 @@ const Event = defineTable({
     id: column.number({ primaryKey: true }),
     userId: column.text(),
     userWordId: column.number({ optional: true, references: () => UserWord.columns.id }),
+    userWordIds: column.json({ optional: true }),
     type: column.text({ enum: Object.values(EventType) as UnionToTuple<(typeof EventType)[keyof typeof EventType]> }),
     status: column.text({
       enum: Object.values(Status) as UnionToTuple<(typeof Status)[keyof typeof Status]>,
@@ -48,6 +49,7 @@ const Event = defineTable({
       optional: true,
     }),
     durationMs: column.number({ optional: true }),
+    costInNanoDollars: column.number({ optional: true }),
     createdAt: column.date({ default: NOW }),
   },
 });
