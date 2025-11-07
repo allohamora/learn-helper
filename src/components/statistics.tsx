@@ -205,7 +205,7 @@ export const Statistics: FC = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="px-4 md:px-6">
-            <div className="text-2xl font-bold">{nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)}$</div>
+            <div className="text-2xl font-bold">${nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)}</div>
             <p className="text-xs text-muted-foreground">cost of generated tasks</p>
           </CardContent>
         </Card>
