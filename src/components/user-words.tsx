@@ -1,5 +1,6 @@
 import { type FC, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useDebounce } from 'use-debounce';
 import { actions } from 'astro:actions';
 import { UserWordsFilters } from './user-words-filters';
 import { WordsTable } from './words-table';
@@ -11,15 +12,18 @@ export const UserWords: FC = () => {
   const [level, setLevel] = useState<Level | undefined>();
   const [status, setStatus] = useState<Status | undefined>();
   const [list, setList] = useState<List>(List.Oxford5000Words);
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [search] = useDebounce(searchValue, 800);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, error, refetch } = useInfiniteQuery(
     {
-      queryKey: ['getUserWords', level, status, list],
+      queryKey: ['getUserWords', level, status, list, search],
       queryFn: async ({ pageParam }) => {
         return await actions.getUserWords.orThrow({
           level,
           status,
           list,
+          search,
           cursor: pageParam,
           limit: 50,
         });
@@ -37,6 +41,7 @@ export const UserWords: FC = () => {
     setList(value as List);
     setLevel(undefined);
     setStatus(undefined);
+    setSearchValue('');
   };
 
   if (isLoading) {
@@ -74,7 +79,7 @@ export const UserWords: FC = () => {
             <div className="text-2xl font-bold text-foreground md:text-3xl">{totalWords}</div>
             <div className="text-xs text-muted-foreground md:text-sm">total words</div>
           </div>
-          {!status && (
+          {!status && !searchValue && (
             <div className="text-center sm:text-left">
               <div className="text-2xl font-bold text-green-600 md:text-3xl">
                 {totalWords > 0 ? Math.round(((totalWords - learningWords) / totalWords) * 100) : 0}%
@@ -93,7 +98,14 @@ export const UserWords: FC = () => {
           </TabsList>
 
           {data && (
-            <UserWordsFilters level={level} status={status} onLevelChange={setLevel} onStatusChange={setStatus} />
+            <UserWordsFilters
+              level={level}
+              status={status}
+              search={searchValue}
+              onLevelChange={setLevel}
+              onStatusChange={setStatus}
+              onSearchChange={setSearchValue}
+            />
           )}
         </div>
 

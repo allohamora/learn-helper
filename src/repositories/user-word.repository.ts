@@ -1,7 +1,7 @@
 import type { AuthParams } from '@/types/auth.types';
 import type { Transaction } from '@/types/db.types';
 import { Level, List, Status } from '@/types/user-words.types';
-import { db, UserWord, eq, sql, Word, and, asc, gte, inArray, desc } from 'astro:db';
+import { db, UserWord, eq, sql, Word, and, asc, gte, inArray, desc, like } from 'astro:db';
 
 const isUserWordsExists = async (userId: string) => {
   const res = await db.select().from(UserWord).where(eq(UserWord.userId, userId)).limit(1);
@@ -40,16 +40,18 @@ type GetUserWordsBody = AuthParams<{
   level?: Level;
   list?: List;
   status?: Status;
+  search?: string;
   cursor?: string;
   limit: number;
 }>;
 
-export const getUserWords = async ({ userId, level, list, status, cursor, limit }: GetUserWordsBody) => {
+export const getUserWords = async ({ userId, level, list, status, search, cursor, limit }: GetUserWordsBody) => {
   const filters = [
     eq(UserWord.userId, userId),
     level ? eq(Word.level, level) : undefined,
     list ? eq(Word.list, list) : undefined,
     status ? eq(UserWord.status, status) : undefined,
+    search ? like(Word.value, `%${search}%`) : undefined,
   ];
 
   const getTotal = async () => {

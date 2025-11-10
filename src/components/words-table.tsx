@@ -1,12 +1,15 @@
 import { type FC, useMemo, useRef } from 'react';
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Volume2, ExternalLink } from 'lucide-react';
+import { Volume2, ExternalLink, RotateCcw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { Status, type UserWord } from '@/types/user-words.types';
+import { actions } from 'astro:actions';
+import { useToast } from '@/hooks/use-toast';
 
 type WordsTableProps = {
   data: UserWord[];
@@ -26,7 +29,30 @@ export const WordsTable: FC<WordsTableProps> = ({
   showPartOfSpeech = true,
 }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const resetUserWord = useMutation({
+    mutationFn: async (userWordId: number) => {
+      return await actions.setDiscoveryStatus.orThrow({ userWordId, status: Status.Waiting });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['getUserWords'] });
+
+      toast({
+        title: 'Success',
+        description: 'Word has been reset to waiting state',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to reset word',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const columns = useMemo<ColumnDef<UserWord>[]>(() => {
     const baseColumns: ColumnDef<UserWord>[] = [
@@ -100,7 +126,10 @@ export const WordsTable: FC<WordsTableProps> = ({
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => {
-          const { word } = row.original;
+          const { word, id, status, wordsToUnlock, encounterCount } = row.original;
+          const canReset =
+            (status === Status.Learning && wordsToUnlock === 0 && encounterCount === 0) || status === Status.Known;
+
           return (
             <div className="flex items-center gap-1">
               {word.pronunciation && (
@@ -132,6 +161,22 @@ export const WordsTable: FC<WordsTableProps> = ({
                   </a>
                 </Button>
               )}
+              {canReset && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => resetUserWord.mutate(id)}
+                  disabled={resetUserWord.isPending}
+                  className="h-6 w-6 shrink-0 p-0"
+                  title="Reset word to waiting state"
+                >
+                  {resetUserWord.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-3 w-3" />
+                  )}
+                </Button>
+              )}
             </div>
           );
         },
@@ -139,7 +184,7 @@ export const WordsTable: FC<WordsTableProps> = ({
     );
 
     return baseColumns;
-  }, [isPlaying, playAudio, showPartOfSpeech]);
+  }, [isPlaying, playAudio, showPartOfSpeech, resetUserWord]);
 
   const table = useReactTable({
     data,
@@ -183,7 +228,7 @@ export const WordsTable: FC<WordsTableProps> = ({
       case 'status':
         return '0 0 100px';
       case 'actions':
-        return '0 0 120px';
+        return '0 0 160px';
       default:
         return '0 0 100px';
     }
