@@ -37,7 +37,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
-      <div className="flex items-center gap-2">
+      <div className="items-center gap-2 sm:flex">
         <label htmlFor="search-filter" className="shrink-0 text-xs font-medium sm:text-sm">
           Search:
         </label>
@@ -51,7 +51,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="items-center gap-2 sm:flex">
         <label htmlFor="level-filter" className="shrink-0 text-xs font-medium sm:text-sm">
           Level:
         </label>
@@ -73,7 +73,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="items-center gap-2 sm:flex">
         <label htmlFor="status-filter" className="shrink-0 text-xs font-medium sm:text-sm">
           Status:
         </label>
@@ -81,7 +81,7 @@ export const UserWordsFilters: FC<UserWordsFiltersProps> = ({
           value={status || 'all'}
           onValueChange={(value) => onStatusChange(value === 'all' ? undefined : (value as Status))}
         >
-          <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
+          <SelectTrigger id="status-filter" className="w-full sm:w-[200px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
