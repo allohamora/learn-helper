@@ -1,12 +1,15 @@
 import { type FC } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Level, Status } from '@/types/user-words.types';
 
 type UserWordsFiltersProps = {
   level?: Level;
   status?: Status;
+  search?: string;
   onLevelChange: (level?: Level) => void;
   onStatusChange: (status?: Status) => void;
+  onSearchChange: (search: string) => void;
 };
 
 const LEVELS: { value: Level; label: string }[] = [
@@ -24,9 +27,30 @@ const STATUSES: { value: Status; label: string }[] = [
   { value: Status.Known, label: 'Known' },
 ];
 
-export const UserWordsFilters: FC<UserWordsFiltersProps> = ({ level, status, onLevelChange, onStatusChange }) => {
+export const UserWordsFilters: FC<UserWordsFiltersProps> = ({
+  level,
+  status,
+  search,
+  onLevelChange,
+  onStatusChange,
+  onSearchChange,
+}) => {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+      <div className="flex items-center gap-2">
+        <label htmlFor="search-filter" className="shrink-0 text-xs font-medium sm:text-sm">
+          Search:
+        </label>
+        <Input
+          id="search-filter"
+          type="text"
+          placeholder="Search words..."
+          value={search || ''}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full sm:w-[200px]"
+        />
+      </div>
+
       <div className="flex items-center gap-2">
         <label htmlFor="level-filter" className="shrink-0 text-xs font-medium sm:text-sm">
           Level:
