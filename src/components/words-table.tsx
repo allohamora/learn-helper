@@ -184,7 +184,7 @@ export const WordsTable: FC<WordsTableProps> = ({
     );
 
     return baseColumns;
-  }, [isPlaying, playAudio, showPartOfSpeech, resetUserWord.isPending]);
+  }, [isPlaying, playAudio, showPartOfSpeech, resetUserWord]);
 
   const table = useReactTable({
     data,
