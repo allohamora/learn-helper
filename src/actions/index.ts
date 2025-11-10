@@ -50,7 +50,7 @@ export const server = {
       level: z.nativeEnum(Level).optional(),
       list: z.nativeEnum(List).optional(),
       status: z.nativeEnum(Status).optional(),
-      search: z.string().optional(),
+      search: z.string().trim().optional(),
       cursor: z.string().optional(),
       limit: z.number().min(1).max(100).default(50),
     }),
