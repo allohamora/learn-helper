@@ -1,6 +1,6 @@
 import { type FC, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { useDebounce, useDebouncedCallback } from 'use-debounce';
+import { useDebounce } from 'use-debounce';
 import { actions } from 'astro:actions';
 import { UserWordsFilters } from './user-words-filters';
 import { WordsTable } from './words-table';
