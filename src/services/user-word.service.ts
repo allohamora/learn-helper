@@ -377,6 +377,7 @@ const toWordOrderTasks = async (words: UserWord[]) => {
       '- The sentence must be natural, modern English (5-15 words total).',
       '- The target word or phrase must appear in the sentence.',
       '- Do not include punctuation marks in the sentence.',
+      '- Do not repeat a word more than once in the sentence.',
       '- Capitalize first word that starts the sentence.',
       '- Make sentences unique; avoid repeating structures or contexts.',
       '',
