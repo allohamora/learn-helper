@@ -234,7 +234,7 @@ const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTask
       throw new Error('Word for WordOrder task is not found');
     }
 
-    const sentenceWords = sentence
+    const sentenceWords = removePeriods(sentence)
       .split(' ')
       .filter((word) => !!word.trim())
       .map((value, idx) => ({ idx, value }));
