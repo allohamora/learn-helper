@@ -40,6 +40,13 @@ const shuffle = <T,>(array: T[]): T[] => {
     .map(({ value }) => value);
 };
 
+// gemini-2.5-flash-lite trained on data with periods at the end of sentences
+// because of that you can or have dots with questions and exclamations
+// or don't have them at all
+// gpt-5-nano needs other hacks to work correctly, like schema should be an object instead of an array,
+// prompt tricks, disabled reasoning (because with it you will have a 1 minute request for a task) and etc
+const removePeriods = (text: string) => text.replace(/\.$/gm, '');
+
 const toShowcaseTasks = (words: UserWord[]) => {
   return words.map(
     (item): ShowcaseTask => ({
@@ -145,7 +152,7 @@ const toFillInTheGapTasks = (words: UserWord[], tasksData: TasksData['fillInTheG
       type: TaskType.FillInTheGap,
       data: {
         id,
-        text: task,
+        text: removePeriods(task),
         word: answer,
       },
     };
@@ -159,8 +166,8 @@ const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrain
       type: TaskType.TranslateUkrainianSentence,
       data: {
         id,
-        sentence,
-        options: shuffle(options),
+        sentence: removePeriods(sentence),
+        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
       },
     };
   });
@@ -173,8 +180,8 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
       type: TaskType.TranslateEnglishSentence,
       data: {
         id,
-        sentence,
-        options: shuffle(options),
+        sentence: removePeriods(sentence),
+        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
       },
     };
   });
@@ -213,7 +220,13 @@ const toFindIncorrectSentenceTasks = (words: UserWord[], tasksData: TasksData['f
       data: {
         ...found.word,
         id,
-        options: shuffle(options),
+        options: shuffle(
+          options.map((option) => ({
+            ...option,
+            value: removePeriods(option.value),
+            description: option.description ? removePeriods(option.description) : undefined,
+          })),
+        ),
       },
     };
   });
@@ -226,7 +239,7 @@ const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTask
       throw new Error('Word for WordOrder task is not found');
     }
 
-    const sentenceWords = sentence
+    const sentenceWords = removePeriods(sentence)
       .split(' ')
       .filter((word) => !!word.trim())
       .map((value, idx) => ({ idx, value }));
