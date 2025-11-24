@@ -7,7 +7,7 @@ import {
 } from '@/repositories/user-word.repository';
 import type { AuthParams } from '@/types/auth.types';
 import { Status, TaskType, type DiscoveryStatus } from '@/types/user-words.types';
-import { EventType, type EventBody } from '@/types/event.types';
+import { EventType } from '@/types/event.types';
 import { db } from 'astro:db';
 import { generateObject, type LanguageModelUsage } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
