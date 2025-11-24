@@ -28,16 +28,10 @@ export function WordDiscoveryCard({ userWord }: WordDiscoveryCardProps) {
       <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl leading-tight font-bold md:text-2xl">
-              {userWord.word.value}
-              {userWord.word.spelling && (
-                <span className="ml-2 text-base font-normal text-muted-foreground md:text-lg">
-                  ({userWord.word.spelling})
-                </span>
-              )}
-            </CardTitle>
+            <CardTitle className="text-xl leading-tight font-bold md:text-2xl">{userWord.word.value}</CardTitle>
 
-            <div className="mt-1 text-sm text-muted-foreground">{userWord.word.uaTranslation}</div>
+            <div className="text-base font-normal text-muted-foreground md:text-lg">({userWord.word.spelling})</div>
+            <div className="text-sm text-muted-foreground">{userWord.word.uaTranslation}</div>
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
