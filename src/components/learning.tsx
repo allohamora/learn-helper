@@ -40,6 +40,11 @@ const shuffle = <T,>(array: T[]): T[] => {
     .map(({ value }) => value);
 };
 
+// gemini-2.5-flash-lite trained on data with periods at the end of sentences
+// because of that you can or have dots with questions and exclamations
+// or don't have them at all
+// gpt-5-nano needs other hacks to work correctly, like schema should be an object instead of an array,
+// prompt tricks, disabled reasoning (because with it you will have a 1 minute request for a task) and etc
 const removePeriods = (text: string) => text.replace(/\.$/gm, '');
 
 const toShowcaseTasks = (words: UserWord[]) => {
