@@ -79,7 +79,7 @@ const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: Langu
   return inputCostInNanoDollars + outputCostInNanoDollars;
 };
 
-const toFillInTheGapTasks = async (words: UserWord[]) => {
+const toFillInTheGap = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -88,7 +88,7 @@ const toFillInTheGapTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object, usage } = await generateObject({
+  const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -128,10 +128,10 @@ const toFillInTheGapTasks = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, cost };
+  return { tasks, cost };
 };
 
-const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
+const toTranslateEnglishSentence = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -140,7 +140,7 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object, usage } = await generateObject({
+  const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -183,10 +183,10 @@ const toTranslateEnglishSentenceTasks = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, cost };
+  return { tasks, cost };
 };
 
-const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
+const toTranslateUkrainianSentence = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -195,7 +195,7 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object, usage } = await generateObject({
+  const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -239,10 +239,10 @@ const toTranslateUkrainianSentenceTasks = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, cost };
+  return { tasks, cost };
 };
 
-const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
+const toSynonymAndAntonym = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -251,7 +251,7 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object, usage } = await generateObject({
+  const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -289,10 +289,10 @@ const toSynonymAndAntonymTasks = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, cost };
+  return { tasks, cost };
 };
 
-const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
+const toFindIncorrectSentence = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -301,7 +301,7 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object, usage } = await generateObject({
+  const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -343,10 +343,10 @@ const toFindIncorrectSentenceTasks = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, cost };
+  return { tasks, cost };
 };
 
-const toWordOrderTasks = async (words: UserWord[]) => {
+const toWordOrder = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -355,7 +355,7 @@ const toWordOrderTasks = async (words: UserWord[]) => {
     definition: word.definition,
   }));
 
-  const { object, usage } = await generateObject({
+  const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
       z.object({
@@ -395,7 +395,7 @@ const toWordOrderTasks = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, cost };
+  return { tasks, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
@@ -412,28 +412,28 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   }
 
   const [
-    fillInTheGapTasks,
-    translateEnglishSentenceTasks,
-    translateUkrainianSentenceTasks,
-    synonymAndAntonymTasks,
-    findIncorrectSentenceTasks,
-    wordOrderTasks,
+    fillInTheGap,
+    translateEnglishSentence,
+    translateUkrainianSentence,
+    synonymAndAntonym,
+    findIncorrectSentence,
+    wordOrder,
   ] = await Promise.all([
-    toFillInTheGapTasks(words),
-    toTranslateEnglishSentenceTasks(words),
-    toTranslateUkrainianSentenceTasks(words),
-    toSynonymAndAntonymTasks(words),
-    toFindIncorrectSentenceTasks(words),
-    toWordOrderTasks(words),
+    toFillInTheGap(words),
+    toTranslateEnglishSentence(words),
+    toTranslateUkrainianSentence(words),
+    toSynonymAndAntonym(words),
+    toFindIncorrectSentence(words),
+    toWordOrder(words),
   ]);
 
   const events = [
-    fillInTheGapTasks.cost,
-    translateEnglishSentenceTasks.cost,
-    translateUkrainianSentenceTasks.cost,
-    synonymAndAntonymTasks.cost,
-    findIncorrectSentenceTasks.cost,
-    wordOrderTasks.cost,
+    fillInTheGap.cost,
+    translateEnglishSentence.cost,
+    translateUkrainianSentence.cost,
+    synonymAndAntonym.cost,
+    findIncorrectSentence.cost,
+    wordOrder.cost,
   ].map((cost) => ({
     ...cost,
     type: EventType.TaskCost as const,
@@ -443,11 +443,11 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   await insertEvents(events);
 
   return {
-    fillInTheGapTasks: fillInTheGapTasks.object,
-    translateEnglishSentenceTasks: translateEnglishSentenceTasks.object,
-    translateUkrainianSentenceTasks: translateUkrainianSentenceTasks.object,
-    synonymAndAntonymTasks: synonymAndAntonymTasks.object,
-    findIncorrectSentenceTasks: findIncorrectSentenceTasks.object,
-    wordOrderTasks: wordOrderTasks.object,
+    fillInTheGapTasks: fillInTheGap.tasks,
+    translateEnglishSentenceTasks: translateEnglishSentence.tasks,
+    translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
+    synonymAndAntonymTasks: synonymAndAntonym.tasks,
+    findIncorrectSentenceTasks: findIncorrectSentence.tasks,
+    wordOrderTasks: wordOrder.tasks,
   };
 };
