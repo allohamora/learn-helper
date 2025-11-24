@@ -16,6 +16,7 @@ import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
 import { deleteWordDiscoveredEvents, insertEvent, insertEvents } from '@/repositories/event.repository';
+import { randomElement } from '@/utils/array.utils';
 
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
@@ -79,6 +80,18 @@ const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: Langu
   return inputCostInNanoDollars + outputCostInNanoDollars;
 };
 
+const sentenceTypePercentages = {
+  statement: 50,
+  question: 25,
+  exclamation: 25,
+};
+
+const SENTENCE_TYPES: string[] = Object.entries(sentenceTypePercentages).flatMap(
+  ([type, percentage]) => Array(percentage).fill(type) as string[],
+);
+
+const getSentenceType = () => randomElement(SENTENCE_TYPES);
+
 const toFillInTheGap = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -86,6 +99,7 @@ const toFillInTheGap = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
+    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -110,7 +124,6 @@ const toFillInTheGap = async (words: UserWord[]) => {
       '- For phrases, replace the entire phrase with the blank as one unit.',
       '- Use a natural, modern tone - avoid slang or overly formal expressions.',
       '- Make each sentence unique; avoid repeating structures or contexts.',
-      '- Do not end sentences with a period.',
       '- The "answer" field must contain the exact form of the missing word or phrase that correctly fits the blank.',
       '- If the target phrase has placeholders (e.g., "agree with (sb)", "take care of (sth)"), adapt the sentence naturally (e.g., target "agree with (sb)" → sentence "I ___ you" → answer "agree with").',
       '',
@@ -138,6 +151,7 @@ const toTranslateEnglishSentence = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
+    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -162,7 +176,7 @@ const toTranslateEnglishSentence = async (words: UserWord[]) => {
       `- Generate exactly ${words.length} tasks, one per input item, keeping the same ids.`,
       '- The English sentence must include or clearly express the meaning of the target English word or phrase.',
       '- If the input is a phrase, use the full phrase naturally within the sentence.',
-      '- Sentences must be concise (1–12 words), modern, natural, and without periods.',
+      '- Sentences must be concise (1–12 words), modern, and natural.',
       '- Each task must include 4 Ukrainian options: 1 correct translation (isAnswer: true) and 3 incorrect but plausible ones (isAnswer: false).',
       '- The correct translation must precisely reflect the meaning of the English sentence.',
       '- Incorrect translations must be grammatically correct and natural but differ slightly in meaning (e.g., wrong preposition, verb, or adjective).',
@@ -193,6 +207,7 @@ const toTranslateUkrainianSentence = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
+    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -216,11 +231,11 @@ const toTranslateUkrainianSentence = async (words: UserWord[]) => {
       'Requirements:',
       `- Generate exactly ${words.length} tasks, one per input item, reusing input ids.`,
       '- The Ukrainian sentence must include or clearly express the meaning of the target English word or phrase.',
-      '- Sentences must be short (1–12 words), natural, modern, and without periods.',
+      '- Sentences must be short (1–12 words), natural, modern, and limited to exactly one sentence.',
       '- Each task must include 4 full-sentence English options: 1 correct (isAnswer: true) and 3 incorrect (isAnswer: false).',
       '- All options must be complete, natural English sentences, not single words or fragments.',
       '- The correct option must include the exact English word or phrase from the input (match exactly, case-sensitive).',
-      '- The correct option must accurately reflect the meaning of the Ukrainian sentence.',
+      '- The correct option must fully translate the entire Ukrainian sentence.',
       '- Incorrect options must be natural but differ slightly in meaning (e.g., wrong preposition, similar verb, or altered adjective).',
       '- Use partOfSpeech and definition fields to make distractors realistic.',
       '- Vary topics and sentence patterns; avoid repetition.',
@@ -326,7 +341,7 @@ const toFindIncorrectSentence = async (words: UserWord[]) => {
       '- One sentence must use it INCORRECTLY (isAnswer: true) - it should be nonsensical, impossible, or grammatically broken, producing a sentence that is clearly meaningless to a native speaker.',
       '- The incorrect sentence should not just be unusual or less natural; it must be obviously wrong, absurd, or completely illogical.',
       '- The description must appear only for the incorrect sentence and briefly explain why it is nonsense or incorrect.',
-      '- Sentences must be complete, natural English (3–15 words) without periods at the end.',
+      '- Sentences must be complete, natural English (3–15 words).',
       '- Avoid repeating sentence topics or patterns across tasks.',
       '',
       'Words and Phrases:',
@@ -353,6 +368,7 @@ const toWordOrder = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
+    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -376,7 +392,6 @@ const toWordOrder = async (words: UserWord[]) => {
       '- Each word should be separated by a single space.',
       '- The sentence must be natural, modern English (5-15 words total).',
       '- The target word or phrase must appear in the sentence.',
-      '- Do not include punctuation marks in the sentence.',
       '- Do not repeat a word more than once in the sentence.',
       '- Capitalize first word that starts the sentence.',
       '- Make sentences unique; avoid repeating structures or contexts.',

@@ -40,6 +40,8 @@ const shuffle = <T,>(array: T[]): T[] => {
     .map(({ value }) => value);
 };
 
+const removePeriods = (text: string) => text.replace(/\.$/gm, '');
+
 const toShowcaseTasks = (words: UserWord[]) => {
   return words.map(
     (item): ShowcaseTask => ({
@@ -145,7 +147,7 @@ const toFillInTheGapTasks = (words: UserWord[], tasksData: TasksData['fillInTheG
       type: TaskType.FillInTheGap,
       data: {
         id,
-        text: task,
+        text: removePeriods(task),
         word: answer,
       },
     };
@@ -159,8 +161,8 @@ const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrain
       type: TaskType.TranslateUkrainianSentence,
       data: {
         id,
-        sentence,
-        options: shuffle(options),
+        sentence: removePeriods(sentence),
+        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
       },
     };
   });
@@ -173,8 +175,8 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
       type: TaskType.TranslateEnglishSentence,
       data: {
         id,
-        sentence,
-        options: shuffle(options),
+        sentence: removePeriods(sentence),
+        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
       },
     };
   });
@@ -213,7 +215,13 @@ const toFindIncorrectSentenceTasks = (words: UserWord[], tasksData: TasksData['f
       data: {
         ...found.word,
         id,
-        options: shuffle(options),
+        options: shuffle(
+          options.map((option) => ({
+            ...option,
+            value: removePeriods(option.value),
+            description: option.description ? removePeriods(option.description) : undefined,
+          })),
+        ),
       },
     };
   });
