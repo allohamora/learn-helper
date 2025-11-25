@@ -32,9 +32,7 @@ export const WordToOptions: FC<WordToOptionsProps> = ({ data, ...props }) => {
         <div className="flex items-start justify-between">
           <CardTitle className="text-xl leading-tight font-bold md:text-3xl">
             {data.value}
-            {data.spelling && (
-              <span className="ml-2 text-base font-normal text-muted-foreground md:text-lg">({data.spelling})</span>
-            )}
+            <div className="text-base font-normal text-muted-foreground md:text-lg">({data.spelling})</div>
           </CardTitle>
 
           <div className="flex items-center gap-1">

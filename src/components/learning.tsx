@@ -134,6 +134,7 @@ const toPronunciationToWordTasks = (words: UserWord[]) => {
       data: {
         id: target.id,
         pronunciation: target.word.pronunciation,
+        spelling: target.word.spelling,
         word: target.word.value,
       },
     };

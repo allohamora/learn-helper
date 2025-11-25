@@ -16,7 +16,7 @@ type WordData = {
   uaTranslation: string; // "відвідувати",
   partOfSpeech?: string; // "noun",
   level: Level; // "a1",
-  spelling?: string; // "/ˈvɪzɪt/",
+  spelling: string; // "/ˈvɪzɪt/",
   pronunciation: string; // "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/v/vis/visit/visit__us_1.mp3",
   link: string; // "https://www.oxfordlearnersdictionaries.com/definition/english/visit_2"
 };

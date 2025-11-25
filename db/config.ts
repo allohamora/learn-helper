@@ -11,7 +11,7 @@ const Word = defineTable({
     uaTranslation: column.text(),
     partOfSpeech: column.text({ optional: true }),
     level: column.text({ enum: Object.values(Level) as UnionToTuple<(typeof Level)[keyof typeof Level]> }),
-    spelling: column.text({ optional: true }),
+    spelling: column.text(),
     pronunciation: column.text(),
     link: column.text(),
     list: column.text({ enum: Object.values(List) as UnionToTuple<(typeof List)[keyof typeof List]> }),
