@@ -15,7 +15,7 @@ import {
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
   type SynonymAndAntonymTask,
-  type FindIncorrectSentenceTask,
+  type FindNonsenseSentenceTask,
   type WordOrderTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
@@ -209,16 +209,16 @@ const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synon
   });
 };
 
-const toFindIncorrectSentenceTasks = (words: UserWord[], tasksData: TasksData['findIncorrectSentenceTasks']) => {
-  return tasksData.map(({ id, options }): FindIncorrectSentenceTask => {
+const toFindNonsenseSentenceTasks = (words: UserWord[], tasksData: TasksData['findNonsenseSentenceTasks']) => {
+  return tasksData.map(({ id, options }): FindNonsenseSentenceTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
-      throw new Error('Word for FindIncorrectSentence task is not found');
+      throw new Error('Word for FindNonsenseSentence task is not found');
     }
 
     return {
       id: crypto.randomUUID(),
-      type: TaskType.FindIncorrectSentence,
+      type: TaskType.FindNonsenseSentence,
       data: {
         ...found.word,
         id,
@@ -280,7 +280,7 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
-  const findIncorrectSentenceTasks = toFindIncorrectSentenceTasks(words, tasksData.findIncorrectSentenceTasks);
+  const findNonsenseSentenceTasks = toFindNonsenseSentenceTasks(words, tasksData.findNonsenseSentenceTasks);
   const wordOrderTasks = toWordOrderTasks(words, tasksData.wordOrderTasks);
 
   return [
@@ -288,7 +288,7 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
-    ...shuffle(findIncorrectSentenceTasks),
+    ...shuffle(findNonsenseSentenceTasks),
     ...shuffle(wordOrderTasks),
   ];
 };
@@ -543,11 +543,11 @@ export const Learning: FC = () => {
               />
             )}
 
-            {currentTask?.type === TaskType.FindIncorrectSentence && (
+            {currentTask?.type === TaskType.FindNonsenseSentence && (
               <WordToOptions
                 key={currentTask.id}
-                title="Find the incorrect sentence"
-                subtitle="Choose the sentence where the word or phrase is used incorrectly"
+                title="Find the nonsense sentence"
+                subtitle="Choose the sentence where the word or phrase is used nonsensically"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

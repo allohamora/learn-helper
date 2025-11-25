@@ -307,7 +307,7 @@ const toSynonymAndAntonym = async (words: UserWord[]) => {
   return { tasks, cost };
 };
 
-const toFindIncorrectSentence = async (words: UserWord[]) => {
+const toFindNonsenseSentence = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
     value: word.value,
@@ -352,7 +352,7 @@ const toFindIncorrectSentence = async (words: UserWord[]) => {
   });
 
   const cost = {
-    taskType: TaskType.FindIncorrectSentence,
+    taskType: TaskType.FindNonsenseSentence,
     costInNanoDollars: calculateCostInNanoDollars(usage),
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
@@ -421,7 +421,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       translateEnglishSentenceTasks: [],
       translateUkrainianSentenceTasks: [],
       synonymAndAntonymTasks: [],
-      findIncorrectSentenceTasks: [],
+      findNonsenseSentenceTasks: [],
       wordOrderTasks: [],
     };
   }
@@ -431,14 +431,14 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateEnglishSentence,
     translateUkrainianSentence,
     synonymAndAntonym,
-    findIncorrectSentence,
+    findNonsenseSentence,
     wordOrder,
   ] = await Promise.all([
     toFillInTheGap(words),
     toTranslateEnglishSentence(words),
     toTranslateUkrainianSentence(words),
     toSynonymAndAntonym(words),
-    toFindIncorrectSentence(words),
+    toFindNonsenseSentence(words),
     toWordOrder(words),
   ]);
 
@@ -447,7 +447,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateEnglishSentence.cost,
     translateUkrainianSentence.cost,
     synonymAndAntonym.cost,
-    findIncorrectSentence.cost,
+    findNonsenseSentence.cost,
     wordOrder.cost,
   ].map((cost) => ({
     ...cost,
@@ -462,7 +462,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateEnglishSentenceTasks: translateEnglishSentence.tasks,
     translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
     synonymAndAntonymTasks: synonymAndAntonym.tasks,
-    findIncorrectSentenceTasks: findIncorrectSentence.tasks,
+    findNonsenseSentenceTasks: findNonsenseSentence.tasks,
     wordOrderTasks: wordOrder.tasks,
   };
 };
