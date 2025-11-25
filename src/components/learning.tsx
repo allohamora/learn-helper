@@ -241,17 +241,17 @@ const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTask
       throw new Error('Word for WordOrder task is not found');
     }
 
-    const sentenceWords = removePeriods(sentence)
+    const originalWords = removePeriods(sentence)
       .split(' ')
-      .filter((word) => !!word.trim())
-      .map((value, idx) => ({ idx, value }));
+      .filter((word) => !!word.trim());
 
     return {
       id: crypto.randomUUID(),
       type: TaskType.WordOrder,
       data: {
         id,
-        words: shuffle([...sentenceWords]),
+        originalWords,
+        shuffledWords: shuffle(originalWords),
       },
     };
   });
