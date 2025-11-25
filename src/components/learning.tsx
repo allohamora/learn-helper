@@ -155,6 +155,7 @@ const toFillInTheGapTasks = (words: UserWord[], tasksData: TasksData['fillInTheG
         id,
         text: removePeriods(task),
         word: answer,
+        hint: found.word.definition,
       },
     };
   });
