@@ -143,7 +143,8 @@ export type WordOrderTask = {
   type: TaskType.WordOrder;
   data: {
     id: number;
-    words: { idx: number; value: string }[];
+    originalWords: string[];
+    shuffledWords: string[];
   };
 };
 

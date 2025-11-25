@@ -6,8 +6,6 @@ import { cn } from '@/lib/utils';
 import type { WordOrderTask } from '@/types/user-words.types';
 
 type Data = WordOrderTask['data'];
-type Words = Data['words'];
-type Word = Words[number];
 
 type WordOrderProps = {
   title: string;
@@ -18,19 +16,19 @@ type WordOrderProps = {
 };
 
 export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake, onNext }) => {
-  const [selectedWords, setSelectedWords] = useState<Word[]>([]);
-  const [availableWords, setAvailableWords] = useState<Words>(data.words);
+  const [selectedWords, setSelectedWords] = useState<string[]>([]);
+  const [availableWords, setAvailableWords] = useState<string[]>(data.shuffledWords);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
 
-  const handleWordClick = (word: Word, index: number) => {
+  const handleWordClick = (word: string, index: number) => {
     if (isChecked) return;
 
     setSelectedWords([...selectedWords, word]);
     setAvailableWords(availableWords.filter((_, idx) => idx !== index));
   };
 
-  const handleRemoveWord = (word: Word, index: number) => {
+  const handleRemoveWord = (word: string, index: number) => {
     if (isChecked) return;
 
     setSelectedWords(selectedWords.filter((_, idx) => idx !== index));
@@ -38,7 +36,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
   };
 
   const handleCheck = () => {
-    const correct = selectedWords.every((word, index) => word.idx === index);
+    const correct = selectedWords.join(' ') === data.originalWords.join(' ');
 
     setIsCorrect(correct);
     setIsChecked(true);
@@ -67,10 +65,11 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
                 <span className="text-muted-foreground">Select words below to build the sentence</span>
               ) : (
                 selectedWords.map((word, index) => {
-                  const isCorrectPosition = isChecked && word.idx === index;
+                  const isCorrectPosition = isChecked && data.originalWords[index] === word;
+
                   return (
                     <button
-                      key={`${word.value}-${word.idx}-${index}`}
+                      key={`${word}-${index}`}
                       type="button"
                       onClick={() => handleRemoveWord(word, index)}
                       disabled={isChecked}
@@ -81,9 +80,9 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
                         isCorrectPosition && 'bg-green-100 text-green-800',
                         isChecked && !isCorrectPosition && 'bg-red-100 text-red-800',
                       )}
-                      aria-label={isChecked ? undefined : `Remove ${word.value}`}
+                      aria-label={isChecked ? undefined : `Remove ${word}`}
                     >
-                      {word.value}
+                      {word}
                     </button>
                   );
                 })
@@ -98,14 +97,14 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
               <div className="flex flex-wrap justify-center gap-2">
                 {availableWords.map((word, index) => (
                   <Button
-                    key={`${word.value}-${word.idx}-${index}`}
+                    key={`${word}-${index}`}
                     type="button"
                     variant="outline"
                     onClick={() => handleWordClick(word, index)}
                     disabled={isChecked}
                     className="h-auto px-4 py-2 text-base md:text-lg"
                   >
-                    {word.value}
+                    {word}
                   </Button>
                 ))}
               </div>
@@ -120,12 +119,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
                     <p className="font-semibold text-red-600">Incorrect</p>
                     <p className="text-muted-foreground">
                       The correct order is:{' '}
-                      <span className="font-semibold text-foreground">
-                        {data.words
-                          .toSorted((a, b) => a.idx - b.idx)
-                          .map((word) => word.value)
-                          .join(' ')}
-                      </span>
+                      <span className="font-semibold text-foreground">{data.originalWords.join(' ')}</span>
                     </p>
                   </div>
                 )}
@@ -137,7 +131,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
                 <Button
                   onClick={handleCheck}
                   size="lg"
-                  disabled={selectedWords.length !== data.words.length}
+                  disabled={selectedWords.length !== data.originalWords.length}
                   className="min-w-32"
                 >
                   Check
