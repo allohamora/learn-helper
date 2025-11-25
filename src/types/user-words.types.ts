@@ -98,6 +98,7 @@ export type PronunciationToWordTask = {
   type: TaskType.PronunciationToWord;
   data: ToWordData & {
     pronunciation: string;
+    spelling: string;
   };
 };
 

@@ -29,16 +29,23 @@ export const PronunciationToWord: FC<PronunciationToWordProps> = ({ data: { pron
       data={data}
       {...props}
     >
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={handlePlayPronunciation}
-        disabled={isPlaying}
-        className="h-20 w-20 rounded-full md:h-24 md:w-24"
-        title="Play pronunciation"
-      >
-        <Volume2 className={cn('h-6 w-6 md:h-8 md:w-8', { 'animate-pulse': isPlaying })} />
-      </Button>
+      <div className="flex flex-col items-center gap-4">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={handlePlayPronunciation}
+          disabled={isPlaying}
+          className="h-20 w-20 rounded-full md:h-24 md:w-24"
+          title="Play pronunciation"
+        >
+          <Volume2 className={cn('h-6 w-6 md:h-8 md:w-8', { 'animate-pulse': isPlaying })} />
+        </Button>
+
+        <details className="w-full max-w-xs text-center text-sm text-muted-foreground">
+          <summary className="cursor-pointer font-medium text-foreground select-none">Show spelling</summary>
+          <p className="mt-2 text-lg font-semibold text-foreground">{data.spelling}</p>
+        </details>
+      </div>
     </ToWord>
   );
 };
