@@ -28,7 +28,7 @@ export const TextToWord: FC<TextToWordProps> = ({ data: { text, hint, ...data },
             className="ml-2 size-6 cursor-pointer align-middle"
             title={hint}
             aria-label="Show hint"
-            onClick={() => toast({ title: 'hint', description: hint, variant: 'default' })}
+            onClick={() => toast({ title: 'Hint', description: hint, variant: 'default' })}
           >
             <CircleQuestionMarkIcon className="size-4" />
           </Button>
