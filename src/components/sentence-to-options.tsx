@@ -14,7 +14,7 @@ type SentenceToOptionsProps = {
 export const SentenceToOptions: FC<SentenceToOptionsProps> = ({ data: { sentence, ...data }, ...props }) => {
   return (
     <ToOptions data={data} {...props}>
-      <CardTitle className="flex min-h-[120px] items-center justify-center text-lg">{sentence}</CardTitle>
+      <CardTitle className="flex min-h-[120px] items-center justify-center text-center text-lg">{sentence}</CardTitle>
     </ToOptions>
   );
 };
