@@ -46,6 +46,7 @@ export type ToWordData = {
 
 export type TextToWordData = ToWordData & {
   text: string;
+  hint?: string;
 };
 
 export type ToOptionsData = {
