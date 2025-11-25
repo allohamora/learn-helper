@@ -18,24 +18,22 @@ export const TextToWord: FC<TextToWordProps> = ({ data: { text, hint, ...data },
 
   return (
     <ToWord data={data} {...props}>
-      <div className="flex w-full flex-col items-center gap-3 text-center">
-        <div className="flex w-full items-start justify-center gap-2">
-          <p className="text-lg leading-relaxed font-normal md:text-xl">{text}</p>
-          {hint ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="cursor-pointer"
-              title={hint}
-              aria-label="Show hint"
-              onClick={() => toast({ title: 'hint', description: hint, variant: 'default' })}
-            >
-              <CircleQuestionMarkIcon className="size-4" />
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      <p className="w-full text-center text-lg leading-relaxed font-normal md:text-xl">
+        <span className="align-middle">{text}</span>
+        {hint && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="ml-2 size-6 cursor-pointer align-middle"
+            title={hint}
+            aria-label="Show hint"
+            onClick={() => toast({ title: 'hint', description: hint, variant: 'default' })}
+          >
+            <CircleQuestionMarkIcon className="size-4" />
+          </Button>
+        )}
+      </p>
     </ToWord>
   );
 };
