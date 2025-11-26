@@ -16,7 +16,6 @@ import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
 import { deleteWordDiscoveredEvents, insertEvent, insertEvents } from '@/repositories/event.repository';
-import { randomElement } from '@/utils/array.utils';
 
 const REVIEW_AFTER_VALUE = 3;
 const MAX_ENCOUNTER_COUNT = 3;
@@ -80,18 +79,6 @@ const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: Langu
   return inputCostInNanoDollars + outputCostInNanoDollars;
 };
 
-const sentenceTypePercentages = {
-  statement: 50,
-  question: 25,
-  exclamation: 25,
-};
-
-const SENTENCE_TYPES: string[] = Object.entries(sentenceTypePercentages).flatMap(
-  ([type, percentage]) => Array(percentage).fill(type) as string[],
-);
-
-const getSentenceType = () => randomElement(SENTENCE_TYPES);
-
 const toFillInTheGap = async (words: UserWord[]) => {
   const wordList = words.map(({ id, word }) => ({
     id,
@@ -99,7 +86,6 @@ const toFillInTheGap = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
-    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -151,7 +137,6 @@ const toTranslateEnglishSentence = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
-    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -207,7 +192,6 @@ const toTranslateUkrainianSentence = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
-    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
@@ -368,7 +352,6 @@ const toWordOrder = async (words: UserWord[]) => {
     partOfSpeech: word.partOfSpeech,
     level: word.level,
     definition: word.definition,
-    sentenceType: getSentenceType(),
   }));
 
   const { object: tasks, usage } = await generateObject({
