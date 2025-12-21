@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.23",
-    "@astrojs/db": "^0.18.0",
+    "@astrojs/db": "^0.18.3",
     "@clerk/astro": "^2.13.6",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-label": "^2.1.7",
@@ -53,8 +53,8 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@astrojs/node": "^9.4.6",
-    "@astrojs/react": "^4.4.0",
+    "@astrojs/node": "^9.5.1",
+    "@astrojs/react": "^4.4.2",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.37.0",
@@ -64,7 +64,7 @@
     "@types/eslint-plugin-tailwindcss": "^3.17.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.1",
-    "astro": "^5.14.4",
+    "astro": "^5.16.6",
     "babel-plugin-react-compiler": "1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9.37.0",
