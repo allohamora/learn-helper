@@ -55,3 +55,5 @@ From `package.json`:
 - Use `shadcn` CLI commands to install or update UI components; do NOT write component source from the memory.
 - Use Astro Actions (`src/actions`) instead of adding bespoke API endpoint routes; implement server logic in actions and invoke them from forms/components to keep a unified server boundary.
 - When editing prompts, follow the same prompt style and formatting to maintain consistency.
+- Use `for...of` loops instead of `forEach` for better performance and readability.
+- Avoid single-letter or one-word variable names; use descriptive names that clearly indicate purpose (e.g., `task` instead of `t`, `words` instead of `w`).
