@@ -21,5 +21,7 @@ jobs:
         run: npm i
       - name: Copy .env file
         run: cp .env.example .env
-      - name: Run test
+      - name: Run unit tests
         run: npm run test
+      - name: Run integration tests
+        run: npm run test:integration
