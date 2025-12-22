@@ -12,7 +12,6 @@ import { db } from 'astro:db';
 import { generateObject, type LanguageModelUsage } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
-import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
 import { deleteWordDiscoveredEvents, insertEvent, insertEvents } from '@/repositories/event.repository';
@@ -79,15 +78,15 @@ const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: Langu
   return inputCostInNanoDollars + outputCostInNanoDollars;
 };
 
-const toFillInTheGap = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
+export type WordData = {
+  id: number;
+  value: string;
+  partOfSpeech: string | null;
+  level: string;
+  definition: string;
+};
 
+export const toFillInTheGap = async (words: WordData[]) => {
   const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
@@ -115,7 +114,7 @@ const toFillInTheGap = async (words: UserWord[]) => {
       '',
       'Words and Phrases:',
       '```json',
-      JSON.stringify(wordList),
+      JSON.stringify(words),
       '```',
     ].join('\n'),
   });
@@ -130,15 +129,7 @@ const toFillInTheGap = async (words: UserWord[]) => {
   return { tasks, cost };
 };
 
-const toTranslateEnglishSentence = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
+export const toTranslateEnglishSentence = async (words: WordData[]) => {
   const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
@@ -170,7 +161,7 @@ const toTranslateEnglishSentence = async (words: UserWord[]) => {
       '',
       'Words and Phrases:',
       '```json',
-      JSON.stringify(wordList),
+      JSON.stringify(words),
       '```',
     ].join('\n'),
   });
@@ -185,15 +176,7 @@ const toTranslateEnglishSentence = async (words: UserWord[]) => {
   return { tasks, cost };
 };
 
-const toTranslateUkrainianSentence = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
+export const toTranslateUkrainianSentence = async (words: WordData[]) => {
   const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
@@ -226,7 +209,7 @@ const toTranslateUkrainianSentence = async (words: UserWord[]) => {
       '',
       'Words and Phrases:',
       '```json',
-      JSON.stringify(wordList),
+      JSON.stringify(words),
       '```',
     ].join('\n'),
   });
@@ -241,15 +224,7 @@ const toTranslateUkrainianSentence = async (words: UserWord[]) => {
   return { tasks, cost };
 };
 
-const toSynonymAndAntonym = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
+export const toSynonymAndAntonym = async (words: WordData[]) => {
   const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
@@ -276,7 +251,7 @@ const toSynonymAndAntonym = async (words: UserWord[]) => {
       '',
       'Words and Phrases:',
       '```json',
-      JSON.stringify(wordList),
+      JSON.stringify(words),
       '```',
     ].join('\n'),
   });
@@ -291,15 +266,7 @@ const toSynonymAndAntonym = async (words: UserWord[]) => {
   return { tasks, cost };
 };
 
-const toFindNonsenseSentence = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
+export const toFindNonsenseSentence = async (words: WordData[]) => {
   const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
@@ -330,7 +297,7 @@ const toFindNonsenseSentence = async (words: UserWord[]) => {
       '',
       'Words and Phrases:',
       '```json',
-      JSON.stringify(wordList),
+      JSON.stringify(words),
       '```',
     ].join('\n'),
   });
@@ -345,15 +312,7 @@ const toFindNonsenseSentence = async (words: UserWord[]) => {
   return { tasks, cost };
 };
 
-const toWordOrder = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
+export const toWordOrder = async (words: WordData[]) => {
   const { object: tasks, usage } = await generateObject({
     model,
     schema: z.array(
@@ -381,7 +340,7 @@ const toWordOrder = async (words: UserWord[]) => {
       '',
       'Words and Phrases:',
       '```json',
-      JSON.stringify(wordList),
+      JSON.stringify(words),
       '```',
     ].join('\n'),
   });
@@ -397,8 +356,8 @@ const toWordOrder = async (words: UserWord[]) => {
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
-  const words = await getLearningWords(body);
-  if (!words.length) {
+  const learningWords = await getLearningWords(body);
+  if (!learningWords.length) {
     return {
       fillInTheGapTasks: [],
       translateEnglishSentenceTasks: [],
@@ -408,6 +367,16 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       wordOrderTasks: [],
     };
   }
+
+  const words = learningWords.map(
+    ({ id, word }): WordData => ({
+      id,
+      value: word.value,
+      partOfSpeech: word.partOfSpeech,
+      level: word.level,
+      definition: word.definition,
+    }),
+  );
 
   const [
     fillInTheGap,
@@ -436,7 +405,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     ...cost,
     type: EventType.TaskCost as const,
     userId: body.userId,
-    userWordIds: words.map(({ id }) => id),
+    userWordIds: learningWords.map(({ id }) => id),
   }));
   await insertEvents(events);
 
