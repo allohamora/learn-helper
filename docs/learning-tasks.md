@@ -117,16 +117,15 @@ This document describes the task types used in the Learn Helper learning system.
 
 **Notes**:
 
-- **Grammatically correct**: All sentences and translations must be grammatically correct in both English and Ukrainian
+- **All options grammatically correct**: All 4 Ukrainian options must be grammatically perfect with natural word order, proper case endings, correct verb conjugations, and appropriate preposition usage
 - **Natural language**: Both English sentences and Ukrainian translations must sound fluent and authentic to native speakers
 - **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid creating scenarios where multiple translations could be considered correct (e.g., "She is at home" should not have both "Вона вдома" and "Вона в будинку" as they could both be valid in different contexts)
+- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different verb, noun, adjective, time word), wrong number (singular/plural with all required grammatical adjustments), or wrong prepositions - but always remain grammatically valid
 - **Vary topics**: Use diverse contexts and avoid repeating sentence patterns to keep learners engaged
 - **Relatable content**: Choose everyday situations and topics that learners can relate to
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
 - **No literal translations**: Ukrainian options must sound natural, not word-for-word literal translations
 - **Punctuation variety**: Use different sentence types - statements (.), questions (?), and exclamations (!) - to reflect natural communication
-- **Quality distractors**: Incorrect options should be grammatically correct and plausible, differing subtly (wrong preposition, similar verb, altered adjective)
-- **Realistic alternatives**: Use the provided `partOfSpeech` and `definition` to create believable incorrect options
 - **Complete meaning**: The correct translation must fully capture the English sentence's meaning, not just contain the target word
 - **Phrase integration**: When the target is a phrase, incorporate the entire phrase naturally within the sentence
 - **Concise sentences**: Keep sentences short (1-12 words) for clarity and learning focus
@@ -193,9 +192,9 @@ This document describes the task types used in the Learn Helper learning system.
   - Sentence: "She bought a new dress yesterday."
   - Options:
     - ✓ "Вона купила нову сукню вчора."
-    - ✗ "Вона купила нову сукню завтра." (wrong time - tomorrow instead of yesterday)
-    - ✗ "Вона купує нову сукню вчора." (wrong tense - present instead of past)
-    - ✗ "Вона носить нову сукню вчора." (wrong verb - wear instead of buy)
+    - ✗ "Вона купила нову сукню торік." (wrong time - last year instead of yesterday)
+    - ✗ "Вона купила нові сукні вчора." (wrong number - dresses plural instead of dress singular)
+    - ✗ "Вона носила нову сукню вчора." (wrong verb - wore instead of bought)
 
 - **Level B1** (Second conditional expressing hypothetical situation):
   - Word: "discover"
@@ -211,9 +210,9 @@ This document describes the task types used in the Learn Helper learning system.
   - Sentence: "The company had been established before the crisis began."
   - Options:
     - ✓ "Компанія була заснована до того, як почалася криза."
-    - ✗ "Компанія заснована до того, як почалася криза." (wrong tense - present perfect instead of past perfect)
-    - ✗ "Компанія буде заснована до того, як почалася криза." (wrong tense - future instead of past perfect)
-    - ✗ "Компанія засновується до того, як почалася криза." (wrong tense - present continuous instead of past perfect)
+    - ✗ "Компанія була створена до того, як почалася криза." (wrong verb - created instead of established)
+    - ✗ "Організація була заснована до того, як почалася криза." (wrong noun - organization instead of company)
+    - ✗ "Компанія була заснована після того, як почалася криза." (wrong time relation - after instead of before)
 
 - **Level C1** (Modal verb with negative, abstract noun, advanced vocabulary):
   - Word: "underestimate"
@@ -245,19 +244,19 @@ This document describes the task types used in the Learn Helper learning system.
 
 **Notes**:
 
-- **Grammatically correct**: All Ukrainian sentences and English options must be grammatically correct and natural
+- **All options grammatically correct**: All 4 English options must be grammatically perfect, fluent, and complete sentences with proper subject-verb agreement, correct tense usage, and natural word order
 - **Authentic language**: Ukrainian sentences should sound conversational and authentic, English options must be fluent
 - **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid scenarios where multiple English translations could be equally correct for the Ukrainian sentence
 - **No synonyms or alternative phrases**: Incorrect options must NOT use synonyms or different phrases that could create valid alternative translations - this is strictly forbidden (e.g., if target is "nervous", don't use "worried"; if target is "get rid of", don't use "throw away")
+- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different non-synonym verb, noun, adjective), wrong pronouns (with correctly adjusted verb forms), altered specificity (this/these, some/all), or wrong prepositions - but always remain grammatically valid
 - **Keep it fresh**: Avoid repeating sentence structures or topics across tasks to maintain interest
 - **Engaging scenarios**: Use interesting, modern contexts that feel relevant to learners
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
 - **Natural Ukrainian**: Create Ukrainian sentences that sound authentic and conversational, not artificial
 - **Punctuation variety**: Mix sentence types with periods (.), questions (?), and exclamations (!) to add dynamism and reflect real language use
-- **Complete sentences only**: All English options must be full, grammatically correct sentences, never fragments or phrases
+- **Complete sentences only**: All English options must be full, grammatically correct sentences with subject and verb, never fragments or phrases
 - **Exact word requirement**: The correct option MUST contain the exact target English word/phrase (case-sensitive matching during generation)
 - **Full translation**: The correct option must translate the ENTIRE Ukrainian sentence, not just include the target word somewhere
-- **Smart distractors**: Create plausible incorrect alternatives using wrong tense, wrong pronouns, altered specificity (this/these, some/all), different sentence structure, wrong prepositions - but NEVER use synonyms or alternative phrases that could be valid translations
 - **Brief and focused**: Keep sentences short (1-12 words) and limited to exactly one sentence
 - **Exactly 4 options**: Always provide 1 correct and 3 incorrect options
 
@@ -286,9 +285,9 @@ This document describes the task types used in the Learn Helper learning system.
   - Sentence: "Це цікава історія."
   - Options:
     - ✓ "This is an interesting story." (exact word match)
-    - ✗ "This is a interesting story." (wrong article)
-    - ✗ "This is the interesting story." (definite article)
-    - ✗ "This is interesting story." (missing article)
+    - ✗ "This is an old story." (wrong adjective - old instead of interesting)
+    - ✗ "That is an interesting story." (wrong demonstrative - that instead of this)
+    - ✗ "This is an interesting book." (wrong noun - book instead of story)
 
 - **Conjunction (but)**:
   - Word: "but"
@@ -313,54 +312,54 @@ This document describes the task types used in the Learn Helper learning system.
   - Sentence: "Ти готовий?"
   - Options:
     - ✓ "Are you ready?"
-    - ✗ "You are ready?" (wrong structure)
-    - ✗ "Were you ready?" (wrong tense)
-    - ✗ "Is he ready?" (wrong pronoun)
+    - ✗ "Are you tired?" (wrong adjective - tired instead of ready)
+    - ✗ "Are they ready?" (wrong pronoun - they instead of you)
+    - ✗ "Is he ready?" (wrong pronoun - he instead of you)
 
 - **Level A1** (Simple present tense, basic vocabulary):
   - Word: "drink"
   - Sentence: "Я п'ю воду."
   - Options:
     - ✓ "I drink water."
-    - ✗ "I eat water." (wrong verb - eat instead of drink)
-    - ✗ "I drinks water." (wrong grammar - incorrect verb form)
-    - ✗ "I am water." (wrong verb - be instead of drink)
+    - ✗ "I drink juice." (wrong noun - juice instead of water)
+    - ✗ "I drink tea." (wrong noun - tea instead of water)
+    - ✗ "He drinks water." (wrong pronoun - he instead of I, with correctly adjusted verb)
 
 - **Level A2** (Simple past tense with time expression):
   - Word: "watched"
   - Sentence: "Ми дивилися фільм минулого вечора."
   - Options:
     - ✓ "We watched a movie last night."
-    - ✗ "We watch a movie last night." (wrong tense - present instead of past)
-    - ✗ "We are watching a movie last night." (wrong tense - present continuous with past time)
-    - ✗ "We will watch a movie last night." (wrong tense - future with past time)
+    - ✗ "We watched a show last night." (wrong noun - show instead of movie)
+    - ✗ "We watched a movie yesterday morning." (wrong time - yesterday morning instead of last night)
+    - ✗ "They watched a movie last night." (wrong pronoun - they instead of we)
 
 - **Level B1** (Second conditional expressing hypothetical situation):
   - Word: "achieve"
   - Sentence: "Якби вона більше працювала, вона б досягла своєї мети."
   - Options:
     - ✓ "If she worked harder, she would achieve her goal."
-    - ✗ "If she worked harder, she would reach her goal." (synonym - reach instead of achieve)
-    - ✗ "If she works harder, she would achieve her goal." (wrong tense - present in if-clause)
-    - ✗ "When she works harder, she would achieve her goal." (wrong conjunction - when instead of if)
+    - ✗ "If she studied harder, she would achieve her goal." (wrong verb - studied instead of worked)
+    - ✗ "If he worked harder, he would achieve his goal." (wrong pronoun - he instead of she, with correctly adjusted possessive)
+    - ✗ "If she worked harder, she would achieve their goals." (wrong possessive and number - their goals instead of her goal)
 
 - **Level B2** (Past perfect passive voice, complex temporal sequence):
   - Word: "been informed"
   - Sentence: "Мене повідомили про зміни до того, як вони сталися."
   - Options:
     - ✓ "I had been informed about the changes before they happened."
-    - ✗ "I was been informed about the changes before they happened." (wrong auxiliary - was instead of had)
-    - ✗ "I have been informed about the changes before they happened." (wrong tense - present perfect instead of past perfect)
-    - ✗ "I am been informed about the changes before they happened." (wrong auxiliary - am instead of had)
+    - ✗ "I had been informed about the updates before they happened." (wrong noun - updates instead of changes)
+    - ✗ "She had been informed about the changes before they happened." (wrong pronoun - she instead of I)
+    - ✗ "I had been informed about the changes after they happened." (wrong preposition - after instead of before)
 
 - **Level C1** (Formal register, gerund after preposition, polite request):
   - Word: "refrain"
   - Sentence: "Прошу вас утримуватися від коментарів до завершення презентації."
   - Options:
     - ✓ "Please refrain from commenting until the presentation is over."
-    - ✗ "Please stop from commenting until the presentation is over." (wrong verb - stop instead of refrain)
-    - ✗ "Please refrain to comment until the presentation is over." (wrong preposition - to instead of from)
-    - ✗ "Please refrain from comments until the presentation is over." (wrong form - noun instead of gerund)
+    - ✗ "Please refrain from commenting until the discussion is over." (wrong noun - discussion instead of presentation)
+    - ✗ "Please refrain from commenting after the presentation is over." (wrong preposition - after instead of until)
+    - ✗ "We refrain from commenting until the presentation is over." (wrong pronoun - we instead of you implied in please)
 
 ---
 
