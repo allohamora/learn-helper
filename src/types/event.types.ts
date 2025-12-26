@@ -10,7 +10,7 @@ export enum EventType {
   TaskCost = 'task-cost',
 }
 
-export type EventBody =
+export type ClientEventBody =
   | {
       type: EventType.WordDiscovered;
       userWordId: number;
@@ -34,7 +34,10 @@ export type EventBody =
   | {
       type: EventType.WordMovedToNextStep;
       userWordId: number;
-    }
+    };
+
+export type EventBody =
+  | ClientEventBody
   | {
       type: EventType.TaskCost;
       taskType: TaskType;
