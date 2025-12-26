@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "astro dev --remote",
     "start": "node ./dist/server/entry.mjs",
-    "prebuild": "tsc --noEmit",
     "build": "astro build --remote",
     "postbuild": "sh ./scripts/create-index.sh",
+    "check": "astro check",
     "preview": "astro preview",
     "push": "astro db push --remote",
     "seed": "astro db execute db/seed.ts --remote",
@@ -55,6 +55,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.6",
     "@astrojs/node": "^9.5.1",
     "@astrojs/react": "^4.4.2",
     "@commitlint/cli": "^20.2.0",
@@ -89,6 +90,7 @@
     "stylelint-config-standard": "^39.0.1",
     "stylelint-config-tailwindcss": "^1.0.0",
     "stylelint-prettier": "^5.0.3",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.0",
     "vite-tsconfig-paths": "^6.0.3",
     "vitest": "3.2.4"
