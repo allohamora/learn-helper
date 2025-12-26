@@ -31,13 +31,13 @@ expect.extend({
           .any()
           .optional()
           .describe(
-            'the actual value from input that failed the constraint (extract only the relevant part in the same json format as expected)',
+            'the actual value from input that failed the constraint (extract only the relevant part in the same json format as expected, example: [{ "id": 1, "value": { "key": "value" } }])',
           ),
         expected: z
           .any()
           .optional()
           .describe(
-            'the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual)',
+            'the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{ "id": 1, "value": { "key": "value" } }])',
           ),
       }),
       prompt: [
