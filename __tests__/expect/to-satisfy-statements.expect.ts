@@ -25,8 +25,20 @@ expect.extend({
       model,
       output: 'object',
       schema: z.object({
-        reason: z.string().nullable().optional(),
-        satisfies: z.boolean(),
+        reason: z.string().nullable().optional().describe('explanation if the input does not satisfy the statements'),
+        satisfies: z.boolean().describe('boolean indicating if the input satisfies all the statements'),
+        actual: z
+          .any()
+          .optional()
+          .describe(
+            'the actual value from input that failed the constraint (extract only the relevant part in the same json format as expected)',
+          ),
+        expected: z
+          .any()
+          .optional()
+          .describe(
+            'the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual)',
+          ),
       }),
       prompt: [
         'Compare the following input against the provided statements and determine if the input satisfies all the statements.',
@@ -40,17 +52,13 @@ expect.extend({
         '```json',
         JSON.stringify(statements),
         '```',
-        '',
-        'Respond with a JSON object with the following properties:',
-        '- reason: explanation if the input does not satisfy the statements (optional)',
-        '- satisfies: boolean indicating if the input satisfies all the statements',
       ].join('\n'),
     });
 
     return {
       pass: object.satisfies,
-      actual: input,
-      expected: null, // without expected, we won't see "+ Received:" block in the output, and generating expected by ai is significantly more expensive in tokens
+      actual: object.actual,
+      expected: object.expected,
       message: () =>
         !object.satisfies
           ? `Expected object to satisfy constraints, but it doesn't. ${object.reason || ''}`
