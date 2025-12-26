@@ -20,7 +20,9 @@
     "lint:fix": "eslint \"**/*.{ts,tsx,astro}\" --fix",
     "csslint": "stylelint \"src/**/*.{css,ts,tsx}\"",
     "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix",
-    "test": "vitest"
+    "test": "vitest",
+    "test:integration": "vitest --config vitest-integration.config.ts",
+    "test:evals": "vitest --config vitest-evals.config.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^2.0.51",
@@ -55,6 +57,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@ai-sdk/openai": "^2.0.88",
     "@astrojs/check": "^0.9.6",
     "@astrojs/node": "^9.5.1",
     "@astrojs/react": "^4.4.2",

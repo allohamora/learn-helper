@@ -10,9 +10,8 @@ import { Status, TaskType, type DiscoveryStatus } from '@/types/user-words.types
 import { EventType } from '@/types/event.types';
 import { db } from 'astro:db';
 import { generateObject, type LanguageModelUsage } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { z } from 'zod';
-import { type UserWord } from '@/types/user-words.types';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
 import { deleteWordDiscoveredEvents, insertEvent, insertEvents } from '@/repositories/event.repository';
@@ -79,44 +78,47 @@ const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: Langu
   return inputCostInNanoDollars + outputCostInNanoDollars;
 };
 
-const toFillInTheGap = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
+export type WordData = {
+  id: number;
+  value: string;
+  partOfSpeech: string | null;
+  level: string;
+  definition: string;
+};
 
-  const { object: tasks, usage } = await generateObject({
+export const toFillInTheGap = async (words: WordData[]) => {
+  const {
+    reasoning,
+    object: tasks,
+    usage,
+  } = await generateObject({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 4096,
+          includeThoughts: true,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     schema: z.array(
       z.object({
-        id: z.number(),
-        task: z.string(),
-        answer: z.string(),
+        id: z.number().describe('Each task.id matches the corresponding input word.id'),
+        task: z.string().describe('3-15 word sentence with exactly one "___" blank replacing target word'),
+        answer: z.string().describe('Exact word/phrase adapted grammatically (case-insensitive)'),
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates concise, natural fill-in-the-gap exercises for learners.',
-      'For each provided English word or phrase, generate one English sentence where the target word or phrase is replaced by a blank.',
+      `Create exactly ${words.length} fill-in-the-gap exercises (one per input word)`,
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks, one for each input item, using the same ids.`,
-      '- Each task must be a single, complete, natural English sentence (5–15 words).',
-      '- The sentence must contain exactly one blank represented as "___".',
-      '- The missing word or phrase must be exactly the target word/phrase (case-insensitive).',
-      '- Do not include the target word/phrase anywhere else in the sentence.',
-      '- For phrases, replace the entire phrase with the blank as one unit.',
-      '- Use a natural, modern tone - avoid slang or overly formal expressions.',
-      '- Make each sentence unique; avoid repeating structures or contexts.',
-      '- The "answer" field must contain the exact form of the missing word or phrase that correctly fits the blank.',
-      '- If the target phrase has placeholders (e.g., "agree with (sb)", "take care of (sth)"), adapt the sentence naturally (e.g., target "agree with (sb)" → sentence "I ___ you" → answer "agree with").',
+      '- Grammatically correct, natural, engaging and modern English sentences',
+      '- Target word appears ONLY as blank',
+      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
+      '- Varied punctuation (., !, ?) based on sentence type',
       '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
+      'Words:',
+      JSON.stringify(words),
     ].join('\n'),
   });
 
@@ -127,51 +129,55 @@ const toFillInTheGap = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { tasks, cost };
+  return { reasoning, tasks, cost };
 };
 
-const toTranslateEnglishSentence = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object: tasks, usage } = await generateObject({
+export const toTranslateEnglishSentence = async (words: WordData[]) => {
+  const {
+    reasoning,
+    object: tasks,
+    usage,
+  } = await generateObject({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 8192,
+          includeThoughts: true,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     schema: z.array(
       z.object({
-        id: z.number(),
-        sentence: z.string(),
-        options: z.array(
-          z.object({
-            value: z.string(),
-            isAnswer: z.boolean(),
-          }),
-        ),
+        id: z.number().describe('Each task.id matches the corresponding input word.id'),
+        sentence: z.string().describe('English sentence containing target word/phrase'),
+        options: z
+          .array(
+            z.object({
+              value: z.string().describe('Complete Ukrainian sentence'),
+              isAnswer: z.boolean().describe('true for 1 correct option, false for 3 wrong options'),
+            }),
+          )
+          .describe('4 options: 1 correct, 3 wrong'),
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates short, natural English sentences for learners.',
-      'For each given English word or phrase, generate one English sentence (1–12 words) and four Ukrainian translation options.',
+      `Create exactly ${words.length} English->Ukrainian translation tasks (one per input word)`,
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks, one per input item, keeping the same ids.`,
-      '- The English sentence must include or clearly express the meaning of the target English word or phrase.',
-      '- If the input is a phrase, use the full phrase naturally within the sentence.',
-      '- Sentences must be concise (1–12 words), modern, and natural.',
-      '- Each task must include 4 Ukrainian options: 1 correct translation (isAnswer: true) and 3 incorrect but plausible ones (isAnswer: false).',
-      '- The correct translation must precisely reflect the meaning of the English sentence.',
-      '- Incorrect translations must be grammatically correct and natural but differ slightly in meaning (e.g., wrong preposition, verb, or adjective).',
-      '- All Ukrainian sentences must sound fluent and natural for native speakers.',
-      '- Avoid repeating topics, subjects, or sentence patterns across tasks.',
+      '- English sentence: 3-15 words, modern, natural',
+      '- ALL Ukrainian options MUST be complete sentences with subject (pronoun/noun) and conjugated verb',
+      '- ALL options: grammatically perfect with full agreement (possessives match noun case AND number)',
+      '- Correct option: precisely translates English sentence',
+      '- Wrong options: same topic, differ in tense/subject/details',
+      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
+      '- When generating Ukrainian text, always ensure adjective–noun agreement',
+      '- Adjectives must match the noun in gender, number, and case',
+      '- Do not use synonyms of the target word in any option',
+      '- Do not have multiple options that are acceptable translations of the English sentence',
       '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
+      'Words:',
+      JSON.stringify(words),
     ].join('\n'),
   });
 
@@ -182,52 +188,52 @@ const toTranslateEnglishSentence = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { tasks, cost };
+  return { reasoning, tasks, cost };
 };
 
-const toTranslateUkrainianSentence = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object: tasks, usage } = await generateObject({
+export const toTranslateUkrainianSentence = async (words: WordData[]) => {
+  const {
+    reasoning,
+    object: tasks,
+    usage,
+  } = await generateObject({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 8192,
+          includeThoughts: true,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     schema: z.array(
       z.object({
-        id: z.number(),
-        sentence: z.string(),
-        options: z.array(
-          z.object({
-            value: z.string(),
-            isAnswer: z.boolean(),
-          }),
-        ),
+        id: z.number().describe('Each task.id matches the corresponding input word.id'),
+        sentence: z.string().describe('Ukrainian sentence containing translated target word/phrase'),
+        options: z
+          .array(
+            z.object({
+              value: z.string().describe('Complete English sentence'),
+              isAnswer: z.boolean().describe('true for 1 correct option, false for 3 wrong options'),
+            }),
+          )
+          .describe('4 options: 1 correct, 3 wrong'),
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates short, natural Ukrainian sentences for learners.',
-      'For each given English word or phrase, create one Ukrainian sentence (1–12 words) and four English translation options.',
+      `Create exactly ${words.length} Ukrainian->English translation tasks (one per input word)`,
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks, one per input item, reusing input ids.`,
-      '- The Ukrainian sentence must include or clearly express the meaning of the target English word or phrase.',
-      '- Sentences must be short (1–12 words), natural, modern, and limited to exactly one sentence.',
-      '- Each task must include 4 full-sentence English options: 1 correct (isAnswer: true) and 3 incorrect (isAnswer: false).',
-      '- All options must be complete, natural English sentences, not single words or fragments.',
-      '- The correct option must include the exact English word or phrase from the input (match exactly, case-sensitive).',
-      '- The correct option must fully translate the entire Ukrainian sentence.',
-      '- Incorrect options must be natural but differ slightly in meaning (e.g., wrong preposition, similar verb, or altered adjective).',
-      '- Use partOfSpeech and definition fields to make distractors realistic.',
-      '- Vary topics and sentence patterns; avoid repetition.',
+      '- Ukrainian sentence: 3-15 words, modern, natural',
+      '- ALL English options must be grammatically complete: include articles (a/an/the), prepositions, objects',
+      '- Correct option: precisely translates Ukrainian sentence',
+      '- Wrong options: same topic, differ in tense/subject/details',
+      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
+      '- Do not use synonyms of the target word in any option',
+      '- Do not have multiple options that are acceptable translations of the English sentence',
       '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
+      'Words:',
+      JSON.stringify(words),
     ].join('\n'),
   });
 
@@ -238,46 +244,45 @@ const toTranslateUkrainianSentence = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { tasks, cost };
+  return { reasoning, tasks, cost };
 };
 
-const toSynonymAndAntonym = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object: tasks, usage } = await generateObject({
+export const toSynonymAndAntonym = async (words: WordData[]) => {
+  const {
+    reasoning,
+    object: tasks,
+    usage,
+  } = await generateObject({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 4096,
+          includeThoughts: true,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     schema: z.array(
       z.object({
-        id: z.number(),
+        id: z.number().describe('Each task.id matches the corresponding input word.id'),
         synonym: z.string(),
         antonym: z.string(),
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates vocabulary-building exercises for learners.',
-      'For each provided English word or phrase, generate one synonym and one antonym based on its most common meaning.',
+      `Create exactly ${words.length} synonym/antonym pairs based on the definition field (one per input word)`,
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} entries, one for each input item, using the same ids.`,
-      '- Provide one synonym (similar meaning) and one antonym (opposite meaning) for each target word or phrase.',
-      '- Use clear, common, and learner-friendly vocabulary.',
-      '- Prefer single-word answers; use short phrases only when necessary.',
-      '- The synonym and antonym must match the part of speech and approximate difficulty of the target word.',
-      '- If a word has multiple meanings, use the primary one indicated by the provided definition.',
-      '- Do not repeat the target word itself as a synonym or antonym.',
-      '- Keep all outputs natural, lowercase (unless proper nouns), and free of quotes or punctuation.',
-      '- Avoid rare, archaic, or overly technical words.',
+      '- Same part of speech as input word',
+      '- Match CEFR level: A1 words need simple synonyms (glad, large), not advanced (elated, substantial)',
+      '- Use "definition" for meaning, but preserve part of speech',
+      '- Never use target word itself',
+      '- Use only words from the same category: modal -> modal, article -> article, preposition -> preposition',
+      '- Never substitute with content words (adjectives, verbs, nouns)',
+      '- If no true synonym/antonym exists at target level, create a near-synonym/antonym that closely matches meaning',
       '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
+      'Words:',
+      JSON.stringify(words),
     ].join('\n'),
   });
 
@@ -288,50 +293,57 @@ const toSynonymAndAntonym = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { tasks, cost };
+  return { reasoning, tasks, cost };
 };
 
-const toFindNonsenseSentence = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object: tasks, usage } = await generateObject({
+export const toFindNonsenseSentence = async (words: WordData[]) => {
+  const {
+    object: tasks,
+    usage,
+    reasoning,
+  } = await generateObject({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 4096,
+          includeThoughts: true,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     schema: z.array(
       z.object({
-        id: z.number(),
+        id: z.number().describe('Each task.id matches the corresponding input word.id'),
         options: z.array(
-          z.object({
-            value: z.string(),
-            isAnswer: z.boolean(),
-            description: z.string().optional(),
-          }),
+          z
+            .object({
+              value: z.string().describe('Sentence (3-15 words, modern, natural) containing EXACT target word/phrase'),
+              isAnswer: z.boolean().describe('true for 1 nonsense sentence, false for 3 correct sentences'),
+              description: z
+                .string()
+                .optional()
+                .describe('Nonsense sentence (isAnswer: true) MUST have description field explaining why it is wrong'),
+            })
+            .describe('4 options: 1 nonsense, 3 correct'),
         ),
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates mistake detection exercises for learners.',
-      'For each provided English word or phrase, generate four sentences: three correct and one clearly incorrect nonsense sentence.',
+      `Create exactly ${words.length} nonsense detection tasks (one per input word)`,
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
-      '- Each task must include 4 sentence options, all containing the target word or phrase.',
-      '- Three sentences must use the word/phrase CORRECTLY (isAnswer: false) - they should be natural, well-formed, and demonstrate proper usage.',
-      '- One sentence must use it INCORRECTLY (isAnswer: true) - it should be nonsensical, impossible, or grammatically broken, producing a sentence that is clearly meaningless to a native speaker.',
-      '- The incorrect sentence should not just be unusual or less natural; it must be obviously wrong, absurd, or completely illogical.',
-      '- The description must appear only for the incorrect sentence and briefly explain why it is nonsense or incorrect.',
-      '- Sentences must be complete, natural English (3–15 words).',
-      '- Avoid repeating sentence topics or patterns across tasks.',
+      '- Correct sentences: natural, grammatically perfect, contain exact target word/phrase',
+      '- Nonsense sentence: obviously absurd but MUST contain exact target word/phrase',
+      '- Level-appropriate grammar; varied punctuation (., !, ?)',
       '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
+      'Nonsense types:',
+      '- Semantic absurdity: "The chair can swim very fast."',
+      '- Logical impossibility: "I will do it yesterday."',
+      '- Category mistakes: "The silence can taste purple."',
+      '- Grammatical breakdown: "The book agrees with on the table."',
+      '',
+      'Words:',
+      JSON.stringify(words),
     ].join('\n'),
   });
 
@@ -342,47 +354,43 @@ const toFindNonsenseSentence = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { tasks, cost };
+  return { tasks, cost, reasoning };
 };
 
-const toWordOrder = async (words: UserWord[]) => {
-  const wordList = words.map(({ id, word }) => ({
-    id,
-    value: word.value,
-    partOfSpeech: word.partOfSpeech,
-    level: word.level,
-    definition: word.definition,
-  }));
-
-  const { object: tasks, usage } = await generateObject({
+export const toWordOrder = async (words: WordData[]) => {
+  const {
+    reasoning,
+    object: tasks,
+    usage,
+  } = await generateObject({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          thinkingBudget: 4096,
+          includeThoughts: true,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
     schema: z.array(
       z.object({
-        id: z.number(),
-        sentence: z.string(),
+        id: z.number().describe('Each task.id matches the corresponding input word.id'),
+        sentence: z
+          .string()
+          .describe('3-15 words, single spaces, punctuation attached to words, first word capitalized only'),
       }),
     ),
     prompt: [
-      'You are a professional English teacher who creates word order exercises for learners.',
-      'For each provided English word or phrase, generate a sentence that needs to be arranged in the correct order.',
+      `Create exactly ${words.length} tasks word order exercises (one per input word)`,
       '',
       'Requirements:',
-      `- Generate exactly ${words.length} tasks, one per input item, using the same ids.`,
-      '- Each task must include the target word or phrase as part of a complete, natural English sentence.',
-      '- The sentence must be a single string with words separated by spaces.',
-      '- The sentence must contain all words in the CORRECT order (this is the answer).',
-      '- Include articles (a, an, the), prepositions, and other function words as separate words.',
-      '- Each word should be separated by a single space.',
-      '- The sentence must be natural, modern English (5-15 words total).',
-      '- The target word or phrase must appear in the sentence.',
-      '- Do not repeat a word more than once in the sentence.',
-      '- Capitalize first word that starts the sentence.',
-      '- Make sentences unique; avoid repeating structures or contexts.',
+      '- Generate a sentence in CORRECT word order for each word/phrase',
+      '- Add adjectives, adverbs, time expressions to reach minimum word count',
+      '- All words separate: articles, prepositions, function words',
+      '- Level-appropriate grammar; varied punctuation (., !, ?)',
       '',
-      'Words and Phrases:',
-      '```json',
-      JSON.stringify(wordList),
-      '```',
+      'Words:',
+      JSON.stringify(words),
     ].join('\n'),
   });
 
@@ -393,12 +401,12 @@ const toWordOrder = async (words: UserWord[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { tasks, cost };
+  return { reasoning, tasks, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
-  const words = await getLearningWords(body);
-  if (!words.length) {
+  const learningWords = await getLearningWords(body);
+  if (!learningWords.length) {
     return {
       fillInTheGapTasks: [],
       translateEnglishSentenceTasks: [],
@@ -408,6 +416,16 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       wordOrderTasks: [],
     };
   }
+
+  const words = learningWords.map(
+    ({ id, word }): WordData => ({
+      id,
+      value: word.value,
+      partOfSpeech: word.partOfSpeech,
+      level: word.level,
+      definition: word.definition,
+    }),
+  );
 
   const [
     fillInTheGap,
@@ -436,7 +454,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     ...cost,
     type: EventType.TaskCost as const,
     userId: body.userId,
-    userWordIds: words.map(({ id }) => id),
+    userWordIds: learningWords.map(({ id }) => id),
   }));
   await insertEvents(events);
 

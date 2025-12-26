@@ -21,6 +21,9 @@ export default defineConfig({
       ASTRO_DB_REMOTE_URL: envField.string({ context: 'server', access: 'secret' }),
 
       GEMINI_API_KEY: envField.string({ context: 'server', access: 'secret' }),
+
+      // this is used for a judge in evals
+      OPENAI_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
   integrations: [
