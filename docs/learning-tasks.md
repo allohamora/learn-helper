@@ -26,12 +26,12 @@ This document describes the task types used in the Learn Helper learning system.
 - **Make it enjoyable**: Use interesting, relatable scenarios that learners can connect with their daily lives
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
 - **Modern expressions**: Prefer modern, conversational English over formal or outdated expressions
-- **Punctuation variety**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) to add variety and reflect natural speech patterns
+- **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type
 - **Phrase adaptation**: When target is a phrase with placeholders like "agree with (sb)", adapt naturally by providing context (e.g., "I agree with you")
 - **Article context**: For articles (a/an), ensure the sentence requires that specific article based on the following word's sound (vowel vs. consonant)
 - **Clarity over complexity**: Keep sentences concise (5-15 words) to maintain focus on the target vocabulary
 - **Function words**: For grammatical words (articles, prepositions, conjunctions), create contexts where their specific usage is meaningful and not interchangeable
-- **No repetition**: The target word/phrase should appear only in the blank, nowhere else in the sentence
+- **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence
 - **Case handling**: Answers are evaluated case-insensitively, but should be provided in the appropriate form
 
 **Examples**:
@@ -120,12 +120,18 @@ This document describes the task types used in the Learn Helper learning system.
 - **All options grammatically correct**: All 4 Ukrainian options must be grammatically perfect with natural word order, proper case endings, correct verb conjugations, and appropriate preposition usage
 - **Natural language**: Both English sentences and Ukrainian translations must sound fluent and authentic to native speakers
 - **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid creating scenarios where multiple translations could be considered correct (e.g., "She is at home" should not have both "Вона вдома" and "Вона в будинку" as they could both be valid in different contexts)
-- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different verb, noun, adjective, time word), wrong number (singular/plural with all required grammatical adjustments), or wrong prepositions - but always remain grammatically valid
-- **Vary topics**: Use diverse contexts and avoid repeating sentence patterns to keep learners engaged
+- **No synonym verbs in wrong options**: CRITICAL - Wrong options must NOT use Ukrainian verbs that are synonyms or could mean the same action in context. Examples of BANNED pairs:
+  - "додати" (add) ↔ "покласти" (put) - both could mean adding something
+  - "прийти" (come) ↔ "піти" (go) - in Ukrainian context like "піті на зустріч" can mean arriving, similar to "прийти"
+  - Wrong options must use CLEARLY DIFFERENT, NON-SYNONYMOUS verbs
+- **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
+  - GOOD: "I am going to do my homework." → Wrong: "I finished my homework.", "I am doing my project.", "I forgot my homework."
+  - BAD: "I am going to do my homework." → Wrong: "I will buy a book.", "They went to cinema.", "She likes music." (completely unrelated topics)
+- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different NON-SYNONYM verb, noun, adjective, time word within same context), wrong number (singular/plural with all required grammatical adjustments), wrong tense, wrong subject/pronoun - but always remain grammatically valid and contextually related
 - **Relatable content**: Choose everyday situations and topics that learners can relate to
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
 - **No literal translations**: Ukrainian options must sound natural, not word-for-word literal translations
-- **Punctuation variety**: Use different sentence types - statements (.), questions (?), and exclamations (!) - to reflect natural communication
+- **Punctuation**: Use appropriate sentence types - statements (.), questions (?), and exclamations (!) - based on context
 - **Complete meaning**: The correct translation must fully capture the English sentence's meaning, not just contain the target word
 - **Phrase integration**: When the target is a phrase, incorporate the entire phrase naturally within the sentence
 - **Concise sentences**: Keep sentences short (1-12 words) for clarity and learning focus
@@ -248,12 +254,14 @@ This document describes the task types used in the Learn Helper learning system.
 - **Authentic language**: Ukrainian sentences should sound conversational and authentic, English options must be fluent
 - **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid scenarios where multiple English translations could be equally correct for the Ukrainian sentence
 - **No synonyms or alternative phrases**: Incorrect options must NOT use synonyms or different phrases that could create valid alternative translations - this is strictly forbidden (e.g., if target is "nervous", don't use "worried"; if target is "get rid of", don't use "throw away")
-- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different non-synonym verb, noun, adjective), wrong pronouns (with correctly adjusted verb forms), altered specificity (this/these, some/all), or wrong prepositions - but always remain grammatically valid
-- **Keep it fresh**: Avoid repeating sentence structures or topics across tasks to maintain interest
+- **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
+  - GOOD: "We are going to travel tomorrow." → Wrong: "We traveled yesterday.", "We are traveling now.", "They are going to travel."
+  - BAD: "We are going to travel tomorrow." → Wrong: "She will cook dinner.", "He likes books.", "They bought a car." (completely unrelated topics)
+- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different non-synonym verb, noun, adjective within same context), wrong pronouns (with correctly adjusted verb forms), altered specificity (this/these, some/all), wrong tense, or wrong prepositions - but always remain grammatically valid and contextually related
 - **Engaging scenarios**: Use interesting, modern contexts that feel relevant to learners
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
 - **Natural Ukrainian**: Create Ukrainian sentences that sound authentic and conversational, not artificial
-- **Punctuation variety**: Mix sentence types with periods (.), questions (?), and exclamations (!) to add dynamism and reflect real language use
+- **Punctuation**: Use appropriate sentence types - statements (.), questions (?), exclamations (!) - based on context
 - **Complete sentences only**: All English options must be full, grammatically correct sentences with subject and verb, never fragments or phrases
 - **Exact word requirement**: The correct option MUST contain the exact target English word/phrase (case-sensitive matching during generation)
 - **Full translation**: The correct option must translate the ENTIRE Ukrainian sentence, not just include the target word somewhere
@@ -467,6 +475,7 @@ This document describes the task types used in the Learn Helper learning system.
 - **No subtle errors**: Avoid sentences that are merely "less natural" or "stylistically odd" - they must be impossible or meaningless
 - **Complete sentences**: Use full, properly structured sentences (3-15 words)
 - **Exactly 4 options**: Always 1 incorrect (the answer) and 3 correct sentences
+- **All sentences contain target**: Every sentence option must include the target word or phrase
 
 **Examples**:
 
@@ -593,18 +602,15 @@ This document describes the task types used in the Learn Helper learning system.
 
 - **Grammatically correct**: The correct sentence must be grammatically perfect and natural English
 - **Natural flow**: Sentences must sound modern, conversational, and authentic - never forced or artificial
-- **Make it interesting**: Use varied, engaging topics and avoid repetitive sentence structures
-- **Puzzle-like fun**: Create sentences that are satisfying to reconstruct, with clear logical word relationships
+- **Engaging content**: Use interesting topics that are satisfying to reconstruct, with clear logical word relationships
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
-- **Punctuation variety**: Include different sentence types - statements (.), questions (?), and exclamations (!) - to add variety and challenge
+- **Punctuation**: Use appropriate sentence types - statements (.), questions (?), exclamations (!) - based on context
 - **Punctuation attachment**: Punctuation marks (periods, commas, question marks, exclamation marks) should be attached to words, not as separate tokens (e.g., "ready?" not "ready" + "?")
 - **Complete separation**: All words, including articles (a, an, the) and prepositions, must be individual words in the string
 - **Phrase splitting**: Multi-word phrases like "take care of" are split into separate words ("take", "care", "of") for arrangement
 - **Space consistency**: Each word must be separated by exactly one space in the correct answer
 - **Capitalization rules**: Only capitalize the first word of the sentence (and proper nouns if present)
-- **No word repetition**: Each word should appear only once in the sentence to avoid confusion
 - **Manageable length**: Keep sentences concise (5-15 words) so the task isn't overwhelming
-- **Unique sentences**: Avoid reusing sentence patterns or structures across different tasks
 
 **Examples**:
 
