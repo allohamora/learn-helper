@@ -2,7 +2,7 @@ import { type FC, type MouseEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Volume2, ExternalLink, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Volume2, ExternalLink, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { List, type ShowcaseTask } from '@/types/user-words.types';
