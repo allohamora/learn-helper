@@ -72,6 +72,7 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
       data: {
         ...target.word,
         options,
+        hint: target.word.uaTranslation,
       },
     };
   });
@@ -86,6 +87,7 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
         id: target.id,
         text: target.word.definition,
         word: target.word.value,
+        hint: target.word.uaTranslation,
       },
     };
   });
@@ -100,6 +102,7 @@ const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] =>
         id: target.id,
         text: target.word.uaTranslation,
         word: target.word.value,
+        hint: target.word.definition,
       },
     };
   });
@@ -121,6 +124,7 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
       data: {
         ...target.word,
         options,
+        hint: target.word.definition,
       },
     };
   });
@@ -204,6 +208,7 @@ const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synon
         word: found.word.value,
         synonym,
         antonym,
+        hint: found.word.definition,
       },
     };
   });

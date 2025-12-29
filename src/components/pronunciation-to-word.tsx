@@ -12,7 +12,10 @@ type PronunciationToWordProps = {
   onNext: () => void;
 };
 
-export const PronunciationToWord: FC<PronunciationToWordProps> = ({ data: { pronunciation, ...data }, ...props }) => {
+export const PronunciationToWord: FC<PronunciationToWordProps> = ({
+  data: { pronunciation, spelling, ...data },
+  ...props
+}) => {
   const { playAudio, isPlaying } = useAudioPlayer();
 
   const handlePlayPronunciation = (event: MouseEvent) => {
@@ -43,7 +46,7 @@ export const PronunciationToWord: FC<PronunciationToWordProps> = ({ data: { pron
 
         <details className="w-full max-w-xs text-center text-sm text-muted-foreground">
           <summary className="cursor-pointer font-medium text-foreground select-none">Show spelling</summary>
-          <p className="mt-2 text-lg font-semibold text-foreground">{data.spelling}</p>
+          <p className="mt-2 text-lg font-semibold text-foreground">{spelling}</p>
         </details>
       </div>
     </ToWord>

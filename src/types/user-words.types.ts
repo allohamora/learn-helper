@@ -42,6 +42,7 @@ export enum TaskType {
 export type ToWordData = {
   id: number;
   word: string;
+  hint?: string;
 };
 
 export type TextToWordData = ToWordData & {
@@ -58,7 +59,10 @@ export type ToOptionsData = {
   }[];
 };
 
-export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
+export type WordToOptionsData = ToOptionsData &
+  typeof db.Word.$inferSelect & {
+    hint?: string;
+  };
 
 export type SentenceData = ToOptionsData & {
   sentence: string;

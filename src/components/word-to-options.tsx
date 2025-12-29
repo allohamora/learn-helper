@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { List, type WordToOptionsData } from '@/types/user-words.types';
 import { ToOptions } from './to-options';
+import { HintButton } from './hint-button';
 
 type WordToOptionsProps = {
   title: string;
@@ -16,7 +17,7 @@ type WordToOptionsProps = {
   onNext: () => void;
 };
 
-export const WordToOptions: FC<WordToOptionsProps> = ({ data, ...props }) => {
+export const WordToOptions: FC<WordToOptionsProps> = ({ data: { hint, ...data }, ...props }) => {
   const { playAudio, isPlaying } = useAudioPlayer();
 
   const handlePlayPronunciation = (event: MouseEvent) => {
@@ -36,6 +37,8 @@ export const WordToOptions: FC<WordToOptionsProps> = ({ data, ...props }) => {
           </CardTitle>
 
           <div className="flex items-center gap-1">
+            {hint && <HintButton hint={hint} className="h-8 w-8 shrink-0 p-0" />}
+
             {data.pronunciation && (
               <Button
                 variant="ghost"
