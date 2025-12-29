@@ -57,3 +57,4 @@ From `package.json`:
 - When editing prompts, follow the same prompt style and formatting to maintain consistency.
 - Use `for...of` loops instead of `forEach` for better performance and readability.
 - Avoid single-letter or one-word variable names; use descriptive names that clearly indicate purpose (e.g., `task` instead of `t`, `words` instead of `w`).
+- Always use IDE diagnostics to validate code after implementation.
