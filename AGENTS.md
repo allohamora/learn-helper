@@ -57,4 +57,5 @@ From `package.json`:
 - When editing prompts, follow the same prompt style and formatting to maintain consistency.
 - Use `for...of` loops instead of `forEach` for better performance and readability.
 - Avoid single-letter or one-word variable names; use descriptive names that clearly indicate purpose (e.g., `task` instead of `t`, `words` instead of `w`).
+- Do NOT use the non-null assertion operator (`!`) in TypeScript; instead, use proper type guards, optional chaining, or refactor to handle null/undefined cases explicitly.
 - Always use IDE diagnostics to validate code after implementation.
