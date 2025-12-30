@@ -52,7 +52,10 @@ const toShowcaseTasks = (words: UserWord[]) => {
     (item): ShowcaseTask => ({
       id: crypto.randomUUID(),
       type: TaskType.Showcase,
-      data: item.word,
+      data: {
+        ...item.word,
+        id: item.id,
+      },
     }),
   );
 };
@@ -71,6 +74,7 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
       type: TaskType.WordToDefinition,
       data: {
         ...target.word,
+        id: target.id,
         options,
         hint: target.word.uaTranslation,
       },
@@ -123,6 +127,7 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
       type: TaskType.WordToTranslation,
       data: {
         ...target.word,
+        id: target.id,
         options,
         hint: target.word.definition,
       },
