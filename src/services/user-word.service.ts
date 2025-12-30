@@ -113,7 +113,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
       '',
       'Requirements:',
       '- Grammatically correct, natural, engaging and modern English sentences',
-      '- Target word appears ONLY as blank',
+      '- Target word appears ONLY as "___" blank',
       '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
       '- Varied punctuation (., !, ?) based on sentence type',
       '',
