@@ -137,7 +137,7 @@ export const Statistics: FC = () => {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
@@ -214,7 +214,9 @@ export const Statistics: FC = () => {
             <p className="text-xs text-muted-foreground">hints viewed</p>
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Task Cost</CardTitle>
