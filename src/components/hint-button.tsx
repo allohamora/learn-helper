@@ -20,7 +20,7 @@ export const HintButton: FC<HintButtonProps> = ({ hint, userWordId, taskType, cl
 
   const handleClick = () => {
     toast({ title: 'Hint', description: hint, variant: 'default' });
-    createEvent({ type: EventType.HintViewed, userWordId, taskType, hint });
+    createEvent({ type: EventType.HintViewed, userWordId, taskType });
   };
 
   return (

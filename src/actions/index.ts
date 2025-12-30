@@ -119,7 +119,6 @@ export const server = {
             type: z.literal(EventType.HintViewed),
             userWordId: z.number(),
             taskType: z.nativeEnum(TaskType),
-            hint: z.string(),
           }),
         ]),
       ),

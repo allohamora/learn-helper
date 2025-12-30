@@ -52,7 +52,10 @@ const toShowcaseTasks = (words: UserWord[]) => {
     (item): ShowcaseTask => ({
       id: crypto.randomUUID(),
       type: TaskType.Showcase,
-      data: item.word,
+      data: {
+        ...item.word,
+        id: item.id,
+      },
     }),
   );
 };

@@ -40,7 +40,6 @@ export type ClientEventBody =
       type: EventType.HintViewed;
       userWordId: number;
       taskType: TaskType;
-      hint: string;
     };
 
 export type EventBody =

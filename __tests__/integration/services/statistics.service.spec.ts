@@ -324,21 +324,18 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToDefinition,
-          hint: 'Test hint 1',
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.DefinitionToWord,
-          hint: 'Test hint 2',
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToTranslation,
-          hint: 'Test hint 3',
         },
       ]);
 
@@ -817,35 +814,30 @@ describe('statistics.service', () => {
           userWordId: userWord1.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToDefinition,
-          hint: 'Test hint 1',
         },
         {
           userId,
           userWordId: userWord1.id,
           type: EventType.HintViewed,
           taskType: TaskType.DefinitionToWord,
-          hint: 'Test hint 2',
         },
         {
           userId,
           userWordId: userWord2.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToTranslation,
-          hint: 'Test hint 3',
         },
         {
           userId,
           userWordId: userWord2.id,
           type: EventType.HintViewed,
           taskType: TaskType.TranslationToWord,
-          hint: 'Test hint 4',
         },
         {
           userId,
           userWordId: userWord2.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordOrder,
-          hint: 'Test hint 5',
         },
       ]);
 
@@ -869,28 +861,24 @@ describe('statistics.service', () => {
           userWordId: userWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToDefinition,
-          hint: 'Test hint 1',
         },
         {
           userId,
           userWordId: userWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.DefinitionToWord,
-          hint: 'Test hint 2',
         },
         {
           userId: otherUserId,
           userWordId: otherUserWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToTranslation,
-          hint: 'Other user hint 1',
         },
         {
           userId: otherUserId,
           userWordId: otherUserWord.id,
           type: EventType.HintViewed,
           taskType: TaskType.TranslationToWord,
-          hint: 'Other user hint 2',
         },
       ]);
 
@@ -914,7 +902,6 @@ describe('statistics.service', () => {
           userWordId: userWord1.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToDefinition,
-          hint: 'Today hint 1',
           createdAt: today,
         },
         {
@@ -922,7 +909,6 @@ describe('statistics.service', () => {
           userWordId: userWord1.id,
           type: EventType.HintViewed,
           taskType: TaskType.DefinitionToWord,
-          hint: 'Today hint 2',
           createdAt: today,
         },
         {
@@ -930,7 +916,6 @@ describe('statistics.service', () => {
           userWordId: userWord2.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordToTranslation,
-          hint: 'Today hint 3',
           createdAt: today,
         },
         {
@@ -938,7 +923,6 @@ describe('statistics.service', () => {
           userWordId: userWord1.id,
           type: EventType.HintViewed,
           taskType: TaskType.TranslationToWord,
-          hint: 'Yesterday hint 1',
           createdAt: yesterday,
         },
         {
@@ -946,7 +930,6 @@ describe('statistics.service', () => {
           userWordId: userWord2.id,
           type: EventType.HintViewed,
           taskType: TaskType.WordOrder,
-          hint: 'Yesterday hint 2',
           createdAt: yesterday,
         },
         {
@@ -954,7 +937,6 @@ describe('statistics.service', () => {
           userWordId: userWord1.id,
           type: EventType.HintViewed,
           taskType: TaskType.FillInTheGap,
-          hint: 'Week ago hint',
           createdAt: weekAgo,
         },
       ]);
