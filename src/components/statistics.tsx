@@ -580,7 +580,7 @@ export const Statistics: FC = () => {
       <Card className="border-muted/40 py-4 md:py-6">
         <CardHeader className="space-y-1 px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-semibold">Most Challenging Words</CardTitle>
+            <CardTitle className="text-base font-semibold">Most Mistaken Words</CardTitle>
           </div>
           <CardDescription className="text-sm">
             Words that need more practice based on mistake frequency
