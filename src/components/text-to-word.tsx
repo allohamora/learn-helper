@@ -1,10 +1,11 @@
 import { type FC } from 'react';
-import type { TextToWordData } from '@/types/user-words.types';
+import type { TextToWordData, TaskType } from '@/types/user-words.types';
 import { ToWord } from './to-word';
 
 type TextToWordProps = {
   title: string;
   subtitle: string;
+  taskType: TaskType;
   data: TextToWordData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;

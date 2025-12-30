@@ -80,6 +80,7 @@ export const getGroupedByDayLearningEvents = async ({
           EventType.LearningTaskCompleted,
           EventType.ShowcaseTaskCompleted,
           EventType.RetryLearningTaskCompleted,
+          EventType.HintViewed,
         ]),
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
@@ -115,6 +116,18 @@ export const getTopMistakes = async ({ userId, limit }: AuthParams<{ limit: numb
     .select({ count: sql<number>`count(*)`, value: Word.value, partOfSpeech: Word.partOfSpeech })
     .from(Event)
     .where(and(eq(Event.userId, userId), isNotNull(Event.userWordId), eq(Event.type, EventType.LearningMistakeMade)))
+    .groupBy(Event.userWordId)
+    .leftJoin(UserWord, eq(Event.userWordId, UserWord.id))
+    .leftJoin(Word, eq(UserWord.wordId, Word.id))
+    .orderBy(sql`count(*) DESC`)
+    .limit(limit);
+};
+
+export const getTopHintedWords = async ({ userId, limit }: AuthParams<{ limit: number }>) => {
+  return await db
+    .select({ count: sql<number>`count(*)`, value: Word.value, partOfSpeech: Word.partOfSpeech })
+    .from(Event)
+    .where(and(eq(Event.userId, userId), isNotNull(Event.userWordId), eq(Event.type, EventType.HintViewed)))
     .groupBy(Event.userWordId)
     .leftJoin(UserWord, eq(Event.userWordId, UserWord.id))
     .leftJoin(Word, eq(UserWord.wordId, Word.id))

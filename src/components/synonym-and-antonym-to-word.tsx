@@ -1,10 +1,11 @@
 import { type FC } from 'react';
-import type { SynonymAndAntonymData } from '@/types/user-words.types';
+import type { SynonymAndAntonymData, TaskType } from '@/types/user-words.types';
 import { ToWord } from './to-word';
 
 type SynonymAndAntonymToWordProps = {
   title: string;
   subtitle: string;
+  taskType: TaskType;
   data: SynonymAndAntonymData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;

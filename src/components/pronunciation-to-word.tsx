@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import type { PronunciationToWordTask } from '@/types/user-words.types';
+import { TaskType, type PronunciationToWordTask } from '@/types/user-words.types';
 import { ToWord } from './to-word';
 
 type PronunciationToWordProps = {
@@ -29,6 +29,7 @@ export const PronunciationToWord: FC<PronunciationToWordProps> = ({
     <ToWord
       title="Which word matches this pronunciation?"
       subtitle="Listen to the pronunciation and type the word you hear."
+      taskType={TaskType.PronunciationToWord}
       data={data}
       {...props}
     >

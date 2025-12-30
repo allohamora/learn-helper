@@ -479,6 +479,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What does this word mean?"
                 subtitle="Select the correct definition for the given word"
+                taskType={TaskType.WordToDefinition}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -490,6 +491,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Which word matches this definition?"
                 subtitle="Type the correct word for the given definition"
+                taskType={TaskType.DefinitionToWord}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -501,6 +503,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What is the correct translation?"
                 subtitle="Select the Ukrainian translation for the given word"
+                taskType={TaskType.WordToTranslation}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -512,6 +515,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Which word matches this translation?"
                 subtitle="Type the correct word for the given translation"
+                taskType={TaskType.TranslationToWord}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -527,6 +531,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Select the correct translation"
                 subtitle="Choose the Ukrainian translation that best matches the English sentence"
+                taskType={TaskType.TranslateEnglishSentence}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -538,6 +543,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Select the correct translation"
                 subtitle="Choose the English sentence that best matches the Ukrainian sentence"
+                taskType={TaskType.TranslateUkrainianSentence}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -549,6 +555,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Fill in the gap"
                 subtitle="Type the correct word for the given sentence"
+                taskType={TaskType.FillInTheGap}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -560,6 +567,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="What word matches this?"
                 subtitle="Type the word that has both the given synonym and antonym"
+                taskType={TaskType.SynonymAndAntonym}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -571,6 +579,7 @@ export const Learning: FC = () => {
                 key={currentTask.id}
                 title="Find the nonsense sentence"
                 subtitle="Choose the sentence where the word or phrase is used nonsensically"
+                taskType={TaskType.FindNonsenseSentence}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

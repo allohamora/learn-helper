@@ -11,6 +11,7 @@ import {
   DollarSign,
   Database,
   ArrowDownUp,
+  Lightbulb,
 } from 'lucide-react';
 import { CartesianGrid, XAxis, YAxis, Area, AreaChart } from 'recharts';
 
@@ -56,6 +57,10 @@ const learningChartConfig = {
   mistakesMade: {
     label: 'Mistakes',
     color: 'var(--chart-4)',
+  },
+  hintsViewed: {
+    label: 'Hints Viewed',
+    color: 'var(--chart-6)',
   },
   durationMin: {
     label: 'Duration (min)',
@@ -128,11 +133,11 @@ export const Statistics: FC = () => {
     );
   }
 
-  const { general, topMistakes } = data;
+  const { general, topMistakes, topHintedWords } = data;
 
   return (
     <div className="space-y-4 md:space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Words Discovered</CardTitle>
@@ -199,6 +204,19 @@ export const Statistics: FC = () => {
           </CardContent>
         </Card>
 
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
+            <CardTitle className="text-sm font-medium">Hints Viewed</CardTitle>
+            <Lightbulb className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="px-4 md:px-6">
+            <div className="text-2xl font-bold">{general.totalHintsViewed.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">hints viewed</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="gap-0 py-4 md:py-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
             <CardTitle className="text-sm font-medium">Task Cost</CardTitle>
@@ -370,7 +388,7 @@ export const Statistics: FC = () => {
               </Badge>
             </div>
             <CardDescription className="text-sm">
-              Daily tasks completed, retries, showcases, mistakes made, and time spent
+              Daily tasks completed, retries, showcases, mistakes made, hints viewed, and time spent
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto px-4 pt-2 md:px-6">
@@ -399,6 +417,10 @@ export const Statistics: FC = () => {
                   <linearGradient id="fillMistakes" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-mistakesMade)" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="var(--color-mistakesMade)" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="fillHints" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-hintsViewed)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-hintsViewed)" stopOpacity={0.05} />
                   </linearGradient>
                   <linearGradient id="fillDuration" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--color-durationMin)" stopOpacity={0.3} />
@@ -448,6 +470,15 @@ export const Statistics: FC = () => {
                   type="monotone"
                   fill="url(#fillMistakes)"
                   stroke="var(--color-mistakesMade)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Area
+                  dataKey="hintsViewed"
+                  type="monotone"
+                  fill="url(#fillHints)"
+                  stroke="var(--color-hintsViewed)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
@@ -551,7 +582,7 @@ export const Statistics: FC = () => {
       <Card className="border-muted/40 py-4 md:py-6">
         <CardHeader className="space-y-1 px-4 md:px-6">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-semibold">Most Challenging Words</CardTitle>
+            <CardTitle className="text-base font-semibold">Most Mistaken Words</CardTitle>
           </div>
           <CardDescription className="text-sm">
             Words that need more practice based on mistake frequency
@@ -598,6 +629,65 @@ export const Statistics: FC = () => {
                       <td className="px-4 py-3 text-right">
                         <span className="inline-flex items-center justify-center rounded-full bg-destructive/10 px-3 py-1 text-sm font-bold text-destructive">
                           {mistake.count}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-muted/40 py-4 md:py-6">
+        <CardHeader className="space-y-1 px-4 md:px-6">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base font-semibold">Most Hinted Words</CardTitle>
+          </div>
+          <CardDescription className="text-sm">Words you needed help with most frequently</CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-hidden px-4 md:px-6">
+          {topHintedWords.length === 0 ? (
+            <div className="py-8 text-center text-muted-foreground">
+              <p>No hints viewed yet. Try using hints when you need help!</p>
+            </div>
+          ) : (
+            <div className="overflow-auto rounded-lg border border-muted/40">
+              <table className="w-full">
+                <thead className="bg-muted/30">
+                  <tr className="border-b border-muted/40">
+                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Rank
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Word
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium tracking-wider text-muted-foreground uppercase">
+                      Hints
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-muted/40">
+                  {topHintedWords.map((word, index) => (
+                    <tr key={`${word.value}-${index}`} className="transition-colors hover:bg-muted/20">
+                      <td className="px-4 py-3">
+                        <Badge variant={index < 3 ? 'default' : 'secondary'} className="font-mono text-xs">
+                          #{index + 1}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold">{word.value || 'Unknown'}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {word.partOfSpeech || 'Unknown'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary">
+                          {word.count}
                         </span>
                       </td>
                     </tr>

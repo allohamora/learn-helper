@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { WordOrderTask } from '@/types/user-words.types';
+import { TaskType, type WordOrderTask } from '@/types/user-words.types';
 import { HintButton } from './hint-button';
 
 type Data = WordOrderTask['data'];
@@ -57,7 +57,14 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
         <p className="text-sm text-muted-foreground">
           <span className="align-middle">{subtitle}</span>
-          {data.hint && <HintButton hint={data.hint} className="ml-2 align-middle" />}
+          {data.hint && (
+            <HintButton
+              hint={data.hint}
+              userWordId={data.id}
+              taskType={TaskType.WordOrder}
+              className="ml-2 align-middle"
+            />
+          )}
         </p>
       </div>
 
