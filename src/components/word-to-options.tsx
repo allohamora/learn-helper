@@ -5,12 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type WordToOptionsData } from '@/types/user-words.types';
+import { List, type WordToOptionsData, type TaskType } from '@/types/user-words.types';
 import { ToOptions } from './to-options';
 
 type WordToOptionsProps = {
   title: string;
   subtitle: string;
+  taskType: TaskType;
   data: WordToOptionsData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;

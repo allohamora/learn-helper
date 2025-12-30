@@ -4,6 +4,7 @@ import {
   getGroupedByDayTaskCostEvents,
   getGroupedByTypeEvents,
   getTopMistakes,
+  getTopHintedWords,
 } from '@/repositories/event.repository';
 import type { AuthParams } from '@/types/auth.types';
 import { EventType } from '@/types/event.types';
@@ -24,6 +25,7 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalRetriesCompleted: 0,
     totalShowcasesCompleted: 0,
     totalWordsMovedToNextStep: 0,
+    totalHintsViewed: 0,
     totalTaskCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -78,6 +80,9 @@ const getGeneralStatistics = async (data: AuthParams) => {
         continue;
       case EventType.WordMovedToNextStep:
         result.totalWordsMovedToNextStep = item.count;
+        continue;
+      case EventType.HintViewed:
+        result.totalHintsViewed = item.count;
         continue;
       case EventType.TaskCost:
         if (item.costInNanoDollars === null) {
@@ -152,6 +157,7 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
         completedRetries: 0,
         completedShowcases: 0,
         mistakesMade: 0,
+        hintsViewed: 0,
         durationMs: 0,
       },
     }),
@@ -193,6 +199,9 @@ const getLearningPerDayStatistics = async (data: AuthParams<{ dateTo: Date; date
       case EventType.LearningMistakeMade:
         target.mistakesMade = item.count;
         continue;
+      case EventType.HintViewed:
+        target.hintsViewed = item.count;
+        continue;
       default:
         throw new Error(`Unknown learning event type: ${item.type}`);
     }
@@ -231,12 +240,13 @@ export const getStatistics = async ({ userId }: AuthParams) => {
   const dateFrom = daysAgo(6, startOfDay(dateTo));
   const data = { userId, dateFrom, dateTo };
 
-  const [general, discoveringPerDay, learningPerDay, costPerDay, topMistakes] = await Promise.all([
+  const [general, discoveringPerDay, learningPerDay, costPerDay, topMistakes, topHintedWords] = await Promise.all([
     getGeneralStatistics(data),
     getDiscoveringPerDayStatistics(data),
     getLearningPerDayStatistics(data),
     getCostPerDayStatistics(data),
     getTopMistakes({ userId, limit: 20 }),
+    getTopHintedWords({ userId, limit: 20 }),
   ]);
 
   return {
@@ -245,5 +255,6 @@ export const getStatistics = async ({ userId }: AuthParams) => {
     learningPerDay,
     costPerDay,
     topMistakes,
+    topHintedWords,
   } satisfies Statistics;
 };

@@ -8,6 +8,7 @@ export enum EventType {
   RetryLearningTaskCompleted = 'retry-learning-task-completed',
   WordMovedToNextStep = 'word-moved-to-next-step',
   TaskCost = 'task-cost',
+  HintViewed = 'hint-viewed',
 }
 
 export type ClientEventBody =
@@ -34,6 +35,12 @@ export type ClientEventBody =
   | {
       type: EventType.WordMovedToNextStep;
       userWordId: number;
+    }
+  | {
+      type: EventType.HintViewed;
+      userWordId: number;
+      taskType: TaskType;
+      hint: string;
     };
 
 export type EventBody =

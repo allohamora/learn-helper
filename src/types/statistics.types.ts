@@ -11,6 +11,7 @@ export type LearningPerDayStatistics = {
   completedRetries: number;
   completedShowcases: number;
   mistakesMade: number;
+  hintsViewed: number;
   durationMs: number;
 };
 
@@ -29,6 +30,7 @@ export type Statistics = {
     totalRetriesCompleted: number;
     totalShowcasesCompleted: number;
     totalWordsMovedToNextStep: number;
+    totalHintsViewed: number;
     totalTaskCostsInNanoDollars: number;
     totalInputTokens: number;
     totalOutputTokens: number;
@@ -43,6 +45,11 @@ export type Statistics = {
   learningPerDay: LearningPerDayStatistics[];
   costPerDay: CostPerDayStatistics[];
   topMistakes: {
+    count: number;
+    value: string | null;
+    partOfSpeech: string | null;
+  }[];
+  topHintedWords: {
     count: number;
     value: string | null;
     partOfSpeech: string | null;

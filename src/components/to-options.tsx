@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HintButton } from './hint-button';
-import { type ToOptionsData } from '@/types/user-words.types';
+import { type ToOptionsData, type TaskType } from '@/types/user-words.types';
 
 type ToOptionsProps = {
   title: string;
   subtitle: string;
+  taskType: TaskType;
   data: ToOptionsData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
@@ -18,6 +19,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
   data,
   title,
   subtitle,
+  taskType,
   onMistake,
   onNext,
   children,
@@ -41,7 +43,9 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
         <p className="text-sm text-muted-foreground">
           <span className="align-middle">{subtitle}</span>
-          {data.hint && <HintButton hint={data.hint} className="ml-2 align-middle" />}
+          {data.hint && (
+            <HintButton hint={data.hint} userWordId={data.id} taskType={taskType} className="ml-2 align-middle" />
+          )}
         </p>
       </div>
 

@@ -6,11 +6,12 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SttButton } from './stt-button';
 import { HintButton } from './hint-button';
-import type { ToWordData } from '@/types/user-words.types';
+import type { ToWordData, TaskType } from '@/types/user-words.types';
 
 type ToWordProps = {
   title: string;
   subtitle: string;
+  taskType: TaskType;
   data: ToWordData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
@@ -43,7 +44,15 @@ export const compare = ({ answer, input }: { answer: string; input: string }) =>
   return pattern.test(normalize(input));
 };
 
-export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, data, onMistake, onNext, children }) => {
+export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({
+  title,
+  subtitle,
+  taskType,
+  data,
+  onMistake,
+  onNext,
+  children,
+}) => {
   const [userInput, setUserInput] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -85,7 +94,9 @@ export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, da
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
         <p className="text-sm text-muted-foreground">
           <span className="align-middle">{subtitle}</span>
-          {data.hint && <HintButton hint={data.hint} className="ml-2 align-middle" />}
+          {data.hint && (
+            <HintButton hint={data.hint} userWordId={data.id} taskType={taskType} className="ml-2 align-middle" />
+          )}
         </p>
       </div>
 

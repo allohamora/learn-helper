@@ -44,6 +44,7 @@ describe('statistics.service', () => {
         totalRetriesCompleted: 0,
         totalShowcasesCompleted: 0,
         totalWordsMovedToNextStep: 0,
+        totalHintsViewed: 0,
         totalTaskCostsInNanoDollars: 0,
         totalInputTokens: 0,
         totalOutputTokens: 0,
@@ -68,6 +69,7 @@ describe('statistics.service', () => {
         expect(day.completedRetries).toBe(0);
         expect(day.completedShowcases).toBe(0);
         expect(day.mistakesMade).toBe(0);
+        expect(day.hintsViewed).toBe(0);
         expect(day.durationMs).toBe(0);
       }
 
@@ -317,6 +319,27 @@ describe('statistics.service', () => {
           inputTokens: 500,
           outputTokens: 1000,
         },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToDefinition,
+          hint: 'Test hint 1',
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.DefinitionToWord,
+          hint: 'Test hint 2',
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToTranslation,
+          hint: 'Test hint 3',
+        },
       ]);
 
       const result = await getStatistics({ userId });
@@ -327,6 +350,7 @@ describe('statistics.service', () => {
         totalRetriesCompleted: 2,
         totalShowcasesCompleted: 2,
         totalWordsMovedToNextStep: 2,
+        totalHintsViewed: 3,
         totalTaskCostsInNanoDollars: 5_000_000_000,
         totalInputTokens: 2000,
         totalOutputTokens: 4000,
@@ -781,6 +805,173 @@ describe('statistics.service', () => {
 
       const result = await getStatistics({ userId });
       expect(result.topMistakes).toHaveLength(20);
+    });
+
+    it('counts hint viewed events correctly', async () => {
+      const userWord1 = getUserWord(0);
+      const userWord2 = getUserWord(1);
+
+      await db.insert(Event).values([
+        {
+          userId,
+          userWordId: userWord1.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToDefinition,
+          hint: 'Test hint 1',
+        },
+        {
+          userId,
+          userWordId: userWord1.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.DefinitionToWord,
+          hint: 'Test hint 2',
+        },
+        {
+          userId,
+          userWordId: userWord2.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToTranslation,
+          hint: 'Test hint 3',
+        },
+        {
+          userId,
+          userWordId: userWord2.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.TranslationToWord,
+          hint: 'Test hint 4',
+        },
+        {
+          userId,
+          userWordId: userWord2.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordOrder,
+          hint: 'Test hint 5',
+        },
+      ]);
+
+      const result = await getStatistics({ userId });
+      expect(result.general.totalHintsViewed).toBe(5);
+    });
+
+    it('counts hint viewed events only for the specified user', async () => {
+      const otherUserId = randomUUID();
+      const userWord = getUserWord();
+
+      await ensureUserWordsExists(otherUserId);
+      const [otherUserWord] = await getUserWords({ userId: otherUserId, limit: 1 }).then(({ data }) => data);
+      if (!otherUserWord) {
+        throw new Error('Failed to create other user word');
+      }
+
+      await db.insert(Event).values([
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToDefinition,
+          hint: 'Test hint 1',
+        },
+        {
+          userId,
+          userWordId: userWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.DefinitionToWord,
+          hint: 'Test hint 2',
+        },
+        {
+          userId: otherUserId,
+          userWordId: otherUserWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToTranslation,
+          hint: 'Other user hint 1',
+        },
+        {
+          userId: otherUserId,
+          userWordId: otherUserWord.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.TranslationToWord,
+          hint: 'Other user hint 2',
+        },
+      ]);
+
+      const result = await getStatistics({ userId });
+      expect(result.general.totalHintsViewed).toBe(2);
+
+      await db.delete(Event).where(eq(Event.userId, otherUserId));
+      await db.delete(UserWord).where(eq(UserWord.userId, otherUserId));
+    });
+
+    it('returns correct hints viewed per day statistics within date range', async () => {
+      const userWord1 = getUserWord(0);
+      const userWord2 = getUserWord(1);
+      const today = new Date();
+      const yesterday = daysAgo(1);
+      const weekAgo = daysAgo(6);
+
+      await db.insert(Event).values([
+        {
+          userId,
+          userWordId: userWord1.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToDefinition,
+          hint: 'Today hint 1',
+          createdAt: today,
+        },
+        {
+          userId,
+          userWordId: userWord1.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.DefinitionToWord,
+          hint: 'Today hint 2',
+          createdAt: today,
+        },
+        {
+          userId,
+          userWordId: userWord2.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordToTranslation,
+          hint: 'Today hint 3',
+          createdAt: today,
+        },
+        {
+          userId,
+          userWordId: userWord1.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.TranslationToWord,
+          hint: 'Yesterday hint 1',
+          createdAt: yesterday,
+        },
+        {
+          userId,
+          userWordId: userWord2.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.WordOrder,
+          hint: 'Yesterday hint 2',
+          createdAt: yesterday,
+        },
+        {
+          userId,
+          userWordId: userWord1.id,
+          type: EventType.HintViewed,
+          taskType: TaskType.FillInTheGap,
+          hint: 'Week ago hint',
+          createdAt: weekAgo,
+        },
+      ]);
+
+      const result = await getStatistics({ userId });
+
+      const todayStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(today));
+      expect(todayStats).toBeDefined();
+      expect(todayStats?.hintsViewed).toBe(3);
+
+      const yesterdayStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(yesterday));
+      expect(yesterdayStats).toBeDefined();
+      expect(yesterdayStats?.hintsViewed).toBe(2);
+
+      const weekAgoStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
+      expect(weekAgoStats).toBeDefined();
+      expect(weekAgoStats?.hintsViewed).toBe(1);
     });
   });
 });
