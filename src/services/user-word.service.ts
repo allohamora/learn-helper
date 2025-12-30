@@ -156,6 +156,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
             z.object({
               value: z.string().describe('Complete Ukrainian sentence'),
               isAnswer: z.boolean().describe('true for 1 correct option, false for 3 wrong options'),
+              description: z.string().optional().describe('ONLY wrong options (isAnswer: false) have description'),
             }),
           )
           .describe('4 options: 1 correct, 3 wrong'),
@@ -175,6 +176,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       '- Adjectives must match the noun in gender, number, and case',
       '- Do not use synonyms of the target word in any option',
       '- Do not have multiple options that are acceptable translations of the English sentence',
+      "- ONLY wrong options (isAnswer: false) have description: \"Wrong [category]: '[incorrect word]' instead of '[correct word]'\" - reference specific words, not full sentences",
       '',
       'Words:',
       JSON.stringify(words),
@@ -215,6 +217,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
             z.object({
               value: z.string().describe('Complete English sentence'),
               isAnswer: z.boolean().describe('true for 1 correct option, false for 3 wrong options'),
+              description: z.string().optional().describe('ONLY wrong options (isAnswer: false) have description'),
             }),
           )
           .describe('4 options: 1 correct, 3 wrong'),
@@ -231,6 +234,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
       '- Do not use synonyms of the target word in any option',
       '- Do not have multiple options that are acceptable translations of the English sentence',
+      "- ONLY wrong options (isAnswer: false) have description: \"Wrong [category]: '[incorrect word]' instead of '[correct word]'\" - reference specific words, not full sentences",
       '',
       'Words:',
       JSON.stringify(words),

@@ -67,7 +67,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
                       <span className="flex-1 text-sm leading-relaxed md:text-base">{value}</span>
                     </div>
                   </Button>
-                  {isFinished && isAnswered && isAnswer && description && (
+                  {isAnswered && description && (
                     <div className="ml-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">{description}</div>
                   )}
                 </div>

@@ -173,7 +173,13 @@ const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrain
       data: {
         id,
         sentence: removePeriods(sentence),
-        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
+        options: shuffle(
+          options.map((option) => ({
+            ...option,
+            value: removePeriods(option.value),
+            description: option.description ? removePeriods(option.description) : undefined,
+          })),
+        ),
       },
     };
   });
@@ -187,7 +193,13 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
       data: {
         id,
         sentence: removePeriods(sentence),
-        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
+        options: shuffle(
+          options.map((option) => ({
+            ...option,
+            value: removePeriods(option.value),
+            description: option.description ? removePeriods(option.description) : undefined,
+          })),
+        ),
       },
     };
   });
