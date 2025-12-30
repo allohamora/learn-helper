@@ -242,12 +242,20 @@ describe.concurrent('user-word.service', () => {
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
+
+      const specialSymbolsRegex = /[-—'"`]/;
+
       for (const task of tasks) {
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('sentence');
+        expect(task).toHaveProperty('hint');
         expect(typeof task.sentence).toBe('string');
+        expect(typeof task.hint).toBe('string');
         expect(task.sentence.length).toBeGreaterThan(0);
+        expect(task.hint.length).toBeGreaterThan(0);
         expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
+        expect(task.sentence).not.toMatch(specialSymbolsRegex);
+        expect(task.hint).not.toMatch(specialSymbolsRegex);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -256,6 +264,9 @@ describe.concurrent('user-word.service', () => {
         'Target word/phrase or natural variation appears (e.g., "for the first time"→"my first time", "be going to do"→"are going to visit").',
         'Articles, prepositions, function words are separate. Multi-word phrases split into separate words.',
         'Level-appropriate grammar preferred: A1 simple, B1 ideally conditionals, B2+ advanced - but variations acceptable as long as sentences are natural and demonstrate proper word usage.',
+        'Each task has a hint field containing the Ukrainian translation of the sentence.',
+        'Ukrainian hints are natural, grammatically correct, and properly convey the meaning of the English sentence.',
+        'CRITICAL: Neither sentences nor hints contain hyphens (-), em dashes (—), apostrophes (\'), quotes ("), or backticks (`).',
       ]);
     });
   });

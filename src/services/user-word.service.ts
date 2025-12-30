@@ -382,6 +382,7 @@ export const toWordOrder = async (words: WordData[]) => {
         sentence: z
           .string()
           .describe('3-15 words, single spaces, punctuation attached to words, first word capitalized only'),
+        hint: z.string().describe('Ukrainian translation of the sentence'),
       }),
     ),
     prompt: [
@@ -392,6 +393,8 @@ export const toWordOrder = async (words: WordData[]) => {
       '- Add adjectives, adverbs, time expressions to reach minimum word count',
       '- All words separate: articles, prepositions, function words',
       '- Level-appropriate grammar; varied punctuation (., !, ?)',
+      '- Do NOT use hyphens, apostrophes, quotes, or other special symbols',
+      '- Provide Ukrainian translation as hint: natural, grammatically perfect, no special symbols',
       '',
       'Words:',
       JSON.stringify(words),
