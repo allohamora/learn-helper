@@ -52,7 +52,10 @@ const toShowcaseTasks = (words: UserWord[]) => {
     (item): ShowcaseTask => ({
       id: crypto.randomUUID(),
       type: TaskType.Showcase,
-      data: item.word,
+      data: {
+        ...item.word,
+        id: item.id,
+      },
     }),
   );
 };
@@ -71,7 +74,9 @@ const toWordToDefinitionTasks = (words: UserWord[]) => {
       type: TaskType.WordToDefinition,
       data: {
         ...target.word,
+        id: target.id,
         options,
+        hint: target.word.uaTranslation,
       },
     };
   });
@@ -86,6 +91,7 @@ const toDefinitionToWordTasks = (words: UserWord[]) => {
         id: target.id,
         text: target.word.definition,
         word: target.word.value,
+        hint: target.word.uaTranslation,
       },
     };
   });
@@ -100,6 +106,7 @@ const toTranslationToWordTasks = (words: UserWord[]): TranslationToWordTask[] =>
         id: target.id,
         text: target.word.uaTranslation,
         word: target.word.value,
+        hint: target.word.definition,
       },
     };
   });
@@ -120,7 +127,9 @@ const toWordToTranslationTasks = (words: UserWord[]): WordToTranslationTask[] =>
       type: TaskType.WordToTranslation,
       data: {
         ...target.word,
+        id: target.id,
         options,
+        hint: target.word.definition,
       },
     };
   });
@@ -169,7 +178,13 @@ const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrain
       data: {
         id,
         sentence: removePeriods(sentence),
-        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
+        options: shuffle(
+          options.map((option) => ({
+            ...option,
+            value: removePeriods(option.value),
+            description: option.description ? removePeriods(option.description) : undefined,
+          })),
+        ),
       },
     };
   });
@@ -183,7 +198,13 @@ const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishS
       data: {
         id,
         sentence: removePeriods(sentence),
-        options: shuffle(options.map((option) => ({ ...option, value: removePeriods(option.value) }))),
+        options: shuffle(
+          options.map((option) => ({
+            ...option,
+            value: removePeriods(option.value),
+            description: option.description ? removePeriods(option.description) : undefined,
+          })),
+        ),
       },
     };
   });
@@ -204,6 +225,7 @@ const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synon
         word: found.word.value,
         synonym,
         antonym,
+        hint: found.word.definition,
       },
     };
   });
@@ -235,7 +257,7 @@ const toFindNonsenseSentenceTasks = (words: UserWord[], tasksData: TasksData['fi
 };
 
 const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTasks']) => {
-  return tasksData.map(({ id, sentence }): WordOrderTask => {
+  return tasksData.map(({ id, sentence, hint }): WordOrderTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
       throw new Error('Word for WordOrder task is not found');
@@ -252,6 +274,7 @@ const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTask
         id,
         originalWords,
         shuffledWords: shuffle(originalWords),
+        hint,
       },
     };
   });

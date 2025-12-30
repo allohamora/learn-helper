@@ -16,7 +16,7 @@ export const SynonymAndAntonymToWord: FC<SynonymAndAntonymToWordProps> = ({
 }) => {
   return (
     <ToWord data={data} {...props}>
-      <div className="flex w-full flex-wrap items-center justify-around text-center text-lg leading-relaxed font-semibold md:text-xl">
+      <div className="flex flex-wrap items-center justify-around gap-2 text-center text-lg font-semibold md:gap-3 md:text-xl">
         <span className="text-blue-400">{synonym}</span>
         <span>|</span>
         <span className="text-orange-400">{antonym}</span>

@@ -111,6 +111,14 @@ describe.concurrent('user-word.service', () => {
         expect(task).toHaveProperty('options');
         expect(task.options).toHaveLength(4);
         expect(task.options.filter((opt) => opt.isAnswer)).toHaveLength(1);
+        for (const option of task.options) {
+          if (!option.isAnswer) {
+            expect(option.description).toBeDefined();
+            expect(option.description?.length).toBeGreaterThan(0);
+          } else {
+            expect(option.description).toBeUndefined();
+          }
+        }
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -120,6 +128,10 @@ describe.concurrent('user-word.service', () => {
         'Wrong options stay in same topic/context but differ in verb/noun/tense/subject (e.g., "do homework"→"finished homework", not "buy book").',
         'Prefer one valid translation, but minor variations are acceptable.',
         'Tasks cover various CEFR levels (A1-C1), which is expected and acceptable.',
+        'CRITICAL: ONLY wrong options (isAnswer: false) MUST have non-empty description field.',
+        'CRITICAL: Correct option (isAnswer: true) must NOT have description field.',
+        "Descriptions follow format: \"Wrong [category]: '[incorrect Ukrainian word]' instead of '[correct word]'\" - reference SPECIFIC words, NOT full sentences.",
+        "Examples of GOOD descriptions: \"Wrong tense: 'бачив' instead of 'бачу'\", \"Wrong noun: 'присутність' instead of 'відсутність'\". BAD descriptions: \"Wrong tense: 'Я бачив кішку.' instead of 'Я бачу кішку.'\"",
       ]);
     });
   });
@@ -137,6 +149,14 @@ describe.concurrent('user-word.service', () => {
         expect(task).toHaveProperty('options');
         expect(task.options).toHaveLength(4);
         expect(task.options.filter((opt) => opt.isAnswer)).toHaveLength(1);
+        for (const option of task.options) {
+          if (!option.isAnswer) {
+            expect(option.description).toBeDefined();
+            expect(option.description?.length).toBeGreaterThan(0);
+          } else {
+            expect(option.description).toBeUndefined();
+          }
+        }
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -147,6 +167,10 @@ describe.concurrent('user-word.service', () => {
         'Prefer one valid translation, but variations are acceptable.',
         'Tasks cover various CEFR levels (A1-C1), which is expected.',
         'Minor unnatural issues like "своїх бабусю та дідуся" instead of "своїх бабусь та дідусів" are acceptable as long as the meaning is clear and grammatically correct.',
+        'CRITICAL: ONLY wrong options (isAnswer: false) MUST have non-empty description field.',
+        'CRITICAL: Correct option (isAnswer: true) must NOT have description field.',
+        "Descriptions follow format: \"Wrong [category]: '[incorrect English word]' instead of '[correct word]'\" - reference SPECIFIC words, NOT full sentences.",
+        "Examples of GOOD descriptions: \"Wrong tense: 'wanted' instead of 'are going to'\", \"Wrong verb: 'search' instead of 'see'\". BAD descriptions: \"Wrong tense: 'I wanted to go.' instead of 'I am going to go.'\"",
       ]);
     });
   });
@@ -191,8 +215,14 @@ describe.concurrent('user-word.service', () => {
         expect(task.options).toHaveLength(4);
         expect(task.options.filter((opt) => opt.isAnswer)).toHaveLength(1);
         expect(task.options.filter((opt) => !opt.isAnswer)).toHaveLength(3);
-        const nonsense = task.options.find((opt) => opt.isAnswer);
-        expect(nonsense?.description).toBeDefined();
+        for (const option of task.options) {
+          if (option.isAnswer) {
+            expect(option.description).toBeDefined();
+            expect(option.description?.length).toBeGreaterThan(0);
+          } else {
+            expect(option.description).toBeUndefined();
+          }
+        }
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -212,12 +242,20 @@ describe.concurrent('user-word.service', () => {
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
+
+      const specialSymbolsRegex = /[-—'"`]/;
+
       for (const task of tasks) {
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('sentence');
+        expect(task).toHaveProperty('hint');
         expect(typeof task.sentence).toBe('string');
+        expect(typeof task.hint).toBe('string');
         expect(task.sentence.length).toBeGreaterThan(0);
+        expect(task.hint.length).toBeGreaterThan(0);
         expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
+        expect(task.sentence).not.toMatch(specialSymbolsRegex);
+        expect(task.hint).not.toMatch(specialSymbolsRegex);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -226,6 +264,9 @@ describe.concurrent('user-word.service', () => {
         'Target word/phrase or natural variation appears (e.g., "for the first time"→"my first time", "be going to do"→"are going to visit").',
         'Articles, prepositions, function words are separate. Multi-word phrases split into separate words.',
         'Level-appropriate grammar preferred: A1 simple, B1 ideally conditionals, B2+ advanced - but variations acceptable as long as sentences are natural and demonstrate proper word usage.',
+        'Each task has a hint field containing the Ukrainian translation of the sentence.',
+        'Ukrainian hints are natural, grammatically correct, and properly convey the meaning of the English sentence.',
+        'CRITICAL: Neither sentences nor hints contain hyphens (-), em dashes (—), apostrophes (\'), quotes ("), or backticks (`).',
       ]);
     });
   });

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HintButton } from './hint-button';
 import { type ToOptionsData } from '@/types/user-words.types';
 
 type ToOptionsProps = {
@@ -38,7 +39,10 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
     <div className="mx-auto max-w-2xl">
       <div className="mb-4 text-center md:mb-6">
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="align-middle">{subtitle}</span>
+          {data.hint && <HintButton hint={data.hint} className="ml-2 align-middle" />}
+        </p>
       </div>
 
       <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
@@ -67,7 +71,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
                       <span className="flex-1 text-sm leading-relaxed md:text-base">{value}</span>
                     </div>
                   </Button>
-                  {isFinished && isAnswered && isAnswer && description && (
+                  {isAnswered && description && (
                     <div className="ml-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">{description}</div>
                   )}
                 </div>

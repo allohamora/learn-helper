@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { WordOrderTask } from '@/types/user-words.types';
+import { HintButton } from './hint-button';
 
 type Data = WordOrderTask['data'];
 
@@ -54,7 +55,10 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
     <div className="mx-auto max-w-2xl">
       <div className="mb-4 text-center md:mb-6">
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="align-middle">{subtitle}</span>
+          {data.hint && <HintButton hint={data.hint} className="ml-2 align-middle" />}
+        </p>
       </div>
 
       <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SttButton } from './stt-button';
+import { HintButton } from './hint-button';
 import type { ToWordData } from '@/types/user-words.types';
 
 type ToWordProps = {
@@ -82,7 +83,10 @@ export const ToWord: FC<PropsWithChildren<ToWordProps>> = ({ title, subtitle, da
     <div className="mx-auto max-w-2xl">
       <div className="mb-4 text-center md:mb-6">
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
-        <p className="text-sm text-muted-foreground">{subtitle}</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="align-middle">{subtitle}</span>
+          {data.hint && <HintButton hint={data.hint} className="ml-2 align-middle" />}
+        </p>
       </div>
 
       <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
