@@ -1,7 +1,6 @@
 import { type FC } from 'react';
 import type { TextToWordData } from '@/types/user-words.types';
 import { ToWord } from './to-word';
-import { HintButton } from './hint-button';
 
 type TextToWordProps = {
   title: string;
@@ -11,13 +10,10 @@ type TextToWordProps = {
   onNext: () => void;
 };
 
-export const TextToWord: FC<TextToWordProps> = ({ data: { text, hint, ...data }, ...props }) => {
+export const TextToWord: FC<TextToWordProps> = ({ data: { text, ...data }, ...props }) => {
   return (
     <ToWord data={data} {...props}>
-      <p className="w-full text-center text-lg leading-relaxed font-normal md:text-xl">
-        <span className="align-middle">{text}</span>
-        {hint && <HintButton hint={hint} className="ml-2 align-middle" />}
-      </p>
+      <p className="w-full text-center text-lg leading-relaxed font-normal md:text-xl">{text}</p>
     </ToWord>
   );
 };

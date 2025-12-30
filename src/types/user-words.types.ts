@@ -47,7 +47,6 @@ export type ToWordData = {
 
 export type TextToWordData = ToWordData & {
   text: string;
-  hint?: string;
 };
 
 export type ToOptionsData = {
@@ -57,12 +56,10 @@ export type ToOptionsData = {
     isAnswer: boolean;
     description?: string;
   }[];
+  hint?: string;
 };
 
-export type WordToOptionsData = ToOptionsData &
-  typeof db.Word.$inferSelect & {
-    hint?: string;
-  };
+export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
 
 export type SentenceData = ToOptionsData & {
   sentence: string;
