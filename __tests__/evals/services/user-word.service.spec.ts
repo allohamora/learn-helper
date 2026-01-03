@@ -90,7 +90,7 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks, each with id matching input word.id, task field with one ___ blank, and answer field.`,
-        'CRITICAL: Each task.task must contain exactly one ___ (three underscores) as a blank placeholder.',
+        'Each task.task must contain exactly one ___ (three underscores) as the blank placeholder.',
         'Sentences are 3-15 words, natural modern English. When the blank is filled with the answer, the sentence should be comprehensible - however, "a"/"an" mismatches (e.g., "a interesting" instead of "an interesting") are acceptable, as well as occasional awkward phrasing.',
         'Answer is target word/phrase or grammatical adaptation. Examples: "be going to do (sth)" can be "are going to" in "We are ___ walk", "are going to do" in "We are ___ do homework". Target appears only as blank.',
         'Tasks cover various CEFR levels, which is expected.',
