@@ -354,7 +354,7 @@ Do not modify the command or add additional flags.
 
 # Persuasion Principles for Agent Communication
 
-Usefull for writing prompts, including but not limited to: commands, hooks, skills for Claude Code, or prompts for sub agents or any other LLM interaction.
+Useful for writing prompts, including but not limited to: commands, hooks, skills for Claude Code, or prompts for sub agents or any other LLM interaction.
 
 ## Overview
 
