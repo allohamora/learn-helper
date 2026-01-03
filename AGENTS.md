@@ -54,8 +54,18 @@ From `package.json`:
 - Use `context7` mcp tools to get latest docs of the libraries before use them.
 - Use `shadcn` CLI commands to install or update UI components; do NOT write component source from the memory.
 - Use Astro Actions (`src/actions`) instead of adding bespoke API endpoint routes; implement server logic in actions and invoke them from forms/components to keep a unified server boundary.
-- When editing prompts, follow the same prompt style and formatting to maintain consistency.
 - Use `for...of` loops instead of `forEach` for better performance and readability.
 - Avoid single-letter or one-word variable names; use descriptive names that clearly indicate purpose (e.g., `task` instead of `t`, `words` instead of `w`).
 - Do NOT use the non-null assertion operator (`!`) in TypeScript; instead, use proper type guards, optional chaining, or refactor to handle null/undefined cases explicitly.
 - Always use IDE diagnostics to validate code after implementation.
+
+## LLM Prompt Writing Guidelines
+
+When writing or editing prompts for LLM task generation:
+
+- Do NOT use "CRITICAL" or similar all-caps emphasis
+- Do NOT bloat prompts with excessive examples
+- Do NOT duplicate requirements between prompt sections and field descriptions
+- Use simple, imperative language for requirements
+- Structure prompts with clear sections: task description, requirements, reasoning steps
+- Follow the same prompt style and formatting to maintain consistency

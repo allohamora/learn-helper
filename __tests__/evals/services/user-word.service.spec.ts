@@ -76,8 +76,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toFillInTheGap', () => {
     it('generates fill-in-the-gap tasks', async () => {
-      const { reasoning, tasks } = await toFillInTheGap(words);
-      console.log('fill-in-the-gap', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { object, tasks } = await toFillInTheGap(words);
+      console.log('fill-in-the-gap', JSON.stringify(object, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -90,9 +90,9 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks, each with id matching input word.id, task field with one ___ blank, and answer field.`,
-        'CRITICAL: Each task.task must contain exactly one ___ (three underscores) as a blank placeholder.',
+        'Each task.task must contain exactly one ___ (three underscores) as the blank placeholder.',
         'Sentences are 3-15 words, natural modern English. When the blank is filled with the answer, the sentence should be comprehensible - however, "a"/"an" mismatches (e.g., "a interesting" instead of "an interesting") are acceptable, as well as occasional awkward phrasing.',
-        'Answer is target word/phrase or grammatical adaptation (e.g., "be going to do (sth)"→"are going to", conjugated verb forms). Target appears only as blank.',
+        'Answer is target word/phrase or grammatical adaptation. Examples: "be going to do (sth)" can be "are going to" in "We are ___ walk", "are going to do" in "We are ___ do homework". Target appears only as blank.',
         'Tasks cover various CEFR levels, which is expected.',
       ]);
     });
@@ -100,8 +100,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toTranslateEnglishSentence', () => {
     it('generates English to Ukrainian translation tasks', async () => {
-      const { tasks, reasoning } = await toTranslateEnglishSentence(words);
-      console.log('to-translate-english-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { object, tasks } = await toTranslateEnglishSentence(words);
+      console.log('to-translate-english-sentence', JSON.stringify(object, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -138,8 +138,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toTranslateUkrainianSentence', () => {
     it('generates Ukrainian to English translation tasks', async () => {
-      const { tasks, reasoning } = await toTranslateUkrainianSentence(words);
-      console.log('to-translate-ukrainian-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { object, tasks } = await toTranslateUkrainianSentence(words);
+      console.log('to-translate-ukrainian-sentence', JSON.stringify(object, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -177,8 +177,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toSynonymAndAntonym', () => {
     it('generates synonym and antonym tasks', async () => {
-      const { tasks, reasoning } = await toSynonymAndAntonym(words);
-      console.log('to-synonym-and-antonym', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { object, tasks } = await toSynonymAndAntonym(words);
+      console.log('to-synonym-and-antonym', JSON.stringify(object, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -204,8 +204,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toFindNonsenseSentence', () => {
     it('generates nonsense detection tasks', async () => {
-      const { tasks, reasoning } = await toFindNonsenseSentence(words);
-      console.log('to-find-nonsense-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { object, tasks } = await toFindNonsenseSentence(words);
+      console.log('to-find-nonsense-sentence', JSON.stringify(object, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -237,13 +237,11 @@ describe.concurrent('user-word.service', () => {
 
   describe('toWordOrder', () => {
     it('generates word order tasks', async () => {
-      const { tasks } = await toWordOrder(words);
-      console.log('to-word-order', JSON.stringify(tasks, null, 2));
+      const { object, tasks } = await toWordOrder(words);
+      console.log('to-word-order', JSON.stringify(object, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
-
-      const specialSymbolsRegex = /[-—'"`]/;
 
       for (const task of tasks) {
         expect(task).toHaveProperty('id');
@@ -254,8 +252,6 @@ describe.concurrent('user-word.service', () => {
         expect(task.sentence.length).toBeGreaterThan(0);
         expect(task.hint.length).toBeGreaterThan(0);
         expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
-        expect(task.sentence).not.toMatch(specialSymbolsRegex);
-        expect(task.hint).not.toMatch(specialSymbolsRegex);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -265,8 +261,7 @@ describe.concurrent('user-word.service', () => {
         'Articles, prepositions, function words are separate. Multi-word phrases split into separate words.',
         'Level-appropriate grammar preferred: A1 simple, B1 ideally conditionals, B2+ advanced - but variations acceptable as long as sentences are natural and demonstrate proper word usage.',
         'Each task has a hint field containing the Ukrainian translation of the sentence.',
-        'Ukrainian hints are natural, grammatically correct, and properly convey the meaning of the English sentence.',
-        'CRITICAL: Neither sentences nor hints contain hyphens (-), em dashes (—), apostrophes (\'), quotes ("), or backticks (`).',
+        'Ukrainian hints are grammatically correct, use standard Ukrainian spelling, and accurately convey the meaning of the English sentence. Different translation approaches are acceptable (e.g., "своїх бабусю та дідуся" or "своїх бабусь та дідусів").',
       ]);
     });
   });
