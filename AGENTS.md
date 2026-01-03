@@ -65,6 +65,7 @@ When writing or editing prompts for LLM task generation:
 
 - Do NOT use "CRITICAL" or similar all-caps emphasis
 - Do NOT bloat prompts with excessive examples
+- Do NOT duplicate requirements between prompt sections and field descriptions
 - Use simple, imperative language for requirements
 - Structure prompts with clear sections: task description, requirements, reasoning steps
 - Follow the same prompt style and formatting to maintain consistency
