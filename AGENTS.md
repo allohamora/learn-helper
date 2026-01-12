@@ -69,3 +69,4 @@ When writing or editing prompts for LLM task generation:
 - Use simple, imperative language for requirements
 - Structure prompts with clear sections: task description, requirements, reasoning steps
 - Follow the same prompt style and formatting to maintain consistency
+- For few-shot examples, use entirely fictional data instead of real data or data derived from test cases
