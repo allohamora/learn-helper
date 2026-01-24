@@ -16,7 +16,7 @@ The Learn Helper is an **Astro + React** application focused on English learning
 - **Husky + lint-staged + Commitlint**: Pre-commit & commit message quality gates
 - **Modules (ESM)**: Native module interoperability
 
-## Structure & Conventions
+## Project Structure
 
 Directory highlights:
 
@@ -24,14 +24,17 @@ Directory highlights:
 src/
 ├── actions/               # Server-side actions
 ├── components/            # UI + feature components
-│   └── ui/                # Shadcn/Ui primitives (buttons, inputs, toasts, etc.)
-├── data/                  # Static learning datasets (Oxford lists)
-├── hooks/                 # Custom React hooks (e.g., toast system)
+│   └── ui/                # shadcn/ui primitives
+├── hooks/                 # Custom React hooks
 ├── layouts/               # Astro layout shells
-├── lib/                   # Utilities & cross-cutting helpers
-├── middleware.ts          # (Astro) auth / routing middleware entry
-├── pages/                 # Astro pages (SSR / static)
-├── styles/                # Global CSS & Tailwind layers
+├── lib/                   # Utilities and shared helpers
+├── middleware.ts          # Astro auth/routing middleware
+├── pages/                 # Astro routes (SSR/static)
+├── styles/                # Global CSS and Tailwind layers
+db/
+├── config.ts              # Astro DB config
+├── seed.ts                # Database seeding script
+└── data/                  # Oxford datasets (JSON)
 ```
 
 ## Scripts
@@ -40,12 +43,25 @@ From `package.json`:
 
 - `dev` – Start Astro dev server
 - `build` – Production build
-- `preview` – Preview built output
-- `astro` – Direct Astro CLI access
-- `prepare` – Husky install hook
+- `check` – Astro type check
 - `format` / `format:fix` – Prettier check / write
 - `lint` / `lint:fix` – ESLint check / fix (`ts`, `tsx`, `astro`)
 - `csslint` / `csslint:fix` – Stylelint check / fix (`css`, `ts`, `tsx` for styled content)
+- `test` – Unit tests (`**/__tests__/unit/**/*.spec.ts`)
+- `test:integration` – Integration tests (`**/__tests__/integration/**/*.spec.ts`)
+- `test:evals` – Evals tests (`**/__tests__/evals/**/*.spec.ts`)
+
+Run a single test file:
+
+- `npm run test -- __tests__/unit/path/to/foo.spec.ts`
+- `npm run test:integration -- __tests__/integration/path/to/foo.spec.ts`
+- `npm run test:evals -- __tests__/evals/path/to/foo.spec.ts`
+
+Run a single test by name:
+
+- `npm run test -- -t "test name"`
+- `npm run test:integration -- -t "test name"`
+- `npm run test:evals -- -t "test name"`
 
 ## Instructions
 
@@ -57,16 +73,3 @@ From `package.json`:
 - Use `for...of` loops instead of `forEach` for better performance and readability.
 - Avoid single-letter or one-word variable names; use descriptive names that clearly indicate purpose (e.g., `task` instead of `t`, `words` instead of `w`).
 - Do NOT use the non-null assertion operator (`!`) in TypeScript; instead, use proper type guards, optional chaining, or refactor to handle null/undefined cases explicitly.
-- Always use IDE diagnostics to validate code after implementation.
-
-## LLM Prompt Writing Guidelines
-
-When writing or editing prompts for LLM task generation:
-
-- Do NOT use "CRITICAL" or similar all-caps emphasis
-- Do NOT bloat prompts with excessive examples
-- Do NOT duplicate requirements between prompt sections and field descriptions
-- Use simple, imperative language for requirements
-- Structure prompts with clear sections: task description, requirements, reasoning steps
-- Follow the same prompt style and formatting to maintain consistency
-- For few-shot examples, use entirely fictional data instead of real data or data derived from test cases
