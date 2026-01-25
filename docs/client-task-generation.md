@@ -1,6 +1,6 @@
-# Runtime Task Generation
+# Client Task Generation
 
-This document describes the task types generated at runtime (client-side) for the Learn Helper learning system. These tasks are generated dynamically from existing word data without requiring AI.
+This document describes the task types generated at runtime on the client for the Learn Helper learning system. These tasks are generated dynamically from existing word data without requiring AI.
 
 ## Ranking
 
@@ -412,7 +412,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ## Task Sequence
 
-Runtime tasks are generated and presented in a specific order:
+Client tasks are generated and presented in a specific order:
 
 1. **Showcase tasks** - Always first, in word order (not shuffled)
 2. **Word to Definition** - Shuffled among themselves
