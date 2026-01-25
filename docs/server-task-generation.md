@@ -148,7 +148,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid creating scenarios where multiple translations could be considered correct (e.g., "She is at home" should not have both "Вона вдома" and "Вона в будинку" as they could both be valid in different contexts)
 - **No synonym verbs in wrong options**: CRITICAL - Wrong options must NOT use Ukrainian verbs that are synonyms or could mean the same action in context. Examples of BANNED pairs:
   - "додати" (add) ↔ "покласти" (put) - both could mean adding something
-  - "прийти" (come) ↔ "піти" (go) - in Ukrainian context like "піті на зустріч" can mean arriving, similar to "прийти"
+  - "прийти" (come) ↔ "піти" (go) - in Ukrainian context like "піти на зустріч" can mean arriving, similar to "прийти"
   - Wrong options must use CLEARLY DIFFERENT, NON-SYNONYMOUS verbs
 - **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
   - GOOD: "I am going to do my homework." → Wrong: "I finished my homework.", "I am doing my project.", "I forgot my homework."
