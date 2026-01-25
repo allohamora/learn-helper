@@ -63,7 +63,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Simple word**:
   - Word: "achieve"
-  - Displays: "achieve", "/əˈtʃiːv/", "досягати", "to succeed in doing or completing something", B1, verb, oxford 5000
+  - Displays: "achieve", "/əˈtʃiːv/", "досягати", "to succeed in doing or completing something", B1, verb, Oxford 5000
 
 - **Phrase**:
   - Word: "take care of (sth)"
@@ -202,7 +202,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Word with alternatives**:
   - Correct answer: "feel (happy/sad)"
-  - Valid inputs: "feel", "feel (happy)", "feel (sad)", "feel (happy/sad)"
+  - Valid inputs: "feel (happy)", "feel (sad)", "feel (happy/sad)"
 
 **Ranking**:
 

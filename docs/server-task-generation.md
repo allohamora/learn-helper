@@ -101,7 +101,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Level B2** (Present perfect tense, achievement context):
   - Word: "accomplish"
   - Task: "She has \_\_\_ more than anyone expected this year."
-  - Answer: "accomplish"
+  - Answer: "accomplished"
 
 - **Level C1** (Modal verb with advanced vocabulary, subtle meaning):
   - Word: "undermine"
@@ -232,7 +232,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Word: "discover"
   - Sentence: "If I traveled more, I would discover new cultures."
   - Options:
-    - ✓ "Якби я більше подорожував, я б відкривав нові культури."
+    - ✓ "Якби я більше подорожував, я б відкрив нові культури."
     - ✗ "Якби я більше подорожував, я б вивчав нові культури." (wrong verb - study instead of discover)
     - ✗ "Коли я подорожую, я відкриваю нові культури." (wrong structure - first conditional instead of second)
     - ✗ "Я подорожую і відкриваю нові культури." (wrong structure - simple present instead of conditional)
