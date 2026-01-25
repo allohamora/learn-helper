@@ -54,7 +54,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Answer: "achieve"
 
 - **Phrase**:
-  - Word: "take care of (sth)"
+  - Word: "agree with (sb)"
   - Task: "I \_\_\_ you."
   - Answer: "agree with" (adapts placeholder naturally)
 
@@ -160,7 +160,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Punctuation**: Use appropriate sentence types - statements (.), questions (?), and exclamations (!) - based on context
 - **Complete meaning**: The correct translation must fully capture the English sentence's meaning, not just contain the target word
 - **Phrase integration**: When the target is a phrase, incorporate the entire phrase naturally within the sentence
-- **Concise sentences**: Keep sentences short (1-12 words) for clarity and learning focus
+- **Concise sentences**: Keep sentences short (3-15 words) for clarity and learning focus
 - **Exact count**: Always provide exactly 4 options (1 correct, 3 incorrect)
 
 **Examples**:
@@ -178,10 +178,10 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Word: "take care of (sb/sth)"
   - Sentence: "I take care of my dog."
   - Options:
-    - ✓ "Я доглядаю за своїм собакою."
-    - ✗ "Я люблю свого собаку." (wrong verb)
-    - ✗ "Я граюся зі своїм собакою." (playing, not caring)
-    - ✗ "Я годую свого собаку." (only feeding)
+    - ✓ "Я доглядаю за своєю собакою."
+    - ✗ "Я люблю свою собаку." (wrong verb)
+    - ✗ "Я граюся зі своєю собакою." (playing, not caring)
+    - ✗ "Я годую свою собаку." (only feeding)
 
 - **Article (a)**:
   - Word: "a"
@@ -242,7 +242,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Sentence: "The company had been established before the crisis began."
   - Options:
     - ✓ "Компанія була заснована до того, як почалася криза."
-    - ✗ "Компанія була створена до того, як почалася криза." (wrong verb - created instead of established)
+    - ✗ "Компанія була закрита до того, як почалася криза." (wrong verb - closed instead of established)
     - ✗ "Організація була заснована до того, як почалася криза." (wrong noun - organization instead of company)
     - ✗ "Компанія була заснована після того, як почалася криза." (wrong time relation - after instead of before)
 
@@ -305,7 +305,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Complete sentences only**: All English options must be full, grammatically correct sentences with subject and verb, never fragments or phrases
 - **Exact word requirement**: The correct option MUST contain the exact target English word/phrase (case-sensitive matching during generation)
 - **Full translation**: The correct option must translate the ENTIRE Ukrainian sentence, not just include the target word somewhere
-- **Brief and focused**: Keep sentences short (1-12 words) and limited to exactly one sentence
+- **Brief and focused**: Keep sentences short (3-15 words) and limited to exactly one sentence
 - **Exactly 4 options**: Always provide 1 correct and 3 incorrect options
 
 **Examples**:
@@ -396,7 +396,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Sentence: "Мене повідомили про зміни до того, як вони сталися."
   - Options:
     - ✓ "I had been informed about the changes before they happened."
-    - ✗ "I had been informed about the updates before they happened." (wrong noun - updates instead of changes)
+    - ✗ "I had been informed about the meetings before they happened." (wrong noun - meetings instead of changes)
     - ✗ "She had been informed about the changes before they happened." (wrong pronoun - she instead of I)
     - ✗ "I had been informed about the changes after they happened." (wrong preposition - after instead of before)
 
