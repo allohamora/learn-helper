@@ -51,11 +51,11 @@ These criteria define why a task belongs earlier or later in a sequence.
 
 ## Task order
 
-### Server tasks (catalog order)
+### Server tasks (runtime sequence)
 
-- **Fill in the Gap**: Kick off with contextual recall to anchor meaning.
 - **Translate English Sentence**: Reinforce comprehension by mapping English to Ukrainian.
 - **Translate Ukrainian Sentence**: Flip direction to practice English production.
+- **Fill in the Gap**: Build contextual recall to anchor meaning.
 - **Synonym and Antonym**: Expand semantic links with near and opposite meanings.
 - **Find Nonsense Sentence**: Stress-test usage by spotting impossible contexts.
 - **Word Order**: Rebuild sentence structure to cement grammar around the target.
