@@ -1,4 +1,4 @@
-# Test Generation
+# Task Generation
 
 This document summarizes learning task generation across server (AI-generated) and client (runtime) systems. It provides a shared scoring model, a one-line intent for each task in order, and summary rankings pulled from the source docs.
 
