@@ -34,7 +34,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
     level: Level; // CEFR level (A1-C1)
-    partOfSpeech: string; // Part of speech (noun, verb, etc.)
+    partOfSpeech?: string | null; // Part of speech (noun, verb, etc.)
     list: List; // Source list (Oxford 5000 or Phrase List)
     link: string; // Link to Oxford Dictionary
   }
@@ -45,7 +45,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **No user input required**: This is a recognition-only task with no right/wrong answers
 - **Always first**: Showcase tasks always appear at the beginning of a learning session, before any active recall tasks
-- **Complete information display**: Shows all available word data including value, spelling, pronunciation, translation, definition, level, and part of speech
+- **Complete information display**: Shows all available word data including value, spelling, pronunciation, translation, definition, level, and part of speech (when available)
 - **Audio playback**: Includes a button to play the word's pronunciation
 - **External link**: Provides a link to the Oxford Dictionary for additional context
 - **Source indication**: Shows whether the word comes from Oxford 5000 Words or Oxford Phrase List
@@ -86,7 +86,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ### 2. Word to Definition
 
-**Description**: Students see a word with its spelling and pronunciation, then select the correct definition from four multiple-choice options.
+**Description**: Students see a word with its spelling and pronunciation, then select the correct definition from multiple-choice options.
 
 **Schema**:
 
@@ -99,22 +99,24 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     value: string; // The word itself
     spelling: string; // Phonetic spelling
     pronunciation: string; // Audio URL
+    uaTranslation: string; // Ukrainian translation
+    definition: string; // English definition
     level: Level; // CEFR level
-    partOfSpeech: string; // Part of speech
+    partOfSpeech?: string | null; // Part of speech
     list: List; // Source list
     link: string; // Oxford Dictionary link
     options: Array<{
       value: string; // Definition text
       isAnswer: boolean; // true for correct, false for wrong
-    }>; // 4 options: 1 correct, 3 wrong
-    hint: string; // Ukrainian translation (optional help)
+    }>; // Up to 4 options: 1 correct, up to 3 wrong
+    hint?: string; // Ukrainian translation (hint text)
   }
 }
 ```
 
 **Notes**:
 
-- **Four options always**: Exactly 4 options generated - 1 correct answer and 3 distractors
+- **Up to 4 options**: 1 correct answer and up to 3 distractors (fewer if the session has fewer than 4 learning words)
 - **Distractors from session**: Wrong options are definitions from other words in the current learning session
 - **Shuffled options**: Options are randomly shuffled so the correct answer isn't always in the same position
 - **Shuffled tasks**: Word to Definition tasks are shuffled among themselves (not in showcase order)
@@ -137,7 +139,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **With hint used**:
   - Word: "nervous"
   - Hint (on click): "нервовий"
-  - Options show 4 definitions, one correct
+  - Options show up to 4 definitions, one correct
 
 **Ranking**:
 
@@ -168,7 +170,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     id: number; // User word ID
     text: string; // The definition to identify
     word: string; // Correct answer (the word itself)
-    hint: string; // Ukrainian translation (optional help)
+    hint?: string; // Ukrainian translation (optional help)
   }
 }
 ```
@@ -177,10 +179,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Free text input**: Students type the answer rather than selecting from options
 - **Case insensitive**: Answer comparison ignores case (e.g., "Achieve" matches "achieve")
-- **Flexible phrase matching**: For phrases with placeholders like "agree with (sb)", accepts variations:
-  - "agree with" (without placeholder)
-  - "agree with you", "agree with him", etc. (with specific subjects)
-- **Alternative forms supported**: Handles `/` separated alternatives in parentheses (e.g., "(fun/interesting)" accepts either)
+- **Parenthetical segments are optional**: For phrases like "agree with (sb)", accepted inputs include "agree with" or "agree with (sb)" (placeholders are not expanded to real words)
+- **Alternatives inside parentheses**: For "(fun/interesting)" style answers, accepted inputs include "(fun)", "(interesting)", or "(fun/interesting)" (parentheses required)
 - **Speech-to-text**: Includes a microphone button for voice input
 - **Ukrainian hint available**: The hint button reveals the Ukrainian translation
 - **Visual feedback**: Input field turns green (correct) or red (incorrect) after checking
@@ -198,11 +198,11 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Phrase with placeholder**:
   - Definition: "to have the same opinion as someone"
   - Correct answer: "agree with (sb)"
-  - Valid inputs: "agree with", "agree with (sb)", "agree with you", "agree with her"
+  - Valid inputs: "agree with", "agree with (sb)"
 
 - **Word with alternatives**:
   - Correct answer: "feel (happy/sad)"
-  - Valid inputs: "feel happy", "feel sad", "feel (happy)", "feel (sad)"
+  - Valid inputs: "feel", "feel (happy)", "feel (sad)", "feel (happy/sad)"
 
 **Ranking**:
 
@@ -221,7 +221,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ### 4. Word to Translation
 
-**Description**: Students see a word with its spelling and pronunciation, then select the correct Ukrainian translation from four multiple-choice options.
+**Description**: Students see a word with its spelling and pronunciation, then select the correct Ukrainian translation from multiple-choice options.
 
 **Schema**:
 
@@ -234,22 +234,24 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     value: string; // The word itself
     spelling: string; // Phonetic spelling
     pronunciation: string; // Audio URL
+    uaTranslation: string; // Ukrainian translation
+    definition: string; // English definition
     level: Level; // CEFR level
-    partOfSpeech: string; // Part of speech
+    partOfSpeech?: string | null; // Part of speech
     list: List; // Source list
     link: string; // Oxford Dictionary link
     options: Array<{
       value: string; // Ukrainian translation
       isAnswer: boolean; // true for correct, false for wrong
-    }>; // 4 options: 1 correct, 3 wrong
-    hint: string; // English definition (optional help)
+    }>; // Up to 4 options: 1 correct, up to 3 wrong
+    hint?: string; // English definition (hint text)
   }
 }
 ```
 
 **Notes**:
 
-- **Four options always**: Exactly 4 options - 1 correct Ukrainian translation and 3 distractors
+- **Up to 4 options**: 1 correct Ukrainian translation and up to 3 distractors (fewer if the session has fewer than 4 learning words)
 - **Distractors from session**: Wrong options are Ukrainian translations from other words in the current learning session
 - **Shuffled options**: Options are randomly shuffled
 - **Shuffled tasks**: Word to Translation tasks are shuffled among themselves
@@ -271,7 +273,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Phrase**:
   - Word: "look forward to"
-  - Options show 4 Ukrainian translations
+  - Options show up to 4 Ukrainian translations
   - Hint: "to feel excited about something that is going to happen"
 
 **Ranking**:
@@ -303,7 +305,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     id: number; // User word ID
     text: string; // Ukrainian translation shown as prompt
     word: string; // Correct English word to type
-    hint: string; // English definition (optional help)
+    hint?: string; // English definition (optional help)
   }
 }
 ```
@@ -328,7 +330,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Phrase**:
   - Ukrainian: "піклуватися про"
   - Correct answer: "take care of (sth)"
-  - Valid inputs: "take care of", "take care of something", "take care of (sth)"
+  - Valid inputs: "take care of", "take care of (sth)"
 
 **Ranking**:
 
@@ -423,8 +425,8 @@ Client tasks are generated and presented in a specific order:
 
 This sequence follows a learning progression:
 
-- **Recognition first**: Showcase and multiple-choice tasks (Word to Definition, Word to Translation)
-- **Production later**: Text input tasks (Definition to Word, Translation to Word, Pronunciation to Word)
+- **Order**: Showcase -> Word to Definition -> Definition to Word -> Word to Translation -> Translation to Word -> Pronunciation to Word
+- **Why**: Definition and translation pairs use the same recognition/production pattern, so they are alternated before ending with listening-based recall
 
 ---
 
