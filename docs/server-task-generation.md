@@ -91,7 +91,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Level A2** (Simple past tense, familiar context):
   - Word: "visit"
   - Task: "We \_\_\_ our grandparents last weekend."
-  - Answer: "visit"
+  - Answer: "visited"
 
 - **Level B1** (Second conditional, hypothetical situation):
   - Word: "choose"
