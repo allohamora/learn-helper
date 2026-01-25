@@ -2,6 +2,10 @@
 
 This document summarizes learning task generation across server (AI-generated) and client (runtime) systems. It provides a shared scoring model, a one-line intent for each task in order, and summary rankings pulled from the source docs.
 
+## Goal
+
+Task generation aims to build a short learning session (under 30 minutes) that helps learners get acquainted with a focused set of words rather than master them deeply. At the end of the session, learners decide whether to move each word to the next step based on their confidence.
+
 ## Task sources
 
 - Server tasks: AI-generated per target word or phrase; designed to create varied sentence-level contexts and distractors.
