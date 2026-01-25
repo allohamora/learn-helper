@@ -67,8 +67,8 @@ Run a single test by name:
 
 - Install new dependencies by npm install commands; do NOT manually edit package.json or package-lock.json.
 - Write comments only when necessary to clarify complex logic; prefer self-documenting code.
-- Use `context7` mcp tools to get latest docs of the libraries before use them.
-- Use `shadcn` CLI commands to install or update UI components; do NOT write component source from the memory.
+- Use `context7` mcp tools to get latest docs of the libraries before using them.
+- Use `shadcn` CLI commands to install or update UI components; do NOT write component source from memory.
 - Use Astro Actions (`src/actions`) instead of adding bespoke API endpoint routes; implement server logic in actions and invoke them from forms/components to keep a unified server boundary.
 - Use `for...of` loops instead of `forEach` for better performance and readability.
 - Avoid single-letter or one-word variable names; use descriptive names that clearly indicate purpose (e.g., `task` instead of `t`, `words` instead of `w`).

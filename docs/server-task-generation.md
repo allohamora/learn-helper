@@ -148,7 +148,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid creating scenarios where multiple translations could be considered correct (e.g., "She is at home" should not have both "Вона вдома" and "Вона в будинку" as they could both be valid in different contexts)
 - **No synonym verbs in wrong options**: CRITICAL - Wrong options must NOT use Ukrainian verbs that are synonyms or could mean the same action in context. Examples of BANNED pairs:
   - "додати" (add) ↔ "покласти" (put) - both could mean adding something
-  - "прийти" (come) ↔ "піти" (go) - in Ukrainian context like "піти на зустріч" can mean arriving, similar to "прийти"
+  - "прийти" (come) ↔ "піти" (go) - in Ukrainian context like "піти назустріч" can mean going to meet someone, similar to "прийти"
   - Wrong options must use CLEARLY DIFFERENT, NON-SYNONYMOUS verbs
 - **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
   - GOOD: "I am going to do my homework." → Wrong: "I finished my homework.", "I am doing my project.", "I forgot my homework."
@@ -515,7 +515,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 {
   id: number;
   options: Array<{
-    value: string; // Sentence (3-15 words) containing EXACT target word/phrase
+    value: string; // Sentence (3-15 words) containing the target word/phrase (inflected as needed)
     isAnswer: boolean; // true for 1 nonsense sentence, false for 3 correct sentences
     description?: string; // Nonsense sentence (isAnswer: true) MUST have description explaining why it is wrong
   }>; // 4 options: 1 nonsense, 3 correct
@@ -541,7 +541,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **No subtle errors**: Avoid sentences that are merely "less natural" or "stylistically odd" - they must be impossible or meaningless
 - **Complete sentences**: Use full, properly structured sentences (3-15 words)
 - **Exactly 4 options**: Always 1 incorrect (the answer) and 3 correct sentences
-- **All sentences contain target**: Every sentence option must include the target word or phrase
+- **All sentences contain target**: Every sentence option must include the target word or phrase (inflected as needed)
 
 **Examples**:
 
