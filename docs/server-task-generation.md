@@ -152,7 +152,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Wrong options must use CLEARLY DIFFERENT, NON-SYNONYMOUS verbs
 - **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
   - GOOD: "I am going to do my homework." → Wrong: "I finished my homework.", "I am doing my project.", "I forgot my homework."
-  - BAD: "I am going to do my homework." → Wrong: "I will buy a book.", "They went to cinema.", "She likes music." (completely unrelated topics)
+  - BAD: "I am going to do my homework." → Wrong: "I will buy a book.", "They went to the cinema.", "She likes music." (completely unrelated topics)
 - **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different NON-SYNONYM verb, noun, adjective, time word within same context), wrong number (singular/plural with all required grammatical adjustments), wrong tense, wrong subject/pronoun - but always remain grammatically valid and contextually related
 - **Relatable content**: Choose everyday situations and topics that learners can relate to
 - **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
@@ -234,7 +234,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Options:
     - ✓ "Якби я більше подорожував, я б відкрив нові культури."
     - ✗ "Якби я більше подорожував, я б вивчав нові культури." (wrong verb - study instead of discover)
-    - ✗ "Коли я подорожую, я відкриваю нові культури." (wrong structure - first conditional instead of second)
+    - ✗ "Якщо я більше подорожуватиму, я відкрию нові культури." (wrong structure - first conditional instead of second)
     - ✗ "Я подорожую і відкриваю нові культури." (wrong structure - simple present instead of conditional)
 
 - **Level B2** (Past perfect passive, complex temporal relationship):
@@ -566,7 +566,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Options:
     - ✗ "I agree with your opinion."
     - ✗ "They don't agree with the decision."
-    - ✓ "The book agrees with on the table." (description: "Grammatically broken - 'agrees with' used without proper subject or object")
+    - ✓ "The book agrees with on the table." (description: "Grammatically broken - 'agrees with' used without an object")
     - ✗ "We agree with the new policy."
 
 - **Article misuse (a)**:
@@ -630,7 +630,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Options:
     - ✗ "If I could imagine anything, I would create a new world."
     - ✗ "I can't imagine life without music."
-    - ✓ "The chair imagines about flying to Mars." (description: "Semantic absurdity - inanimate objects cannot imagine or have thoughts")
+    - ✓ "The chair imagines flying to Mars." (description: "Semantic absurdity - inanimate objects cannot imagine or have thoughts")
     - ✗ "Try to imagine what tomorrow will bring."
 
 - **Level B2** (Passive voice context, logical impossibility with natural phenomena):
@@ -705,7 +705,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Word: "achieve"
   - Sentence: "She will achieve her goals."
   - Hint: "Вона досягне своїх цілей."
-  - Scrambled: ["her", "will", "She", "goals", "achieve."]
+  - Scrambled: ["her", "will", "She", "goals.", "achieve"]
 
 - **Phrase preservation** ("take care of" is split into individual words):
   - Word: "take care of"
