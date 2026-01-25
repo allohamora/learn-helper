@@ -7,6 +7,19 @@ This document summarizes learning task generation across server (AI-generated) a
 - Server tasks: AI-generated per target word or phrase; designed to create varied sentence-level contexts and distractors.
 - Client tasks: generated at runtime from existing word data; no AI required; options are drawn from the current session.
 
+## Repeatable learning algorithm
+
+The repetition schedule is driven by `moveUserWordToNextStep` and two fields on each word: `encounterCount` and `wordsToUnlock`.
+
+- Learning queue: `getLearningWords` returns words with `status = Learning`, ordered by `wordsToUnlock` ascending, then `id`.
+- Step advance (per completed word):
+  - Increment `encounterCount` for the word that was just completed.
+  - Decrement `wordsToUnlock` by 1 for all words where it is >= 1.
+  - If `encounterCount` reaches 3, mark the word `Learned` and set `wordsToUnlock` to 0 (it leaves the learning queue).
+  - Otherwise, set the word's `wordsToUnlock` to `max(wordsToUnlock) + 3`, pushing it to the back of the queue with a 3-step buffer.
+
+This means a word reappears after at least 3 other step advances, and spacing increases as the queue grows. Each word is shown up to 3 times before it is marked learned and removed from rotation.
+
 ## Scoring model
 
 Each task type is scored 1-10 across seven parameters (max 70 total):
