@@ -94,10 +94,10 @@
     "vitest": "3.2.4"
   },
   "engines": {
-    "node": ">=v22.13.0",
-    "npm": ">=10.9.2"
+    "node": ">=v24.13.0",
+    "npm": ">=11.8.0"
   },
-  "packageManager": "npm@10.9.2",
+  "packageManager": "npm@11.8.0",
   "lint-staged": {
     "*.{js,cjs,mjs,json,yml,md}": "prettier --write",
     "*.css": "stylelint --fix",
