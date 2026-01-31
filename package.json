@@ -20,7 +20,6 @@
     "lint:fix": "eslint \"**/*.{ts,tsx,astro}\" --fix",
     "csslint": "stylelint \"src/**/*.{css,ts,tsx}\"",
     "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix",
-    "test": "vitest",
     "test:integration": "vitest --config vitest-integration.config.ts"
   },
   "dependencies": {
