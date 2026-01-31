@@ -21,11 +21,9 @@
     "csslint": "stylelint \"src/**/*.{css,ts,tsx}\"",
     "csslint:fix": "stylelint \"src/**/*.{css,ts,tsx}\" --fix",
     "test": "vitest",
-    "test:integration": "vitest --config vitest-integration.config.ts",
-    "test:evals": "vitest --config vitest-evals.config.ts"
+    "test:integration": "vitest --config vitest-integration.config.ts"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.51",
     "@astrojs/db": "^0.18.3",
     "@clerk/astro": "^2.16.10",
     "@hookform/resolvers": "^5.2.2",
@@ -38,11 +36,9 @@
     "@tanstack/react-query-devtools": "^5.91.1",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.13",
-    "ai": "^5.0.116",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
-    "rate-limiter-flexible": "^9.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.69.0",
@@ -57,7 +53,6 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@ai-sdk/openai": "^2.0.88",
     "@astrojs/check": "^0.9.6",
     "@astrojs/node": "^9.5.1",
     "@astrojs/react": "^4.4.2",

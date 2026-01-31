@@ -27,11 +27,14 @@ export const NextStep: FC<NextStepProps> = ({ userWordId }) => {
 
   return (
     <Button
+      type="button"
       size="sm"
       variant="outline"
       onClick={() => moveUserWordToNextStep.mutate({ userWordId })}
       disabled={moveUserWordToNextStep.isPending || moveUserWordToNextStep.isSuccess}
       className="size-8 p-0"
+      aria-label="Move to next step"
+      title="Move to next step"
     >
       {moveUserWordToNextStep.isPending ? (
         <Loader2 className="size-4 animate-spin" />
