@@ -25,7 +25,7 @@
     "test:evals": "vitest --config vitest-evals.config.ts"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.51",
+    "@ai-sdk/google": "2.0.52",
     "@astrojs/db": "^0.19.0",
     "@clerk/astro": "^2.16.17",
     "@hookform/resolvers": "^5.2.2",
@@ -38,7 +38,7 @@
     "@tanstack/react-query-devtools": "^5.91.3",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.18",
-    "ai": "^5.0.116",
+    "ai": "5.0.124",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
@@ -57,7 +57,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@ai-sdk/openai": "^2.0.88",
+    "@ai-sdk/openai": "2.0.89",
     "@astrojs/check": "^0.9.6",
     "@astrojs/node": "^9.5.2",
     "@astrojs/react": "^4.4.2",
