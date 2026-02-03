@@ -2552,7 +2552,7 @@
   {
     "value": "each",
     "definition": "used to refer to every one of two or more people or things, when you are thinking about them separately",
-    "uaTranslation": "кожен (вживається як прислівник)",
+    "uaTranslation": "кожен",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/iːtʃ/",
@@ -8892,7 +8892,7 @@
   {
     "value": "sure",
     "definition": "confident that you know something or that you are right",
-    "uaTranslation": "певн(ий)",
+    "uaTranslation": "впевнений",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/ʃʊr/",
@@ -10602,7 +10602,7 @@
   {
     "value": "would",
     "definition": "used in polite offers or invitations",
-    "uaTranslation": "used in polite offers or invitations",
+    "uaTranslation": "би",
     "partOfSpeech": "modal verb",
     "level": "a1",
     "spelling": "/wʊd/",
@@ -15242,7 +15242,7 @@
   {
     "value": "inside",
     "definition": "on or to the inner part of something/somebody; within something/somebody",
-    "uaTranslation": "у/в",
+    "uaTranslation": "всередині",
     "partOfSpeech": "preposition",
     "level": "a2",
     "spelling": "/ˌɪnˈsaɪd/",
@@ -18272,7 +18272,7 @@
   {
     "value": "sadly",
     "definition": "in a sad way",
-    "uaTranslation": "сумнo",
+    "uaTranslation": "сумно",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/ˈsædli/",
@@ -22302,7 +22302,7 @@
   {
     "value": "consist",
     "definition": "a set of railway vehicles forming a complete train",
-    "uaTranslation": "склад (потяга)",
+    "uaTranslation": "склад поїзда",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/kənˈsɪst/",
@@ -28612,7 +28612,7 @@
   {
     "value": "tend",
     "definition": "to be likely to do something or to happen in a particular way because this is what often or usually happens",
-    "uaTranslation": "схиляти(ся)",
+    "uaTranslation": "мати тенденцію",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/tend/",
@@ -46622,7 +46622,7 @@
   {
     "value": "bat",
     "definition": "to hit a ball with a bat, especially in a game of baseball or cricket",
-    "uaTranslation": "бити (битою)",
+    "uaTranslation": "бити битою",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/bæt/",
@@ -57912,7 +57912,7 @@
   {
     "value": "swing",
     "definition": "to move backwards or forwards or from side to side while hanging from a fixed point; to make something do this",
-    "uaTranslation": "гойдати(ся)",
+    "uaTranslation": "гойдатися",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/swɪŋ/",
