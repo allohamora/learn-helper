@@ -146,7 +146,7 @@ export type WordOrderTask = {
     id: number;
     originalWords: string[];
     shuffledWords: string[];
-    hint?: string;
+    translation: string;
   };
 };
 

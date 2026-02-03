@@ -674,7 +674,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 {
   id: number;
   sentence: string; // 3-15 words, single spaces, punctuation attached to words, first word capitalized only
-  hint: string; // Ukrainian translation of the sentence
+  translation: string; // Ukrainian translation of the sentence
 }
 ```
 
@@ -690,7 +690,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Phrase splitting**: Multi-word phrases like "take care of" are split into separate words ("take", "care", "of") for arrangement
 - **Space consistency**: Each word must be separated by exactly one space in the correct answer
 - **Capitalization rules**: Only capitalize the first word of the sentence (and proper nouns if present)
-- **Ukrainian hint**: Provide a natural, grammatically correct Ukrainian translation as the hint
+- **Ukrainian translation**: Provide a natural, grammatically correct Ukrainian translation
 - **Manageable length**: Keep sentences concise (3-15 words) so the task isn't overwhelming
 
 **Examples**:
@@ -698,85 +698,85 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Simple sentence**:
   - Word: "beautiful"
   - Sentence: "The garden is beautiful."
-  - Hint: "Сад гарний."
+  - Translation: "Сад гарний."
   - Scrambled (in UI): ["garden", "The", "is", "beautiful."]
 
 - **Sentence with articles**:
   - Word: "achieve"
   - Sentence: "She will achieve her goals."
-  - Hint: "Вона досягне своїх цілей."
+  - Translation: "Вона досягне своїх цілей."
   - Scrambled: ["her", "will", "She", "goals.", "achieve"]
 
 - **Phrase preservation** ("take care of" is split into individual words):
   - Word: "take care of"
   - Sentence: "I take care of my plants."
-  - Hint: "Я доглядаю за своїми рослинами."
+  - Translation: "Я доглядаю за своїми рослинами."
   - Scrambled: ["my", "care", "I", "plants.", "of", "take"]
 
 - **Article (a)** (Article "a" must be placed before the adjective-noun combination):
   - Word: "a"
   - Sentence: "She bought a red car."
-  - Hint: "Вона купила червоний автомобіль."
+  - Translation: "Вона купила червоний автомобіль."
   - Scrambled: ["bought", "red", "a", "She", "car."]
 
 - **Article (an)** (Article "an" must precede the vowel-starting adjective):
   - Word: "an"
   - Sentence: "He is an excellent student."
-  - Hint: "Він відмінний студент."
+  - Translation: "Він відмінний студент."
   - Scrambled: ["student.", "excellent", "is", "an", "He"]
 
 - **Multiple articles** (Demonstrates both definite (the) and indefinite (a) article placement):
   - Word: "the"
   - Sentence: "The cat chased a mouse."
-  - Hint: "Кіт наздоганяв мишу."
+  - Translation: "Кіт наздоганяв мишу."
   - Scrambled: ["chased", "a", "mouse.", "cat", "The"]
 
 - **Question sentence** (Question word order with question mark attached to last word):
   - Word: "ready"
   - Sentence: "Are you ready?"
-  - Hint: "Ти готовий?"
+  - Translation: "Ти готовий?"
   - Scrambled: ["you", "ready?", "Are"]
 
 - **Exclamation sentence** (Exclamation with punctuation attached to last word):
   - Word: "incredible"
   - Sentence: "That was incredible!"
-  - Hint: "Це було неймовірно!"
+  - Translation: "Це було неймовірно!"
   - Scrambled: ["was", "That", "incredible!"]
 
 - **Sentence with comma** (Comma attached to word, period attached to last word):
   - Word: "happy"
   - Sentence: "I am tired, but happy."
-  - Hint: "Я втомлений, але щасливий."
+  - Translation: "Я втомлений, але щасливий."
   - Scrambled: ["tired,", "happy.", "I", "but", "am"]
 
 - **Level A1** (Simple present tense, basic subject-verb-object structure):
   - Word: "like"
   - Sentence: "I like my cat."
-  - Hint: "Мені подобається мій кіт."
+  - Translation: "Мені подобається мій кіт."
   - Scrambled: ["my", "I", "like", "cat."]
 
 - **Level A2** (Present continuous for future plans with time expression):
   - Word: "going"
   - Sentence: "We are going to the beach tomorrow."
-  - Hint: "Ми їдемо на пляж завтра."
+  - Translation: "Ми їдемо на пляж завтра."
   - Scrambled: ["tomorrow.", "going", "beach", "We", "the", "to", "are"]
 
 - **Level B1** (Second conditional structure with comma placement):
   - Word: "explore"
   - Sentence: "If I had time, I would explore the jungle."
-  - Hint: "Якби я мав час, я б досліджував джунглі."
+  - Translation: "Якби я мав час, я б досліджував джунглі."
   - Scrambled: ["time,", "If", "explore", "would", "had", "jungle.", "the", "I", "I"]
 
 - **Level B2** (Past perfect passive voice, complex temporal sequence):
   - Word: "been completed"
   - Sentence: "The project had been completed before the deadline."
-  - Hint: "Проєкт було завершено до дедлайну."
+  - Translation: "Проєкт було завершено до дедлайну."
   - Scrambled: ["had", "The", "been", "before", "deadline.", "completed", "project", "the"]
 
 - **Level C1** (Formal conjunction, advanced vocabulary with comma):
   - Word: "notwithstanding"
   - Sentence: "Notwithstanding the obstacles, we persevered."
-  - Hint: "Незважаючи на перешкоди, ми витримали."
+  - Translation: "Незважаючи на перешкоди, ми витримали."
   - Scrambled: ["persevered.", "we", "Notwithstanding", "obstacles,", "the"]
 
 **Ranking**:
@@ -786,7 +786,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 | Retrieval Effort      | 6     | Must reconstruct sentence; words visible but order requires thought    |
 | Cognitive Load        | 5     | Can overwhelm with many words; grammar rules add complexity            |
 | Association Building  | 6     | Shows word in grammatical context; builds sentence structure awareness |
-| Feedback Quality      | 6     | Shows correct order; Ukrainian hint helps understanding                |
+| Feedback Quality      | 6     | Shows correct order; Ukrainian translation helps understanding         |
 | Spacing Compatibility | 6     | Repeatable but same sentence feels redundant                           |
 | Engagement Factor     | 7     | Puzzle-like; satisfying to complete; interactive drag-and-drop         |
 | Transfer Potential    | 7     | Practices sentence construction; useful for writing skills             |

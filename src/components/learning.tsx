@@ -257,7 +257,7 @@ const toFindNonsenseSentenceTasks = (words: UserWord[], tasksData: TasksData['fi
 };
 
 const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTasks']) => {
-  return tasksData.map(({ id, sentence, hint }): WordOrderTask => {
+  return tasksData.map(({ id, sentence, translation }): WordOrderTask => {
     const found = words.find((word) => word.id === id);
     if (!found) {
       throw new Error('Word for WordOrder task is not found');
@@ -274,7 +274,7 @@ const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTask
         id,
         originalWords,
         shuffledWords: shuffle(originalWords),
-        hint,
+        translation: removePeriods(translation),
       },
     };
   });

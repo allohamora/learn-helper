@@ -410,7 +410,7 @@ export const toWordOrder = async (words: WordData[]) => {
         sentence: z
           .string()
           .describe('3-15 words, single spaces, punctuation attached to words, first word capitalized only'),
-        hint: z.string().describe('Ukrainian translation of the sentence'),
+        translation: z.string().describe('Ukrainian translation of the sentence'),
       }),
     ),
     prompt: [
@@ -421,15 +421,15 @@ export const toWordOrder = async (words: WordData[]) => {
       '- Add adjectives, adverbs, time expressions to reach minimum word count',
       '- All words separate: articles, prepositions, function words',
       '- Level-appropriate grammar; varied punctuation (., !, ?)',
-      '- Provide Ukrainian translation as hint: natural, grammatically perfect',
+      '- Provide Ukrainian translation: natural, grammatically perfect',
       '',
       'Reasoning Steps:',
       '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
       '2. Generate 3 Sentence Candidates: Write sentences using the word. For each, count words explicitly (e.g., "1-I 2-saw 3-a 4-cute 5-little 6-cat = 6 words") and check if within 3-15 range (yes/no)',
       '3. Validate Each: For all 3 candidates check: word count 3-15 (yes/no), natural phrasing (yes/no), unambiguous when shuffled (yes/no), level-appropriate (yes/no)',
       '4. Select Best: Choose sentence with most "yes" validations. If no candidate has all "yes", generate 2 new candidates and validate. Select the best valid option',
-      '5. Generate Ukrainian Hint: Translate selected sentence to natural, grammatically correct Ukrainian. Use standard Ukrainian spelling and vocabulary. Ensure proper verb conjugation, case agreement, and word choice',
-      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), first word capitalized (yes/no), words single-space separated (yes/no), punctuation attached to words (yes/no), target word present (yes/no), Ukrainian hint verified correct (yes/no). If any "no", fix the issue',
+      '5. Generate Ukrainian Translation: Translate selected sentence to natural, grammatically correct Ukrainian. Use standard Ukrainian spelling and vocabulary. Ensure proper verb conjugation, case agreement, and word choice',
+      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), first word capitalized (yes/no), words single-space separated (yes/no), punctuation attached to words (yes/no), target word present (yes/no), Ukrainian translation verified correct (yes/no). If any "no", fix the issue',
       '',
       'Words:',
       JSON.stringify(words),
