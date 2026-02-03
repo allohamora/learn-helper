@@ -274,7 +274,7 @@ const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTask
         id,
         originalWords,
         shuffledWords: shuffle(originalWords),
-        translation,
+        translation: removePeriods(translation),
       },
     };
   });
