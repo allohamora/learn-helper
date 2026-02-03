@@ -2,6 +2,7 @@ import {
   getGroupedByDayDiscoveryEvents,
   getGroupedByDayLearningEvents,
   getGroupedByDayTaskCostEvents,
+  getGroupedByDayUaTranslationUpdatedEvents,
   getGroupedByTypeEvents,
   getTopMistakes,
   getTopHintedWords,
@@ -13,6 +14,7 @@ import type {
   DiscoveringPerDayStatistics,
   LearningPerDayStatistics,
   Statistics,
+  UaTranslationUpdatedPerDayStatistics,
 } from '@/types/statistics.types';
 import { Status } from '@/types/user-words.types';
 import { daysAgo, endOfDay, startOfDay, toDateOnlyString } from '@/utils/date.utils';
@@ -26,6 +28,7 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalShowcasesCompleted: 0,
     totalWordsMovedToNextStep: 0,
     totalHintsViewed: 0,
+    totalUaTranslationsUpdated: 0,
     totalTaskCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -83,6 +86,9 @@ const getGeneralStatistics = async (data: AuthParams) => {
         continue;
       case EventType.HintViewed:
         result.totalHintsViewed = item.count;
+        continue;
+      case EventType.UaTranslationUpdated:
+        result.totalUaTranslationsUpdated = item.count;
         continue;
       case EventType.TaskCost:
         if (item.costInNanoDollars === null) {
@@ -235,16 +241,42 @@ const getCostPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom
   return Object.values(state);
 };
 
+const getUaTranslationUpdatedPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
+  const state = getDates(data).reduce(
+    (state, date) => ({ ...state, [date]: { date, count: 0 } }),
+    {} as Record<string, UaTranslationUpdatedPerDayStatistics>,
+  );
+
+  const events = await getGroupedByDayUaTranslationUpdatedEvents(data);
+  for (const item of events) {
+    const target = state[item.date];
+    if (target) {
+      target.count = item.count;
+    }
+  }
+
+  return Object.values(state);
+};
+
 export const getStatistics = async ({ userId }: AuthParams) => {
   const dateTo = endOfDay(new Date());
   const dateFrom = daysAgo(6, startOfDay(dateTo));
   const data = { userId, dateFrom, dateTo };
 
-  const [general, discoveringPerDay, learningPerDay, costPerDay, topMistakes, topHintedWords] = await Promise.all([
+  const [
+    general,
+    discoveringPerDay,
+    learningPerDay,
+    costPerDay,
+    uaTranslationUpdatedPerDay,
+    topMistakes,
+    topHintedWords,
+  ] = await Promise.all([
     getGeneralStatistics(data),
     getDiscoveringPerDayStatistics(data),
     getLearningPerDayStatistics(data),
     getCostPerDayStatistics(data),
+    getUaTranslationUpdatedPerDayStatistics(data),
     getTopMistakes({ userId, limit: 20 }),
     getTopHintedWords({ userId, limit: 20 }),
   ]);
@@ -254,6 +286,7 @@ export const getStatistics = async ({ userId }: AuthParams) => {
     discoveringPerDay,
     learningPerDay,
     costPerDay,
+    uaTranslationUpdatedPerDay,
     topMistakes,
     topHintedWords,
   } satisfies Statistics;

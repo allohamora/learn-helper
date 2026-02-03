@@ -12,6 +12,7 @@ import {
   Database,
   ArrowDownUp,
   Lightbulb,
+  Pencil,
 } from 'lucide-react';
 import { CartesianGrid, XAxis, YAxis, Area, AreaChart } from 'recharts';
 
@@ -65,6 +66,13 @@ const learningChartConfig = {
   durationMin: {
     label: 'Duration (min)',
     color: 'var(--chart-5)',
+  },
+} satisfies ChartConfig;
+
+const uaTranslationChartConfig = {
+  count: {
+    label: 'Updated',
+    color: 'var(--chart-1)',
   },
 } satisfies ChartConfig;
 
@@ -212,6 +220,17 @@ export const Statistics: FC = () => {
           <CardContent className="px-4 md:px-6">
             <div className="text-2xl font-bold">{general.totalHintsViewed.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">hints viewed</p>
+          </CardContent>
+        </Card>
+
+        <Card className="gap-0 py-4 md:py-6">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-2 md:px-6">
+            <CardTitle className="text-sm font-medium">Translations Updated</CardTitle>
+            <Pencil className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="px-4 md:px-6">
+            <div className="text-2xl font-bold">{general.totalUaTranslationsUpdated.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">translations corrected</p>
           </CardContent>
         </Card>
       </div>
@@ -569,6 +588,57 @@ export const Statistics: FC = () => {
                   type="monotone"
                   fill="url(#fillOutputTokens)"
                   stroke="var(--color-outputTokens)"
+                  strokeWidth={2}
+                  dot={{ r: 3, strokeWidth: 2 }}
+                  activeDot={{ r: 5 }}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="py-4 md:py-6">
+          <CardHeader className="space-y-1 px-4 md:px-6">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold">Translations Updated</CardTitle>
+              <Badge variant="secondary" className="font-normal">
+                <Calendar className="mr-1 h-3 w-3" />
+                Last 7 days
+              </Badge>
+            </div>
+            <CardDescription className="text-sm">Daily Ukrainian translations corrected</CardDescription>
+          </CardHeader>
+          <CardContent className="mt-auto px-4 pt-2 md:px-6">
+            <ChartContainer config={uaTranslationChartConfig}>
+              <AreaChart
+                accessibilityLayer
+                data={data.uaTranslationUpdatedPerDay.map((item) => ({
+                  ...item,
+                  date: toDateWithoutYear(item.date),
+                }))}
+              >
+                <defs>
+                  <linearGradient id="fillUaTranslationCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-count)" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                <XAxis
+                  hide={isPhoneScreen}
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  className="text-xs"
+                />
+                <YAxis hide={isPhoneScreen} tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
+                <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
+                <Area
+                  dataKey="count"
+                  type="monotone"
+                  fill="url(#fillUaTranslationCount)"
+                  stroke="var(--color-count)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
