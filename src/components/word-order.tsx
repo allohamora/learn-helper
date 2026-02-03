@@ -3,8 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TaskType, type WordOrderTask } from '@/types/user-words.types';
-import { HintButton } from './hint-button';
+import { type WordOrderTask } from '@/types/user-words.types';
 
 type Data = WordOrderTask['data'];
 
@@ -55,51 +54,44 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
     <div className="mx-auto max-w-2xl">
       <div className="mb-4 text-center md:mb-6">
         <h2 className="mb-2 text-lg font-semibold md:text-xl">{title}</h2>
-        <p className="text-sm text-muted-foreground">
-          <span className="align-middle">{subtitle}</span>
-          {data.hint && (
-            <HintButton
-              hint={data.hint}
-              userWordId={data.id}
-              taskType={TaskType.WordOrder}
-              className="ml-2 align-middle"
-            />
-          )}
-        </p>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
       <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
         <CardHeader className="px-4 md:px-6">
-          <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {selectedWords.length === 0 ? (
-                <span className="text-muted-foreground">Select words below to build the sentence</span>
-              ) : (
-                selectedWords.map((word, index) => {
-                  const isCorrectPosition = isChecked && data.originalWords[index] === word;
+          <div className="space-y-3 text-center">
+            <p className="px-3 py-2 text-base font-semibold text-white md:text-lg">{data.translation}</p>
+            <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {selectedWords.length === 0 ? (
+                  <span className="text-muted-foreground">Select words below to build the sentence</span>
+                ) : (
+                  selectedWords.map((word, index) => {
+                    const isCorrectPosition = isChecked && data.originalWords[index] === word;
 
-                  return (
-                    <button
-                      key={`${word}-${index}`}
-                      type="button"
-                      onClick={() => handleRemoveWord(word, index)}
-                      disabled={isChecked}
-                      className={cn(
-                        'inline-flex items-center rounded-md bg-primary/10 px-3 py-1.5 text-base font-medium transition-colors md:text-lg',
-                        !isChecked && 'cursor-pointer hover:bg-primary/20 active:bg-primary/30',
-                        isChecked && 'cursor-default',
-                        isCorrectPosition && 'bg-green-100 text-green-800',
-                        isChecked && !isCorrectPosition && 'bg-red-100 text-red-800',
-                      )}
-                      aria-label={isChecked ? undefined : `Remove ${word}`}
-                    >
-                      {word}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </CardTitle>
+                    return (
+                      <button
+                        key={`${word}-${index}`}
+                        type="button"
+                        onClick={() => handleRemoveWord(word, index)}
+                        disabled={isChecked}
+                        className={cn(
+                          'inline-flex items-center rounded-md bg-primary/10 px-3 py-1.5 text-base font-medium transition-colors md:text-lg',
+                          !isChecked && 'cursor-pointer hover:bg-primary/20 active:bg-primary/30',
+                          isChecked && 'cursor-default',
+                          isCorrectPosition && 'bg-green-100 text-green-800',
+                          isChecked && !isCorrectPosition && 'bg-red-100 text-red-800',
+                        )}
+                        aria-label={isChecked ? undefined : `Remove ${word}`}
+                      >
+                        {word}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </CardTitle>
+          </div>
         </CardHeader>
 
         <CardContent className="space-y-6 px-4 md:px-6">
