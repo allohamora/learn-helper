@@ -60,7 +60,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
       <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
         <CardHeader className="px-4 md:px-6">
           <div className="space-y-3 text-center">
-            <p className="px-3 py-2 text-base font-semibold text-white md:text-lg">{data.translation}</p>
+            <p className="px-3 py-2 text-base font-semibold text-foreground md:text-lg">{data.translation}</p>
             <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {selectedWords.length === 0 ? (
