@@ -246,11 +246,11 @@ describe.concurrent('user-word.service', () => {
       for (const task of tasks) {
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('sentence');
-        expect(task).toHaveProperty('hint');
+        expect(task).toHaveProperty('translation');
         expect(typeof task.sentence).toBe('string');
-        expect(typeof task.hint).toBe('string');
+        expect(typeof task.translation).toBe('string');
         expect(task.sentence.length).toBeGreaterThan(0);
-        expect(task.hint.length).toBeGreaterThan(0);
+        expect(task.translation.length).toBeGreaterThan(0);
         expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
       }
 
@@ -260,8 +260,8 @@ describe.concurrent('user-word.service', () => {
         'Target word/phrase or natural variation appears (e.g., "for the first time"→"my first time", "be going to do"→"are going to visit").',
         'Articles, prepositions, function words are separate. Multi-word phrases split into separate words.',
         'Level-appropriate grammar preferred: A1 simple, B1 ideally conditionals, B2+ advanced - but variations acceptable as long as sentences are natural and demonstrate proper word usage.',
-        'Each task has a hint field containing the Ukrainian translation of the sentence.',
-        'Ukrainian hints are grammatically correct, use standard Ukrainian spelling, and accurately convey the meaning of the English sentence. Different translation approaches are acceptable (e.g., "своїх бабусю та дідуся" or "своїх бабусь та дідусів").',
+        'Each task has a translation field containing the Ukrainian translation of the sentence.',
+        'Ukrainian translations are grammatically correct, use standard Ukrainian spelling, and accurately convey the meaning of the English sentence. Different translation approaches are acceptable (e.g., "своїх бабусю та дідуся" or "своїх бабусь та дідусів").',
       ]);
     });
   });
