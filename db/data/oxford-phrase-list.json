@@ -74,7 +74,7 @@
   {
     "value": "all over the world",
     "definition": "the earth, with all its countries, peoples and natural features",
-    "uaTranslation": "увесь світ",
+    "uaTranslation": "по всьому світу",
     "level": "a1",
     "spelling": "/ˌɔːl ˈəʊvər ðə wɜːrld/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/all/all_o/all_over_the_world_1_us_1.mp3",
@@ -101,7 +101,7 @@
   {
     "value": "arrive at",
     "definition": "to get to a place, especially at the end of a journey",
-    "uaTranslation": "прибувати на",
+    "uaTranslation": "прибувати до",
     "level": "a1",
     "spelling": "/əˈraɪv æt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/arr/arriv/arrive_at_1_us_1.mp3",
@@ -227,7 +227,7 @@
   {
     "value": "bad for (sb/sth)",
     "definition": "unpleasant; full of problems",
-    "uaTranslation": "погано для (когось/чогось)",
+    "uaTranslation": "шкідливо для (когось/чогось)",
     "level": "a1",
     "spelling": "/ˈbæd fər ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/b/bad/bad_f/bad_for_sb_1_us_1.mp3",
@@ -488,7 +488,7 @@
   {
     "value": "get off",
     "definition": "to receive something",
-    "uaTranslation": "отримати",
+    "uaTranslation": "вийти",
     "level": "a1",
     "spelling": "/ɡɛt ˈɔːf/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/get/get_o/get_off_1_us_3.mp3",
@@ -497,7 +497,7 @@
   {
     "value": "get on",
     "definition": "to receive something",
-    "uaTranslation": "отримати",
+    "uaTranslation": "сісти",
     "level": "a1",
     "spelling": "/ɡet ɑn/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/get/get_o/get_on_1_us_2.mp3",
@@ -524,7 +524,7 @@
   {
     "value": "get to",
     "definition": "to receive something",
-    "uaTranslation": "отримати",
+    "uaTranslation": "діставатися до",
     "level": "a1",
     "spelling": "/ɡet tu/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/get/get_t/get_to_1_us_1.mp3",
@@ -542,7 +542,7 @@
   {
     "value": "go back",
     "definition": "if two people go back a period of time (usually a long time), they have known each other for that time",
-    "uaTranslation": "бути знайомими довгий час",
+    "uaTranslation": "повертатися",
     "level": "a1",
     "spelling": "/ˈɡəʊ bæk/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/go_/go_ba/go_back_1_us_2.mp3",
@@ -560,7 +560,7 @@
   {
     "value": "go into (sth)",
     "definition": "to move or travel from one place to another",
-    "uaTranslation": "заходити (кудись)",
+    "uaTranslation": "заходити в (щось)",
     "level": "a1",
     "spelling": "/ˈɡəʊ ˈɪntu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/go_/go_in/go_into_sth_1_us_1.mp3",
@@ -569,7 +569,7 @@
   {
     "value": "go out",
     "definition": "to leave your house to go to a social event",
-    "uaTranslation": "піти",
+    "uaTranslation": "виходити",
     "level": "a1",
     "spelling": "/ˈɡəʊ aʊt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/go_/go_ou/go_out_1_us_1.mp3",
@@ -605,7 +605,7 @@
   {
     "value": "good at (sth)",
     "definition": "of high quality or an acceptable standard",
-    "uaTranslation": "добре в (чомусь)",
+    "uaTranslation": "добрий у (чомусь)",
     "level": "a1",
     "spelling": "/ɡʊd ət ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/goo/good_/good_at_sth_1_us_1.mp3",
@@ -623,7 +623,7 @@
   {
     "value": "good morning",
     "definition": "used to say hello politely when people first see each other in the morning; sometimes also used formally when people leave each other in the morning",
-    "uaTranslation": "Доброго ранку",
+    "uaTranslation": "доброго ранку",
     "level": "a1",
     "spelling": "/ˈɡʊd ˈmɔːrnɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/goo/good_/good_morning_1_us_1.mp3",
@@ -659,7 +659,7 @@
   {
     "value": "guess what",
     "definition": "to try and give an answer or make a judgement about something without being sure of all the facts",
-    "uaTranslation": "Вгадайте що!",
+    "uaTranslation": "вгадайте що",
     "level": "a1",
     "spelling": "/ˈɡes wɒt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/gue/guess/guess_what_1_us_2.mp3",
@@ -902,7 +902,7 @@
   {
     "value": "in the country",
     "definition": "an area of land that has or used to have its own government and laws",
-    "uaTranslation": "країна",
+    "uaTranslation": "у сільській місцевості",
     "level": "a1",
     "spelling": "/ɪn ðə ˈkʌntri/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/i/in_/in_th/in_the_country_1_us_1.mp3",
@@ -1262,7 +1262,7 @@
   {
     "value": "once a",
     "definition": "on one occasion only; one time",
-    "uaTranslation": "один раз",
+    "uaTranslation": "раз на",
     "level": "a1",
     "spelling": "/ˈwʌns ə/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/o/onc/once_/once_a_1_us_1.mp3",
@@ -1271,7 +1271,7 @@
   {
     "value": "one day",
     "definition": "a period of 24 hours",
-    "uaTranslation": "одна доба",
+    "uaTranslation": "один день",
     "level": "a1",
     "spelling": "/wʌn ˈdeɪ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/o/one/one_d/one_day_1_us_2.mp3",
@@ -1361,7 +1361,7 @@
   {
     "value": "really enjoy",
     "definition": "to get pleasure from something",
-    "uaTranslation": "щиро насолоджуватися",
+    "uaTranslation": "дуже насолоджуватися",
     "level": "a1",
     "spelling": "/ˈriːəli ɪnˈdʒɔɪ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/r/rea/reall/really_enjoy_1_us_1.mp3",
@@ -1388,7 +1388,7 @@
   {
     "value": "right now",
     "definition": "on or to the right side",
-    "uaTranslation": "праворуч",
+    "uaTranslation": "прямо зараз",
     "level": "a1",
     "spelling": "/raɪt naʊ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/r/rig/right/right_now_1_us_1.mp3",
@@ -1397,7 +1397,7 @@
   {
     "value": "see you",
     "definition": "to become aware of somebody/something by using your eyes",
-    "uaTranslation": "бачити",
+    "uaTranslation": "до зустрічі",
     "level": "a1",
     "spelling": "/ˈsiː juː/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/s/see/see_y/see_you_1_us_1.mp3",
@@ -1460,7 +1460,7 @@
   {
     "value": "such as",
     "definition": "used to emphasize the great degree of something",
-    "uaTranslation": "такий як",
+    "uaTranslation": "як-от",
     "level": "a1",
     "spelling": "/sʌtʃ ˈæz/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/s/suc/such_/such_as_1_us_1.mp3",
@@ -1721,7 +1721,7 @@
   {
     "value": "would like",
     "definition": "to find somebody/something pleasant, attractive or of a good enough standard; to enjoy something",
-    "uaTranslation": "хотів би / хотіла б",
+    "uaTranslation": "хотілося б",
     "level": "a1",
     "spelling": "/wʊd ˈlaɪk/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/wou/would/would_like_1_us_1.mp3",
@@ -1730,7 +1730,7 @@
   {
     "value": "would you like?",
     "definition": "used in polite offers or invitations",
-    "uaTranslation": "Чи хотіли б ви?",
+    "uaTranslation": "чи хотіли б ви?",
     "level": "a1",
     "spelling": "/wʊd ˈdʒu ˈlaɪk/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/wou/would/would_you_like_1_us_1.mp3",
@@ -1802,7 +1802,7 @@
   {
     "value": "a couple of (sth)",
     "definition": "two people or things",
-    "uaTranslation": "кілька (чогось)",
+    "uaTranslation": "пара (чогось)",
     "level": "a2",
     "spelling": "/ə ˈkʌpəl əv ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/a_c/a_cou/a_couple_of_sth_1_us_1.mp3",
@@ -1928,7 +1928,7 @@
   {
     "value": "as a result",
     "definition": "a thing that is caused or produced because of something else",
-    "uaTranslation": "як результат",
+    "uaTranslation": "в результаті",
     "level": "a2",
     "spelling": "/əz ə rɪˈzʌlt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/as_/as_a_/as_a_result_1_us_1.mp3",
@@ -1946,7 +1946,7 @@
   {
     "value": "as soon as",
     "definition": "in a short time from now; a short time after something else has happened",
-    "uaTranslation": "якнайшвидше",
+    "uaTranslation": "як тільки",
     "level": "a2",
     "spelling": "/æz ˈsuːn æz/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/as_/as_so/as_soon_as_1_us_1.mp3",
@@ -2009,7 +2009,7 @@
   {
     "value": "at the time of (sth)",
     "definition": "what is measured in minutes, hours, days, etc",
-    "uaTranslation": "у час/момент (чогось)",
+    "uaTranslation": "під час (чогось)",
     "level": "a2",
     "spelling": "/æt ðə ˈtaɪm əv ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/at_/at_th/at_the_time_of_sth_1_us_1.mp3",
@@ -2126,7 +2126,7 @@
   {
     "value": "check out",
     "definition": "to find out if something is correct, or if somebody is acceptable",
-    "uaTranslation": "перевіряти",
+    "uaTranslation": "виписуватися",
     "level": "a2",
     "spelling": "/ˈtʃɛk ˈaʊt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/che/check/check_out_1_us_2.mp3",
@@ -2162,7 +2162,7 @@
   {
     "value": "come on!",
     "definition": "used in orders to tell somebody to hurry or to try harder",
-    "uaTranslation": "Давай!",
+    "uaTranslation": "давай!",
     "level": "a2",
     "spelling": "/ˈkʌm ˈɑːn/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/com/come_/come_on__1_us_1.mp3",
@@ -2369,7 +2369,7 @@
   {
     "value": "followed by (sb/sth)",
     "definition": "to come or go after or behind somebody/something",
-    "uaTranslation": "за (кимось/чимось)",
+    "uaTranslation": "після (когось/чогось)",
     "level": "a2",
     "spelling": "/ˈfɒləʊd baɪ ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/f/fol/follo/followed_by_sb_1_us_1.mp3",
@@ -2423,7 +2423,7 @@
   {
     "value": "get out",
     "definition": "to produce or publish something",
-    "uaTranslation": "видати",
+    "uaTranslation": "вийти",
     "level": "a2",
     "spelling": "/ˈɡɛt ˈaʊt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/get/get_o/get_out_1_us_5.mp3",
@@ -2432,7 +2432,7 @@
   {
     "value": "give (sth) up",
     "definition": "to believe that somebody is never going to arrive, get better, be found, etc",
-    "uaTranslation": "втратити надію щодо (чогось)",
+    "uaTranslation": "відмовлятися від (чогось)",
     "level": "a2",
     "spelling": "/ˈɡɪv ˈsʌmθɪŋ ˈʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/giv/give_/give_sth_up_1_us_1.mp3",
@@ -2477,7 +2477,7 @@
   {
     "value": "go down (sth)",
     "definition": "from a high or higher point on something to a lower one",
-    "uaTranslation": "спускатися вниз по (чомусь)",
+    "uaTranslation": "спускатися по (чомусь)",
     "level": "a2",
     "spelling": "/ˈɡəʊ daʊn ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/go_/go_do/go_down_sth_1_us_1.mp3",
@@ -2486,7 +2486,7 @@
   {
     "value": "go for (sth)",
     "definition": "to move or travel from one place to another",
-    "uaTranslation": "іти до (чогось)",
+    "uaTranslation": "йти на (щось)",
     "level": "a2",
     "spelling": "/ˈɡəʊ fər ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/go_/go_fo/go_for_sth_1_us_1.mp3",
@@ -2585,7 +2585,7 @@
   {
     "value": "i guess",
     "definition": "to try and give an answer or make a judgement about something without being sure of all the facts",
-    "uaTranslation": "я думаю",
+    "uaTranslation": "я гадаю",
     "level": "a2",
     "spelling": "/aɪ ˈɡɛs/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/i/i_g/i_gue/i_guess_1_us_1.mp3",
@@ -2738,7 +2738,7 @@
   {
     "value": "in this way",
     "definition": "a method, style or manner of doing something",
-    "uaTranslation": "так",
+    "uaTranslation": "таким чином",
     "level": "a2",
     "spelling": "/ɪn ðɪs ˈweɪ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/i/in_/in_th/in_this_way_1_us_1.mp3",
@@ -2774,7 +2774,7 @@
   {
     "value": "less than",
     "definition": "almost",
-    "uaTranslation": "майже",
+    "uaTranslation": "менше ніж",
     "level": "a2",
     "spelling": "/ˈles ðæn/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/les/less_/less_than_1_us_1.mp3",
@@ -2810,7 +2810,7 @@
   {
     "value": "look back at (sth)",
     "definition": "to look again at something that you read or wrote earlier, in order to remind yourself what it said",
-    "uaTranslation": "переглянути (щось)",
+    "uaTranslation": "озиратися на (щось)",
     "level": "a2",
     "spelling": "/ˈlʊk ˈbæk ət ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/loo/look_/look_back_at_sth_1_us_1.mp3",
@@ -2819,7 +2819,7 @@
   {
     "value": "look (sth) up",
     "definition": "to become better",
-    "uaTranslation": "перевіряти (щось)",
+    "uaTranslation": "шукати (щось)",
     "level": "a2",
     "spelling": "/ˈlʊk ˈsʌmθɪŋ ˈʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/loo/look_/look_sth_up_1_us_1.mp3",
@@ -2900,7 +2900,7 @@
   {
     "value": "oh well",
     "definition": "used to express surprise, anger or relief",
-    "uaTranslation": "ну й добре",
+    "uaTranslation": "ну що ж",
     "level": "a2",
     "spelling": "/əʊ ˈwel/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/o/oh_/oh_we/oh_well_1_us_1.mp3",
@@ -3098,7 +3098,7 @@
   {
     "value": "save money",
     "definition": "to keep somebody/something safe from death, harm, loss, etc",
-    "uaTranslation": "рятувати",
+    "uaTranslation": "заощаджувати",
     "level": "a2",
     "spelling": "/ˈseɪv ˈmʌni/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/s/sav/save_/save_money_1_us_1.mp3",
@@ -3251,7 +3251,7 @@
   {
     "value": "the important thing",
     "definition": "having a great effect on people or things; of great value",
-    "uaTranslation": "важливе",
+    "uaTranslation": "важлива річ",
     "level": "a2",
     "spelling": "/ðə ɪmˈpɔːrtənt ˈθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/the/the_i/the_important_thing_1_us_1.mp3",
@@ -3332,7 +3332,7 @@
   {
     "value": "why not?",
     "definition": "used in questions to ask the reason for or purpose of something",
-    "uaTranslation": "Чому б ні?",
+    "uaTranslation": "чому б ні?",
     "level": "a2",
     "spelling": "/ˈwaɪ ˈnɑːt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/why/why_n/why_not_1_us_1.mp3",
@@ -3395,7 +3395,7 @@
   {
     "value": "a great deal",
     "definition": "an agreement, especially in business, on particular conditions for buying or doing something",
-    "uaTranslation": "угода",
+    "uaTranslation": "дуже багато",
     "level": "b1",
     "spelling": "/ə ˈɡreɪt ˈdiːl/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/a_g/a_gre/a_great_deal_1_us_1.mp3",
@@ -3440,7 +3440,7 @@
   {
     "value": "a range of (sth)",
     "definition": "a variety of things of a particular type",
-    "uaTranslation": "ряд (чогось)",
+    "uaTranslation": "діапазон (чогось)",
     "level": "b1",
     "spelling": "/ə ˈreɪndʒ əv ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/a_r/a_ran/a_range_of_sth_1_us_1.mp3",
@@ -3611,7 +3611,7 @@
   {
     "value": "be supposed to do (sth)",
     "definition": "to think or believe that something is true or possible (based on the knowledge that you have)",
-    "uaTranslation": "припускати, що хтось зробить (щось)",
+    "uaTranslation": "повинен (щось) зробити",
     "level": "b1",
     "spelling": "/bi səˈpəʊzd tu ˈdu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/b/be_/be_su/be_supposed_to_do_sth_1_us_1.mp3",
@@ -3629,7 +3629,7 @@
   {
     "value": "break up",
     "definition": "to separate into smaller pieces",
-    "uaTranslation": "розбиватися",
+    "uaTranslation": "розпадатися",
     "level": "b1",
     "spelling": "/ˈbreɪk ʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/b/bre/break/break_up_1_us_2.mp3",
@@ -3692,7 +3692,7 @@
   {
     "value": "clean up",
     "definition": "to win or make a lot of money",
-    "uaTranslation": "заробляти багато грошей",
+    "uaTranslation": "прибирати",
     "level": "b1",
     "spelling": "/ˈkliːn ʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/cle/clean/clean_up_1_us_2.mp3",
@@ -3746,7 +3746,7 @@
   {
     "value": "decide on (sth)",
     "definition": "to choose something from a number of possibilities",
-    "uaTranslation": "вирішити щодо (чогось)",
+    "uaTranslation": "обрати (щось)",
     "level": "b1",
     "spelling": "/dɪˈsaɪd ɒn ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/d/dec/decid/decide_on_sth_1_us_1.mp3",
@@ -3836,7 +3836,7 @@
   {
     "value": "fail to do (sth)",
     "definition": "to not be successful in achieving something",
-    "uaTranslation": "не вдатися зробити (щось)",
+    "uaTranslation": "не змогти зробити (щось)",
     "level": "b1",
     "spelling": "/ˈfeɪl tə ˈdu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/f/fai/fail_/fail_to_do_sth_1_us_1.mp3",
@@ -3872,7 +3872,7 @@
   {
     "value": "fed up",
     "definition": "bored or unhappy, especially with a situation that has continued for too long",
-    "uaTranslation": "набриднути",
+    "uaTranslation": "набридлий",
     "level": "b1",
     "spelling": "/ˈfed ˈʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/f/fed/fed_u/fed_up_1_us_1.mp3",
@@ -3944,7 +3944,7 @@
   {
     "value": "get to know (sb)",
     "definition": "to have information in your mind as a result of experience or because you have learned or been told it",
-    "uaTranslation": "дізнаватися (когось)",
+    "uaTranslation": "познайомитися з (кимось)",
     "level": "b1",
     "spelling": "/ˈɡet tə ˈnəʊ ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/get/get_t/get_to_know_sb_1_us_1.mp3",
@@ -3971,7 +3971,7 @@
   {
     "value": "go ahead",
     "definition": "to travel in front of other people in your group and arrive before them",
-    "uaTranslation": "іти вперед",
+    "uaTranslation": "йти попереду",
     "level": "b1",
     "spelling": "/ɡoʊ əˈhɛd/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/go_/go_ah/go_ahead_1_us_3.mp3",
@@ -4295,7 +4295,7 @@
   {
     "value": "make a difference",
     "definition": "the way in which two people or things are not like each other; the way in which somebody/something has changed",
-    "uaTranslation": "зробити внесок",
+    "uaTranslation": "мати значення",
     "level": "b1",
     "spelling": "/ˈmeɪk ə ˈdɪfrəns/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/m/mak/make_/make_a_difference_1_us_1.mp3",
@@ -4322,7 +4322,7 @@
   {
     "value": "mean to do (sth)",
     "definition": "to have something as a meaning in the same or another language",
-    "uaTranslation": "означати (щось)",
+    "uaTranslation": "мати намір (щось) зробити",
     "level": "b1",
     "spelling": "/ˈmiːn tu ˈdu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/m/mea/mean_/mean_to_do_sth_1_us_1.mp3",
@@ -4520,7 +4520,7 @@
   {
     "value": "prepared to do (sth)",
     "definition": "ready and able to deal with something",
-    "uaTranslation": "готовий до (чогось)",
+    "uaTranslation": "готовий (щось) зробити",
     "level": "b1",
     "spelling": "/pɹɪˈpɛɚd tu ˈdu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/p/pre/prepa/prepared_to_do_sth_1_us_1.mp3",
@@ -4547,7 +4547,7 @@
   {
     "value": "put (sth) up",
     "definition": "to show a particular level of skill, determination, etc. in a fight or contest",
-    "uaTranslation": "показати (щось)",
+    "uaTranslation": "вивішувати (щось)",
     "level": "b1",
     "spelling": "/ˈpʊt ˈsʌmθɪŋ ˈʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/p/put/put_s/put_sth_up_1_us_1.mp3",
@@ -4556,7 +4556,7 @@
   {
     "value": "quite a",
     "definition": "to some degree",
-    "uaTranslation": "аж",
+    "uaTranslation": "доволі",
     "level": "b1",
     "spelling": "/ˈkwaɪt ə/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/q/qui/quite/quite_a_1_us_1.mp3",
@@ -4673,7 +4673,7 @@
   {
     "value": "set (sth) up",
     "definition": "to provide somebody with the money that they need in order to do something",
-    "uaTranslation": "фінансувати (щось)",
+    "uaTranslation": "створювати (щось)",
     "level": "b1",
     "spelling": "/ˈset ʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/s/set/set_s/set_sth_up_1_us_1.mp3",
@@ -4691,7 +4691,7 @@
   {
     "value": "so far",
     "definition": "a long distance away",
-    "uaTranslation": "далеко",
+    "uaTranslation": "поки що",
     "level": "b1",
     "spelling": "/səʊ ˈfɑːr/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/s/so_/so_fa/so_far_1_us_1.mp3",
@@ -4790,7 +4790,7 @@
   {
     "value": "that's it",
     "definition": "used for referring to a person or thing that is not near the speaker, or not as near to the speaker as another",
-    "uaTranslation": "це",
+    "uaTranslation": "ось і все",
     "level": "b1",
     "spelling": "/ðæts ˈɪt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tha/that_/that_s_it_1_us_1.mp3",
@@ -4889,7 +4889,7 @@
   {
     "value": "up to (sth)",
     "definition": "towards or in a higher position",
-    "uaTranslation": "вгору до (чогось)",
+    "uaTranslation": "до (чогось)",
     "level": "b1",
     "spelling": "/ˈʌp tu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/u/up_/up_to/up_to_sth_1_us_1.mp3",
@@ -4898,7 +4898,7 @@
   {
     "value": "way of life",
     "definition": "the ability to breathe, grow, produce young, etc. that people, animals and plants have before they die and that objects do not have",
-    "uaTranslation": "життя",
+    "uaTranslation": "спосіб життя",
     "level": "b1",
     "spelling": "/ˈweɪ əv ˈlaɪf/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/way/way_o/way_of_life_1_us_1.mp3",
@@ -5015,7 +5015,7 @@
   {
     "value": "all the way",
     "definition": "a method, style or manner of doing something",
-    "uaTranslation": "повністю",
+    "uaTranslation": "весь шлях",
     "level": "b2",
     "spelling": "/ɔːl ðə ˈweɪ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/all/all_t/all_the_way_1_us_1.mp3",
@@ -5033,7 +5033,7 @@
   {
     "value": "apply to (sb/sth)",
     "definition": "to make a formal request, usually in writing, for something such as a job, a loan, permission for something, a place at a university, etc",
-    "uaTranslation": "подати заявку на (щось)",
+    "uaTranslation": "стосуватися (когось/чогось)",
     "level": "b2",
     "spelling": "/əˈplaɪ tu ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/app/apply/apply_to_sb_1_us_1.mp3",
@@ -5078,7 +5078,7 @@
   {
     "value": "as long as",
     "definition": "for a long time",
-    "uaTranslation": "як довго",
+    "uaTranslation": "за умови що",
     "level": "b2",
     "spelling": "/əz ˈlɔːŋ əz/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/as_/as_lo/as_long_as_1_us_1.mp3",
@@ -5105,7 +5105,7 @@
   {
     "value": "at once",
     "definition": "on one occasion only; one time",
-    "uaTranslation": "один раз",
+    "uaTranslation": "одразу",
     "level": "b2",
     "spelling": "/æt ˈwʌns/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/at_/at_on/at_once_1_us_1.mp3",
@@ -5285,7 +5285,7 @@
   {
     "value": "case study",
     "definition": "a detailed account of the development of a person, a group of people or a situation over a period of time",
-    "uaTranslation": "випадок для вивчення",
+    "uaTranslation": "аналіз випадку",
     "level": "b2",
     "spelling": "/ˈkeɪs ˌstʌdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/cas/case_/case_study_1_us_1.mp3",
@@ -5429,7 +5429,7 @@
   {
     "value": "exposure to (sth)",
     "definition": "the state of being in a place or situation where there is no protection from something harmful or unpleasant",
-    "uaTranslation": "піддавання (чомусь)",
+    "uaTranslation": "вплив (чогось)",
     "level": "b2",
     "spelling": "/ɪkˈspəʊʒər tə ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/e/exp/expos/exposure_to_sth_1_us_1.mp3",
@@ -5456,7 +5456,7 @@
   {
     "value": "find yourself doing (sth)",
     "definition": "to discover somebody/something unexpectedly or by chance",
-    "uaTranslation": "опинитися, роблячи (щось)",
+    "uaTranslation": "виявити, що робиш (щось)",
     "level": "b2",
     "spelling": "/ˈfaɪnd jərˈself ˈduːɪŋ ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/f/fin/find_/find_yourself_doing_sth_1_us_1.mp3",
@@ -5627,7 +5627,7 @@
   {
     "value": "in relation to (sb/sth)",
     "definition": "the way in which two people, groups or countries behave towards each other or deal with each other",
-    "uaTranslation": "у відношенні до (когось/чогось)",
+    "uaTranslation": "щодо (когось/чогось)",
     "level": "b2",
     "spelling": "/ɪn rɪˈleɪʃən tu ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/i/in_/in_re/in_relation_to_sb_1_us_1.mp3",
@@ -5735,7 +5735,7 @@
   {
     "value": "on board",
     "definition": "a long thin piece of strong hard material, especially wood, used, for example, for making floors, building walls and roofs and making boats",
-    "uaTranslation": "дошка",
+    "uaTranslation": "на борту",
     "level": "b2",
     "spelling": "/ɔːn ˈbɔːrd/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/o/on_/on_bo/on_board_1_us_1.mp3",
@@ -5780,7 +5780,7 @@
   {
     "value": "opposed to (sth)",
     "definition": "disagreeing strongly with something and trying to stop it",
-    "uaTranslation": "на противагу (чомусь)",
+    "uaTranslation": "проти (чогось)",
     "level": "b2",
     "spelling": "/əˈpəʊzd tu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/o/opp/oppos/opposed_to_sth_1_us_1.mp3",
@@ -5870,7 +5870,7 @@
   {
     "value": "ranging from",
     "definition": "to vary between two particular amounts, sizes, etc., including others between them",
-    "uaTranslation": "від",
+    "uaTranslation": "від ... до",
     "level": "b2",
     "spelling": "/ˈreɪndʒɪŋ frəm/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/r/ran/rangi/ranging_from_1_us_1.mp3",
@@ -5888,7 +5888,7 @@
   {
     "value": "relevant to (sb/sth)",
     "definition": "closely connected with the subject you are discussing or the situation you are in",
-    "uaTranslation": "стосовно (когось/чогось)",
+    "uaTranslation": "доречний для (когось/чогось)",
     "level": "b2",
     "spelling": "/ˈrɛləvənt tu ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/r/rel/relev/relevant_to_sb_1_us_1.mp3",
@@ -5906,7 +5906,7 @@
   {
     "value": "role model",
     "definition": "a person that people admire and try to copy",
-    "uaTranslation": "зразковий приклад для наслідування",
+    "uaTranslation": "взірець",
     "level": "b2",
     "spelling": "/ˈroʊl ˈmɑːdl/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/r/rol/role_/role_model_1_us_1.mp3",
@@ -5969,7 +5969,7 @@
   {
     "value": "subject to (sth)",
     "definition": "likely to be affected by something, especially something bad",
-    "uaTranslation": "піддаватися (чомусь)",
+    "uaTranslation": "підлягати (чомусь)",
     "level": "b2",
     "spelling": "/ˈsʌbdʒɪkt tu ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/s/sub/subje/subject_to_sth_1_us_1.mp3",
@@ -5996,7 +5996,7 @@
   {
     "value": "take over",
     "definition": "to begin to have control of or responsibility for something, especially in place of somebody else",
-    "uaTranslation": "перебрати",
+    "uaTranslation": "перейняти",
     "level": "b2",
     "spelling": "/ˈteɪk ˈəʊvər/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_over_1_us_2.mp3",
@@ -6338,7 +6338,7 @@
   {
     "value": "for the benefit of (sb)",
     "definition": "an advantage that something gives you; a helpful and useful effect that something has",
-    "uaTranslation": "на користь (комусь)",
+    "uaTranslation": "на користь (когось)",
     "level": "c1",
     "spelling": "/fər ðə ˈbenɪfɪt əv ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/f/for/for_t/for_the_benefit_of_sb_1_us_1.mp3",
@@ -6356,7 +6356,7 @@
   {
     "value": "get away with (sth)",
     "definition": "to steal something and escape with it",
-    "uaTranslation": "вкрасти (щось) й утекти",
+    "uaTranslation": "зійти з рук (за щось)",
     "level": "c1",
     "spelling": "/ˈɡet əˈweɪ wɪð ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/g/get/get_a/get_away_with_sth_1_us_1.mp3",
@@ -6671,7 +6671,7 @@
   {
     "value": "put it",
     "definition": "to move something into a particular place or position",
-    "uaTranslation": "покласти",
+    "uaTranslation": "сказати",
     "level": "c1",
     "spelling": "/pʊt ɪt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/p/put/put_i/put_it_1_us_1.mp3",

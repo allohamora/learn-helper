@@ -82,7 +82,7 @@
   {
     "value": "activity",
     "definition": "a thing that you do for interest or pleasure",
-    "uaTranslation": "активність",
+    "uaTranslation": "заняття",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ækˈtɪvəti/",
@@ -152,7 +152,7 @@
   {
     "value": "afraid",
     "definition": "feeling fear; frightened because you think that you might be hurt or suffer",
-    "uaTranslation": "боязкий",
+    "uaTranslation": "наляканий",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/əˈfreɪd/",
@@ -172,7 +172,7 @@
   {
     "value": "afternoon",
     "definition": "the period of time from 12 o'clock in the middle of the day until about 6 o’clock in the evening",
-    "uaTranslation": "після обіду",
+    "uaTranslation": "пополудень",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˌæftərˈnuːn/",
@@ -702,7 +702,7 @@
   {
     "value": "be",
     "definition": "used with a present participle to form progressive tenses",
-    "uaTranslation": "допоміжне дієслово бути",
+    "uaTranslation": "бути",
     "partOfSpeech": "auxiliary verb",
     "level": "a1",
     "spelling": "/bi/",
@@ -1002,7 +1002,7 @@
   {
     "value": "blue",
     "definition": "the colour of a clear sky or the sea on a clear day",
-    "uaTranslation": "синій",
+    "uaTranslation": "синій колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/bluː/",
@@ -1042,7 +1042,7 @@
   {
     "value": "boot",
     "definition": "a strong shoe that covers the foot and ankle and often the lower part of the leg",
-    "uaTranslation": "чоботи",
+    "uaTranslation": "чобіт",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/buːt/",
@@ -1052,7 +1052,7 @@
   {
     "value": "bored",
     "definition": "feeling tired and impatient because you have lost interest in somebody/something or because you have nothing to do",
-    "uaTranslation": "нудьгуючий",
+    "uaTranslation": "знуджений",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/bɔːrd/",
@@ -1072,7 +1072,7 @@
   {
     "value": "born",
     "definition": "to come out of your mother’s body at the beginning of your life",
-    "uaTranslation": "народжений",
+    "uaTranslation": "народжуватися",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/bɔːrn/",
@@ -1212,7 +1212,7 @@
   {
     "value": "brown",
     "definition": "the colour of earth or coffee",
-    "uaTranslation": "коричневий",
+    "uaTranslation": "коричневий колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/braʊn/",
@@ -1302,7 +1302,7 @@
   {
     "value": "by",
     "definition": "used for showing how or in what way something is done",
-    "uaTranslation": "біля",
+    "uaTranslation": "за допомогою",
     "partOfSpeech": "preposition",
     "level": "a1",
     "spelling": "/baɪ/",
@@ -1332,7 +1332,7 @@
   {
     "value": "cake",
     "definition": "a sweet food made from a mixture of flour, eggs, butter, sugar, etc. that is baked in an oven. Cakes are made in various shapes and sizes and are often decorated, for example with cream or icing",
-    "uaTranslation": "тістечко",
+    "uaTranslation": "торт",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/keɪk/",
@@ -1392,7 +1392,7 @@
   {
     "value": "capital",
     "definition": "having the form and size used at the beginning of a sentence or a name",
-    "uaTranslation": "велика літера",
+    "uaTranslation": "прописний",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/ˈkæpɪtl/",
@@ -1682,7 +1682,7 @@
   {
     "value": "climb",
     "definition": "to go up something towards the top",
-    "uaTranslation": "лізти",
+    "uaTranslation": "підніматися",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/klaɪm/",
@@ -1952,7 +1952,7 @@
   {
     "value": "could",
     "definition": "used as the past tense of ‘can’",
-    "uaTranslation": "міг би",
+    "uaTranslation": "міг",
     "partOfSpeech": "modal verb",
     "level": "a1",
     "spelling": "/kəd/",
@@ -1982,7 +1982,7 @@
   {
     "value": "cousin",
     "definition": "a child of your aunt or uncle",
-    "uaTranslation": "двоюрідний брат",
+    "uaTranslation": "двоюрідний родич",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈkʌzn/",
@@ -2322,7 +2322,7 @@
   {
     "value": "difficult",
     "definition": "not easy; needing effort or skill to do or to understand",
-    "uaTranslation": "важкий",
+    "uaTranslation": "складний",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/ˈdɪfɪkəlt/",
@@ -2362,7 +2362,7 @@
   {
     "value": "dish",
     "definition": "a flat shallow container for cooking food in or serving it from",
-    "uaTranslation": "блюдо",
+    "uaTranslation": "тарілка",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/dɪʃ/",
@@ -2452,7 +2452,7 @@
   {
     "value": "downstairs",
     "definition": "down the stairs; on or to a floor of a house or building lower than the one you are on, especially the one at ground level",
-    "uaTranslation": "униз",
+    "uaTranslation": "внизу",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/ˌdaʊnˈsterz/",
@@ -2512,7 +2512,7 @@
   {
     "value": "drive",
     "definition": "to operate a vehicle so that it goes in a particular direction",
-    "uaTranslation": "вести",
+    "uaTranslation": "керувати",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/draɪv/",
@@ -2722,7 +2722,7 @@
   {
     "value": "else",
     "definition": "in addition to something already mentioned",
-    "uaTranslation": "інакше",
+    "uaTranslation": "ще",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/els/",
@@ -2742,7 +2742,7 @@
   {
     "value": "email",
     "definition": "to send a message to somebody by email",
-    "uaTranslation": "відправити електронного листа",
+    "uaTranslation": "надсилати електронного листа",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/ˈiːmeɪl/",
@@ -2922,7 +2922,7 @@
   {
     "value": "excited",
     "definition": "feeling or showing happiness and enthusiasm",
-    "uaTranslation": "захоплений",
+    "uaTranslation": "схвильований",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/ɪkˈsaɪtɪd/",
@@ -2952,7 +2952,7 @@
   {
     "value": "exercise",
     "definition": "to do sports or other physical activities in order to stay healthy or become stronger; to make an animal do this",
-    "uaTranslation": "вправлятися",
+    "uaTranslation": "тренуватися",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/ˈeksərsaɪz/",
@@ -3312,7 +3312,7 @@
   {
     "value": "fine",
     "definition": "in good health",
-    "uaTranslation": "добре",
+    "uaTranslation": "здоровий",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/faɪn/",
@@ -3622,7 +3622,7 @@
   {
     "value": "front",
     "definition": "the part or side of something that faces forward; the side of something that you look at first",
-    "uaTranslation": "перед",
+    "uaTranslation": "передня частина",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/frʌnt/",
@@ -3652,7 +3652,7 @@
   {
     "value": "fun",
     "definition": "the feeling of enjoying yourself; activities that you enjoy",
-    "uaTranslation": "задоволення",
+    "uaTranslation": "розвага",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/fʌn/",
@@ -3722,7 +3722,7 @@
   {
     "value": "girl",
     "definition": "a female child",
-    "uaTranslation": "дівчина",
+    "uaTranslation": "дівчинка",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ɡɜːrl/",
@@ -3732,7 +3732,7 @@
   {
     "value": "girlfriend",
     "definition": "a girl or a woman that somebody is having a romantic relationship with",
-    "uaTranslation": "подруга",
+    "uaTranslation": "дівчина",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈɡɜːrlfrend/",
@@ -3822,7 +3822,7 @@
   {
     "value": "grandparent",
     "definition": "the father or mother of your father or mother",
-    "uaTranslation": "дідусь / бабуся",
+    "uaTranslation": "дідусь/бабуся",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈɡrænperənt/",
@@ -3852,7 +3852,7 @@
   {
     "value": "green",
     "definition": "the colour of grass and the leaves of most plants and trees",
-    "uaTranslation": "зелений",
+    "uaTranslation": "зелений колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ɡriːn/",
@@ -3872,7 +3872,7 @@
   {
     "value": "grey",
     "definition": "the colour of smoke or ashes",
-    "uaTranslation": "сірий",
+    "uaTranslation": "сірий колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ɡreɪ/",
@@ -3952,7 +3952,7 @@
   {
     "value": "half",
     "definition": "an amount equal to half of something/somebody",
-    "uaTranslation": "половина",
+    "uaTranslation": "пів",
     "partOfSpeech": "determiner",
     "level": "a1",
     "spelling": "/hæf/",
@@ -4012,7 +4012,7 @@
   {
     "value": "hard",
     "definition": "difficult to do, understand or answer",
-    "uaTranslation": "важкий",
+    "uaTranslation": "складний",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/hɑːrd/",
@@ -4202,7 +4202,7 @@
   {
     "value": "hi",
     "definition": "used to say hello",
-    "uaTranslation": "Привіт",
+    "uaTranslation": "привіт",
     "partOfSpeech": "exclamation",
     "level": "a1",
     "spelling": "/haɪ/",
@@ -4262,7 +4262,7 @@
   {
     "value": "holiday",
     "definition": "a period of time when you are not at work or school",
-    "uaTranslation": "свято",
+    "uaTranslation": "відпустка",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈhɑːlədeɪ/",
@@ -4502,7 +4502,7 @@
   {
     "value": "in",
     "definition": "into an object, an area or a substance",
-    "uaTranslation": "у",
+    "uaTranslation": "всередину",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/ɪn/",
@@ -4602,7 +4602,7 @@
   {
     "value": "interview",
     "definition": "to talk to somebody and ask them questions at a formal meeting to find out if they are suitable for a job, course of study, etc",
-    "uaTranslation": "брати інтерв'ю",
+    "uaTranslation": "проводити співбесіду",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/ˈɪntərvjuː/",
@@ -4622,7 +4622,7 @@
   {
     "value": "introduce",
     "definition": "to tell two or more people who have not met before what each other’s names are; to tell somebody what your name is",
-    "uaTranslation": "відрекомендувати",
+    "uaTranslation": "представити",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/ˌɪntrəˈduːs/",
@@ -4702,7 +4702,7 @@
   {
     "value": "join",
     "definition": "to fix or connect two or more things together",
-    "uaTranslation": "єднати",
+    "uaTranslation": "з'єднувати",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/dʒɔɪn/",
@@ -4802,7 +4802,7 @@
   {
     "value": "kind",
     "definition": "consisting of goods or services, not money",
-    "uaTranslation": "натура",
+    "uaTranslation": "натурою",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/kaɪnd/",
@@ -4962,7 +4962,7 @@
   {
     "value": "left",
     "definition": "the left side or direction",
-    "uaTranslation": "ліво",
+    "uaTranslation": "ліва сторона",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/left/",
@@ -4992,7 +4992,7 @@
   {
     "value": "let",
     "definition": "used for making suggestions or as a polite way of telling people what you want them to do",
-    "uaTranslation": "нехай",
+    "uaTranslation": "давай",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/let/",
@@ -5212,7 +5212,7 @@
   {
     "value": "lose",
     "definition": "to be unable to find something/somebody",
-    "uaTranslation": "губити",
+    "uaTranslation": "загубити",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/luːz/",
@@ -6022,7 +6022,7 @@
   {
     "value": "next",
     "definition": "after something else; then; afterwards",
-    "uaTranslation": "далі",
+    "uaTranslation": "потім",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/nekst/",
@@ -6282,7 +6282,7 @@
   {
     "value": "off",
     "definition": "used to say that something has been removed or become separated",
-    "uaTranslation": "від",
+    "uaTranslation": "геть",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/ɔːf/",
@@ -6372,7 +6372,7 @@
   {
     "value": "on",
     "definition": "on somebody’s body; being worn",
-    "uaTranslation": "увімкнено",
+    "uaTranslation": "на собі",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/ɑːn/",
@@ -6772,7 +6772,7 @@
   {
     "value": "parent",
     "definition": "a person’s father or mother",
-    "uaTranslation": "батько",
+    "uaTranslation": "батько/мати",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈperənt/",
@@ -6862,7 +6862,7 @@
   {
     "value": "past",
     "definition": "later than something",
-    "uaTranslation": "повз",
+    "uaTranslation": "після",
     "partOfSpeech": "preposition",
     "level": "a1",
     "spelling": "/pæst/",
@@ -7062,7 +7062,7 @@
   {
     "value": "pink",
     "definition": "the colour that is produced when you mix red and white together",
-    "uaTranslation": "рожевий",
+    "uaTranslation": "рожевий колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/pɪŋk/",
@@ -7432,7 +7432,7 @@
   {
     "value": "purple",
     "definition": "the colour of blue and red mixed together",
-    "uaTranslation": "фіолетовий",
+    "uaTranslation": "фіолетовий колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈpɜːrpl/",
@@ -7622,7 +7622,7 @@
   {
     "value": "red",
     "definition": "the colour of blood or fire",
-    "uaTranslation": "червоний",
+    "uaTranslation": "червоний колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/red/",
@@ -7732,7 +7732,7 @@
   {
     "value": "ride",
     "definition": "to sit on an animal, especially a horse, and control it as it moves",
-    "uaTranslation": "їхати верхи",
+    "uaTranslation": "їздити верхи",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/raɪd/",
@@ -7762,7 +7762,7 @@
   {
     "value": "right",
     "definition": "the right side or direction",
-    "uaTranslation": "право",
+    "uaTranslation": "права сторона",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/raɪt/",
@@ -7992,7 +7992,7 @@
   {
     "value": "section",
     "definition": "any of the parts into which something is divided",
-    "uaTranslation": "секція",
+    "uaTranslation": "розділ",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈsekʃn/",
@@ -8172,7 +8172,7 @@
   {
     "value": "should",
     "definition": "used to show what is right, appropriate, etc., especially when criticizing somebody’s actions",
-    "uaTranslation": "варто",
+    "uaTranslation": "слід",
     "partOfSpeech": "modal verb",
     "level": "a1",
     "spelling": "/ʃəd/",
@@ -8412,7 +8412,7 @@
   {
     "value": "some",
     "definition": "used with uncountable nouns or plural countable nouns to mean ‘an amount of’ or ‘a number of’, when the amount or number is not given",
-    "uaTranslation": "деякий",
+    "uaTranslation": "певна кількість",
     "partOfSpeech": "determiner",
     "level": "a1",
     "spelling": "/sʌm/",
@@ -8422,7 +8422,7 @@
   {
     "value": "some",
     "definition": "used to refer to an amount of something or a number of people or things when the amount or number is not given",
-    "uaTranslation": "дехто",
+    "uaTranslation": "деякі",
     "partOfSpeech": "pronoun",
     "level": "a1",
     "spelling": "/sʌm/",
@@ -8502,7 +8502,7 @@
   {
     "value": "sorry",
     "definition": "feeling sad and ashamed about something that has been done",
-    "uaTranslation": "шкода",
+    "uaTranslation": "винний",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/ˈsɑːri/",
@@ -8612,7 +8612,7 @@
   {
     "value": "spell",
     "definition": "to say or write the letters of a word in the correct order",
-    "uaTranslation": "диктувати по літерах",
+    "uaTranslation": "вимовляти по літерах",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/spel/",
@@ -8752,7 +8752,7 @@
   {
     "value": "story",
     "definition": "a description of events and people that the writer or speaker has invented in order to entertain people",
-    "uaTranslation": "оповідання",
+    "uaTranslation": "історія",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈstɔːri/",
@@ -9072,7 +9072,7 @@
   {
     "value": "tell",
     "definition": "to give information to somebody by speaking or writing",
-    "uaTranslation": "розсказа́ти",
+    "uaTranslation": "розповісти",
     "partOfSpeech": "verb",
     "level": "a1",
     "spelling": "/tel/",
@@ -9692,7 +9692,7 @@
   {
     "value": "true",
     "definition": "connected with facts rather than things that have been invented or guessed",
-    "uaTranslation": "справжній",
+    "uaTranslation": "правдивий",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/truː/",
@@ -9902,7 +9902,7 @@
   {
     "value": "upstairs",
     "definition": "up the stairs; on or to a floor of a house or other building higher than the one that you are on",
-    "uaTranslation": "наверх",
+    "uaTranslation": "нагорі",
     "partOfSpeech": "adverb",
     "level": "a1",
     "spelling": "/ˌʌpˈsterz/",
@@ -10262,7 +10262,7 @@
   {
     "value": "well",
     "definition": "in good health",
-    "uaTranslation": "добре",
+    "uaTranslation": "здоровий",
     "partOfSpeech": "adjective",
     "level": "a1",
     "spelling": "/wel/",
@@ -10422,7 +10422,7 @@
   {
     "value": "white",
     "definition": "the colour of fresh snow or of milk",
-    "uaTranslation": "білий",
+    "uaTranslation": "білий колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/waɪt/",
@@ -10632,7 +10632,7 @@
   {
     "value": "writing",
     "definition": "the activity of writing, in contrast to reading, speaking, etc",
-    "uaTranslation": "письмо",
+    "uaTranslation": "писання",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈraɪtɪŋ/",
@@ -10682,7 +10682,7 @@
   {
     "value": "yellow",
     "definition": "the colour of lemons or butter",
-    "uaTranslation": "жовтий",
+    "uaTranslation": "жовтий колір",
     "partOfSpeech": "noun",
     "level": "a1",
     "spelling": "/ˈjeləʊ/",
@@ -10972,7 +10972,7 @@
   {
     "value": "airline",
     "definition": "a company that provides regular flights to take passengers and goods to different places",
-    "uaTranslation": "авіалінія",
+    "uaTranslation": "авіакомпанія",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ˈerlaɪn/",
@@ -11202,7 +11202,7 @@
   {
     "value": "anywhere",
     "definition": "used in negative sentences and in questions instead of somewhere",
-    "uaTranslation": "ніде",
+    "uaTranslation": "будь-де",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/ˈeniwer/",
@@ -11212,7 +11212,7 @@
   {
     "value": "anywhere",
     "definition": "used in negative sentences and in questions instead of somewhere",
-    "uaTranslation": "ніде",
+    "uaTranslation": "будь-де",
     "partOfSpeech": "pronoun",
     "level": "a2",
     "spelling": "/ˈeniwer/",
@@ -11352,7 +11352,7 @@
   {
     "value": "asleep",
     "definition": "sleeping",
-    "uaTranslation": "сонний",
+    "uaTranslation": "сплячий",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/əˈsliːp/",
@@ -11362,7 +11362,7 @@
   {
     "value": "assistant",
     "definition": "having a rank below that of a senior person and helping them in their work",
-    "uaTranslation": "помічник",
+    "uaTranslation": "допоміжний",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/əˈsɪstənt/",
@@ -11422,7 +11422,7 @@
   {
     "value": "attention",
     "definition": "used for asking people to listen to something that is being announced",
-    "uaTranslation": "Увага!",
+    "uaTranslation": "увага!",
     "partOfSpeech": "exclamation",
     "level": "a2",
     "spelling": "/əˈtenʃn/",
@@ -11682,7 +11682,7 @@
   {
     "value": "belong",
     "definition": "to be in the right or suitable place",
-    "uaTranslation": "належати",
+    "uaTranslation": "бути на своєму місці",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/bɪˈlɔːŋ/",
@@ -12002,7 +12002,7 @@
   {
     "value": "brush",
     "definition": "to clean, polish or make something smooth with a brush",
-    "uaTranslation": "чітко",
+    "uaTranslation": "чистити щіткою",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/brʌʃ/",
@@ -12222,7 +12222,7 @@
   {
     "value": "certain",
     "definition": "strongly believing something; having no doubts",
-    "uaTranslation": "певним",
+    "uaTranslation": "певний",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/ˈsɜːrtn/",
@@ -12322,7 +12322,7 @@
   {
     "value": "chip",
     "definition": "a long thin piece of potato fried in oil or fat",
-    "uaTranslation": "чіпси",
+    "uaTranslation": "картопля фрі",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/tʃɪp/",
@@ -13352,7 +13352,7 @@
   {
     "value": "double",
     "definition": "a number or amount that is twice as much or as many as another number or amount",
-    "uaTranslation": "подвоє",
+    "uaTranslation": "удвічі більше",
     "partOfSpeech": "pronoun",
     "level": "a2",
     "spelling": "/ˈdʌbl/",
@@ -13462,7 +13462,7 @@
   {
     "value": "drop",
     "definition": "to allow something to fall by accident; to fall by accident",
-    "uaTranslation": "впускати",
+    "uaTranslation": "упустити",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/drɑːp/",
@@ -13562,7 +13562,7 @@
   {
     "value": "either",
     "definition": "one or the other of two; it does not matter which",
-    "uaTranslation": "або",
+    "uaTranslation": "будь-який із двох",
     "partOfSpeech": "determiner",
     "level": "a2",
     "spelling": "/ˈiːðər/",
@@ -13572,7 +13572,7 @@
   {
     "value": "either",
     "definition": "one or the other of two; it does not matter which",
-    "uaTranslation": "або",
+    "uaTranslation": "будь-який із двох",
     "partOfSpeech": "pronoun",
     "level": "a2",
     "spelling": "/ˈiːðər/",
@@ -13792,7 +13792,7 @@
   {
     "value": "evidence",
     "definition": "the facts, signs or objects that make you believe that something is true",
-    "uaTranslation": "дока́з",
+    "uaTranslation": "докази",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ˈevɪdəns/",
@@ -13972,7 +13972,7 @@
   {
     "value": "fail",
     "definition": "to not be successful in achieving something",
-    "uaTranslation": "не вдаватися",
+    "uaTranslation": "зазнавати невдачі",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/feɪl/",
@@ -14262,7 +14262,7 @@
   {
     "value": "fix",
     "definition": "to repair or correct something",
-    "uaTranslation": "лагод_ити",
+    "uaTranslation": "лагодити",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/fɪks/",
@@ -14682,7 +14682,7 @@
   {
     "value": "gun",
     "definition": "a weapon that is used for firing bullets or shells",
-    "uaTranslation": "пістолет",
+    "uaTranslation": "вогнепальна зброя",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ɡʌn/",
@@ -14742,7 +14742,7 @@
   {
     "value": "have",
     "definition": "used with the past participle to form perfect tenses",
-    "uaTranslation": "мати",
+    "uaTranslation": "допоміжне дієслово",
     "partOfSpeech": "auxiliary verb",
     "level": "a2",
     "spelling": "/həv/",
@@ -15292,7 +15292,7 @@
   {
     "value": "intelligent",
     "definition": "good at learning, understanding and thinking in a logical way about things; showing this ability",
-    "uaTranslation": "інтелектуальний",
+    "uaTranslation": "розумний",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/ɪnˈtelɪdʒənt/",
@@ -15382,7 +15382,7 @@
   {
     "value": "itself",
     "definition": "used when the animal or thing that does an action is also affected by it",
-    "uaTranslation": "саме",
+    "uaTranslation": "саме себе",
     "partOfSpeech": "pronoun",
     "level": "a2",
     "spelling": "/ɪtˈself/",
@@ -15602,7 +15602,7 @@
   {
     "value": "last",
     "definition": "after anyone or anything else; at the end",
-    "uaTranslation": "останній",
+    "uaTranslation": "останнім",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/læst/",
@@ -15782,7 +15782,7 @@
   {
     "value": "less",
     "definition": "almost",
-    "uaTranslation": "менше",
+    "uaTranslation": "майже",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/les/",
@@ -15922,7 +15922,7 @@
   {
     "value": "lock",
     "definition": "to fasten something with a lock; to be fastened with a lock",
-    "uaTranslation": "зачиняти",
+    "uaTranslation": "замикати",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/lɑːk/",
@@ -16082,7 +16082,7 @@
   {
     "value": "male",
     "definition": "a male person, animal or plant",
-    "uaTranslation": "чоловік",
+    "uaTranslation": "самець",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/meɪl/",
@@ -16122,7 +16122,7 @@
   {
     "value": "mark",
     "definition": "a written or printed symbol that is used as a sign of something, for example the quality of something or who made or owns it",
-    "uaTranslation": "ознака",
+    "uaTranslation": "позначка",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/mɑːrk/",
@@ -16372,7 +16372,7 @@
   {
     "value": "mobile",
     "definition": "a mobile phone",
-    "uaTranslation": "мобільний",
+    "uaTranslation": "мобільний телефон",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ˈməʊbl/",
@@ -16552,7 +16552,7 @@
   {
     "value": "nervous",
     "definition": "anxious about something or afraid of something",
-    "uaTranslation": "схвильований",
+    "uaTranslation": "нервовий",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/ˈnɜːrvəs/",
@@ -16732,7 +16732,7 @@
   {
     "value": "onto",
     "definition": "used with verbs to express movement on or to a particular place or position",
-    "uaTranslation": "на + Знахідний відмінок",
+    "uaTranslation": "на",
     "partOfSpeech": "preposition",
     "level": "a2",
     "spelling": "/ˈɑːntə/",
@@ -16822,7 +16822,7 @@
   {
     "value": "outside",
     "definition": "the outer side or surface of something",
-    "uaTranslation": "зовні",
+    "uaTranslation": "зовнішній бік",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ˌaʊtˈsaɪd/",
@@ -16832,7 +16832,7 @@
   {
     "value": "outside",
     "definition": "on or to a place on the outside of something",
-    "uaTranslation": "зовні",
+    "uaTranslation": "поза",
     "partOfSpeech": "preposition",
     "level": "a2",
     "spelling": "/ˌaʊtˈsaɪd/",
@@ -17042,7 +17042,7 @@
   {
     "value": "per cent",
     "definition": "in every way",
-    "uaTranslation": "всебічно",
+    "uaTranslation": "у відсотках",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/pər ˈsent/",
@@ -17322,7 +17322,7 @@
   {
     "value": "possession",
     "definition": "something that you own or have with you at a particular time",
-    "uaTranslation": "володіння",
+    "uaTranslation": "власність",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/pəˈzeʃn/",
@@ -18312,7 +18312,7 @@
   {
     "value": "salary",
     "definition": "money that employees receive for doing their job, especially professional employees or people working in an office, usually paid every month",
-    "uaTranslation": "оклад",
+    "uaTranslation": "зарплата",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ˈsæləri/",
@@ -18462,7 +18462,7 @@
   {
     "value": "second",
     "definition": "after one other person or thing in order or importance",
-    "uaTranslation": "другий",
+    "uaTranslation": "другим",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/ˈsekənd/",
@@ -18872,7 +18872,7 @@
   {
     "value": "skiing",
     "definition": "the sport or activity of moving over snow on skis",
-    "uaTranslation": "лижі",
+    "uaTranslation": "катання на лижах",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ˈskiːɪŋ/",
@@ -19102,7 +19102,7 @@
   {
     "value": "somewhere",
     "definition": "a place that you do not know or do not mention by name",
-    "uaTranslation": "місце",
+    "uaTranslation": "десь",
     "partOfSpeech": "pronoun",
     "level": "a2",
     "spelling": "/ˈsʌmwer/",
@@ -19222,7 +19222,7 @@
   {
     "value": "stair",
     "definition": "a set of steps built between two floors inside a building",
-    "uaTranslation": "сходинка",
+    "uaTranslation": "сходи",
     "partOfSpeech": "noun",
     "level": "a2",
     "spelling": "/ster/",
@@ -19682,7 +19682,7 @@
   {
     "value": "taste",
     "definition": "to have a particular taste",
-    "uaTranslation": "куштувати",
+    "uaTranslation": "мати смак",
     "partOfSpeech": "verb",
     "level": "a2",
     "spelling": "/teɪst/",
@@ -20132,7 +20132,7 @@
   {
     "value": "underground",
     "definition": "under the surface of the ground",
-    "uaTranslation": "підземно",
+    "uaTranslation": "під землею",
     "partOfSpeech": "adverb",
     "level": "a2",
     "spelling": "/ˌʌndərˈɡraʊnd/",
@@ -20232,7 +20232,7 @@
   {
     "value": "used to",
     "definition": "used to say that something happened continuously or frequently during a period in the past",
-    "uaTranslation": "зазвичай",
+    "uaTranslation": "мав звичку",
     "partOfSpeech": "modal verb",
     "level": "a2",
     "spelling": "/ˈjuːst tə/",
@@ -20602,7 +20602,7 @@
   {
     "value": "worse",
     "definition": "of poorer quality or lower standard; more unpleasant",
-    "uaTranslation": "гірше",
+    "uaTranslation": "гірший",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/wɜːrs/",
@@ -20612,7 +20612,7 @@
   {
     "value": "worst",
     "definition": "of the poorest quality or lowest standard; worse than any other person or thing of a similar kind",
-    "uaTranslation": "найгірше",
+    "uaTranslation": "найгірший",
     "partOfSpeech": "adjective",
     "level": "a2",
     "spelling": "/wɜːrst/",
@@ -20642,7 +20642,7 @@
   {
     "value": "yours",
     "definition": "of or belonging to you",
-    "uaTranslation": "твій/твоя/твоє/твої",
+    "uaTranslation": "ваш",
     "partOfSpeech": "pronoun",
     "level": "a2",
     "spelling": "/jərz/",
@@ -21062,7 +21062,7 @@
   {
     "value": "appointment",
     "definition": "a formal arrangement to meet or visit somebody at a particular time, especially for a reason connected with their work",
-    "uaTranslation": "призначення",
+    "uaTranslation": "зустріч",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/əˈpɔɪntmənt/",
@@ -21182,7 +21182,7 @@
   {
     "value": "attraction",
     "definition": "an interesting or lively place to go or thing to do",
-    "uaTranslation": "атракціон",
+    "uaTranslation": "принада",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/əˈtrækʃn/",
@@ -21222,7 +21222,7 @@
   {
     "value": "aware",
     "definition": "knowing or realizing something",
-    "uaTranslation": "усвідомлений",
+    "uaTranslation": "обізнаний",
     "partOfSpeech": "adjective",
     "level": "b1",
     "spelling": "/əˈwer/",
@@ -21322,7 +21322,7 @@
   {
     "value": "basis",
     "definition": "the way things are organized or arranged; how often something happens",
-    "uaTranslation": "підстава",
+    "uaTranslation": "основа",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ˈbeɪsɪs/",
@@ -22302,7 +22302,7 @@
   {
     "value": "consist",
     "definition": "a set of railway vehicles forming a complete train",
-    "uaTranslation": "склад поїзда",
+    "uaTranslation": "складатися",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/kənˈsɪst/",
@@ -22622,7 +22622,7 @@
   {
     "value": "damage",
     "definition": "physical harm caused to something which makes it less attractive, useful or valuable",
-    "uaTranslation": "шкода",
+    "uaTranslation": "пошкодження",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ˈdæmɪdʒ/",
@@ -23102,7 +23102,7 @@
   {
     "value": "educate",
     "definition": "to teach somebody over a period of time at a school, university, etc",
-    "uaTranslation": "освічувати",
+    "uaTranslation": "навчати",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/ˈedʒukeɪt/",
@@ -23222,7 +23222,7 @@
   {
     "value": "employment",
     "definition": "work, especially when it is done to earn money; the state of being employed",
-    "uaTranslation": "працевлаштування",
+    "uaTranslation": "зайнятість",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ɪmˈplɔɪmənt/",
@@ -23322,7 +23322,7 @@
   {
     "value": "environmental",
     "definition": "connected with the natural conditions in which people, animals and plants live; connected with the environment",
-    "uaTranslation": "довкільний",
+    "uaTranslation": "екологічний",
     "partOfSpeech": "adjective",
     "level": "b1",
     "spelling": "/ɪnˌvaɪrənˈmentl/",
@@ -23392,7 +23392,7 @@
   {
     "value": "essential",
     "definition": "completely necessary; extremely important in a particular situation or for a particular activity",
-    "uaTranslation": "суттєвий",
+    "uaTranslation": "необхідний",
     "partOfSpeech": "adjective",
     "level": "b1",
     "spelling": "/ɪˈsenʃl/",
@@ -23712,7 +23712,7 @@
   {
     "value": "feature",
     "definition": "to include a particular person or thing as a special feature",
-    "uaTranslation": "представляти",
+    "uaTranslation": "включати",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/ˈfiːtʃər/",
@@ -23882,7 +23882,7 @@
   {
     "value": "following",
     "definition": "the thing or things that you will mention next; the person or people that you will mention next",
-    "uaTranslation": "наступний",
+    "uaTranslation": "наступне",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ˈfɑːləʊɪŋ/",
@@ -24522,7 +24522,7 @@
   {
     "value": "hurry",
     "definition": "very quickly or more quickly than usual",
-    "uaTranslation": "поспіхом",
+    "uaTranslation": "поспіх",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ˈhɜːri/",
@@ -25112,7 +25112,7 @@
   {
     "value": "lead",
     "definition": "the position ahead of everyone else in a race or competition",
-    "uaTranslation": "лідерство",
+    "uaTranslation": "перевага",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/liːd/",
@@ -25632,7 +25632,7 @@
   {
     "value": "mud",
     "definition": "wet earth that is soft and sticky",
-    "uaTranslation": "бруд",
+    "uaTranslation": "багнюка",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/mʌd/",
@@ -25772,7 +25772,7 @@
   {
     "value": "need",
     "definition": "used to state that something is/was not necessary or that only very little is/was necessary; used to ask if something is/was necessary",
-    "uaTranslation": "потребувати",
+    "uaTranslation": "потрібно",
     "partOfSpeech": "modal verb",
     "level": "b1",
     "spelling": "/niːd/",
@@ -25882,7 +25882,7 @@
   {
     "value": "now",
     "definition": "because the thing mentioned is happening or has just happened",
-    "uaTranslation": "зараз",
+    "uaTranslation": "оскільки",
     "partOfSpeech": "conjunction",
     "level": "b1",
     "spelling": "/naʊ/",
@@ -26052,7 +26052,7 @@
   {
     "value": "outdoor",
     "definition": "used, happening or located outside rather than in a building",
-    "uaTranslation": "зовнішній",
+    "uaTranslation": "на відкритому повітрі",
     "partOfSpeech": "adjective",
     "level": "b1",
     "spelling": "/ˈaʊtdɔːr/",
@@ -26252,7 +26252,7 @@
   {
     "value": "photography",
     "definition": "the art, process or job of taking photographs or filming something",
-    "uaTranslation": "фотографія",
+    "uaTranslation": "фотографування",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/fəˈtɑːɡrəfi/",
@@ -27082,7 +27082,7 @@
   {
     "value": "reference",
     "definition": "a thing you say or write that mentions somebody/something else; the act of mentioning somebody/something",
-    "uaTranslation": "посилання",
+    "uaTranslation": "згадка",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ˈrefrəns/",
@@ -27332,7 +27332,7 @@
   {
     "value": "request",
     "definition": "to ask for something or ask somebody to do something in a polite or formal way",
-    "uaTranslation": "запитувати",
+    "uaTranslation": "просити",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/rɪˈkwest/",
@@ -27922,7 +27922,7 @@
   {
     "value": "silent",
     "definition": "where there is little or no sound; making little or no sound",
-    "uaTranslation": "мовчазний",
+    "uaTranslation": "тихий",
     "partOfSpeech": "adjective",
     "level": "b1",
     "spelling": "/ˈsaɪlənt/",
@@ -28242,7 +28242,7 @@
   {
     "value": "statistic",
     "definition": "a collection of information shown in numbers",
-    "uaTranslation": "статистика",
+    "uaTranslation": "статистичний показник",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/stəˈtɪstɪk/",
@@ -28432,7 +28432,7 @@
   {
     "value": "summary",
     "definition": "a short statement that gives only the main points of something, not the details",
-    "uaTranslation": "резюме",
+    "uaTranslation": "підсумок",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/ˈsʌməri/",
@@ -28772,7 +28772,7 @@
   {
     "value": "tin",
     "definition": "a metal container in which food is sold; the contents of one of these containers",
-    "uaTranslation": "консерви",
+    "uaTranslation": "консерва",
     "partOfSpeech": "noun",
     "level": "b1",
     "spelling": "/tɪn/",
@@ -29282,7 +29282,7 @@
   {
     "value": "violent",
     "definition": "involving or caused by physical force that is intended to hurt or kill somebody",
-    "uaTranslation": "жорстокий",
+    "uaTranslation": "насильницький",
     "partOfSpeech": "adjective",
     "level": "b1",
     "spelling": "/ˈvaɪələnt/",
@@ -29552,7 +29552,7 @@
   {
     "value": "wonder",
     "definition": "to think about something and try to decide what is true, what will happen, what you should do, etc",
-    "uaTranslation": "цікавитися",
+    "uaTranslation": "замислюватися",
     "partOfSpeech": "verb",
     "level": "b1",
     "spelling": "/ˈwʌndər/",
@@ -29582,7 +29582,7 @@
   {
     "value": "worldwide",
     "definition": "affecting all parts of the world",
-    "uaTranslation": "увесь світ",
+    "uaTranslation": "в усьому світі",
     "partOfSpeech": "adverb",
     "level": "b1",
     "spelling": "/ˌwɜːrldˈwaɪd/",
@@ -30442,7 +30442,7 @@
   {
     "value": "approve",
     "definition": "to think that somebody/something is good, acceptable or suitable",
-    "uaTranslation": "схвалити",
+    "uaTranslation": "схвалювати",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/əˈpruːv/",
@@ -30752,7 +30752,7 @@
   {
     "value": "awkward",
     "definition": "making you feel embarrassed",
-    "uaTranslation": "незграбний",
+    "uaTranslation": "незручний",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/ˈɔːkwərd/",
@@ -31302,7 +31302,7 @@
   {
     "value": "broadcaster",
     "definition": "a person whose job is presenting or talking on television or radio programmes",
-    "uaTranslation": "мовець",
+    "uaTranslation": "ведучий",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈbrɔːdkæstər/",
@@ -32672,7 +32672,7 @@
   {
     "value": "convention",
     "definition": "the way in which something is done that most people in a society expect and consider to be polite or the right way to do it",
-    "uaTranslation": "звичаєвість",
+    "uaTranslation": "звичай",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/kənˈvenʃn/",
@@ -33012,7 +33012,7 @@
   {
     "value": "crop",
     "definition": "a plant that is grown in large quantities, especially as food",
-    "uaTranslation": "врожай",
+    "uaTranslation": "сільськогосподарська культура",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/krɑːp/",
@@ -33042,7 +33042,7 @@
   {
     "value": "cruise",
     "definition": "to travel in a ship or boat visiting different places, especially as a holiday",
-    "uaTranslation": "подорожувати в круїз",
+    "uaTranslation": "подорожувати круїзом",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/kruːz/",
@@ -33212,7 +33212,7 @@
   {
     "value": "date",
     "definition": "to write or print the date on something",
-    "uaTranslation": "дати",
+    "uaTranslation": "датувати",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/deɪt/",
@@ -33882,7 +33882,7 @@
   {
     "value": "discourage",
     "definition": "to try to prevent something or to prevent somebody from doing something, especially by making it difficult to do or by showing that you do not approve of it",
-    "uaTranslation": "змагати",
+    "uaTranslation": "знеохочувати",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/dɪsˈkɜːrɪdʒ/",
@@ -33932,7 +33932,7 @@
   {
     "value": "display",
     "definition": "an arrangement of things in a public place to inform or entertain people or advertise something for sale",
-    "uaTranslation": "вітрина",
+    "uaTranslation": "експозиція",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/dɪˈspleɪ/",
@@ -34402,7 +34402,7 @@
   {
     "value": "elbow",
     "definition": "the joint between the upper and lower parts of the arm where it bends in the middle",
-    "uaTranslation": "лік",
+    "uaTranslation": "лікоть",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈelbəʊ/",
@@ -34572,7 +34572,7 @@
   {
     "value": "encounter",
     "definition": "a meeting, especially one that is sudden, unexpected or violent",
-    "uaTranslation": "зіткнення",
+    "uaTranslation": "зустріч",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ɪnˈkaʊntər/",
@@ -34662,7 +34662,7 @@
   {
     "value": "enthusiastic",
     "definition": "feeling or showing a lot of excitement and interest about somebody/something",
-    "uaTranslation": "ентузіазтичний",
+    "uaTranslation": "ентузіастичний",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/ɪnˌθuːziˈæstɪk/",
@@ -35422,7 +35422,7 @@
   {
     "value": "fellow",
     "definition": "used to describe somebody who is the same as you in some way, or in the same situation",
-    "uaTranslation": "супутній",
+    "uaTranslation": "спільний",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/ˈfeləʊ/",
@@ -35482,7 +35482,7 @@
   {
     "value": "finding",
     "definition": "information that is discovered as the result of research into something",
-    "uaTranslation": "знахідка",
+    "uaTranslation": "результат",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈfaɪndɪŋ/",
@@ -35912,7 +35912,7 @@
   {
     "value": "fuel",
     "definition": "to supply something with material that can be burnt to produce heat or power",
-    "uaTranslation": "розпалювати",
+    "uaTranslation": "постачати паливом",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/ˈfjuːəl/",
@@ -36042,7 +36042,7 @@
   {
     "value": "gain",
     "definition": "an increase in the amount of something, especially in wealth or weight",
-    "uaTranslation": "прибуток",
+    "uaTranslation": "приріст",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ɡeɪn/",
@@ -36422,7 +36422,7 @@
   {
     "value": "handle",
     "definition": "to deal with a situation, a person, an area of work or a strong emotion",
-    "uaTranslation": "керувати",
+    "uaTranslation": "справлятися",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/ˈhændl/",
@@ -36562,7 +36562,7 @@
   {
     "value": "herb",
     "definition": "a plant whose leaves, flowers or seeds are used to add taste to food, in medicines or for their pleasant smell. parsley, mint and oregano are all herbs",
-    "uaTranslation": "зелень",
+    "uaTranslation": "пряна трава",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ɜːrb/",
@@ -36592,7 +36592,7 @@
   {
     "value": "high",
     "definition": "the highest level or number",
-    "uaTranslation": "вершина",
+    "uaTranslation": "максимум",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/haɪ/",
@@ -37112,7 +37112,7 @@
   {
     "value": "indication",
     "definition": "a remark or sign that shows that something is happening or what somebody is thinking or feeling",
-    "uaTranslation": "вказування",
+    "uaTranslation": "ознака",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˌɪndɪˈkeɪʃn/",
@@ -37162,7 +37162,7 @@
   {
     "value": "infer",
     "definition": "to reach an opinion or decide that something is true on the basis of information that is available",
-    "uaTranslation": "випливати",
+    "uaTranslation": "робити висновок",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/ɪnˈfɜːr/",
@@ -37332,7 +37332,7 @@
   {
     "value": "insight",
     "definition": "an understanding of what something is like",
-    "uaTranslation": "прозріння",
+    "uaTranslation": "розуміння",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈɪnsaɪt/",
@@ -37812,7 +37812,7 @@
   {
     "value": "lane",
     "definition": "a narrow road in the country",
-    "uaTranslation": "стежка",
+    "uaTranslation": "вузька дорога",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/leɪn/",
@@ -38142,7 +38142,7 @@
   {
     "value": "loose",
     "definition": "not securely fixed where it should be; able to become separated from something",
-    "uaTranslation": "слабкий",
+    "uaTranslation": "нещільний",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/luːs/",
@@ -38172,7 +38172,7 @@
   {
     "value": "low",
     "definition": "a low level or point; a low figure",
-    "uaTranslation": "низький",
+    "uaTranslation": "низький рівень",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ləʊ/",
@@ -38322,7 +38322,7 @@
   {
     "value": "margin",
     "definition": "the empty space at the side of a written or printed page",
-    "uaTranslation": "поля",
+    "uaTranslation": "поле",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈmɑːrdʒɪn/",
@@ -38402,7 +38402,7 @@
   {
     "value": "matching",
     "definition": "having the same colour, pattern, style, etc. and therefore looking attractive together",
-    "uaTranslation": "комбінаційний",
+    "uaTranslation": "пасуючий",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/ˈmætʃɪŋ/",
@@ -38692,7 +38692,7 @@
   {
     "value": "mission",
     "definition": "that cannot exist or be done; not possible",
-    "uaTranslation": "неможливий",
+    "uaTranslation": "місія",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ɪmˈpɑːsəbl/",
@@ -39482,7 +39482,7 @@
   {
     "value": "oppose",
     "definition": "to disagree strongly with somebody’s plan, policy, etc. and try to change it or prevent it from succeeding",
-    "uaTranslation": "заперечувати",
+    "uaTranslation": "протистояти",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/əˈpəʊz/",
@@ -39612,7 +39612,7 @@
   {
     "value": "outline",
     "definition": "to give a description of the main facts or points involved in something",
-    "uaTranslation": "накреслювати",
+    "uaTranslation": "окреслювати",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/ˈaʊtlaɪn/",
@@ -40452,7 +40452,7 @@
   {
     "value": "price",
     "definition": "to fix the price of something at a particular level",
-    "uaTranslation": "цінити",
+    "uaTranslation": "встановлювати ціну",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/praɪs/",
@@ -40832,7 +40832,7 @@
   {
     "value": "publishing",
     "definition": "the profession or business of preparing and printing books, magazines, CD-ROMs, etc. and selling or making them available to the public",
-    "uaTranslation": "видавництво",
+    "uaTranslation": "видавнича справа",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈpʌblɪʃɪŋ/",
@@ -42382,7 +42382,7 @@
   {
     "value": "settler",
     "definition": "a person who goes to live in a new country or region",
-    "uaTranslation": "осадник",
+    "uaTranslation": "поселенець",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈsetlər/",
@@ -42452,7 +42452,7 @@
   {
     "value": "shame",
     "definition": "used to say that something is a cause for feeling sad or disappointed",
-    "uaTranslation": "сором",
+    "uaTranslation": "шкода",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ʃeɪm/",
@@ -42622,7 +42622,7 @@
   {
     "value": "sibling",
     "definition": "a brother or sister",
-    "uaTranslation": "сиблінг",
+    "uaTranslation": "брат або сестра",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ˈsɪblɪŋ/",
@@ -42792,7 +42792,7 @@
   {
     "value": "slope",
     "definition": "to be at an angle so that it is higher at one end than the other",
-    "uaTranslation": "збігати",
+    "uaTranslation": "спадати",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/sləʊp/",
@@ -42852,7 +42852,7 @@
   {
     "value": "sophisticated",
     "definition": "clever and complicated in the way that it works or is presented",
-    "uaTranslation": "витончений",
+    "uaTranslation": "складний",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/səˈfɪstɪkeɪtɪd/",
@@ -43202,7 +43202,7 @@
   {
     "value": "stare",
     "definition": "used to describe something that you have failed to see, even though it was obvious and should have been easy to see",
-    "uaTranslation": "проґавити",
+    "uaTranslation": "пильно дивитися",
     "partOfSpeech": "verb",
     "level": "b2",
     "spelling": "/ster/",
@@ -43612,7 +43612,7 @@
   {
     "value": "surrounding",
     "definition": "that is near or around something",
-    "uaTranslation": "оточуючий",
+    "uaTranslation": "навколишній",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/səˈraʊndɪŋ/",
@@ -43832,7 +43832,7 @@
   {
     "value": "tear",
     "definition": "a hole that has been made in something by tearing",
-    "uaTranslation": "дірка",
+    "uaTranslation": "розрив",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/ter/",
@@ -44652,7 +44652,7 @@
   {
     "value": "universal",
     "definition": "done by or involving all the people in the world or in a particular group",
-    "uaTranslation": "універсальний",
+    "uaTranslation": "загальний",
     "partOfSpeech": "adjective",
     "level": "b2",
     "spelling": "/ˌjuːnɪˈvɜːrsl/",
@@ -45362,7 +45362,7 @@
   {
     "value": "wrong",
     "definition": "behaviour that is not honest or morally acceptable",
-    "uaTranslation": "неправильність",
+    "uaTranslation": "зло",
     "partOfSpeech": "noun",
     "level": "b2",
     "spelling": "/rɔːŋ/",
@@ -46242,7 +46242,7 @@
   {
     "value": "arguably",
     "definition": "used (often before a comparative or superlative adjective) when you are stating an opinion that you believe you could give reasons to support",
-    "uaTranslation": "імовірно",
+    "uaTranslation": "можна стверджувати",
     "partOfSpeech": "adverb",
     "level": "c1",
     "spelling": "/ˈɑːrɡjuəbli/",
@@ -46312,7 +46312,7 @@
   {
     "value": "assassination",
     "definition": "the murder of an important or famous person, especially for political reasons",
-    "uaTranslation": "усунення",
+    "uaTranslation": "вбивство",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/əˌsæsɪˈneɪʃn/",
@@ -47032,7 +47032,7 @@
   {
     "value": "buddy",
     "definition": "a friend",
-    "uaTranslation": "друже",
+    "uaTranslation": "приятель",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈbʌdi/",
@@ -48162,7 +48162,7 @@
   {
     "value": "constitutional",
     "definition": "a short walk that people take because it is good for their health",
-    "uaTranslation": "конституційний",
+    "uaTranslation": "прогулянковий",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˌkɑːnstɪˈtuːʃənl/",
@@ -48522,7 +48522,7 @@
   {
     "value": "councillor",
     "definition": "a member of a city or county council",
-    "uaTranslation": "радник",
+    "uaTranslation": "радний",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈkaʊnsələr/",
@@ -49432,7 +49432,7 @@
   {
     "value": "discretion",
     "definition": "the freedom or power to decide what should be done in a particular situation",
-    "uaTranslation": "розсудливість",
+    "uaTranslation": "розсуд",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/dɪˈskreʃn/",
@@ -49772,7 +49772,7 @@
   {
     "value": "eager",
     "definition": "very interested and excited by something that is going to happen or about something that you want to do; showing this",
-    "uaTranslation": "прагнучий",
+    "uaTranslation": "охочий",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˈiːɡər/",
@@ -49912,7 +49912,7 @@
   {
     "value": "eligible",
     "definition": "a person who is eligible for something or to do something, is able to have or do it because they have the right qualifications, are the right age, etc",
-    "uaTranslation": "правочинний",
+    "uaTranslation": "правомочний",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˈelɪdʒəbl/",
@@ -50172,7 +50172,7 @@
   {
     "value": "ensue",
     "definition": "to happen after or as a result of another event",
-    "uaTranslation": "випливати",
+    "uaTranslation": "наслідувати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ɪnˈsuː/",
@@ -50692,7 +50692,7 @@
   {
     "value": "film-maker",
     "definition": "a person who directs or produces films",
-    "uaTranslation": "кінотворець",
+    "uaTranslation": "кінорежисер",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈfɪlm meɪkər/",
@@ -50872,7 +50872,7 @@
   {
     "value": "forge",
     "definition": "to put a lot of effort into making something successful or strong so that it will last",
-    "uaTranslation": "кувати",
+    "uaTranslation": "створювати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/fɔːrdʒ/",
@@ -50902,7 +50902,7 @@
   {
     "value": "forth",
     "definition": "away from a place; out",
-    "uaTranslation": "геть",
+    "uaTranslation": "назовні",
     "partOfSpeech": "adverb",
     "level": "c1",
     "spelling": "/fɔːrθ/",
@@ -50982,7 +50982,7 @@
   {
     "value": "frustration",
     "definition": "the feeling of being frustrated",
-    "uaTranslation": "розчарування",
+    "uaTranslation": "фрустрація",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/frʌˈstreɪʃn/",
@@ -51872,7 +51872,7 @@
   {
     "value": "indictment",
     "definition": "a sign that a system, society, etc. is very bad or very wrong",
-    "uaTranslation": "свідчення",
+    "uaTranslation": "звинувачення",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ɪnˈdaɪtmənt/",
@@ -52052,7 +52052,7 @@
   {
     "value": "insider",
     "definition": "a person who knows a lot about a group or an organization, because they are part of it",
-    "uaTranslation": "свій",
+    "uaTranslation": "інсайдер",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ɪnˈsaɪdər/",
@@ -53142,7 +53142,7 @@
   {
     "value": "maintenance",
     "definition": "the act of keeping something in good condition by checking or repairing it regularly",
-    "uaTranslation": "підтримка",
+    "uaTranslation": "обслуговування",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈmeɪntənəns/",
@@ -53252,7 +53252,7 @@
   {
     "value": "marketplace",
     "definition": "the activity of competing with other companies to buy and sell goods, services, etc",
-    "uaTranslation": "ринковість",
+    "uaTranslation": "ринок",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈmɑːrkɪtpleɪs/",
@@ -53332,7 +53332,7 @@
   {
     "value": "meantime",
     "definition": "for a short period of time but not permanently",
-    "uaTranslation": "тим часом",
+    "uaTranslation": "проміжок часу",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈmiːntaɪm/",
@@ -53512,7 +53512,7 @@
   {
     "value": "militant",
     "definition": "using, or willing to use, force or strong pressure to achieve your aims, especially to achieve social or political change",
-    "uaTranslation": "бойовий",
+    "uaTranslation": "войовничий",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˈmɪlɪtənt/",
@@ -54042,7 +54042,7 @@
   {
     "value": "obsess",
     "definition": "to completely fill your mind so that you cannot think of anything else, in a way that is not reasonable or normal",
-    "uaTranslation": "одержимість",
+    "uaTranslation": "бути одержимим",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/əbˈses/",
@@ -54062,7 +54062,7 @@
   {
     "value": "occasional",
     "definition": "happening or done sometimes but not often",
-    "uaTranslation": "час від часу",
+    "uaTranslation": "епізодичний",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/əˈkeɪʒənl/",
@@ -54102,7 +54102,7 @@
   {
     "value": "offspring",
     "definition": "a child of a particular person or couple",
-    "uaTranslation": "нащадки",
+    "uaTranslation": "нащадок",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈɔːfsprɪŋ/",
@@ -54212,7 +54212,7 @@
   {
     "value": "outlet",
     "definition": "a shop or an organization that sells goods made by a particular company or of a particular type",
-    "uaTranslation": "фірмовий магазин",
+    "uaTranslation": "торгова точка",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈaʊtlet/",
@@ -54542,7 +54542,7 @@
   {
     "value": "petition",
     "definition": "a written document signed by a large number of people that asks somebody in a position of authority to do or change something",
-    "uaTranslation": "клопотання",
+    "uaTranslation": "петиція",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/pəˈtɪʃn/",
@@ -54622,7 +54622,7 @@
   {
     "value": "pit",
     "definition": "a large deep hole in the ground",
-    "uaTranslation": "ями",
+    "uaTranslation": "яма",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/pɪt/",
@@ -55762,7 +55762,7 @@
   {
     "value": "regain",
     "definition": "to get back something you no longer have, especially an ability or a quality",
-    "uaTranslation": "відновити",
+    "uaTranslation": "повернути",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/rɪˈɡeɪn/",
@@ -55992,7 +55992,7 @@
   {
     "value": "representation",
     "definition": "the act of presenting somebody/something in a particular way; something that shows or describes something",
-    "uaTranslation": "подання",
+    "uaTranslation": "представлення",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˌreprɪzenˈteɪʃn/",
@@ -56002,7 +56002,7 @@
   {
     "value": "reproduce",
     "definition": "to make a copy of a picture, piece of text, etc",
-    "uaTranslation": "відтворити",
+    "uaTranslation": "відтворювати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ˌriːprəˈduːs/",
@@ -56412,7 +56412,7 @@
   {
     "value": "sacrifice",
     "definition": "to give up something that is important or valuable to you in order to get or do something that seems more important for yourself or for another person",
-    "uaTranslation": "жертувати",
+    "uaTranslation": "жертвувати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ˈsækrɪfaɪs/",
@@ -56482,7 +56482,7 @@
   {
     "value": "scope",
     "definition": "the opportunity or ability to do or achieve something",
-    "uaTranslation": "простір",
+    "uaTranslation": "можливості",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/skəʊp/",
@@ -56662,7 +56662,7 @@
   {
     "value": "set-up",
     "definition": "a way of organizing something; a system",
-    "uaTranslation": "структура",
+    "uaTranslation": "устрій",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈset ʌp/",
@@ -57152,7 +57152,7 @@
   {
     "value": "sphere",
     "definition": "a solid figure that is completely round, with every point on its surface at an equal distance from the centre",
-    "uaTranslation": "сфера",
+    "uaTranslation": "куля",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/sfɪr/",
@@ -57202,7 +57202,7 @@
   {
     "value": "spouse",
     "definition": "a husband or wife",
-    "uaTranslation": "чоловік",
+    "uaTranslation": "чоловік або дружина",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/spaʊs/",
@@ -57502,7 +57502,7 @@
   {
     "value": "submission",
     "definition": "the act of accepting that somebody has defeated you and that you must obey them",
-    "uaTranslation": "підкорення",
+    "uaTranslation": "покора",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/səbˈmɪʃn/",
@@ -57762,7 +57762,7 @@
   {
     "value": "supportive",
     "definition": "encouraging somebody or giving them help or sympathy",
-    "uaTranslation": "підтримуючий",
+    "uaTranslation": "підтримувальний",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/səˈpɔːrtɪv/",
@@ -57802,7 +57802,7 @@
   {
     "value": "surge",
     "definition": "a sudden increase of a strong feeling",
-    "uaTranslation": "наплив",
+    "uaTranslation": "сплеск",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/sɜːrdʒ/",
@@ -57902,7 +57902,7 @@
   {
     "value": "swing",
     "definition": "a swinging movement or rhythm",
-    "uaTranslation": "гойданина",
+    "uaTranslation": "гойдання",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/swɪŋ/",
@@ -57972,7 +57972,7 @@
   {
     "value": "tackle",
     "definition": "an act of trying to take the ball from an opponent in football (soccer), hockey, etc.; an act of knocking somebody to the ground, for example in rugby or American football",
-    "uaTranslation": "відбір",
+    "uaTranslation": "силовий прийом",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈtækl/",
@@ -58042,7 +58042,7 @@
   {
     "value": "tenure",
     "definition": "the period of time when somebody holds an important job, especially a political one; the act of holding an important job",
-    "uaTranslation": "утримання посади",
+    "uaTranslation": "перебування на посаді",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈtenjər/",
@@ -58222,7 +58222,7 @@
   {
     "value": "thrilled",
     "definition": "very excited and pleased",
-    "uaTranslation": "в захваті",
+    "uaTranslation": "захоплений",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/θrɪld/",
@@ -58242,7 +58242,7 @@
   {
     "value": "tide",
     "definition": "a regular rise and fall in the level of the sea, caused by the pull of the moon and sun; the flow of water that happens as the sea rises and falls",
-    "uaTranslation": "приплив і відплив",
+    "uaTranslation": "приплив",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/taɪd/",
@@ -58252,7 +58252,7 @@
   {
     "value": "tighten",
     "definition": "to hold or fix something more securely in position; to make something or become more difficult to move, open or separate",
-    "uaTranslation": "затягнути",
+    "uaTranslation": "затягувати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ˈtaɪtn/",
@@ -58432,7 +58432,7 @@
   {
     "value": "transaction",
     "definition": "a piece of business that is done between people, especially an act of buying or selling",
-    "uaTranslation": "трансакція",
+    "uaTranslation": "транзакція",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/trænˈzækʃn/",
@@ -58602,7 +58602,7 @@
   {
     "value": "troubled",
     "definition": "worried and anxious",
-    "uaTranslation": "смутний",
+    "uaTranslation": "стривожений",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˈtrʌbld/",
@@ -58612,7 +58612,7 @@
   {
     "value": "trustee",
     "definition": "a person or an organization that has control of money or property that has been put into a trust for somebody",
-    "uaTranslation": "управитель",
+    "uaTranslation": "довірена особа",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/trʌˈstiː/",
@@ -58652,7 +58652,7 @@
   {
     "value": "twist",
     "definition": "the action of turning something with your hand, or of turning a part of your body",
-    "uaTranslation": "поворот",
+    "uaTranslation": "скручування",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/twɪst/",
@@ -58732,7 +58732,7 @@
   {
     "value": "unveil",
     "definition": "to remove a cover or curtain from a painting, statue, etc. so that it can be seen in public for the first time",
-    "uaTranslation": "розкривати",
+    "uaTranslation": "відкривати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ˌʌnˈveɪl/",
@@ -58752,7 +58752,7 @@
   {
     "value": "upgrade",
     "definition": "the act of making a machine, computer system, etc. more powerful and efficient; the more powerful and efficient machine, computer system, etc",
-    "uaTranslation": "покращення",
+    "uaTranslation": "оновлення",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈʌpɡreɪd/",
@@ -58762,7 +58762,7 @@
   {
     "value": "upgrade",
     "definition": "to make a machine, computer system, etc. more powerful and efficient; to start using a new and better version of a machine, system, etc",
-    "uaTranslation": "покращувати",
+    "uaTranslation": "оновлювати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ˌʌpˈɡreɪd/",
@@ -58882,7 +58882,7 @@
   {
     "value": "vein",
     "definition": "any of the tubes that carry blood from all parts of the body towards the heart",
-    "uaTranslation": "відень",
+    "uaTranslation": "вена",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/veɪn/",
@@ -58892,7 +58892,7 @@
   {
     "value": "venture",
     "definition": "a business project or activity, especially one that involves taking risks",
-    "uaTranslation": "підприємство",
+    "uaTranslation": "підприємницький проєкт",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈventʃər/",
@@ -58992,7 +58992,7 @@
   {
     "value": "vibrant",
     "definition": "full of life and energy",
-    "uaTranslation": "яскравий",
+    "uaTranslation": "жвавий",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˈvaɪbrənt/",
@@ -59002,7 +59002,7 @@
   {
     "value": "vice",
     "definition": "criminal activities that involve sex or drugs",
-    "uaTranslation": "пороки",
+    "uaTranslation": "порок",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/vaɪs/",
@@ -59022,7 +59022,7 @@
   {
     "value": "villager",
     "definition": "a person who lives in a village",
-    "uaTranslation": "селянин",
+    "uaTranslation": "житель села",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈvɪlɪdʒər/",
@@ -59072,7 +59072,7 @@
   {
     "value": "vow",
     "definition": "to make a formal and serious promise to do something or a formal statement that is true",
-    "uaTranslation": "зарікатися",
+    "uaTranslation": "присягати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/vaʊ/",
@@ -59222,7 +59222,7 @@
   {
     "value": "whatsoever",
     "definition": "not at all; not of any kind",
-    "uaTranslation": "абсолютно ні",
+    "uaTranslation": "ніскільки",
     "partOfSpeech": "adverb",
     "level": "c1",
     "spelling": "/ˌwʌtsəʊˈevər/",
@@ -59272,7 +59272,7 @@
   {
     "value": "widen",
     "definition": "to become wider; to make something wider",
-    "uaTranslation": "розширюватися",
+    "uaTranslation": "розширювати",
     "partOfSpeech": "verb",
     "level": "c1",
     "spelling": "/ˈwaɪdn/",
@@ -59372,7 +59372,7 @@
   {
     "value": "worthwhile",
     "definition": "important, pleasant, interesting, etc.; worth spending time, money or effort on",
-    "uaTranslation": "вартий того",
+    "uaTranslation": "вартий",
     "partOfSpeech": "adjective",
     "level": "c1",
     "spelling": "/ˌwɜːrθˈwaɪl/",
@@ -59422,7 +59422,7 @@
   {
     "value": "youngster",
     "definition": "a young person or a child",
-    "uaTranslation": "юнак/дівчина",
+    "uaTranslation": "молода людина",
     "partOfSpeech": "noun",
     "level": "c1",
     "spelling": "/ˈjʌŋstər/",
