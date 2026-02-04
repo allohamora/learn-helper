@@ -74,8 +74,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toFillInTheGap', () => {
     it('generates fill-in-the-gap tasks', async () => {
-      const { object, tasks } = await toFillInTheGap(words);
-      console.log('fill-in-the-gap', JSON.stringify(object, null, 2));
+      const { output, tasks } = await toFillInTheGap(words);
+      console.log('fill-in-the-gap', JSON.stringify(output, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -98,8 +98,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toTranslateEnglishSentence', () => {
     it('generates English to Ukrainian translation tasks', async () => {
-      const { object, tasks } = await toTranslateEnglishSentence(words);
-      console.log('to-translate-english-sentence', JSON.stringify(object, null, 2));
+      const { output, tasks } = await toTranslateEnglishSentence(words);
+      console.log('to-translate-english-sentence', JSON.stringify(output, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -129,8 +129,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toTranslateUkrainianSentence', () => {
     it('generates Ukrainian to English translation tasks', async () => {
-      const { object, tasks } = await toTranslateUkrainianSentence(words);
-      console.log('to-translate-ukrainian-sentence', JSON.stringify(object, null, 2));
+      const { output, tasks } = await toTranslateUkrainianSentence(words);
+      console.log('to-translate-ukrainian-sentence', JSON.stringify(output, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
@@ -160,8 +160,8 @@ describe.concurrent('user-word.service', () => {
 
   describe('toSynonymAndAntonym', () => {
     it('generates synonym and antonym tasks', async () => {
-      const { object, tasks } = await toSynonymAndAntonym(words);
-      console.log('to-synonym-and-antonym', JSON.stringify(object, null, 2));
+      const { output, tasks } = await toSynonymAndAntonym(words);
+      console.log('to-synonym-and-antonym', JSON.stringify(output, null, 2));
 
       expect(tasks).toHaveLength(words.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());

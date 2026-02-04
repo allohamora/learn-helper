@@ -9,7 +9,7 @@ import type { AuthParams } from '@/types/auth.types';
 import { Status, TaskType, type DiscoveryStatus } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { db } from 'astro:db';
-import { generateObject, type LanguageModelUsage } from 'ai';
+import { generateText, Output, type LanguageModelUsage } from 'ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { z } from 'zod';
 import { GEMINI_API_KEY } from 'astro:env/server';
@@ -91,10 +91,10 @@ const removeReasoningSteps = <T extends { reasoningSteps: unknown }>(items: T[])
 };
 
 export const toFillInTheGap = async (words: WordData[]) => {
-  const { object, usage } = await generateObject({
+  const { output, usage } = await generateText({
     model,
-    schema: z.array(
-      z.object({
+    output: Output.array({
+      element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
         reasoningSteps: z.array(
           z.object({
@@ -105,7 +105,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
         task: z.string().describe('3-15 word sentence with exactly one "___" blank replacing target word'),
         answer: z.string().describe('Exact word/phrase adapted grammatically (case-insensitive)'),
       }),
-    ),
+    }),
     prompt: [
       `Create exactly ${words.length} fill-in-the-gap exercises (one per input word)`,
       '',
@@ -128,7 +128,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
     ].join('\n'),
   });
 
-  const tasks = removeReasoningSteps(object);
+  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.FillInTheGap,
@@ -137,14 +137,14 @@ export const toFillInTheGap = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, tasks, cost };
+  return { output, tasks, cost };
 };
 
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
-  const { object, usage } = await generateObject({
+  const { output, usage } = await generateText({
     model,
-    schema: z.array(
-      z.object({
+    output: Output.array({
+      element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
         reasoningSteps: z.array(
           z.object({
@@ -159,7 +159,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
             'Ukrainian translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
           ),
       }),
-    ),
+    }),
     prompt: [
       `Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)`,
       '',
@@ -186,7 +186,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     ].join('\n'),
   });
 
-  const tasks = removeReasoningSteps(object);
+  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.TranslateEnglishSentence,
@@ -195,14 +195,14 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, tasks, cost };
+  return { output, tasks, cost };
 };
 
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
-  const { object, usage } = await generateObject({
+  const { output, usage } = await generateText({
     model,
-    schema: z.array(
-      z.object({
+    output: Output.array({
+      element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
         reasoningSteps: z.array(
           z.object({
@@ -217,7 +217,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
             'English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
           ),
       }),
-    ),
+    }),
     prompt: [
       `Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)`,
       '',
@@ -243,7 +243,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     ].join('\n'),
   });
 
-  const tasks = removeReasoningSteps(object);
+  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.TranslateUkrainianSentence,
@@ -252,14 +252,14 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, tasks, cost };
+  return { output, tasks, cost };
 };
 
 export const toSynonymAndAntonym = async (words: WordData[]) => {
-  const { object, usage } = await generateObject({
+  const { output, usage } = await generateText({
     model,
-    schema: z.array(
-      z.object({
+    output: Output.array({
+      element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
         reasoningSteps: z.array(
           z.object({
@@ -270,7 +270,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
         synonym: z.string(),
         antonym: z.string(),
       }),
-    ),
+    }),
     prompt: [
       `Create exactly ${words.length} synonym/antonym pairs based on the definition field (one per input word)`,
       '',
@@ -296,7 +296,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     ].join('\n'),
   });
 
-  const tasks = removeReasoningSteps(object);
+  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.SynonymAndAntonym,
@@ -305,7 +305,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { object, tasks, cost };
+  return { output, tasks, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
