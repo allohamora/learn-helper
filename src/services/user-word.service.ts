@@ -10,7 +10,7 @@ import { Status, TaskType, type DiscoveryStatus } from '@/types/user-words.types
 import { EventType } from '@/types/event.types';
 import { db } from 'astro:db';
 import { generateText, Output, type LanguageModelUsage } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { z } from 'zod';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
@@ -66,6 +66,15 @@ const google = createGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
 });
 
+const providerOptions = {
+  google: {
+    thinkingConfig: {
+      includeThoughts: true,
+      thinkingBudget: 512,
+    },
+  } as GoogleGenerativeAIProviderOptions,
+};
+
 const model = google('gemini-2.5-flash-lite');
 
 const INPUT_NANO_DOLLARS_PER_TOKEN = 100;
@@ -85,7 +94,7 @@ export type WordData = {
 };
 
 export const toFillInTheGap = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
+  const { reasoning, output, usage } = await generateText({
     model,
     output: Output.array({
       element: z.object({
@@ -94,6 +103,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
         answer: z.string(),
       }),
     }),
+    providerOptions,
     prompt: [
       '<role>Act as an expert English exercise writer focused on fill-in-the-gap practice</role>',
       `<task>Create exactly ${words.length} fill-in-the-gap exercises (one per input word)</task>`,
@@ -116,11 +126,11 @@ export const toFillInTheGap = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks: output, cost };
+  return { reasoning, output, tasks: output, cost };
 };
 
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
+  const { reasoning, output, usage } = await generateText({
     model,
     output: Output.array({
       element: z.object({
@@ -129,6 +139,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
         translation: z.string(),
       }),
     }),
+    providerOptions,
     prompt: [
       '<role>Act as an expert bilingual (English-Ukrainian) language teacher creating word-arrangement exercises.</role>',
       `<task>Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)</task>`,
@@ -153,11 +164,11 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks: output, cost };
+  return { reasoning, output, tasks: output, cost };
 };
 
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
+  const { reasoning, output, usage } = await generateText({
     model,
     output: Output.array({
       element: z.object({
@@ -166,6 +177,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
         translation: z.string(),
       }),
     }),
+    providerOptions,
     prompt: [
       '<role>Act as an expert bilingual (Ukrainian-English) language teacher creating word-arrangement exercises.</role>',
       `<task>Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)</task>`,
@@ -189,11 +201,11 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks: output, cost };
+  return { reasoning, output, tasks: output, cost };
 };
 
 export const toSynonymAndAntonym = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
+  const { reasoning, output, usage } = await generateText({
     model,
     output: Output.array({
       element: z.object({
@@ -202,6 +214,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
         antonym: z.string(),
       }),
     }),
+    providerOptions,
     prompt: [
       '<role>Act as an expert English lexicographer generating synonym/antonym pairs.</role>',
       `<task>Create exactly ${words.length} synonym/antonym pairs based on the input word value (one per input word)</task>`,
@@ -226,7 +239,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks: output, cost };
+  return { reasoning, output, tasks: output, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
