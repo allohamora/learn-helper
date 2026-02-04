@@ -253,5 +253,4 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 | Translate English Sentence   | 47/70   |
 | Translate Ukrainian Sentence | 47/70   |
 | Synonym and Antonym          | 45/70   |
-| Find Nonsense Sentence       | 42/70   |
-| **Overall**                  | 227/350 |
+| **Overall**                  | 185/280 |

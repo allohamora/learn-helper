@@ -15,7 +15,6 @@ import {
   type TranslateUkrainianSentenceTask,
   type TranslateEnglishSentenceTask,
   type SynonymAndAntonymTask,
-  type FindNonsenseSentenceTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
@@ -227,31 +226,6 @@ const toSynonymAndAntonymTasks = (words: UserWord[], tasksData: TasksData['synon
   });
 };
 
-const toFindNonsenseSentenceTasks = (words: UserWord[], tasksData: TasksData['findNonsenseSentenceTasks']) => {
-  return tasksData.map(({ id, options }): FindNonsenseSentenceTask => {
-    const found = words.find((word) => word.id === id);
-    if (!found) {
-      throw new Error('Word for FindNonsenseSentence task is not found');
-    }
-
-    return {
-      id: crypto.randomUUID(),
-      type: TaskType.FindNonsenseSentence,
-      data: {
-        ...found.word,
-        id,
-        options: shuffle(
-          options.map((option) => ({
-            ...option,
-            value: removePeriods(option.value),
-            description: option.description ? removePeriods(option.description) : undefined,
-          })),
-        ),
-      },
-    };
-  });
-};
-
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -275,14 +249,12 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
-  const findNonsenseSentenceTasks = toFindNonsenseSentenceTasks(words, tasksData.findNonsenseSentenceTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
     ...shuffle(translateUkrainianSentenceTasks),
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
-    ...shuffle(findNonsenseSentenceTasks),
   ];
 };
 
@@ -536,18 +508,6 @@ export const Learning: FC = () => {
                 title="What word matches this?"
                 subtitle="Type the word that has both the given synonym and antonym"
                 taskType={TaskType.SynonymAndAntonym}
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
-            )}
-
-            {currentTask?.type === TaskType.FindNonsenseSentence && (
-              <WordToOptions
-                key={currentTask.id}
-                title="Find the nonsense sentence"
-                subtitle="Choose the sentence where the word or phrase is used nonsensically"
-                taskType={TaskType.FindNonsenseSentence}
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
