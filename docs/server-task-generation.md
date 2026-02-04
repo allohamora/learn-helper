@@ -217,6 +217,60 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
+### 4. Synonym and Antonym
+
+**Description**: Students provide a synonym and an antonym for the target word or phrase.
+
+**Schema**:
+
+```typescript
+{
+  id: number;
+  synonym: string; // Common, clear synonym (single word or short phrase)
+  antonym: string; // Common, clear antonym (single word or short phrase)
+}
+```
+
+**Notes**:
+
+- **Same part of speech**: Synonym and antonym must match the target word's part of speech; for function words, keep the same category (article/preposition/modal/conjunction/etc.)
+- **No repetition**: Do not repeat the target word or phrase
+- **Real words only**: Avoid placeholders like "N/A" or "none"
+- **Near matches allowed**: If no exact synonym/antonym exists, use the closest semantic match or functional opposite
+- **Clarity**: Use common, clear vocabulary; single words or short phrases are acceptable
+
+**Examples**:
+
+- **Verb**:
+  - Word: "arrive"
+  - Synonym: "reach"
+  - Antonym: "leave"
+
+- **Noun**:
+  - Word: "victory"
+  - Synonym: "triumph"
+  - Antonym: "defeat"
+
+- **Adjective**:
+  - Word: "fragile"
+  - Synonym: "delicate"
+  - Antonym: "sturdy"
+
+**Ranking**:
+
+| Parameter             | Score | Reason                                                      |
+| --------------------- | ----- | ----------------------------------------------------------- |
+| Retrieval Effort      | 6     | Must recall related words; less context than sentence tasks |
+| Cognitive Load        | 5     | Lightweight recall; two outputs required                    |
+| Association Building  | 8     | Builds strong semantic networks around the target word      |
+| Feedback Quality      | 5     | Correct/incorrect matching; limited explanatory context     |
+| Spacing Compatibility | 6     | Easy to repeat with variants                                |
+| Engagement Factor     | 5     | Can feel dry without gamification                           |
+| Transfer Potential    | 5     | Helpful for meaning, less for real-world usage contexts     |
+| **Overall**           | 45/70 |                                                             |
+
+---
+
 ## Summary Ranking
 
 | Task Type                    | Score   |

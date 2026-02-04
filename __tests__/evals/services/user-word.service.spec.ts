@@ -70,7 +70,14 @@ describe.concurrent('user-word.service', () => {
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a task string containing one ___ blank, and an answer string.`,
         'Sentence around the blank is short (3-15 words) and reads like natural English when filled, with minor awkwardness acceptable.',
-        'Answer is the target word/phrase or a reasonable grammatical form; the target appears only as the blank.',
+        'Sentences are grammatically correct, modern, and conversational; avoid formal or outdated phrasing.',
+        'Tasks feel varied in structure and topic; avoid repeating the same sentence pattern or context.',
+        'Scenarios are interesting or relatable rather than generic drills.',
+        'Punctuation is appropriate for the sentence type (., ?, !).',
+        'If the target includes placeholders like (sb)/(sth), the sentence adapts naturally with a real subject or object.',
+        'For articles (a/an), the following word has the correct initial sound for the article used.',
+        'For function words (articles, prepositions, conjunctions, modals), the context requires that specific word, not an interchangeable alternative.',
+        'Answer is the target word/phrase or a reasonable grammatical form; casing is appropriate and the target appears only as the blank.',
       ]);
     });
   });
@@ -98,6 +105,11 @@ describe.concurrent('user-word.service', () => {
         `Exactly ${words.length} tasks with id matching input word.id, an English sentence, and a Ukrainian translation.`,
         'English sentences are 3-15 words, natural, capitalized, and include the target word/phrase.',
         'Ukrainian translations are 3-15 words and read as natural, grammatical Ukrainian.',
+        'English sentences use appropriate punctuation for statements, questions, or exclamations.',
+        'Ukrainian translations use single spaces, punctuation attached, and only the first word capitalized.',
+        'Punctuation is meaningful rather than added just for formatting; removing a trailing period should not break correctness.',
+        'Ukrainian translations have a single unambiguous word order when shuffled, with all tokens separated (including pronouns, prepositions, conjunctions, particles).',
+        'Ukrainian adjective-noun agreement is correct for gender, number, and case.',
       ]);
     });
   });
@@ -125,6 +137,12 @@ describe.concurrent('user-word.service', () => {
         `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
         'Ukrainian sentences are 3-15 words, natural, and capitalized.',
         'English translations are 3-15 words and read as grammatical, natural English.',
+        'Ukrainian sentences use appropriate punctuation for statements, questions, or exclamations.',
+        'English translations include required articles, prepositions, and auxiliaries as separate tokens.',
+        'English translations use single spaces, punctuation attached, and only the first word capitalized.',
+        'English translations use correct verb forms and read as fluent English.',
+        'Punctuation is meaningful rather than added just for formatting; removing a trailing period should not break correctness.',
+        'English translations have a single unambiguous word order when shuffled, with all tokens separated (articles, prepositions, conjunctions, auxiliaries).',
       ]);
     });
   });
@@ -149,6 +167,7 @@ describe.concurrent('user-word.service', () => {
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, plus non-empty synonym and antonym strings.`,
         'Synonym and antonym are reasonable semantic matches for the target word/phrase, and they do not repeat the target word.',
+        'Synonym and antonym match the target part of speech; for function words, keep the same category.',
         'Use common, clear vocabulary; single words or short phrases are acceptable.',
       ]);
     });
