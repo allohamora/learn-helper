@@ -25,25 +25,25 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 ```typescript
 {
   id: number;
-  task: string; // Sentence with "___" placeholder (3-15 words)
+  task: string; // Sentence with "___" placeholder (max 15 words)
   answer: string; // Correct word/phrase to fill the blank
 }
 ```
 
 **Notes**:
 
-- **Grammatically correct**: All sentences must be grammatically correct and use natural, fluent English
-- **Natural language**: Content should sound authentic and conversational, as a native speaker would use it
-- **Keep tasks unique**: Avoid repeating sentence structures, topics, or contexts across different words to maintain engagement
-- **Make it enjoyable**: Use interesting, relatable scenarios that learners can connect with their daily lives
-- **Modern expressions**: Prefer modern, conversational English over formal or outdated expressions
-- **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type
-- **Phrase adaptation**: When target is a phrase with placeholders like "agree with (sb)", adapt naturally by providing context (e.g., "I agree with you")
-- **Article context**: For articles (a/an), ensure the sentence requires that specific article based on the following word's sound (vowel vs. consonant)
-- **Clarity over complexity**: Keep sentences concise (3-15 words) to maintain focus on the target vocabulary
-- **Function words**: For grammatical words (articles, prepositions, conjunctions), create contexts where their specific usage is meaningful and not interchangeable
-- **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence
-- **Case handling**: Answers are evaluated case-insensitively, but should be provided in the appropriate form
+- **Grammatically correct**: Sentences must be fully grammatical and natural when the blank is filled with the answer.
+- **Natural language**: Use authentic, conversational English that sounds modern and fluent.
+- **Keep tasks unique**: Avoid repeating sentence structures, topics, or contexts across different words.
+- **Make it enjoyable**: Prefer interesting or relatable scenarios over generic drills.
+- **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type.
+- **Sentence length**: Keep tasks to max 15 words with exactly one "\_\_\_" blank.
+- **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence.
+- **Exact target usage**: Use the target word/phrase as-is (case-insensitive); only apply necessary grammatical inflection.
+- **Grammatical fit**: The sentence must not require extra helper verbs or missing complements outside the blank.
+- **Phrase adaptation**: When the target includes placeholders like "agree with (sb)" or "(sth)", replace placeholders with real words outside the blank; do not include placeholders in the answer.
+- **Article context**: For articles (a/an), ensure the following word requires the correct article based on sound.
+- **Function words**: For articles, prepositions, conjunctions, or modals, create contexts where the exact word is required, not interchangeable.
 
 **Examples**:
 
@@ -106,21 +106,21 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 ```typescript
 {
   id: number;
-  sentence: string; // English sentence with target word (3-15 words)
-  translation: string; // Ukrainian translation (3-15 words, single spaces, punctuation attached, first word capitalized only)
+  sentence: string; // English sentence with target word (max 15 words)
+  translation: string; // Ukrainian translation (max 15 words, single spaces, punctuation attached, sentence case)
 }
 ```
 
 **Notes**:
 
-- **Natural language**: English sentences and Ukrainian translations must sound fluent and authentic
-- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
-- **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
-- **UI normalization**: Trailing periods are stripped from sentences/translations before shuffling to avoid model-added periods
-- **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled
-- **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens
-- **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian
-- **Phrase integration**: When the target is a phrase, include it naturally within the English sentence
+- **Natural language**: English sentences and Ukrainian translations must sound fluent and authentic.
+- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type.
+- **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive); no paraphrase.
+- **Translation formatting**: Ukrainian translations are max 15 words, sentence case, single-space separated, with punctuation attached to the final word.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged.
+- **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled.
+- **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens.
+- **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian.
 
 **Examples**:
 
@@ -166,21 +166,21 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 ```typescript
 {
   id: number;
-  sentence: string; // Ukrainian sentence with translated target word (3-15 words)
-  translation: string; // English translation (3-15 words, single spaces, punctuation attached, first word capitalized only)
+  sentence: string; // Ukrainian sentence with translated target word (max 15 words)
+  translation: string; // English translation (max 15 words, single spaces, punctuation attached, sentence case)
 }
 ```
 
 **Notes**:
 
-- **Natural language**: Ukrainian sentences and English translations must sound fluent and authentic
-- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
-- **English completeness**: Include ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, and correct verb forms
-- **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
-- **UI normalization**: Trailing periods are stripped from sentences/translations before shuffling to avoid model-added periods
-- **Unambiguous word order**: The English translation must have one clear valid order when shuffled
-- **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens
-- **Phrase integration**: When the target is a phrase, include it naturally within the Ukrainian sentence
+- **Natural language**: Ukrainian sentences and English translations must sound fluent and authentic.
+- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type.
+- **Ukrainian sentence**: Mid-length, sentence case, with meaningful punctuation.
+- **English completeness**: Include ALL required articles (a/an/the), prepositions, and auxiliary verbs; use correct verb forms.
+- **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive); no paraphrase.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged.
+- **Unambiguous word order**: The English translation must have one clear valid order when shuffled.
+- **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens.
 
 **Examples**:
 
@@ -198,9 +198,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Auxiliary verb**:
   - Word: "be going to do"
-  - Sentence: "Вони збираються подорожувати завтра"
-  - Translation: "They are going to travel tomorrow"
-  - Scrambled: ["are", "They", "tomorrow", "travel", "to", "going"]
+  - Sentence: "Вони збираються робити домашнє завдання завтра"
+  - Translation: "They are going to do homework tomorrow"
+  - Scrambled: ["are", "They", "tomorrow", "homework", "to", "going", "do"]
 
 **Ranking**:
 
@@ -233,11 +233,11 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Same part of speech**: Synonym and antonym must match the target word's part of speech; for function words, keep the same category (article/preposition/modal/conjunction/etc.)
-- **No repetition**: Do not repeat the target word or phrase
-- **Real words only**: Avoid placeholders like "N/A" or "none"
-- **Near matches allowed**: If no exact synonym/antonym exists, use the closest semantic match or functional opposite
-- **Clarity**: Use common, clear vocabulary; single words or short phrases are acceptable
+- **Same part of speech**: Synonym and antonym must match the target word's part of speech; for function words, keep the same category.
+- **No repetition**: Do not repeat the target word or phrase in either output.
+- **Real words only**: Avoid placeholders like "N/A" or "none".
+- **Near matches allowed**: If no exact synonym/antonym exists, use the closest semantic match or functional opposite.
+- **Clarity**: Use common, clear vocabulary; single words or short phrases are acceptable.
 
 **Examples**:
 

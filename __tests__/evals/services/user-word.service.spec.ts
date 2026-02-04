@@ -68,16 +68,12 @@ describe.concurrent('user-word.service', () => {
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks with id matching input word.id, a task string containing one ___ blank, and an answer string.`,
-        'Sentence around the blank is short (3-15 words) and reads like natural English when filled, with minor awkwardness acceptable.',
-        'Sentences are grammatically correct, modern, and conversational; avoid formal or outdated phrasing.',
-        'Tasks feel varied in structure and topic; avoid repeating the same sentence pattern or context.',
-        'Scenarios are interesting or relatable rather than generic drills.',
-        'Punctuation is appropriate for the sentence type (., ?, !).',
-        'If the target includes placeholders like (sb)/(sth), the sentence adapts naturally with a real subject or object.',
-        'For articles (a/an), the following word has the correct initial sound for the article used.',
-        'For function words (articles, prepositions, conjunctions, modals), the context requires that specific word, not an interchangeable alternative.',
-        'Answer is the target word/phrase or a reasonable grammatical form; casing is appropriate and the target appears only as the blank.',
+        `Exactly ${words.length} tasks with id matching input word.id, a task string containing exactly one ___ blank, and an answer string.`,
+        'Sentence is max 15 words and reads as natural English when the blank is filled with the answer; no redundant or contradictory words.',
+        'Answer is the input word/phrase (case-insensitive) with (sb)/(sth) placeholders stripped and only minimal grammatical inflection applied; the target does not appear elsewhere in the sentence.',
+        'If the target includes (sb)/(sth), the replacement words appear in the sentence outside the blank.',
+        'For articles (a/an), the word after the blank requires that exact article by sound; for other function words, the context requires that exact word.',
+        'Sentences are modern, conversational, and varied in structure and topic.',
       ]);
     });
   });
@@ -103,13 +99,11 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, an English sentence, and a Ukrainian translation.`,
-        'English sentences are 3-15 words, natural, capitalized, and include the target word/phrase.',
-        'Ukrainian translations are 3-15 words and read as natural, grammatical Ukrainian.',
-        'English sentences use appropriate punctuation for statements, questions, or exclamations.',
-        'Ukrainian translations use single spaces, punctuation attached, and only the first word capitalized.',
-        'Punctuation is meaningful rather than added just for formatting; removing a trailing period should not break correctness.',
-        'Ukrainian translations have a single unambiguous word order when shuffled, with all tokens separated (including pronouns, prepositions, conjunctions, particles).',
-        'Ukrainian adjective-noun agreement is correct for gender, number, and case.',
+        'English sentences are max 15 words, natural, capitalized, and contain the target phrase (case-insensitive) or a minimal grammatical variant (auxiliaries/articles/possessives); replace (sb)/(sth).',
+        'Ukrainian translations are max 15 words, natural, sentence case, single spaces, standard punctuation (internal commas allowed; final punctuation attached).',
+        'Punctuation is meaningful for the sentence type (., ?, !), not added just for formatting.',
+        'Ukrainian translations have a single unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles kept as separate tokens.',
+        'Ukrainian adjective-noun agreement is correct for gender/number/case.',
       ]);
     });
   });
@@ -135,14 +129,11 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
-        'Ukrainian sentences are 3-15 words, natural, and capitalized.',
-        'English translations are 3-15 words and read as grammatical, natural English.',
-        'Ukrainian sentences use appropriate punctuation for statements, questions, or exclamations.',
-        'English translations include required articles, prepositions, and auxiliaries as separate tokens.',
-        'English translations use single spaces, punctuation attached, and only the first word capitalized.',
-        'English translations use correct verb forms and read as fluent English.',
-        'Punctuation is meaningful rather than added just for formatting; removing a trailing period should not break correctness.',
-        'English translations have a single unambiguous word order when shuffled, with all tokens separated (articles, prepositions, conjunctions, auxiliaries).',
+        'Ukrainian sentences are max 15 words, natural, and capitalized, with appropriate punctuation.',
+        'English translations are max 15 words, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant (auxiliaries/articles/possessives); replace (sb)/(sth).',
+        'English translations include required articles, prepositions, and auxiliaries as separate tokens, with correct a/an usage and verb forms.',
+        'Punctuation is meaningful for the sentence type (., ?, !), not added just for formatting.',
+        'English translations have a single unambiguous word order when shuffled, with articles/prepositions/conjunctions/auxiliaries as separate tokens.',
       ]);
     });
   });

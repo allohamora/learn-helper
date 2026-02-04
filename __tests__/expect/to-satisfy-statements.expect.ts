@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { OPENAI_API_KEY } from 'astro:env/server';
 import { generateText, Output } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI, type OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { z } from 'zod';
 
 type CustomMatchers = {
@@ -23,6 +23,11 @@ expect.extend({
   toSatisfyStatements: async (input, statements) => {
     const { output } = await generateText({
       model,
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'medium',
+        } satisfies OpenAIResponsesProviderOptions,
+      },
       output: Output.object({
         schema: z.object({
           reason: z.string().nullable(),

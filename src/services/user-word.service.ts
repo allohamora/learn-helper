@@ -72,10 +72,12 @@ const providerOptions = {
   google: {
     thinkingConfig: {
       includeThoughts: true,
-      thinkingBudget: 512,
+      thinkingBudget: 1024,
     },
-  } as GoogleGenerativeAIProviderOptions,
+  } satisfies GoogleGenerativeAIProviderOptions,
 };
+
+const temperature = 0.5;
 
 const INPUT_NANO_DOLLARS_PER_TOKEN = 100;
 const OUTPUT_NANO_DOLLARS_PER_TOKEN = 400;
@@ -97,26 +99,23 @@ export const toFillInTheGap = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
     providerOptions,
+    temperature,
     output: Output.array({
       element: z.object({
         id: z.number(),
-        task: z.string(),
         answer: z.string(),
+        task: z.string(),
       }),
     }),
     prompt: [
       '<role>Act as an expert English exercise writer (fill-in-the-gap)</role>',
       `<task>Create exactly ${words.length} tasks, one per input word</task>`,
       '<requirements>',
-      '- task.id matches input word.id',
-      '- Sentence: 3-15 words, natural, modern, and grammatically correct, with exactly one "___" blank; target word appears only in the blank',
-      '- Use appropriate punctuation (., !, ?) for sentence type; avoid adding punctuation that is not needed for meaning',
-      '- Keep tasks unique across the list (avoid repeating sentence structures, topics, or contexts)',
-      '- Make scenarios interesting and relatable; prefer conversational English over formal or outdated expressions',
-      '- If the target includes placeholders like "(sb)" or "(sth)", adapt naturally (e.g., "I ___ you")',
-      '- For articles (a/an), ensure the following word requires the correct article based on sound',
-      '- For function words (articles, prepositions, conjunctions, modals), create contexts where the specific word is required, not interchangeable',
-      '- Answer: exact target word/phrase in the correct form (case-insensitive)',
+      '- Id: task.id matches input word.id.',
+      '- Answer: input word/phrase with (sb)/(sth) removed; apply only grammatical inflection (e.g. conjugate auxiliaries to match the subject); do not substitute any word for a different word.',
+      '- Sentence: exactly one "___" blank; substituting the answer into ___ produces a grammatically correct, natural, modern sentence of max 15 words. The target must not appear elsewhere in the sentence.',
+      '- For function words (articles, prepositions, conjunctions, modals): create context where only that exact word fits.',
+      '- Vary sentence structures and topics across tasks.',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
@@ -136,6 +135,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
     providerOptions,
+    temperature,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -144,17 +144,15 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       }),
     }),
     prompt: [
-      '<role>Act as an expert bilingual teacher (English-Ukrainian)</role>',
+      '<role>Act as an expert bilingual exercise writer (English-Ukrainian)</role>',
       `<task>Create exactly ${words.length} English->Ukrainian word-order tasks, one per input word</task>`,
       '<requirements>',
-      '- task.id matches input word.id',
-      '- English sentence: 3-15 words, natural, contains target word/phrase, with appropriate punctuation, first letter uppercase',
-      '- Ukrainian translation: natural and grammatically correct, 3-15 words, single spaces, punctuation attached, first word capitalized only',
-      '- Use statements (.), questions (?), and exclamations (!) when appropriate',
-      '- Avoid adding trailing periods purely for formatting; punctuation should be meaningful because trailing periods may be stripped before shuffling',
-      '- Ukrainian translation must have a single valid word order when shuffled; all words are separate tokens',
-      '- Keep pronouns, prepositions, conjunctions, and particles as separate tokens',
-      '- Ensure correct Ukrainian adjective-noun agreement (gender, number, case)',
+      '- Id: task.id matches input word.id.',
+      '- English sentence: max 15 words, natural, capitalized, includes the exact target phrase.',
+      '- Ukrainian translation: max 15 words, natural and grammatical, capitalized, single spaces, punctuation attached to the final word.',
+      '- If the target includes (sb)/(sth), replace placeholders with real words but keep the rest unchanged.',
+      '- Ukrainian translation has one unambiguous word order when shuffled; pronouns/prepositions/conjunctions/particles are separate tokens.',
+      '- Ensure correct Ukrainian adjective-noun agreement (gender/number/case).',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
@@ -174,6 +172,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
     providerOptions,
+    temperature,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -182,17 +181,15 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       }),
     }),
     prompt: [
-      '<role>Act as an expert bilingual teacher (Ukrainian-English)</role>',
+      '<role>Act as an expert bilingual exercise writer (Ukrainian-English)</role>',
       `<task>Create exactly ${words.length} Ukrainian->English word-order tasks, one per input word</task>`,
       '<requirements>',
-      '- task.id matches input word.id',
-      '- Ukrainian sentence: 3-15 words, natural, contains the translated target word/phrase, with appropriate punctuation, first letter uppercase',
-      '- English translation: natural and grammatically correct, includes required articles/prepositions/auxiliaries, 3-15 words, single spaces, punctuation attached, first word capitalized only',
-      '- Use statements (.), questions (?), and exclamations (!) when appropriate',
-      '- Avoid adding trailing periods purely for formatting; punctuation should be meaningful because trailing periods may be stripped before shuffling',
-      '- Use correct English verb forms',
-      '- English translation must have a single valid word order when shuffled; all words are separate tokens',
-      '- Keep articles, prepositions, conjunctions, and auxiliaries as separate tokens',
+      '- Id: task.id matches input word.id.',
+      '- Ukrainian sentence: max 15 words, natural, capitalized.',
+      '- English translation: max 15 words, grammatical, capitalized, includes the exact target phrase.',
+      '- English translation includes required articles/prepositions/auxiliaries as separate tokens; correct a/an; correct verb forms.',
+      '- If the target includes (sb)/(sth), replace placeholders with real words but keep the rest unchanged.',
+      '- English translation has one unambiguous word order when shuffled; articles/prepositions/conjunctions/auxiliaries are separate tokens.',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
@@ -212,6 +209,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
     providerOptions,
+    temperature,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -223,12 +221,12 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
       '<role>Act as an expert English lexicographer (synonym/antonym)</role>',
       `<task>Create exactly ${words.length} synonym/antonym pairs, one per input word</task>`,
       '<requirements>',
-      '- task.id matches input word.id',
-      '- Same part of speech; for function words, keep the same category (article/preposition/modal/etc.)',
-      '- Do not use the target word itself',
-      '- Use real words/phrases only (no placeholders like "N/A")',
-      '- If no exact match, use near-synonyms or functional opposites',
-      '- Use common, clear vocabulary; single words or short phrases are acceptable',
+      '- Id: task.id matches input word.id.',
+      '- Synonym and antonym match the target part of speech; for function words, keep the same category.',
+      '- Do not use the target word/phrase in either output.',
+      '- Use real words/phrases only (no placeholders like "N/A").',
+      '- If no exact match exists, use near-synonyms or functional opposites.',
+      '- Use common, clear vocabulary; single words or short phrases are acceptable.',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
