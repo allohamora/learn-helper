@@ -5,7 +5,6 @@ import {
   toTranslateUkrainianSentence,
   toSynonymAndAntonym,
   toFindNonsenseSentence,
-  toWordOrder,
   type WordData,
 } from '@/services/user-word.service';
 import { randomInt } from 'node:crypto';
@@ -108,30 +107,23 @@ describe.concurrent('user-word.service', () => {
       for (const task of tasks) {
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('sentence');
-        expect(task).toHaveProperty('options');
-        expect(task.options).toHaveLength(4);
-        expect(task.options.filter((opt) => opt.isAnswer)).toHaveLength(1);
-        for (const option of task.options) {
-          if (!option.isAnswer) {
-            expect(option.description).toBeDefined();
-            expect(option.description?.length).toBeGreaterThan(0);
-          } else {
-            expect(option.description).toBeUndefined();
-          }
-        }
+        expect(task).toHaveProperty('translation');
+        expect(typeof task.sentence).toBe('string');
+        expect(typeof task.translation).toBe('string');
+        expect(task.sentence.length).toBeGreaterThan(0);
+        expect(task.translation.length).toBeGreaterThan(0);
+        expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
+        expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks, each with id matching input word.id, English sentence (3-15 words with target word), and 4 Ukrainian options.`,
-        'Exactly one option per task has isAnswer: true. Correct option translates the English sentence in natural Ukrainian. Minor grammatical case variations (e.g., nominative "кіт" instead of accusative "кота") are acceptable as long as the sentence is understandable.',
-        'All 4 options are Ukrainian sentences. Minor grammatical imperfections are acceptable if the meaning is clear.',
-        'Wrong options stay in same topic/context but differ in verb/noun/tense/subject (e.g., "do homework"→"finished homework", not "buy book").',
-        'Prefer one valid translation, but minor variations are acceptable.',
-        'Tasks cover various CEFR levels (A1-C1), which is expected and acceptable.',
-        'CRITICAL: ONLY wrong options (isAnswer: false) MUST have non-empty description field.',
-        'CRITICAL: Correct option (isAnswer: true) must NOT have description field.',
-        "Descriptions follow format: \"Wrong [category]: '[incorrect Ukrainian word]' instead of '[correct word]'\" - reference SPECIFIC words, NOT full sentences.",
-        "Examples of GOOD descriptions: \"Wrong tense: 'бачив' instead of 'бачу'\", \"Wrong noun: 'присутність' instead of 'відсутність'\". BAD descriptions: \"Wrong tense: 'Я бачив кішку.' instead of 'Я бачу кішку.'\"",
+        `Exactly ${words.length} tasks with id matching input word.id, English sentence (3-15 words with target word), and Ukrainian translation.`,
+        'English sentences are 3-15 words, natural modern English, first word capitalized, punctuation attached to words.',
+        'Target word/phrase or natural variation appears in the English sentence.',
+        'Ukrainian translations are 3-15 words, grammatically correct natural Ukrainian, single-space separated, first word capitalized, punctuation attached to words.',
+        'Ukrainian translation word order is unambiguous when shuffled — no two valid orderings exist.',
+        'ALL Ukrainian words are separate tokens: pronouns, prepositions, conjunctions, particles are individual words.',
+        'Tasks cover various CEFR levels (A1-C1), which is expected.',
       ]);
     });
   });
@@ -146,31 +138,23 @@ describe.concurrent('user-word.service', () => {
       for (const task of tasks) {
         expect(task).toHaveProperty('id');
         expect(task).toHaveProperty('sentence');
-        expect(task).toHaveProperty('options');
-        expect(task.options).toHaveLength(4);
-        expect(task.options.filter((opt) => opt.isAnswer)).toHaveLength(1);
-        for (const option of task.options) {
-          if (!option.isAnswer) {
-            expect(option.description).toBeDefined();
-            expect(option.description?.length).toBeGreaterThan(0);
-          } else {
-            expect(option.description).toBeUndefined();
-          }
-        }
+        expect(task).toHaveProperty('translation');
+        expect(typeof task.sentence).toBe('string');
+        expect(typeof task.translation).toBe('string');
+        expect(task.sentence.length).toBeGreaterThan(0);
+        expect(task.translation.length).toBeGreaterThan(0);
+        expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
+        expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks, each with id matching input word.id, Ukrainian sentence (3-15 words), and 4 English options.`,
-        'Exactly one option per task has isAnswer: true and includes target word/phrase or natural variation. Correct option translates Ukrainian sentence.',
-        'All 4 options are English sentences. Minor grammatical issues (e.g., tense mismatch like "buys...last year") are acceptable if meaning is clear.',
-        'Wrong options stay in same topic/context but differ in verb/noun/tense/subject. Target word may appear in wrong options if used differently (e.g., different tense/form).',
-        'Prefer one valid translation, but variations are acceptable.',
+        `Exactly ${words.length} tasks with id matching input word.id, Ukrainian sentence (3-15 words), and English translation.`,
+        'Ukrainian sentences are 3-15 words, natural modern Ukrainian, first word capitalized.',
+        'English translations are 3-15 words, grammatically perfect, include ALL articles, ALL prepositions, ALL auxiliary verbs, correct verb forms.',
+        'English translation word order is unambiguous when shuffled — no two valid orderings exist.',
+        'ALL English words are separate tokens: articles, prepositions, conjunctions, auxiliaries are individual words.',
         'Tasks cover various CEFR levels (A1-C1), which is expected.',
-        'Minor unnatural issues like "своїх бабусю та дідуся" instead of "своїх бабусь та дідусів" are acceptable as long as the meaning is clear and grammatically correct.',
-        'CRITICAL: ONLY wrong options (isAnswer: false) MUST have non-empty description field.',
-        'CRITICAL: Correct option (isAnswer: true) must NOT have description field.',
-        "Descriptions follow format: \"Wrong [category]: '[incorrect English word]' instead of '[correct word]'\" - reference SPECIFIC words, NOT full sentences.",
-        "Examples of GOOD descriptions: \"Wrong tense: 'wanted' instead of 'are going to'\", \"Wrong verb: 'search' instead of 'see'\". BAD descriptions: \"Wrong tense: 'I wanted to go.' instead of 'I am going to go.'\"",
+        'Minor Ukrainian phrasing variations are acceptable as long as the meaning is clear.',
       ]);
     });
   });
@@ -231,37 +215,6 @@ describe.concurrent('user-word.service', () => {
         'CRITICAL: Per task must have exactly 3 correct sentences (isAnswer: false) and exactly 1 nonsense (isAnswer: true).',
         'CRITICAL: Nonsense sentence (isAnswer: true) MUST have description field explaining why wrong. Nonsense obviously absurd/impossible/meaningless (e.g., chair swims, do it yesterday).',
         'Tasks use words from various CEFR levels (A1-C1). Sentence complexity should generally match word level, but simpler grammar for higher-level words is acceptable as long as usage is correct.',
-      ]);
-    });
-  });
-
-  describe('toWordOrder', () => {
-    it('generates word order tasks', async () => {
-      const { object, tasks } = await toWordOrder(words);
-      console.log('to-word-order', JSON.stringify(object, null, 2));
-
-      expect(tasks).toHaveLength(words.length);
-      expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
-
-      for (const task of tasks) {
-        expect(task).toHaveProperty('id');
-        expect(task).toHaveProperty('sentence');
-        expect(task).toHaveProperty('translation');
-        expect(typeof task.sentence).toBe('string');
-        expect(typeof task.translation).toBe('string');
-        expect(task.sentence.length).toBeGreaterThan(0);
-        expect(task.translation.length).toBeGreaterThan(0);
-        expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
-      }
-
-      await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks with id matching input word.id and sentence in CORRECT word order (answer key).`,
-        'Sentences are 3-15 words, natural modern English, single-space separated, first word capitalized, punctuation attached to words.',
-        'Target word/phrase or natural variation appears (e.g., "for the first time"→"my first time", "be going to do"→"are going to visit").',
-        'Articles, prepositions, function words are separate. Multi-word phrases split into separate words.',
-        'Level-appropriate grammar preferred: A1 simple, B1 ideally conditionals, B2+ advanced - but variations acceptable as long as sentences are natural and demonstrate proper word usage.',
-        'Each task has a translation field containing the Ukrainian translation of the sentence.',
-        'Ukrainian translations are grammatically correct, use standard Ukrainian spelling, and accurately convey the meaning of the English sentence. Different translation approaches are acceptable (e.g., "своїх бабусю та дідуся" or "своїх бабусь та дідусів").',
       ]);
     });
   });

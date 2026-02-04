@@ -125,7 +125,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ### 2. Translate English Sentence
 
-**Description**: Students select the correct Ukrainian translation of an English sentence containing the target word/phrase.
+**Description**: Students arrange shuffled Ukrainian words to form the correct translation of an English sentence containing the target word/phrase.
 
 **Schema**:
 
@@ -133,664 +133,115 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 {
   id: number;
   sentence: string; // English sentence with target word (3-15 words)
-  options: Array<{
-    value: string; // Complete Ukrainian sentence
-    isAnswer: boolean; // true for 1 correct option, false for 3 wrong options
-    description?: string; // Explanation for wrong options only
-  }>; // 4 options: 1 correct, 3 wrong
+  translation: string; // Ukrainian translation (3-15 words, single spaces, punctuation attached, first word capitalized only)
 }
 ```
 
 **Notes**:
 
-- **All options grammatically correct**: All 4 Ukrainian options must be grammatically perfect with natural word order, proper case endings, correct verb conjugations, and appropriate preposition usage
-- **Natural language**: Both English sentences and Ukrainian translations must sound fluent and authentic to native speakers
-- **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid creating scenarios where multiple translations could be considered correct (e.g., "She is at home" should not have both "Вона вдома" and "Вона в будинку" as they could both be valid in different contexts)
-- **No synonym verbs in wrong options**: CRITICAL - Wrong options must NOT use Ukrainian verbs that are synonyms or could mean the same action in context. Examples of BANNED pairs:
-  - "додати" (add) ↔ "покласти" (put) - both could mean adding something
-  - "прийти" (come) ↔ "піти" (go) - in Ukrainian context like "піти назустріч" can mean going to meet someone, similar to "прийти"
-  - Wrong options must use CLEARLY DIFFERENT, NON-SYNONYMOUS verbs
-- **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
-  - GOOD: "I am going to do my homework." → Wrong: "I finished my homework.", "I am doing my project.", "I forgot my homework."
-  - BAD: "I am going to do my homework." → Wrong: "I will buy a book.", "They went to the cinema.", "She likes music." (completely unrelated topics)
-- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different NON-SYNONYM verb, noun, adjective, time word within same context), wrong number (singular/plural with all required grammatical adjustments), wrong tense, wrong subject/pronoun - but always remain grammatically valid and contextually related
-- **Relatable content**: Choose everyday situations and topics that learners can relate to
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
-- **No literal translations**: Ukrainian options must sound natural, not word-for-word literal translations
-- **Punctuation**: Use appropriate sentence types - statements (.), questions (?), and exclamations (!) - based on context
-- **Complete meaning**: The correct translation must fully capture the English sentence's meaning, not just contain the target word
-- **Phrase integration**: When the target is a phrase, incorporate the entire phrase naturally within the sentence
-- **Concise sentences**: Keep sentences short (3-15 words) for clarity and learning focus
-- **Exact count**: Always provide exactly 4 options (1 correct, 3 incorrect)
+- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use conditionals; for B2, use mixed conditionals or complex tenses; for A2, keep it simple
+- **Natural language**: English sentences and Ukrainian translations must sound fluent and authentic
+- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
+- **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
+- **UI normalization**: Trailing periods are stripped from sentences/translations before shuffling to avoid model-added periods
+- **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled
+- **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens
+- **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian
+- **Phrase integration**: When the target is a phrase, include it naturally within the English sentence
 
 **Examples**:
 
 - **Simple sentence**:
   - Word: "beautiful"
-  - Sentence: "The sunset is beautiful."
-  - Options:
-    - ✓ "Захід сонця прекрасний."
-    - ✗ "Захід сонця яскравий." (different adjective)
-    - ✗ "Схід сонця прекрасний." (sunrise instead of sunset)
-    - ✗ "Сонце прекрасне." (missing "sunset")
+  - Sentence: "The garden is beautiful"
+  - Translation: "Сад гарний"
+  - Scrambled (in UI): ["Сад", "гарний"]
 
 - **Phrase in context**:
-  - Word: "take care of (sb/sth)"
-  - Sentence: "I take care of my dog."
-  - Options:
-    - ✓ "Я доглядаю за своєю собакою."
-    - ✗ "Я люблю свою собаку." (wrong verb)
-    - ✗ "Я граюся зі своєю собакою." (playing, not caring)
-    - ✗ "Я годую свою собаку." (only feeding)
-
-- **Article (a)**:
-  - Word: "a"
-  - Sentence: "I need a new phone."
-  - Options:
-    - ✓ "Мені потрібен новий телефон."
-    - ✗ "Мені потрібні нові телефони." (plural instead of singular)
-    - ✗ "Мені потрібен цей новий телефон." (specific phone, not indefinite)
-    - ✗ "Мені потрібен телефон." (missing "new")
-
-- **Preposition (at)**:
-  - Word: "at"
-  - Sentence: "She is at the store."
-  - Options:
-    - ✓ "Вона в магазині."
-    - ✗ "Вона біля магазину." (near the store)
-    - ✗ "Вона йде до магазину." (going to the store)
-    - ✗ "Вона працює в магазині." (works at the store, different meaning)
+  - Word: "take care of"
+  - Sentence: "I take care of my plants"
+  - Translation: "Я доглядаю за своїми рослинами"
+  - Scrambled: ["доглядаю", "своїми", "Я", "за", "рослинами"]
 
 - **Question sentence**:
-  - Word: "like"
-  - Sentence: "Do you like this song?"
-  - Options:
-    - ✓ "Тобі подобається ця пісня?"
-    - ✗ "Ти слухаєш цю пісню?" (are you listening)
-    - ✗ "Ти знаєш цю пісню?" (do you know)
-    - ✗ "Тобі подобається цей фільм?" (movie instead of song)
-
-- **Level A1** (Simple present tense, basic vocabulary):
-  - Word: "play"
-  - Sentence: "Children play in the park."
-  - Options:
-    - ✓ "Діти грають у парку."
-    - ✗ "Діти гуляють у парку." (wrong verb - walk instead of play)
-    - ✗ "Діти бігають у парку." (wrong verb - run instead of play)
-    - ✗ "Діти сплять у парку." (wrong verb - sleep instead of play)
-
-- **Level A2** (Simple past tense with time expression):
-  - Word: "bought"
-  - Sentence: "She bought a new dress yesterday."
-  - Options:
-    - ✓ "Вона купила нову сукню вчора."
-    - ✗ "Вона купила нову сукню торік." (wrong time - last year instead of yesterday)
-    - ✗ "Вона купила нові сукні вчора." (wrong number - dresses plural instead of dress singular)
-    - ✗ "Вона носила нову сукню вчора." (wrong verb - wore instead of bought)
-
-- **Level B1** (Second conditional expressing hypothetical situation):
-  - Word: "discover"
-  - Sentence: "If I traveled more, I would discover new cultures."
-  - Options:
-    - ✓ "Якби я більше подорожував, я б відкрив нові культури."
-    - ✗ "Якби я більше подорожував, я б вивчав нові культури." (wrong verb - study instead of discover)
-    - ✗ "Якщо я більше подорожуватиму, я відкрию нові культури." (wrong structure - first conditional instead of second)
-    - ✗ "Я подорожую і відкриваю нові культури." (wrong structure - simple present instead of conditional)
-
-- **Level B2** (Past perfect passive, complex temporal relationship):
-  - Word: "established"
-  - Sentence: "The company had been established before the crisis began."
-  - Options:
-    - ✓ "Компанія була заснована до того, як почалася криза."
-    - ✗ "Компанія була закрита до того, як почалася криза." (wrong verb - closed instead of established)
-    - ✗ "Організація була заснована до того, як почалася криза." (wrong noun - organization instead of company)
-    - ✗ "Компанія була заснована після того, як почалася криза." (wrong time relation - after instead of before)
-
-- **Level C1** (Modal verb with negative, abstract noun, advanced vocabulary):
-  - Word: "underestimate"
-  - Sentence: "We shouldn't underestimate the complexity of this issue."
-  - Options:
-    - ✓ "Ми не повинні недооцінювати складність цього питання."
-    - ✗ "Ми не повинні переоцінювати складність цього питання." (opposite meaning - overestimate instead of underestimate)
-    - ✗ "Нам не слід оцінювати складність цього питання." (missing prefix - evaluate instead of underestimate)
-    - ✗ "Ми не можемо недооцінювати простоту цього питання." (wrong noun - simplicity instead of complexity)
+  - Word: "ready"
+  - Sentence: "Are you ready?"
+  - Translation: "Ти готовий?"
+  - Scrambled: ["готовий?", "Ти"]
 
 **Ranking**:
 
-| Parameter             | Score | Reason                                                             |
-| --------------------- | ----- | ------------------------------------------------------------------ |
-| Retrieval Effort      | 5     | Recognition task; options visible reduce recall effort             |
-| Cognitive Load        | 6     | Must compare 4 options; bilingual processing adds complexity       |
-| Association Building  | 7     | Links English word to Ukrainian meaning in context                 |
-| Feedback Quality      | 6     | Shows correct translation; wrong options have explanations         |
-| Spacing Compatibility | 7     | Repeatable with varied sentences; options can be shuffled          |
-| Engagement Factor     | 6     | Multiple choice feels interactive; progress is measurable          |
-| Transfer Potential    | 8     | Practices comprehension in sentence context; close to real reading |
-| **Overall**           | 45/70 |                                                                    |
+| Parameter             | Score | Reason                                                |
+| --------------------- | ----- | ----------------------------------------------------- |
+| Retrieval Effort      | 6     | Must reconstruct target sentence from shuffled words  |
+| Cognitive Load        | 7     | Requires sentence parsing and word-order reasoning    |
+| Association Building  | 7     | Builds strong cross-language sentence associations    |
+| Feedback Quality      | 6     | Clear right/wrong order; no explanation of grammar    |
+| Spacing Compatibility | 6     | Effective for repetition; needs variety to stay fresh |
+| Engagement Factor     | 7     | Puzzle-like; satisfying when correct                  |
+| Transfer Potential    | 8     | Strong practice for syntax and translation flow       |
+| **Overall**           | 47/70 |                                                       |
 
 ---
 
 ### 3. Translate Ukrainian Sentence
 
-**Description**: Students select the correct English translation of a Ukrainian sentence. The correct option must contain the exact target English word/phrase.
+**Description**: Students arrange shuffled English words to form the correct translation of a Ukrainian sentence containing the translated target word/phrase.
 
 **Schema**:
 
 ```typescript
 {
   id: number;
-  sentence: string; // Ukrainian sentence with translated target word/phrase (3-15 words)
-  options: Array<{
-    value: string; // Complete English sentence
-    isAnswer: boolean; // true for 1 correct option, false for 3 wrong options
-    description?: string; // Explanation for wrong options only
-  }>; // 4 options: 1 correct, 3 wrong
+  sentence: string; // Ukrainian sentence with translated target word (3-15 words)
+  translation: string; // English translation (3-15 words, single spaces, punctuation attached, first word capitalized only)
 }
 ```
 
 **Notes**:
 
-- **All options grammatically correct**: All 4 English options must be grammatically perfect, fluent, and complete sentences with proper subject-verb agreement, correct tense usage, and natural word order
-- **Authentic language**: Ukrainian sentences should sound conversational and authentic, English options must be fluent
-- **Only one correct answer**: Ensure that only ONE option is a valid translation - avoid scenarios where multiple English translations could be equally correct for the Ukrainian sentence
-- **No synonyms or alternative phrases**: Incorrect options must NOT use synonyms or different phrases that could create valid alternative translations - this is strictly forbidden (e.g., if target is "nervous", don't use "worried"; if target is "get rid of", don't use "throw away")
-- **Wrong options must be contextually related**: CRITICAL - Wrong options should stay in the same general topic/context as the correct answer but differ in specific details. DO NOT create completely unrelated sentences about different topics.
-  - GOOD: "We are going to travel tomorrow." → Wrong: "We traveled yesterday.", "We are traveling now.", "They are going to travel."
-  - BAD: "We are going to travel tomorrow." → Wrong: "She will cook dinner.", "He likes books.", "They bought a car." (completely unrelated topics)
-- **Differ in meaning, not grammar**: Wrong options should change meaning through: wrong content words (different non-synonym verb, noun, adjective within same context), wrong pronouns (with correctly adjusted verb forms), altered specificity (this/these, some/all), wrong tense, or wrong prepositions - but always remain grammatically valid and contextually related
-- **Engaging scenarios**: Use interesting, modern contexts that feel relevant to learners
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
-- **Natural Ukrainian**: Create Ukrainian sentences that sound authentic and conversational, not artificial
-- **Punctuation**: Use appropriate sentence types - statements (.), questions (?), exclamations (!) - based on context
-- **Complete sentences only**: All English options must be full, grammatically correct sentences with subject and verb, never fragments or phrases
-- **Exact word requirement**: The correct option MUST contain the exact target English word/phrase (case-sensitive matching during generation)
-- **Full translation**: The correct option must translate the ENTIRE Ukrainian sentence, not just include the target word somewhere
-- **Brief and focused**: Keep sentences short (3-15 words) and limited to exactly one sentence
-- **Exactly 4 options**: Always provide 1 correct and 3 incorrect options
-
-**Examples**:
-
-- **Simple word**:
-  - Word: "nervous"
-  - Sentence: "Він нервує перед іспитом."
-  - Options:
-    - ✓ "He is nervous before the exam." (exact word match)
-    - ✗ "He is nervous after the exam." (wrong preposition)
-    - ✗ "He was nervous before the exam." (wrong tense)
-    - ✗ "They are nervous before the exam." (wrong pronoun)
-
-- **Phrase**:
-  - Word: "get rid of"
-  - Sentence: "Мені потрібно позбутися цих старих речей."
-  - Options:
-    - ✓ "I need to get rid of these old things."
-    - ✗ "I need to get rid of some old things." (altered specificity)
-    - ✗ "I want to get rid of these old things." (wrong verb)
-    - ✗ "We need to get rid of these old things." (wrong pronoun)
-
-- **Article (an)**:
-  - Word: "an"
-  - Sentence: "Це цікава історія."
-  - Options:
-    - ✓ "This is an interesting story." (exact word match)
-    - ✗ "This is an old story." (wrong adjective - old instead of interesting)
-    - ✗ "That is an interesting story." (wrong demonstrative - that instead of this)
-    - ✗ "This is an interesting book." (wrong noun - book instead of story)
-
-- **Conjunction (but)**:
-  - Word: "but"
-  - Sentence: "Я втомлений, але щасливий."
-  - Options:
-    - ✓ "I am tired but happy."
-    - ✗ "I am tired and happy." (different conjunction)
-    - ✗ "I was tired but happy." (wrong tense)
-    - ✗ "They are tired but happy." (wrong pronoun)
-
-- **Exclamation sentence**:
-  - Word: "wonderful"
-  - Sentence: "Яка чудова ідея!"
-  - Options:
-    - ✓ "What a wonderful idea!"
-    - ✗ "What a wonderful plan!" (plan instead of idea)
-    - ✗ "That's a wonderful idea." (different structure)
-    - ✗ "What wonderful ideas!" (plural instead of singular)
-
-- **Question sentence**:
-  - Word: "ready"
-  - Sentence: "Ти готовий?"
-  - Options:
-    - ✓ "Are you ready?"
-    - ✗ "Are you tired?" (wrong adjective - tired instead of ready)
-    - ✗ "Are they ready?" (wrong pronoun - they instead of you)
-    - ✗ "Is he ready?" (wrong pronoun - he instead of you)
-
-- **Level A1** (Simple present tense, basic vocabulary):
-  - Word: "drink"
-  - Sentence: "Я п'ю воду."
-  - Options:
-    - ✓ "I drink water."
-    - ✗ "I drink juice." (wrong noun - juice instead of water)
-    - ✗ "I drink tea." (wrong noun - tea instead of water)
-    - ✗ "He drinks water." (wrong pronoun - he instead of I, with correctly adjusted verb)
-
-- **Level A2** (Simple past tense with time expression):
-  - Word: "watched"
-  - Sentence: "Ми дивилися фільм минулого вечора."
-  - Options:
-    - ✓ "We watched a movie last night."
-    - ✗ "We watched a show last night." (wrong noun - show instead of movie)
-    - ✗ "We watched a movie yesterday morning." (wrong time - yesterday morning instead of last night)
-    - ✗ "They watched a movie last night." (wrong pronoun - they instead of we)
-
-- **Level B1** (Second conditional expressing hypothetical situation):
-  - Word: "achieve"
-  - Sentence: "Якби вона більше працювала, вона б досягла своєї мети."
-  - Options:
-    - ✓ "If she worked harder, she would achieve her goal."
-    - ✗ "If she studied harder, she would achieve her goal." (wrong verb - studied instead of worked)
-    - ✗ "If he worked harder, he would achieve his goal." (wrong pronoun - he instead of she, with correctly adjusted possessive)
-    - ✗ "If she worked harder, she would achieve their goals." (wrong possessive and number - their goals instead of her goal)
-
-- **Level B2** (Past perfect passive voice, complex temporal sequence):
-  - Word: "been informed"
-  - Sentence: "Мене повідомили про зміни до того, як вони сталися."
-  - Options:
-    - ✓ "I had been informed about the changes before they happened."
-    - ✗ "I had been informed about the meetings before they happened." (wrong noun - meetings instead of changes)
-    - ✗ "She had been informed about the changes before they happened." (wrong pronoun - she instead of I)
-    - ✗ "I had been informed about the changes after they happened." (wrong preposition - after instead of before)
-
-- **Level C1** (Formal register, gerund after preposition, polite request):
-  - Word: "refrain"
-  - Sentence: "Прошу вас утримуватися від коментарів до завершення презентації."
-  - Options:
-    - ✓ "Please refrain from commenting until the presentation is over."
-    - ✗ "Please refrain from commenting until the discussion is over." (wrong noun - discussion instead of presentation)
-    - ✗ "Please refrain from commenting after the presentation is over." (wrong preposition - after instead of until)
-    - ✗ "We refrain from commenting until the presentation is over." (wrong pronoun - we instead of you implied in please)
-
-**Ranking**:
-
-| Parameter             | Score | Reason                                                         |
-| --------------------- | ----- | -------------------------------------------------------------- |
-| Retrieval Effort      | 5     | Recognition from options; less effort than free production     |
-| Cognitive Load        | 6     | Bilingual comparison; 4 options to evaluate                    |
-| Association Building  | 7     | Connects Ukrainian meaning to English word in sentence context |
-| Feedback Quality      | 6     | Correct answer shown; wrong options explained                  |
-| Spacing Compatibility | 7     | Works well with repetition; sentences can vary                 |
-| Engagement Factor     | 6     | Interactive selection; clear right/wrong feedback              |
-| Transfer Potential    | 8     | Practices production of English; useful for speaking/writing   |
-| **Overall**           | 45/70 |                                                                |
-
----
-
-### 4. Synonym and Antonym
-
-**Description**: Students type the target word/phrase when given its synonym and antonym.
-
-**Schema**:
-
-```typescript
-{
-  id: number;
-  synonym: string; // Word/phrase with similar meaning
-  antonym: string; // Word/phrase with opposite meaning
-}
-```
-
-**Notes**:
-
-- **Grammatically correct**: All synonyms and antonyms must be proper, grammatically correct words or phrases
-- **Natural vocabulary**: Use words that sound natural and commonly used by native speakers
-- **Best possible examples**: Choose the most accurate, clear synonyms and antonyms that truly represent similar/opposite meanings - avoid loose approximations or words that only work in specific contexts
-- **Learner-friendly vocabulary**: Use clear, common words that match the learner's level - avoid rare, archaic, or overly technical terms
-- **Match difficulty**: Synonyms and antonyms should be at a similar difficulty level to the target word
-- **Primary meaning first**: When a word has multiple meanings, focus on the primary one indicated by the provided definition
-- **Concise answers**: Prefer single-word responses; use short phrases only when necessary
-- **Part of speech consistency**: Synonym and antonym must match the target word's part of speech
-- **Avoid self-reference**: Never use the target word itself as its own synonym or antonym
-- **Flexible pairings**: For phrasal verbs, antonyms may be single words (e.g., "give up" → "continue") or other phrases
-- **Limited antonym cases**: Some words ("orange", "table") lack clear antonyms - provide the most reasonable opposite concept
-- **Article handling**: Articles don't follow traditional synonym/antonym rules:
-  - "a" → Synonym: "an" (both indefinite), Antonym: "the" (definite)
-  - "the" → Synonym: "this/that" (definiteness), Antonym: "a/an" (indefinite)
-- **Function words**: For grammatical words (prepositions, conjunctions), focus on opposites in meaning or function
-- **Lowercase preferred**: Keep outputs lowercase unless dealing with proper nouns
-- **No punctuation**: Avoid unnecessary quotes or punctuation in answers
-
-**Examples**:
-
-- **Common adjective**:
-  - Word: "happy"
-  - Synonym: "joyful"
-  - Antonym: "sad"
-
-- **Verb**:
-  - Word: "increase"
-  - Synonym: "grow"
-  - Antonym: "decrease"
-
-- **Abstract noun**:
-  - Word: "success"
-  - Synonym: "achievement"
-  - Antonym: "failure"
-
-- **Phrase**:
-  - Word: "give up"
-  - Synonym: "quit"
-  - Antonym: "persist"
-
-- **Preposition (above)**:
-  - Word: "above"
-  - Synonym: "over"
-  - Antonym: "below"
-
-- **Article (a)**:
-  - Word: "a"
-  - Synonym: "an"
-  - Antonym: "the"
-
-**Ranking**:
-
-| Parameter             | Score | Reason                                                                 |
-| --------------------- | ----- | ---------------------------------------------------------------------- |
-| Retrieval Effort      | 6     | Must produce word from synonym/antonym clues; moderate recall needed   |
-| Cognitive Load        | 6     | Two clues to process; requires semantic reasoning                      |
-| Association Building  | 8     | Strong semantic network; links word to related and opposite meanings   |
-| Feedback Quality      | 6     | Shows if correct; lacks detailed usage examples                        |
-| Spacing Compatibility | 7     | Repeatable; synonym/antonym pairs can vary                             |
-| Engagement Factor     | 5     | Can feel like vocabulary drill; lacks variety                          |
-| Transfer Potential    | 7     | Builds word relationships; helps recognize words in different contexts |
-| **Overall**           | 45/70 |                                                                        |
-
----
-
-### 5. Find Nonsense Sentence
-
-**Description**: Students identify which sentence uses the target word/phrase incorrectly or nonsensically.
-
-**Schema**:
-
-```typescript
-{
-  id: number;
-  options: Array<{
-    value: string; // Sentence (3-15 words) containing the target word/phrase (inflected as needed)
-    isAnswer: boolean; // true for 1 nonsense sentence, false for 3 correct sentences
-    description?: string; // Nonsense sentence (isAnswer: true) MUST have description explaining why it is wrong
-  }>; // 4 options: 1 nonsense, 3 correct
-}
-```
-
-**Notes**:
-
-- **Grammatically correct (for correct sentences)**: The three correct sentences must be grammatically perfect and natural
-- **Natural English**: All correct sentences must sound authentic and fluent to native speakers
-- **Unique contexts**: Vary sentence topics and structures to keep the exercise interesting and engaging
-- **Enjoyable mistakes**: Create errors that are memorable and even amusing while being clearly wrong
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
-- **Punctuation variety**: Include questions (?), exclamations (!), and statements (.) to add diversity and make the exercise more dynamic
-- **Obviously wrong**: The incorrect sentence must be CLEARLY nonsensical, not just awkward or uncommon - it should be meaningless to native speakers
-- **Strong correct examples**: The three correct sentences must demonstrate proper, natural usage with well-formed English
-- **Types of nonsense**:
-  - Semantic absurdity (inanimate objects doing animate actions: "The chair can swim")
-  - Logical impossibility (time paradoxes: "I will do it yesterday")
-  - Grammatical breakdown (completely malformed structures)
-  - Category mistakes (applying concepts to wrong categories)
-- **Explanation required**: Only the incorrect sentence gets a `description` field briefly explaining why it's nonsense
-- **No subtle errors**: Avoid sentences that are merely "less natural" or "stylistically odd" - they must be impossible or meaningless
-- **Complete sentences**: Use full, properly structured sentences (3-15 words)
-- **Exactly 4 options**: Always 1 incorrect (the answer) and 3 correct sentences
-- **All sentences contain target**: Every sentence option must include the target word or phrase (inflected as needed)
-
-**Examples**:
-
-- **Semantic nonsense**:
-  - Word: "swim"
-  - Options:
-    - ✓ "The chair can swim very fast." (description: "Chairs are inanimate objects and cannot swim")
-    - ✗ "Fish swim in the ocean."
-    - ✗ "I learned to swim last summer."
-    - ✗ "She swims every morning."
-
-- **Logical impossibility**:
-  - Word: "yesterday"
-  - Options:
-    - ✗ "I went to the store yesterday."
-    - ✗ "Yesterday was a busy day."
-    - ✓ "I will do it yesterday." (description: "Cannot perform future actions in the past - tense contradiction")
-    - ✗ "Yesterday's meeting was cancelled."
-
-- **Grammatical breakdown**:
-  - Word: "agree with"
-  - Options:
-    - ✗ "I agree with your opinion."
-    - ✗ "They don't agree with the decision."
-    - ✓ "The book agrees with on the table." (description: "Grammatically broken - 'agrees with' used without an object")
-    - ✗ "We agree with the new policy."
-
-- **Article misuse (a)**:
-  - Word: "a"
-  - Options:
-    - ✗ "She bought a new book."
-    - ✗ "I need a minute."
-    - ✓ "He is a very tall." (description: "Article 'a' cannot be used before an adjective without a noun - grammatically incorrect")
-    - ✗ "That's a good idea."
-
-- **Article misuse (an)**:
-  - Word: "an"
-  - Options:
-    - ✗ "I ate an orange yesterday."
-    - ✗ "She is an engineer."
-    - ✓ "We saw an at the zoo." (description: "Article 'an' used without a noun - incomplete and meaningless")
-    - ✗ "It's an important meeting."
-
-- **Preposition misuse (in)**:
-  - Word: "in"
-  - Options:
-    - ✗ "She lives in London."
-    - ✗ "The book is in the bag."
-    - ✓ "I am in very hungry." (description: "Preposition 'in' incorrectly inserted before adjective - creates nonsense")
-    - ✗ "We arrived in the morning."
-
-- **Question sentence**:
-  - Word: "where"
-  - Options:
-    - ✗ "Where are you going?"
-    - ✗ "Where is the station?"
-    - ✓ "Where is the blue very?" (description: "Nonsensical word order and structure - 'where' used with meaningless phrase")
-    - ✗ "Where do you live?"
-
-- **Exclamation sentence**:
-  - Word: "beautiful"
-  - Options:
-    - ✗ "The sunset is beautiful!"
-    - ✗ "What a beautiful day!"
-    - ✓ "The rock is beautiful eating!" (description: "Illogical combination - 'beautiful' incorrectly placed with 'eating' and 'rock' creating meaningless sentence")
-    - ✗ "She looks beautiful!"
-
-- **Level A1** (Simple present tense, basic semantic error):
-  - Word: "run"
-  - Options:
-    - ✗ "Dogs run in the park."
-    - ✗ "Children run to school."
-    - ✓ "The table runs to the kitchen." (description: "Semantic absurdity - tables are inanimate and cannot run")
-    - ✗ "I run every morning."
-
-- **Level A2** (Past tense with time contradiction):
-  - Word: "bought"
-  - Options:
-    - ✗ "She bought a new phone yesterday."
-    - ✓ "He bought a new house tomorrow." (description: "Tense contradiction - past tense 'bought' cannot occur with future time 'tomorrow'")
-    - ✗ "They bought tickets for the concert."
-    - ✗ "We bought fresh bread this morning."
-
-- **Level B1** (Second conditional context, semantic impossibility):
-  - Word: "imagine"
-  - Options:
-    - ✗ "If I could imagine anything, I would create a new world."
-    - ✗ "I can't imagine life without music."
-    - ✓ "The chair imagines flying to Mars." (description: "Semantic absurdity - inanimate objects cannot imagine or have thoughts")
-    - ✗ "Try to imagine what tomorrow will bring."
-
-- **Level B2** (Passive voice context, logical impossibility with natural phenomena):
-  - Word: "established"
-  - Options:
-    - ✗ "The university was established in 1850."
-    - ✗ "New regulations have been established recently."
-    - ✓ "The river established itself by running uphill." (description: "Logical and physical impossibility - rivers cannot establish themselves or run uphill")
-    - ✗ "They established a strong connection over time."
-
-- **Level C1** (Advanced vocabulary, abstract concepts, multiple semantic violations):
-  - Word: "undermine"
-  - Options:
-    - ✗ "Such actions could undermine public trust."
-    - ✗ "The scandal undermined his political career."
-    - ✓ "The color blue undermined the mathematical equation's happiness." (description: "Multiple category errors - colors cannot undermine, equations don't have emotions, abstract semantic breakdown")
-    - ✗ "Corruption undermines democratic institutions."
-
-**Ranking**:
-
-| Parameter             | Score | Reason                                                               |
-| --------------------- | ----- | -------------------------------------------------------------------- |
-| Retrieval Effort      | 4     | Recognition-based; word is visible, just need to spot the wrong one  |
-| Cognitive Load        | 5     | Must evaluate 4 sentences; can be confusing with similar options     |
-| Association Building  | 6     | Shows correct vs incorrect usage; builds negative examples           |
-| Feedback Quality      | 7     | Explains why sentence is nonsense; teaches proper usage              |
-| Spacing Compatibility | 6     | Limited replayability; nonsense sentences are memorable              |
-| Engagement Factor     | 7     | Fun to spot errors; game-like feeling                                |
-| Transfer Potential    | 7     | Helps recognize incorrect usage; improves error detection in reading |
-| **Overall**           | 42/70 |                                                                      |
-
----
-
-### 6. Word Order
-
-**Description**: Students arrange scrambled words to form a correct sentence containing the target word/phrase.
-
-**Schema**:
-
-```typescript
-{
-  id: number;
-  sentence: string; // 3-15 words, single spaces, punctuation attached to words, first word capitalized only
-  translation: string; // Ukrainian translation of the sentence
-}
-```
-
-**Notes**:
-
-- **Grammatically correct**: The correct sentence must be grammatically perfect and natural English
-- **Natural flow**: Sentences must sound modern, conversational, and authentic - never forced or artificial
-- **Engaging content**: Use interesting topics that are satisfying to reconstruct, with clear logical word relationships
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
-- **Punctuation**: Use appropriate sentence types - statements (.), questions (?), exclamations (!) - based on context
-- **Punctuation attachment**: Punctuation marks (periods, commas, question marks, exclamation marks) should be attached to words, not as separate tokens (e.g., "ready?" not "ready" + "?")
-- **Complete separation**: All words, including articles (a, an, the) and prepositions, must be individual words in the string
-- **Phrase splitting**: Multi-word phrases like "take care of" are split into separate words ("take", "care", "of") for arrangement
-- **Space consistency**: Each word must be separated by exactly one space in the correct answer
-- **Capitalization rules**: Only capitalize the first word of the sentence (and proper nouns if present)
-- **Ukrainian translation**: Provide a natural, grammatically correct Ukrainian translation
-- **Manageable length**: Keep sentences concise (3-15 words) so the task isn't overwhelming
+- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use conditionals; for B2, use mixed conditionals or complex tenses; for A2, keep it simple
+- **Natural language**: Ukrainian sentences and English translations must sound fluent and authentic
+- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
+- **English completeness**: Include ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, and correct verb forms
+- **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
+- **UI normalization**: Trailing periods are stripped from sentences/translations before shuffling to avoid model-added periods
+- **Unambiguous word order**: The English translation must have one clear valid order when shuffled
+- **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens
+- **Phrase integration**: When the target is a phrase, include it naturally within the Ukrainian sentence
 
 **Examples**:
 
 - **Simple sentence**:
   - Word: "beautiful"
-  - Sentence: "The garden is beautiful."
-  - Translation: "Сад гарний."
-  - Scrambled (in UI): ["garden", "The", "is", "beautiful."]
+  - Sentence: "Сад гарний"
+  - Translation: "The garden is beautiful"
+  - Scrambled (in UI): ["garden", "The", "is", "beautiful"]
 
-- **Sentence with articles**:
-  - Word: "achieve"
-  - Sentence: "She will achieve her goals."
-  - Translation: "Вона досягне своїх цілей."
-  - Scrambled: ["her", "will", "She", "goals.", "achieve"]
+- **Articles and prepositions**:
+  - Word: "at"
+  - Sentence: "Вона в магазині"
+  - Translation: "She is at the store"
+  - Scrambled: ["the", "at", "She", "is", "store"]
 
-- **Phrase preservation** ("take care of" is split into individual words):
-  - Word: "take care of"
-  - Sentence: "I take care of my plants."
-  - Translation: "Я доглядаю за своїми рослинами."
-  - Scrambled: ["my", "care", "I", "plants.", "of", "take"]
-
-- **Article (a)** (Article "a" must be placed before the adjective-noun combination):
-  - Word: "a"
-  - Sentence: "She bought a red car."
-  - Translation: "Вона купила червоний автомобіль."
-  - Scrambled: ["bought", "red", "a", "She", "car."]
-
-- **Article (an)** (Article "an" must precede the vowel-starting adjective):
-  - Word: "an"
-  - Sentence: "He is an excellent student."
-  - Translation: "Він відмінний студент."
-  - Scrambled: ["student.", "excellent", "is", "an", "He"]
-
-- **Multiple articles** (Demonstrates both definite (the) and indefinite (a) article placement):
-  - Word: "the"
-  - Sentence: "The cat chased a mouse."
-  - Translation: "Кіт наздоганяв мишу."
-  - Scrambled: ["chased", "a", "mouse.", "cat", "The"]
-
-- **Question sentence** (Question word order with question mark attached to last word):
-  - Word: "ready"
-  - Sentence: "Are you ready?"
-  - Translation: "Ти готовий?"
-  - Scrambled: ["you", "ready?", "Are"]
-
-- **Exclamation sentence** (Exclamation with punctuation attached to last word):
-  - Word: "incredible"
-  - Sentence: "That was incredible!"
-  - Translation: "Це було неймовірно!"
-  - Scrambled: ["was", "That", "incredible!"]
-
-- **Sentence with comma** (Comma attached to word, period attached to last word):
-  - Word: "happy"
-  - Sentence: "I am tired, but happy."
-  - Translation: "Я втомлений, але щасливий."
-  - Scrambled: ["tired,", "happy.", "I", "but", "am"]
-
-- **Level A1** (Simple present tense, basic subject-verb-object structure):
-  - Word: "like"
-  - Sentence: "I like my cat."
-  - Translation: "Мені подобається мій кіт."
-  - Scrambled: ["my", "I", "like", "cat."]
-
-- **Level A2** (Present continuous for future plans with time expression):
-  - Word: "going"
-  - Sentence: "We are going to the beach tomorrow."
-  - Translation: "Ми їдемо на пляж завтра."
-  - Scrambled: ["tomorrow.", "going", "beach", "We", "the", "to", "are"]
-
-- **Level B1** (Second conditional structure with comma placement):
-  - Word: "explore"
-  - Sentence: "If I had time, I would explore the jungle."
-  - Translation: "Якби я мав час, я б досліджував джунглі."
-  - Scrambled: ["time,", "If", "explore", "would", "had", "jungle.", "the", "I", "I"]
-
-- **Level B2** (Past perfect passive voice, complex temporal sequence):
-  - Word: "been completed"
-  - Sentence: "The project had been completed before the deadline."
-  - Translation: "Проєкт було завершено до дедлайну."
-  - Scrambled: ["had", "The", "been", "before", "deadline.", "completed", "project", "the"]
-
-- **Level C1** (Formal conjunction, advanced vocabulary with comma):
-  - Word: "notwithstanding"
-  - Sentence: "Notwithstanding the obstacles, we persevered."
-  - Translation: "Незважаючи на перешкоди, ми витримали."
-  - Scrambled: ["persevered.", "we", "Notwithstanding", "obstacles,", "the"]
+- **Auxiliary verb**:
+  - Word: "be going to do"
+  - Sentence: "Вони збираються подорожувати завтра"
+  - Translation: "They are going to travel tomorrow"
+  - Scrambled: ["are", "They", "tomorrow", "travel", "to", "going"]
 
 **Ranking**:
 
-| Parameter             | Score | Reason                                                                 |
-| --------------------- | ----- | ---------------------------------------------------------------------- |
-| Retrieval Effort      | 6     | Must reconstruct sentence; words visible but order requires thought    |
-| Cognitive Load        | 5     | Can overwhelm with many words; grammar rules add complexity            |
-| Association Building  | 6     | Shows word in grammatical context; builds sentence structure awareness |
-| Feedback Quality      | 6     | Shows correct order; Ukrainian translation helps understanding         |
-| Spacing Compatibility | 6     | Repeatable but same sentence feels redundant                           |
-| Engagement Factor     | 7     | Puzzle-like; satisfying to complete; interactive drag-and-drop         |
-| Transfer Potential    | 7     | Practices sentence construction; useful for writing skills             |
-| **Overall**           | 43/70 |                                                                        |
+| Parameter             | Score | Reason                                                |
+| --------------------- | ----- | ----------------------------------------------------- |
+| Retrieval Effort      | 6     | Must reconstruct target sentence from shuffled words  |
+| Cognitive Load        | 7     | Requires grammar and function-word accuracy           |
+| Association Building  | 7     | Builds strong cross-language sentence associations    |
+| Feedback Quality      | 6     | Clear right/wrong order; no explanation of grammar    |
+| Spacing Compatibility | 6     | Effective for repetition; needs variety to stay fresh |
+| Engagement Factor     | 7     | Puzzle-like; satisfying when correct                  |
+| Transfer Potential    | 8     | Strong practice for syntax and translation flow       |
+| **Overall**           | 47/70 |                                                       |
 
 ---
 
@@ -799,9 +250,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 | Task Type                    | Score   |
 | ---------------------------- | ------- |
 | Fill in the Gap              | 46/70   |
-| Translate English Sentence   | 45/70   |
-| Translate Ukrainian Sentence | 45/70   |
+| Translate English Sentence   | 47/70   |
+| Translate Ukrainian Sentence | 47/70   |
 | Synonym and Antonym          | 45/70   |
-| Word Order                   | 43/70   |
 | Find Nonsense Sentence       | 42/70   |
-| **Overall**                  | 266/420 |
+| **Overall**                  | 227/350 |

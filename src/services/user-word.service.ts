@@ -153,41 +153,33 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
           }),
         ),
         sentence: z.string().describe('English sentence containing target word/phrase'),
-        options: z
-          .array(
-            z.object({
-              value: z.string().describe('Complete Ukrainian sentence'),
-              isAnswer: z.boolean().describe('true for 1 correct option, false for 3 wrong options'),
-              description: z.string().optional().describe('ONLY wrong options (isAnswer: false) have description'),
-            }),
-          )
-          .describe('4 options: 1 correct, 3 wrong'),
+        translation: z
+          .string()
+          .describe(
+            'Ukrainian translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
+          ),
       }),
     ),
     prompt: [
-      `Create exactly ${words.length} English->Ukrainian translation tasks (one per input word)`,
+      `Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)`,
       '',
       'Requirements:',
-      '- English sentence: 3-15 words, modern, natural',
-      '- ALL Ukrainian options MUST be complete sentences with subject (pronoun/noun) and conjugated verb',
-      '- ALL options: grammatically perfect with full agreement (possessives match noun case AND number, verbs match subject gender/number, nouns in correct case)',
-      '- Wrong options differ semantically (wrong noun/tense/subject), NOT grammatically.',
-      '- Correct option: precisely translates English sentence',
-      '- Wrong options: grammatically complete sentences that differ by ONE word substitution (wrong tense/subject/noun/verb).',
+      '- English sentence: 3-15 words, modern, natural, containing target word/phrase',
       '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
-      '- When generating Ukrainian text, always ensure adjective–noun agreement',
-      '- Adjectives must match the noun in gender, number, and case',
-      '- Do not use synonyms of the target word in any option',
-      '- Wrong options must NOT be alternative valid translations of the source sentence',
-      "- ONLY wrong options (isAnswer: false) have description: \"Wrong [category]: '[incorrect word]' instead of '[correct word]'\" - reference specific words, not full sentences",
+      '- Varied punctuation (., !, ?) based on sentence type',
+      '- Ukrainian translation: natural, grammatically correct',
+      '- When generating Ukrainian text, ensure adjective-noun agreement (gender, number, case)',
+      '- Ukrainian translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
+      '- Ukrainian translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
+      '- ALL Ukrainian words must be separate: pronouns, prepositions, conjunctions, particles',
       '',
       'Reasoning Steps:',
       '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
       '2. Generate 3 English Sentence Candidates: Write 3 sentences using the word. For each, count words explicitly (e.g., "1-She 2-has 3-a 4-new 5-car = 5 words") and check if within 3-15 range (yes/no). Punctuation marks are NOT words',
       '3. Select Best English Sentence: Choose sentence with word count 3-15, level-appropriate grammar, and natural phrasing. If none valid, generate 2 new candidates. RE-COUNT to verify 3-15 words',
-      '4. Generate 4 Ukrainian Options: 1 correct translation + 3 wrong options. Each wrong option must be a grammatically perfect sentence with clearly different meaning (different noun/verb/adjective). Add word-specific descriptions',
-      '5. Validate Grammar: For EACH of the 4 Ukrainian options, check: has subject (yes/no), has conjugated verb (yes/no), nouns in correct case (yes/no), verb agrees with subject gender/number (yes/no), grammatically perfect (yes/no). If any "no", fix the grammatical error while keeping the semantic difference. Example: "Я бачив кішка" → "Я бачив кішку"',
-      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), exactly 4 options (yes/no), all 4 options grammatically complete sentences (yes/no), exactly 1 correct option (yes/no), all 3 wrong options have word-specific descriptions (yes/no), no synonyms used (yes/no), no wrong option is a valid alternative translation (yes/no). If any "no", fix the issue',
+      '4. Generate Ukrainian Translation: Translate selected sentence to natural, grammatically correct Ukrainian. Ensure proper verb conjugation, case agreement, and word choice. Count Ukrainian words explicitly and verify 3-15 range',
+      '5. Validate Translation: Check: word count 3-15 (yes/no), single-space separated (yes/no), punctuation attached to last word only (yes/no), first word capitalized only (yes/no), unambiguous word order when shuffled (yes/no), all words are separate tokens (yes/no). If any "no", revise the translation',
+      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), target word present (yes/no), Ukrainian translation 3-15 words (yes/no), translation accurate (yes/no), translation formatting correct (yes/no), unambiguous when shuffled (yes/no). If any "no", fix the issue',
       '',
       'Words:',
       JSON.stringify(words),
@@ -219,37 +211,32 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
           }),
         ),
         sentence: z.string().describe('Ukrainian sentence containing translated target word/phrase'),
-        options: z
-          .array(
-            z.object({
-              value: z.string().describe('Complete English sentence'),
-              isAnswer: z.boolean().describe('true for 1 correct option, false for 3 wrong options'),
-              description: z.string().optional().describe('ONLY wrong options (isAnswer: false) have description'),
-            }),
-          )
-          .describe('4 options: 1 correct, 3 wrong'),
+        translation: z
+          .string()
+          .describe(
+            'English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
+          ),
       }),
     ),
     prompt: [
-      `Create exactly ${words.length} Ukrainian->English translation tasks (one per input word)`,
+      `Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)`,
       '',
       'Requirements:',
-      '- Ukrainian sentence: 3-15 words, modern, natural',
-      '- ALL English options must be grammatically perfect sentences: include all articles (a/an/the), all prepositions (to/at/in), all necessary words, correct verb forms',
-      '- Correct option: precisely translates Ukrainian sentence',
-      '- Wrong options differ semantically (wrong noun/tense/subject), NOT grammatically. Examples: VALID: "He is buying" vs "He was buying" (tense change, both grammatical), INVALID: "They are going buy" (missing "to" - grammatically wrong), "They going to buy" (missing "are" - grammatically wrong)',
+      '- Ukrainian sentence: 3-15 words, modern, natural, containing translated target word/phrase',
       '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
-      '- Do not use synonyms of the target word in any option',
-      '- Wrong options must NOT be alternative valid translations of the source sentence',
-      "- ONLY wrong options (isAnswer: false) have description: \"Wrong [category]: '[incorrect word]' instead of '[correct word]'\" - reference specific words, not full sentences",
+      '- Varied punctuation (., !, ?) based on sentence type',
+      '- English translation: natural, grammatically perfect, includes ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, correct verb forms',
+      '- English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
+      '- English translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
+      '- ALL English words must be separate: articles, prepositions, conjunctions, auxiliaries',
       '',
       'Reasoning Steps:',
       '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
       '2. Generate 3 Ukrainian Sentence Candidates: Write 3 sentences using the word. For each, count words explicitly (e.g., "1-Вона 2-має 3-нову 4-машину = 4 words") and check if within 3-15 range (yes/no). Punctuation marks and hyphens are NOT words',
       '3. Select Best Ukrainian Sentence: Choose sentence with word count 3-15, level-appropriate grammar, and natural phrasing. If none valid, generate 2 new candidates. RE-COUNT the selected sentence to verify 3-15 words',
-      '4. Generate 4 English Options: 1 correct translation + 3 wrong options. Each wrong option must be a grammatically perfect sentence with clearly different meaning (different noun/verb/tense). Add word-specific descriptions',
-      '5. Validate Grammar: For EACH of the 4 English options, check: has all articles (yes/no), has all prepositions (yes/no), has all verbs (yes/no), correct verb forms (yes/no), grammatically perfect (yes/no). If any "no", fix the grammatical error while keeping the semantic difference. Example: "They are going buy" → "They are going to buy"',
-      '6. Final Validation: Check all requirements: Ukrainian sentence 3-15 words (yes/no), exactly 4 options (yes/no), all 4 options grammatically complete sentences (yes/no), exactly 1 correct option (yes/no), all 3 wrong options have word-specific descriptions (yes/no), no synonyms used (yes/no), no wrong option is a valid alternative translation (yes/no). If any "no", fix the issue',
+      '4. Generate English Translation: Translate selected sentence to natural, grammatically correct English. Include ALL articles, prepositions, and auxiliary verbs. Count English words explicitly and verify 3-15 range',
+      '5. Validate Translation: Check: word count 3-15 (yes/no), all articles present (yes/no), all prepositions present (yes/no), all auxiliaries present (yes/no), single-space separated (yes/no), punctuation attached to last word only (yes/no), first word capitalized only (yes/no), unambiguous word order when shuffled (yes/no). If any "no", revise the translation',
+      '6. Final Validation: Check all requirements: Ukrainian sentence 3-15 words (yes/no), target word/phrase present (yes/no), English translation 3-15 words (yes/no), translation grammatically perfect (yes/no), translation formatting correct (yes/no), unambiguous when shuffled (yes/no). If any "no", fix the issue',
       '',
       'Words:',
       JSON.stringify(words),
@@ -395,59 +382,6 @@ export const toFindNonsenseSentence = async (words: WordData[]) => {
   return { object, tasks, cost };
 };
 
-export const toWordOrder = async (words: WordData[]) => {
-  const { object, usage } = await generateObject({
-    model,
-    schema: z.array(
-      z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
-        sentence: z
-          .string()
-          .describe('3-15 words, single spaces, punctuation attached to words, first word capitalized only'),
-        translation: z.string().describe('Ukrainian translation of the sentence'),
-      }),
-    ),
-    prompt: [
-      `Create exactly ${words.length} tasks word order exercises (one per input word)`,
-      '',
-      'Requirements:',
-      '- Generate a sentence in CORRECT word order for each word/phrase',
-      '- Add adjectives, adverbs, time expressions to reach minimum word count',
-      '- All words separate: articles, prepositions, function words',
-      '- Level-appropriate grammar; varied punctuation (., !, ?)',
-      '- Provide Ukrainian translation: natural, grammatically perfect',
-      '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 Sentence Candidates: Write sentences using the word. For each, count words explicitly (e.g., "1-I 2-saw 3-a 4-cute 5-little 6-cat = 6 words") and check if within 3-15 range (yes/no)',
-      '3. Validate Each: For all 3 candidates check: word count 3-15 (yes/no), natural phrasing (yes/no), unambiguous when shuffled (yes/no), level-appropriate (yes/no)',
-      '4. Select Best: Choose sentence with most "yes" validations. If no candidate has all "yes", generate 2 new candidates and validate. Select the best valid option',
-      '5. Generate Ukrainian Translation: Translate selected sentence to natural, grammatically correct Ukrainian. Use standard Ukrainian spelling and vocabulary. Ensure proper verb conjugation, case agreement, and word choice',
-      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), first word capitalized (yes/no), words single-space separated (yes/no), punctuation attached to words (yes/no), target word present (yes/no), Ukrainian translation verified correct (yes/no). If any "no", fix the issue',
-      '',
-      'Words:',
-      JSON.stringify(words),
-    ].join('\n'),
-  });
-
-  const tasks = removeReasoningSteps(object);
-
-  const cost = {
-    taskType: TaskType.WordOrder,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-  };
-
-  return { object, tasks, cost };
-};
-
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const learningWords = await getLearningWords(body);
   if (!learningWords.length) {
@@ -457,7 +391,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       translateUkrainianSentenceTasks: [],
       synonymAndAntonymTasks: [],
       findNonsenseSentenceTasks: [],
-      wordOrderTasks: [],
     };
   }
 
@@ -471,21 +404,14 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     }),
   );
 
-  const [
-    fillInTheGap,
-    translateEnglishSentence,
-    translateUkrainianSentence,
-    synonymAndAntonym,
-    findNonsenseSentence,
-    wordOrder,
-  ] = await Promise.all([
-    toFillInTheGap(words),
-    toTranslateEnglishSentence(words),
-    toTranslateUkrainianSentence(words),
-    toSynonymAndAntonym(words),
-    toFindNonsenseSentence(words),
-    toWordOrder(words),
-  ]);
+  const [fillInTheGap, translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym, findNonsenseSentence] =
+    await Promise.all([
+      toFillInTheGap(words),
+      toTranslateEnglishSentence(words),
+      toTranslateUkrainianSentence(words),
+      toSynonymAndAntonym(words),
+      toFindNonsenseSentence(words),
+    ]);
 
   const events = [
     fillInTheGap.cost,
@@ -493,7 +419,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateUkrainianSentence.cost,
     synonymAndAntonym.cost,
     findNonsenseSentence.cost,
-    wordOrder.cost,
   ].map((cost) => ({
     ...cost,
     type: EventType.TaskCost as const,
@@ -508,6 +433,5 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
     synonymAndAntonymTasks: synonymAndAntonym.tasks,
     findNonsenseSentenceTasks: findNonsenseSentence.tasks,
-    wordOrderTasks: wordOrder.tasks,
   };
 };
