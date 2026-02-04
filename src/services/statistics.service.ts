@@ -243,15 +243,15 @@ const getCostPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom
 
 const getWordsUpdatedPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
   const state = getDates(data).reduce(
-    (state, date) => ({ ...state, [date]: { date, count: 0 } }),
+    (state, date) => ({ ...state, [date]: { date, uaTranslation: 0 } }),
     {} as Record<string, WordUpdatedPerDayStatistics>,
   );
 
   const events = await getGroupedByDayWordUpdatedEvents(data);
   for (const item of events) {
     const target = state[item.date];
-    if (target) {
-      target.count = item.count;
+    if (target && item.fieldName === 'uaTranslation') {
+      target.uaTranslation = item.count;
     }
   }
 

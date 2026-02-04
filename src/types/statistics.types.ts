@@ -24,7 +24,7 @@ export type CostPerDayStatistics = {
 
 export type WordUpdatedPerDayStatistics = {
   date: string; // YYYY-MM-DD
-  count: number;
+  uaTranslation: number;
 };
 
 export type Statistics = {

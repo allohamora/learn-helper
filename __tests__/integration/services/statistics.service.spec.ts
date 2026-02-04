@@ -60,6 +60,10 @@ describe('statistics.service', () => {
       expect(result.wordsUpdatedPerDay).toHaveLength(7);
       expect(result.topMistakes).toEqual([]);
 
+      for (const day of result.wordsUpdatedPerDay) {
+        expect(day.uaTranslation).toBe(0);
+      }
+
       for (const day of result.discoveringPerDay) {
         expect(day.learningCount).toBe(0);
         expect(day.knownCount).toBe(0);
@@ -79,10 +83,6 @@ describe('statistics.service', () => {
         expect(day.costInNanoDollars).toBe(0);
         expect(day.inputTokens).toBe(0);
         expect(day.outputTokens).toBe(0);
-      }
-
-      for (const day of result.wordsUpdatedPerDay) {
-        expect(day.count).toBe(0);
       }
     });
 
@@ -745,24 +745,38 @@ describe('statistics.service', () => {
           fieldName: 'uaTranslation',
           createdAt: outsideRangeDate,
         },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'definition',
+          createdAt: today,
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'definition',
+          createdAt: outsideRangeDate,
+        },
       ]);
 
       const result = await getStatistics({ userId });
 
-      expect(result.general.totalWordsUpdated).toBe(4);
+      expect(result.general.totalWordsUpdated).toBe(6);
 
       const todayStats = result.wordsUpdatedPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayStats).toBeDefined();
-      expect(todayStats?.count).toBe(2);
+      expect(todayStats?.uaTranslation).toBe(2);
 
       const weekAgoStats = result.wordsUpdatedPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
       expect(weekAgoStats).toBeDefined();
-      expect(weekAgoStats?.count).toBe(1);
+      expect(weekAgoStats?.uaTranslation).toBe(1);
 
-      const outsideRangeUaStats = result.wordsUpdatedPerDay.find(
+      const outsideRangeStats = result.wordsUpdatedPerDay.find(
         (day) => day.date === toDateOnlyString(outsideRangeDate),
       );
-      expect(outsideRangeUaStats).toBeUndefined();
+      expect(outsideRangeStats).toBeUndefined();
     });
 
     it('returns top mistakes with word details', async () => {

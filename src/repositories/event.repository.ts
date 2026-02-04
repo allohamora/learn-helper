@@ -119,6 +119,7 @@ export const getGroupedByDayWordUpdatedEvents = async ({
   return await db
     .select({
       date: sql<string>`date(${Event.createdAt})`,
+      fieldName: Event.fieldName,
       count: sql<number>`count(*)`,
     })
     .from(Event)
@@ -126,10 +127,11 @@ export const getGroupedByDayWordUpdatedEvents = async ({
       and(
         eq(Event.userId, userId),
         eq(Event.type, EventType.WordUpdated),
+        isNotNull(Event.fieldName),
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
     )
-    .groupBy(sql`date(${Event.createdAt})`);
+    .groupBy(Event.fieldName, sql`date(${Event.createdAt})`);
 };
 
 export const getTopMistakes = async ({ userId, limit }: AuthParams<{ limit: number }>) => {

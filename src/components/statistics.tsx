@@ -70,7 +70,7 @@ const learningChartConfig = {
 } satisfies ChartConfig;
 
 const wordUpdatedChartConfig = {
-  count: {
+  uaTranslation: {
     label: 'uaTranslation',
     color: 'var(--chart-1)',
   },
@@ -618,9 +618,9 @@ export const Statistics: FC = () => {
                 }))}
               >
                 <defs>
-                  <linearGradient id="fillWordUpdatedCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-count)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--color-count)" stopOpacity={0.05} />
+                  <linearGradient id="fillUaTranslation" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-uaTranslation)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-uaTranslation)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
@@ -635,10 +635,10 @@ export const Statistics: FC = () => {
                 <YAxis hide={isPhoneScreen} tickLine={false} axisLine={false} tickMargin={10} className="text-xs" />
                 <ChartTooltip cursor={{ strokeDasharray: '3 3' }} content={<ChartTooltipContent indicator="line" />} />
                 <Area
-                  dataKey="count"
+                  dataKey="uaTranslation"
                   type="monotone"
-                  fill="url(#fillWordUpdatedCount)"
-                  stroke="var(--color-count)"
+                  fill="url(#fillUaTranslation)"
+                  stroke="var(--color-uaTranslation)"
                   strokeWidth={2}
                   dot={{ r: 3, strokeWidth: 2 }}
                   activeDot={{ r: 5 }}
