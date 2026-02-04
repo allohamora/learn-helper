@@ -96,9 +96,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
     }),
     prompt: [
       '<role>Act as an expert English exercise writer focused on fill-in-the-gap practice</role>',
-      '<task>',
-      `Create exactly ${words.length} fill-in-the-gap exercises (one per input word)`,
-      '</task>',
+      `<task>Create exactly ${words.length} fill-in-the-gap exercises (one per input word)</task>`,
       '<requirements>',
       '- Each task.id matches the corresponding input word.id',
       '- Grammatically correct, natural, engaging and modern English sentences',
@@ -107,9 +105,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
       '- Task: 3-15 word sentence with exactly one "___" blank replacing target word',
       '- Answer: exact word/phrase adapted grammatically (case-insensitive)',
       '</requirements>',
-      '<words>',
-      JSON.stringify(words),
-      '</words>',
+      `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
   });
 
@@ -135,9 +131,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     }),
     prompt: [
       '<role>Act as an expert bilingual (English-Ukrainian) language teacher creating word-arrangement exercises.</role>',
-      '<task>',
-      `Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)`,
-      '</task>',
+      `<task>Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)</task>`,
       '<requirements>',
       '- Each task.id matches the corresponding input word.id',
       '- English sentence: 3-15 words, modern, natural, containing target word/phrase',
@@ -148,9 +142,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       '- Ukrainian translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
       '- ALL Ukrainian words must be separate: pronouns, prepositions, conjunctions, particles',
       '</requirements>',
-      '<words>',
-      JSON.stringify(words),
-      '</words>',
+      `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
   });
 
@@ -176,9 +168,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     }),
     prompt: [
       '<role>Act as an expert bilingual (Ukrainian-English) language teacher creating word-arrangement exercises.</role>',
-      '<task>',
-      `Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)`,
-      '</task>',
+      `<task>Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)</task>`,
       '<requirements>',
       '- Each task.id matches the corresponding input word.id',
       '- Ukrainian sentence: 3-15 words, modern, natural, containing translated target word/phrase',
@@ -188,9 +178,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       '- English translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
       '- ALL English words must be separate: articles, prepositions, conjunctions, auxiliaries',
       '</requirements>',
-      '<words>',
-      JSON.stringify(words),
-      '</words>',
+      `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
   });
 
@@ -216,9 +204,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     }),
     prompt: [
       '<role>Act as an expert English lexicographer generating synonym/antonym pairs.</role>',
-      '<task>',
-      `Create exactly ${words.length} synonym/antonym pairs based on the input word value (one per input word)`,
-      '</task>',
+      `<task>Create exactly ${words.length} synonym/antonym pairs based on the input word value (one per input word)</task>`,
       '<requirements>',
       '- Each task.id matches the corresponding input word.id',
       '- Same part of speech as input word',
@@ -229,9 +215,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
       '- Both synonym and antonym must be actual words or phrases derived from the word\'s definition and part of speech; never use placeholders like "N/A", "none", "nothing", "no synonym", "no antonym"',
       '- If no exact match exists at target level, use alternatives: near-synonyms, gradable antonyms, or functional opposites',
       '</requirements>',
-      '<words>',
-      JSON.stringify(words),
-      '</words>',
+      `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
   });
 
