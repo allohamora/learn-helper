@@ -58,8 +58,8 @@ export const WordsTable: FC<WordsTableProps> = ({
   const [editingWord, setEditingWord] = useState<UserWord | null>(null);
 
   const updateTranslation = useMutation({
-    mutationFn: async ({ wordId, userWordId, value }: { wordId: number; userWordId: number; value: string }) => {
-      return await actions.updateWord.orThrow({ wordId, userWordId, value });
+    mutationFn: async ({ wordId, value }: { wordId: number; value: string }) => {
+      return await actions.updateWord.orThrow({ wordId, uaTranslation: value });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['getUserWords'] });

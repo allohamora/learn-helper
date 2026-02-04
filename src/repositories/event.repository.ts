@@ -111,7 +111,7 @@ export const getGroupedByDayTaskCostEvents = async ({
     .groupBy(sql`date(${Event.createdAt})`);
 };
 
-export const getGroupedByDayUaTranslationUpdatedEvents = async ({
+export const getGroupedByDayWordUpdatedEvents = async ({
   userId,
   dateFrom,
   dateTo,
@@ -125,7 +125,7 @@ export const getGroupedByDayUaTranslationUpdatedEvents = async ({
     .where(
       and(
         eq(Event.userId, userId),
-        eq(Event.type, EventType.UaTranslationUpdated),
+        eq(Event.type, EventType.WordUpdated),
         and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
       ),
     )

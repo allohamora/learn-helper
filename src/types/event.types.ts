@@ -9,7 +9,7 @@ export enum EventType {
   WordMovedToNextStep = 'word-moved-to-next-step',
   TaskCost = 'task-cost',
   HintViewed = 'hint-viewed',
-  UaTranslationUpdated = 'ua-translation-updated',
+  WordUpdated = 'word-updated',
 }
 
 export type ClientEventBody =
@@ -54,6 +54,7 @@ export type EventBody =
       outputTokens?: number;
     }
   | {
-      type: EventType.UaTranslationUpdated;
-      userWordId: number;
+      type: EventType.WordUpdated;
+      wordId: number;
+      fieldName: string;
     };

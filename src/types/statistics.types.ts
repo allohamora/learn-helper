@@ -22,7 +22,7 @@ export type CostPerDayStatistics = {
   outputTokens: number;
 };
 
-export type UaTranslationUpdatedPerDayStatistics = {
+export type WordUpdatedPerDayStatistics = {
   date: string; // YYYY-MM-DD
   count: number;
 };
@@ -36,7 +36,7 @@ export type Statistics = {
     totalShowcasesCompleted: number;
     totalWordsMovedToNextStep: number;
     totalHintsViewed: number;
-    totalUaTranslationsUpdated: number;
+    totalWordsUpdated: number;
     totalTaskCostsInNanoDollars: number;
     totalInputTokens: number;
     totalOutputTokens: number;
@@ -50,7 +50,7 @@ export type Statistics = {
   discoveringPerDay: DiscoveringPerDayStatistics[];
   learningPerDay: LearningPerDayStatistics[];
   costPerDay: CostPerDayStatistics[];
-  uaTranslationUpdatedPerDay: UaTranslationUpdatedPerDayStatistics[];
+  wordsUpdatedPerDay: WordUpdatedPerDayStatistics[];
   topMistakes: {
     count: number;
     value: string | null;

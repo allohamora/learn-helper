@@ -2,7 +2,7 @@ import {
   getGroupedByDayDiscoveryEvents,
   getGroupedByDayLearningEvents,
   getGroupedByDayTaskCostEvents,
-  getGroupedByDayUaTranslationUpdatedEvents,
+  getGroupedByDayWordUpdatedEvents,
   getGroupedByTypeEvents,
   getTopMistakes,
   getTopHintedWords,
@@ -14,7 +14,7 @@ import type {
   DiscoveringPerDayStatistics,
   LearningPerDayStatistics,
   Statistics,
-  UaTranslationUpdatedPerDayStatistics,
+  WordUpdatedPerDayStatistics,
 } from '@/types/statistics.types';
 import { Status } from '@/types/user-words.types';
 import { daysAgo, endOfDay, startOfDay, toDateOnlyString } from '@/utils/date.utils';
@@ -28,7 +28,7 @@ const getGeneralStatistics = async (data: AuthParams) => {
     totalShowcasesCompleted: 0,
     totalWordsMovedToNextStep: 0,
     totalHintsViewed: 0,
-    totalUaTranslationsUpdated: 0,
+    totalWordsUpdated: 0,
     totalTaskCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -87,8 +87,8 @@ const getGeneralStatistics = async (data: AuthParams) => {
       case EventType.HintViewed:
         result.totalHintsViewed = item.count;
         continue;
-      case EventType.UaTranslationUpdated:
-        result.totalUaTranslationsUpdated = item.count;
+      case EventType.WordUpdated:
+        result.totalWordsUpdated = item.count;
         continue;
       case EventType.TaskCost:
         if (item.costInNanoDollars === null) {
@@ -241,13 +241,13 @@ const getCostPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom
   return Object.values(state);
 };
 
-const getUaTranslationUpdatedPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
+const getWordsUpdatedPerDayStatistics = async (data: AuthParams<{ dateTo: Date; dateFrom: Date }>) => {
   const state = getDates(data).reduce(
     (state, date) => ({ ...state, [date]: { date, count: 0 } }),
-    {} as Record<string, UaTranslationUpdatedPerDayStatistics>,
+    {} as Record<string, WordUpdatedPerDayStatistics>,
   );
 
-  const events = await getGroupedByDayUaTranslationUpdatedEvents(data);
+  const events = await getGroupedByDayWordUpdatedEvents(data);
   for (const item of events) {
     const target = state[item.date];
     if (target) {
@@ -263,30 +263,23 @@ export const getStatistics = async ({ userId }: AuthParams) => {
   const dateFrom = daysAgo(6, startOfDay(dateTo));
   const data = { userId, dateFrom, dateTo };
 
-  const [
-    general,
-    discoveringPerDay,
-    learningPerDay,
-    costPerDay,
-    uaTranslationUpdatedPerDay,
-    topMistakes,
-    topHintedWords,
-  ] = await Promise.all([
-    getGeneralStatistics(data),
-    getDiscoveringPerDayStatistics(data),
-    getLearningPerDayStatistics(data),
-    getCostPerDayStatistics(data),
-    getUaTranslationUpdatedPerDayStatistics(data),
-    getTopMistakes({ userId, limit: 20 }),
-    getTopHintedWords({ userId, limit: 20 }),
-  ]);
+  const [general, discoveringPerDay, learningPerDay, costPerDay, wordsUpdatedPerDay, topMistakes, topHintedWords] =
+    await Promise.all([
+      getGeneralStatistics(data),
+      getDiscoveringPerDayStatistics(data),
+      getLearningPerDayStatistics(data),
+      getCostPerDayStatistics(data),
+      getWordsUpdatedPerDayStatistics(data),
+      getTopMistakes({ userId, limit: 20 }),
+      getTopHintedWords({ userId, limit: 20 }),
+    ]);
 
   return {
     general,
     discoveringPerDay,
     learningPerDay,
     costPerDay,
-    uaTranslationUpdatedPerDay,
+    wordsUpdatedPerDay,
     topMistakes,
     topHintedWords,
   } satisfies Statistics;

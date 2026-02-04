@@ -45,7 +45,7 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 0,
         totalWordsMovedToNextStep: 0,
         totalHintsViewed: 0,
-        totalUaTranslationsUpdated: 0,
+        totalWordsUpdated: 0,
         totalTaskCostsInNanoDollars: 0,
         totalInputTokens: 0,
         totalOutputTokens: 0,
@@ -57,7 +57,7 @@ describe('statistics.service', () => {
       expect(result.discoveringPerDay).toHaveLength(7);
       expect(result.learningPerDay).toHaveLength(7);
       expect(result.costPerDay).toHaveLength(7);
-      expect(result.uaTranslationUpdatedPerDay).toHaveLength(7);
+      expect(result.wordsUpdatedPerDay).toHaveLength(7);
       expect(result.topMistakes).toEqual([]);
 
       for (const day of result.discoveringPerDay) {
@@ -81,7 +81,7 @@ describe('statistics.service', () => {
         expect(day.outputTokens).toBe(0);
       }
 
-      for (const day of result.uaTranslationUpdatedPerDay) {
+      for (const day of result.wordsUpdatedPerDay) {
         expect(day.count).toBe(0);
       }
     });
@@ -345,13 +345,15 @@ describe('statistics.service', () => {
         },
         {
           userId,
-          userWordId: userWord.id,
-          type: EventType.UaTranslationUpdated,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
         },
         {
           userId,
-          userWordId: userWord.id,
-          type: EventType.UaTranslationUpdated,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
         },
       ]);
 
@@ -364,7 +366,7 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 2,
         totalWordsMovedToNextStep: 2,
         totalHintsViewed: 3,
-        totalUaTranslationsUpdated: 2,
+        totalWordsUpdated: 2,
         totalTaskCostsInNanoDollars: 5_000_000_000,
         totalInputTokens: 2000,
         totalOutputTokens: 4000,
@@ -708,7 +710,7 @@ describe('statistics.service', () => {
       expect(outsideRangeStats).toBeUndefined();
     });
 
-    it('returns correct ua translation updated per day statistics within date range', async () => {
+    it('returns correct word updated per day statistics within date range', async () => {
       const userWord = getUserWord();
       const today = new Date();
       const weekAgo = daysAgo(6);
@@ -717,43 +719,47 @@ describe('statistics.service', () => {
       await db.insert(Event).values([
         {
           userId,
-          userWordId: userWord.id,
-          type: EventType.UaTranslationUpdated,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
           createdAt: today,
         },
         {
           userId,
-          userWordId: userWord.id,
-          type: EventType.UaTranslationUpdated,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
           createdAt: today,
         },
         {
           userId,
-          userWordId: userWord.id,
-          type: EventType.UaTranslationUpdated,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
           createdAt: weekAgo,
         },
         {
           userId,
-          userWordId: userWord.id,
-          type: EventType.UaTranslationUpdated,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
           createdAt: outsideRangeDate,
         },
       ]);
 
       const result = await getStatistics({ userId });
 
-      expect(result.general.totalUaTranslationsUpdated).toBe(4);
+      expect(result.general.totalWordsUpdated).toBe(4);
 
-      const todayStats = result.uaTranslationUpdatedPerDay.find((day) => day.date === toDateOnlyString(today));
+      const todayStats = result.wordsUpdatedPerDay.find((day) => day.date === toDateOnlyString(today));
       expect(todayStats).toBeDefined();
       expect(todayStats?.count).toBe(2);
 
-      const weekAgoStats = result.uaTranslationUpdatedPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
+      const weekAgoStats = result.wordsUpdatedPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
       expect(weekAgoStats).toBeDefined();
       expect(weekAgoStats?.count).toBe(1);
 
-      const outsideRangeUaStats = result.uaTranslationUpdatedPerDay.find(
+      const outsideRangeUaStats = result.wordsUpdatedPerDay.find(
         (day) => day.date === toDateOnlyString(outsideRangeDate),
       );
       expect(outsideRangeUaStats).toBeUndefined();

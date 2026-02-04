@@ -8,7 +8,7 @@ type EditTranslationDialogProps = {
   editingWord: UserWord | null;
   isPending: boolean;
   onClose: () => void;
-  onSave: (params: { wordId: number; userWordId: number; value: string }) => void;
+  onSave: (params: { wordId: number; value: string }) => void;
 };
 
 export const EditTranslationDialog: FC<EditTranslationDialogProps> = ({ editingWord, isPending, onClose, onSave }) => {
@@ -17,7 +17,7 @@ export const EditTranslationDialog: FC<EditTranslationDialogProps> = ({ editingW
   const handleSave = () => {
     const trimmed = editValue.trim();
     if (trimmed.length > 0 && editingWord) {
-      onSave({ wordId: editingWord.word.id, userWordId: editingWord.id, value: trimmed });
+      onSave({ wordId: editingWord.word.id, value: trimmed });
     }
   };
 
