@@ -36,7 +36,7 @@ export enum TaskType {
   FillInTheGap = 'fill-in-the-gap',
   SynonymAndAntonym = 'synonym-and-antonym',
   FindNonsenseSentence = 'find-nonsense-sentence',
-  WordOrder = 'word-order',
+  WordOrder = 'word-order', // deprecated, but we have this in database
 }
 
 export type ToWordData = {
@@ -59,11 +59,14 @@ export type ToOptionsData = {
   hint?: string;
 };
 
-export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
-
-export type SentenceData = ToOptionsData & {
+export type WordArrangementData = {
+  id: number;
   sentence: string;
+  originalWords: string[];
+  shuffledWords: string[];
 };
+
+export type WordToOptionsData = ToOptionsData & typeof db.Word.$inferSelect;
 
 export type ShowcaseTask = {
   id: string;
@@ -107,13 +110,13 @@ export type PronunciationToWordTask = {
 export type TranslateEnglishSentenceTask = {
   id: string;
   type: TaskType.TranslateEnglishSentence;
-  data: SentenceData;
+  data: WordArrangementData;
 };
 
 export type TranslateUkrainianSentenceTask = {
   id: string;
   type: TaskType.TranslateUkrainianSentence;
-  data: SentenceData;
+  data: WordArrangementData;
 };
 
 export type FillInTheGapTask = {
@@ -139,17 +142,6 @@ export type FindNonsenseSentenceTask = {
   data: WordToOptionsData;
 };
 
-export type WordOrderTask = {
-  id: string;
-  type: TaskType.WordOrder;
-  data: {
-    id: number;
-    originalWords: string[];
-    shuffledWords: string[];
-    translation: string;
-  };
-};
-
 export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
@@ -161,5 +153,4 @@ export type LearningTask =
   | TranslateUkrainianSentenceTask
   | FillInTheGapTask
   | SynonymAndAntonymTask
-  | FindNonsenseSentenceTask
-  | WordOrderTask;
+  | FindNonsenseSentenceTask;

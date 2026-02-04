@@ -16,12 +16,10 @@ import {
   type TranslateEnglishSentenceTask,
   type SynonymAndAntonymTask,
   type FindNonsenseSentenceTask,
-  type WordOrderTask,
 } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ShowcaseCard } from './showcase-card';
 import { PronunciationToWord } from './pronunciation-to-word';
-import { SentenceToOptions } from './sentence-to-options';
 import { Button } from '@/components/ui/button';
 import { LearningResult } from './learning-result';
 import { Loader } from './ui/loader';
@@ -171,40 +169,38 @@ const toFillInTheGapTasks = (words: UserWord[], tasksData: TasksData['fillInTheG
 };
 
 const toTranslateUkrainianSentenceTasks = (tasksData: TasksData['translateUkrainianSentenceTasks']) => {
-  return tasksData.map(({ id, sentence, options }): TranslateUkrainianSentenceTask => {
+  return tasksData.map(({ id, sentence, translation }): TranslateUkrainianSentenceTask => {
+    const originalWords = removePeriods(translation)
+      .split(' ')
+      .filter((word) => !!word.trim());
+
     return {
       id: crypto.randomUUID(),
       type: TaskType.TranslateUkrainianSentence,
       data: {
         id,
         sentence: removePeriods(sentence),
-        options: shuffle(
-          options.map((option) => ({
-            ...option,
-            value: removePeriods(option.value),
-            description: option.description ? removePeriods(option.description) : undefined,
-          })),
-        ),
+        originalWords,
+        shuffledWords: shuffle(originalWords),
       },
     };
   });
 };
 
 const toTranslateEnglishSentenceTasks = (tasksData: TasksData['translateEnglishSentenceTasks']) => {
-  return tasksData.map(({ id, sentence, options }): TranslateEnglishSentenceTask => {
+  return tasksData.map(({ id, sentence, translation }): TranslateEnglishSentenceTask => {
+    const originalWords = removePeriods(translation)
+      .split(' ')
+      .filter((word) => !!word.trim());
+
     return {
       id: crypto.randomUUID(),
       type: TaskType.TranslateEnglishSentence,
       data: {
         id,
         sentence: removePeriods(sentence),
-        options: shuffle(
-          options.map((option) => ({
-            ...option,
-            value: removePeriods(option.value),
-            description: option.description ? removePeriods(option.description) : undefined,
-          })),
-        ),
+        originalWords,
+        shuffledWords: shuffle(originalWords),
       },
     };
   });
@@ -256,30 +252,6 @@ const toFindNonsenseSentenceTasks = (words: UserWord[], tasksData: TasksData['fi
   });
 };
 
-const toWordOrderTasks = (words: UserWord[], tasksData: TasksData['wordOrderTasks']) => {
-  return tasksData.map(({ id, sentence, translation }): WordOrderTask => {
-    const found = words.find((word) => word.id === id);
-    if (!found) {
-      throw new Error('Word for WordOrder task is not found');
-    }
-
-    const originalWords = removePeriods(sentence)
-      .split(' ')
-      .filter((word) => !!word.trim());
-
-    return {
-      id: crypto.randomUUID(),
-      type: TaskType.WordOrder,
-      data: {
-        id,
-        originalWords,
-        shuffledWords: shuffle(originalWords),
-        translation: removePeriods(translation),
-      },
-    };
-  });
-};
-
 const toClientTasks = (words: UserWord[]) => {
   const showcaseTasks = toShowcaseTasks(words);
   const wordToDefinitionTasks = toWordToDefinitionTasks(words);
@@ -304,7 +276,6 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
   const fillInTheGapTasks = toFillInTheGapTasks(words, tasksData.fillInTheGapTasks);
   const synonymAndAntonymTasks = toSynonymAndAntonymTasks(words, tasksData.synonymAndAntonymTasks);
   const findNonsenseSentenceTasks = toFindNonsenseSentenceTasks(words, tasksData.findNonsenseSentenceTasks);
-  const wordOrderTasks = toWordOrderTasks(words, tasksData.wordOrderTasks);
 
   return [
     ...shuffle(translateEnglishSentenceTasks),
@@ -312,7 +283,6 @@ const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
     ...shuffle(fillInTheGapTasks),
     ...shuffle(synonymAndAntonymTasks),
     ...shuffle(findNonsenseSentenceTasks),
-    ...shuffle(wordOrderTasks),
   ];
 };
 
@@ -527,11 +497,10 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.TranslateEnglishSentence && (
-              <SentenceToOptions
+              <WordOrder
                 key={currentTask.id}
-                title="Select the correct translation"
-                subtitle="Choose the Ukrainian translation that best matches the English sentence"
-                taskType={TaskType.TranslateEnglishSentence}
+                title="Arrange the Ukrainian translation"
+                subtitle="Select words to build the Ukrainian sentence in the correct order"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -539,11 +508,10 @@ export const Learning: FC = () => {
             )}
 
             {currentTask?.type === TaskType.TranslateUkrainianSentence && (
-              <SentenceToOptions
+              <WordOrder
                 key={currentTask.id}
-                title="Select the correct translation"
-                subtitle="Choose the English sentence that best matches the Ukrainian sentence"
-                taskType={TaskType.TranslateUkrainianSentence}
+                title="Arrange the English translation"
+                subtitle="Select words to build the English sentence in the correct order"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}
@@ -580,17 +548,6 @@ export const Learning: FC = () => {
                 title="Find the nonsense sentence"
                 subtitle="Choose the sentence where the word or phrase is used nonsensically"
                 taskType={TaskType.FindNonsenseSentence}
-                data={currentTask.data}
-                onNext={onNext}
-                onMistake={onMistake}
-              />
-            )}
-
-            {currentTask?.type === TaskType.WordOrder && (
-              <WordOrder
-                key={currentTask.id}
-                title="Arrange the words in the correct order"
-                subtitle="Select words to build the sentence in the correct order"
                 data={currentTask.data}
                 onNext={onNext}
                 onMistake={onMistake}

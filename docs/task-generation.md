@@ -53,12 +53,11 @@ These criteria define why a task belongs earlier or later in a sequence.
 
 ### Server tasks (runtime sequence)
 
-- **Translate English Sentence**: Reinforce comprehension by mapping English to Ukrainian.
-- **Translate Ukrainian Sentence**: Flip direction to practice English production.
+- **Translate English Sentence**: Arrange shuffled Ukrainian words to form the translation of an English sentence.
+- **Translate Ukrainian Sentence**: Arrange shuffled English words to form the translation of a Ukrainian sentence.
 - **Fill in the Gap**: Build contextual recall to anchor meaning.
 - **Synonym and Antonym**: Expand semantic links with near and opposite meanings.
 - **Find Nonsense Sentence**: Stress-test usage by spotting impossible contexts.
-- **Word Order**: Rebuild sentence structure to cement grammar around the target.
 
 ### Client tasks (runtime sequence)
 
@@ -86,7 +85,6 @@ Scores are 0-10 per criterion. Overall score is the average of all criteria (0-1
 | Fill in the Gap              | Server | 6           | 6    | 6    | 6        | 6        | 6          | 8        | 5          | 6.1     |
 | Synonym and Antonym          | Server | 5           | 6    | 6    | 6        | 5        | 6          | 7        | 5          | 5.8     |
 | Find Nonsense Sentence       | Server | 6           | 6    | 5    | 6        | 7        | 7          | 7        | 7          | 6.4     |
-| Word Order                   | Server | 4           | 6    | 4    | 6        | 6        | 6          | 7        | 7          | 5.8     |
 
 ## Summary ranking
 
@@ -95,12 +93,11 @@ Scores are 0-10 per criterion. Overall score is the average of all criteria (0-1
 | Task Type                    | Score   |
 | ---------------------------- | ------- |
 | Fill in the Gap              | 46/70   |
-| Translate English Sentence   | 45/70   |
-| Translate Ukrainian Sentence | 45/70   |
+| Translate English Sentence   | 47/70   |
+| Translate Ukrainian Sentence | 47/70   |
 | Synonym and Antonym          | 45/70   |
-| Word Order                   | 43/70   |
 | Find Nonsense Sentence       | 42/70   |
-| **Overall**                  | 266/420 |
+| **Overall**                  | 227/350 |
 
 ### Client (runtime)
 
