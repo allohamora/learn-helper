@@ -5,12 +5,10 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type WordArrangementData } from '@/types/user-words.types';
 
-type Data = WordArrangementData;
-
 type WordOrderProps = {
   title: string;
   subtitle: string;
-  data: Data;
+  data: WordArrangementData;
   onMistake: (userWordId: number) => void;
   onNext: () => void;
 };
