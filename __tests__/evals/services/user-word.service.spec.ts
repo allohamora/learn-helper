@@ -19,55 +19,36 @@ describe.concurrent('user-word.service', () => {
     [
       {
         value: 'a',
-        definition:
-          'used before countable or singular nouns referring to people or things that have not already been mentioned',
         partOfSpeech: 'indefinite article',
-        level: 'a1',
       },
       {
         value: 'can',
-        definition:
-          'used to say that it is possible for somebody/something to do something, or for something to happen',
         partOfSpeech: 'modal verb',
-        level: 'a1',
       },
       {
         value: 'be going to do (sth)',
-        definition: 'to move or travel from one place to another',
         partOfSpeech: null,
-        level: 'a1',
       },
       {
         value: 'for the first time',
-        definition: 'happening or coming before all other similar things or people; 1st',
         partOfSpeech: null,
-        level: 'a1',
       },
 
       {
         value: 'ability',
-        definition: 'the fact that somebody/something is able to do something',
         partOfSpeech: 'noun',
-        level: 'a2',
       },
       {
         value: 'challenge',
-        definition: "a new or difficult task that tests somebody's ability and skill",
         partOfSpeech: 'noun',
-        level: 'b1',
       },
       {
         value: 'abandon',
-        definition: 'to leave somebody, especially somebody you are responsible for, with no intention of returning',
         partOfSpeech: 'verb',
-        level: 'b2',
       },
       {
         value: 'absence',
-        definition:
-          'the fact of somebody being away from a place where they are usually expected to be; the occasion or period of time when somebody is away',
         partOfSpeech: 'noun',
-        level: 'c1',
       },
     ] satisfies Omit<WordData, 'id'>[]
   ).map((data) => word(data));
@@ -91,7 +72,6 @@ describe.concurrent('user-word.service', () => {
         'Each task.task must contain exactly one ___ (three underscores) as the blank placeholder.',
         'Sentences are 3-15 words, natural modern English. When the blank is filled with the answer, the sentence should be comprehensible - however, "a"/"an" mismatches (e.g., "a interesting" instead of "an interesting") are acceptable, as well as occasional awkward phrasing.',
         'Answer is target word/phrase or grammatical adaptation. Examples: "be going to do (sth)" can be "are going to" in "We are ___ walk", "are going to do" in "We are ___ do homework". Target appears only as blank.',
-        'Tasks cover various CEFR levels, which is expected.',
       ]);
     });
   });
@@ -122,7 +102,6 @@ describe.concurrent('user-word.service', () => {
         'Ukrainian translations are 3-15 words, grammatically correct natural Ukrainian, single-space separated, first word capitalized, punctuation attached to words.',
         'Ukrainian translation word order is unambiguous when shuffled — no two valid orderings exist.',
         'ALL Ukrainian words are separate tokens: pronouns, prepositions, conjunctions, particles are individual words.',
-        'Tasks cover various CEFR levels (A1-C1), which is expected.',
       ]);
     });
   });
@@ -152,7 +131,6 @@ describe.concurrent('user-word.service', () => {
         'English translations are 3-15 words, grammatically perfect, include ALL articles, ALL prepositions, ALL auxiliary verbs, correct verb forms.',
         'English translation word order is unambiguous when shuffled — no two valid orderings exist.',
         'ALL English words are separate tokens: articles, prepositions, conjunctions, auxiliaries are individual words.',
-        'Tasks cover various CEFR levels (A1-C1), which is expected.',
         'Minor Ukrainian phrasing variations are acceptable as long as the meaning is clear.',
       ]);
     });
@@ -178,7 +156,7 @@ describe.concurrent('user-word.service', () => {
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id, synonym, antonym fields. Task ids match input word ids.`,
         'CRITICAL: Both synonym AND antonym fields must be non-empty strings. Empty strings are NOT acceptable - a valid word or phrase must be provided for each field.',
-        'Synonyms/antonyms based on definition field. Synonym/antonym positions may be swapped if both represent semantically valid relationships (e.g., if "presence" is given as synonym for "absence", this is acceptable as it shows a valid semantic relationship even if reversed). Part of speech null for phrases is acceptable.',
+        'Synonyms/antonyms based on word value. Synonym/antonym positions may be swapped if both represent semantically valid relationships (e.g., if "presence" is given as synonym for "absence", this is acceptable as it shows a valid semantic relationship even if reversed). Part of speech null for phrases is acceptable.',
         'Clear, common vocabulary. Single words preferred, but phrases (2-4 words) are fully acceptable. Antonyms do not need to be direct opposites - semantically related contrasting phrases are valid (e.g., for "abandon": antonym could be "stay with", "keep", or "hold onto"). No target word repetition.',
         'Natural, lowercase format (hyphens ok). For articles: "a"→synonym "an", antonym "the" (or similar valid article relationships). Note: INPUT words may contain parentheses like "(sth)" - this refers to the source data, not the output.',
       ]);

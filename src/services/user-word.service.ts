@@ -82,8 +82,6 @@ export type WordData = {
   id: number;
   value: string;
   partOfSpeech: string | null;
-  level: string;
-  definition: string;
 };
 
 export const toFillInTheGap = async (words: WordData[]) => {
@@ -103,7 +101,6 @@ export const toFillInTheGap = async (words: WordData[]) => {
       '<requirements>',
       '- Grammatically correct, natural, engaging and modern English sentences',
       '- Target word appears ONLY as "___" blank',
-      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
       '- Varied punctuation (., !, ?) based on sentence type',
       '</requirements>',
       '<words>',
@@ -142,7 +139,6 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       '</task>',
       '<requirements>',
       '- English sentence: 3-15 words, modern, natural, containing target word/phrase',
-      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
       '- Varied punctuation (., !, ?) based on sentence type',
       '- Ukrainian translation: natural, grammatically correct',
       '- When generating Ukrainian text, ensure adjective-noun agreement (gender, number, case)',
@@ -186,7 +182,6 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       '</task>',
       '<requirements>',
       '- Ukrainian sentence: 3-15 words, modern, natural, containing translated target word/phrase',
-      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
       '- Varied punctuation (., !, ?) based on sentence type',
       '- English translation: natural, grammatically perfect, includes ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, correct verb forms',
       '- English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
@@ -221,12 +216,11 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     }),
     prompt: [
       '<task>',
-      `Create exactly ${words.length} synonym/antonym pairs based on the definition field (one per input word)`,
+      `Create exactly ${words.length} synonym/antonym pairs based on the input word value (one per input word)`,
       '</task>',
       '<requirements>',
       '- Same part of speech as input word',
-      '- Match CEFR level: A1 words need simple synonyms (glad, large), not advanced (elated, substantial)',
-      '- Use "definition" for meaning, but preserve part of speech',
+      '- Use only word meaning from the word value and preserve part of speech',
       '- Never use target word itself',
       '- Use only words from the same category: modal -> modal, article -> article, preposition -> preposition',
       '- Never substitute with content words (adjectives, verbs, nouns)',
@@ -265,8 +259,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       id,
       value: word.value,
       partOfSpeech: word.partOfSpeech,
-      level: word.level,
-      definition: word.definition,
     }),
   );
 
