@@ -36,7 +36,6 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Natural language**: Content should sound authentic and conversational, as a native speaker would use it
 - **Keep tasks unique**: Avoid repeating sentence structures, topics, or contexts across different words to maintain engagement
 - **Make it enjoyable**: Use interesting, relatable scenarios that learners can connect with their daily lives
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
 - **Modern expressions**: Prefer modern, conversational English over formal or outdated expressions
 - **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type
 - **Phrase adaptation**: When target is a phrase with placeholders like "agree with (sb)", adapt naturally by providing context (e.g., "I agree with you")
@@ -83,31 +82,6 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Task: "Do you \_\_\_ the question?"
   - Answer: "understand"
 
-- **Level A1** (Simple present tense, basic daily routine):
-  - Word: "eat"
-  - Task: "I \_\_\_ breakfast every morning."
-  - Answer: "eat"
-
-- **Level A2** (Simple past tense, familiar context):
-  - Word: "visit"
-  - Task: "We \_\_\_ our grandparents last weekend."
-  - Answer: "visited"
-
-- **Level B1** (Second conditional, hypothetical situation):
-  - Word: "choose"
-  - Task: "If I could \_\_\_ any job, I would be a pilot."
-  - Answer: "choose"
-
-- **Level B2** (Present perfect tense, achievement context):
-  - Word: "accomplish"
-  - Task: "She has \_\_\_ more than anyone expected this year."
-  - Answer: "accomplished"
-
-- **Level C1** (Modal verb with advanced vocabulary, subtle meaning):
-  - Word: "undermine"
-  - Task: "His constant criticism could \_\_\_ her confidence."
-  - Answer: "undermine"
-
 **Ranking**:
 
 | Parameter             | Score | Reason                                                                 |
@@ -139,7 +113,6 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use conditionals; for B2, use mixed conditionals or complex tenses; for A2, keep it simple
 - **Natural language**: English sentences and Ukrainian translations must sound fluent and authentic
 - **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
 - **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
@@ -200,7 +173,6 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use conditionals; for B2, use mixed conditionals or complex tenses; for A2, keep it simple
 - **Natural language**: Ukrainian sentences and English translations must sound fluent and authentic
 - **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
 - **English completeness**: Include ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, and correct verb forms
