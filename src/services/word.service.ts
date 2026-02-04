@@ -2,6 +2,7 @@ import { updateUaTranslation } from '@/repositories/word.repository';
 import { insertEvent } from '@/repositories/event.repository';
 import type { AuthParams } from '@/types/auth.types';
 import { EventType } from '@/types/event.types';
+import { db } from 'astro:db';
 
 export const updateUaTranslationWord = async ({
   userId,
@@ -9,6 +10,8 @@ export const updateUaTranslationWord = async ({
   userWordId,
   value,
 }: AuthParams<{ wordId: number; userWordId: number; value: string }>) => {
-  await updateUaTranslation({ wordId, value });
-  await insertEvent({ userId, userWordId, type: EventType.UaTranslationUpdated });
+  await db.transaction(async (tx) => {
+    await updateUaTranslation({ wordId, value }, tx);
+    await insertEvent({ userId, userWordId, type: EventType.UaTranslationUpdated }, tx);
+  });
 };
