@@ -143,6 +143,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Natural language**: English sentences and Ukrainian translations must sound fluent and authentic
 - **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
 - **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
+- **UI normalization**: Trailing periods are stripped from sentences/translations before shuffling to avoid model-added periods
 - **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled
 - **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens
 - **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian
@@ -152,15 +153,15 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Simple sentence**:
   - Word: "beautiful"
-  - Sentence: "The garden is beautiful."
-  - Translation: "Сад гарний."
-  - Scrambled (in UI): ["Сад", "гарний."]
+  - Sentence: "The garden is beautiful"
+  - Translation: "Сад гарний"
+  - Scrambled (in UI): ["Сад", "гарний"]
 
 - **Phrase in context**:
   - Word: "take care of"
-  - Sentence: "I take care of my plants."
-  - Translation: "Я доглядаю за своїми рослинами."
-  - Scrambled: ["доглядаю", "своїми", "Я", "за", "рослинами."]
+  - Sentence: "I take care of my plants"
+  - Translation: "Я доглядаю за своїми рослинами"
+  - Scrambled: ["доглядаю", "своїми", "Я", "за", "рослинами"]
 
 - **Question sentence**:
   - Word: "ready"
@@ -204,6 +205,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type
 - **English completeness**: Include ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, and correct verb forms
 - **Translation formatting**: 3-15 words, single-space separated, punctuation attached to words, first word capitalized only
+- **UI normalization**: Trailing periods are stripped from sentences/translations before shuffling to avoid model-added periods
 - **Unambiguous word order**: The English translation must have one clear valid order when shuffled
 - **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens
 - **Phrase integration**: When the target is a phrase, include it naturally within the Ukrainian sentence
@@ -212,21 +214,21 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **Simple sentence**:
   - Word: "beautiful"
-  - Sentence: "Сад гарний."
-  - Translation: "The garden is beautiful."
-  - Scrambled (in UI): ["garden", "The", "is", "beautiful."]
+  - Sentence: "Сад гарний"
+  - Translation: "The garden is beautiful"
+  - Scrambled (in UI): ["garden", "The", "is", "beautiful"]
 
 - **Articles and prepositions**:
   - Word: "at"
-  - Sentence: "Вона в магазині."
-  - Translation: "She is at the store."
-  - Scrambled: ["the", "at", "She", "is", "store."]
+  - Sentence: "Вона в магазині"
+  - Translation: "She is at the store"
+  - Scrambled: ["the", "at", "She", "is", "store"]
 
 - **Auxiliary verb**:
   - Word: "be going to do"
-  - Sentence: "Вони збираються подорожувати завтра."
-  - Translation: "They are going to travel tomorrow."
-  - Scrambled: ["are", "They", "tomorrow.", "travel", "to", "going"]
+  - Sentence: "Вони збираються подорожувати завтра"
+  - Translation: "They are going to travel tomorrow"
+  - Scrambled: ["are", "They", "tomorrow", "travel", "to", "going"]
 
 **Ranking**:
 
