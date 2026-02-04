@@ -8,6 +8,7 @@ import { ActionError, defineAction, type ActionAPIContext } from 'astro:actions'
 import { z } from 'astro:schema';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { getStatistics } from '@/services/statistics.service';
+import { updateWord } from '@/services/word.service';
 
 const auth = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
   return async (data: T, context: ActionAPIContext) => {
@@ -128,5 +129,12 @@ export const server = {
   getStatistics: defineAction({
     input: z.object({}),
     handler: auth(getStatistics),
+  }),
+  updateWord: defineAction({
+    input: z.object({
+      wordId: z.number(),
+      uaTranslation: z.string().trim().min(1).max(255),
+    }),
+    handler: auth(updateWord),
   }),
 };

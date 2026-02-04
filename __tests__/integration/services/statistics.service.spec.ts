@@ -45,6 +45,7 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 0,
         totalWordsMovedToNextStep: 0,
         totalHintsViewed: 0,
+        totalWordsUpdated: 0,
         totalTaskCostsInNanoDollars: 0,
         totalInputTokens: 0,
         totalOutputTokens: 0,
@@ -56,7 +57,12 @@ describe('statistics.service', () => {
       expect(result.discoveringPerDay).toHaveLength(7);
       expect(result.learningPerDay).toHaveLength(7);
       expect(result.costPerDay).toHaveLength(7);
+      expect(result.wordsUpdatedPerDay).toHaveLength(7);
       expect(result.topMistakes).toEqual([]);
+
+      for (const day of result.wordsUpdatedPerDay) {
+        expect(day.uaTranslation).toBe(0);
+      }
 
       for (const day of result.discoveringPerDay) {
         expect(day.learningCount).toBe(0);
@@ -337,6 +343,18 @@ describe('statistics.service', () => {
           type: EventType.HintViewed,
           taskType: TaskType.WordToTranslation,
         },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
+        },
       ]);
 
       const result = await getStatistics({ userId });
@@ -348,6 +366,7 @@ describe('statistics.service', () => {
         totalShowcasesCompleted: 2,
         totalWordsMovedToNextStep: 2,
         totalHintsViewed: 3,
+        totalWordsUpdated: 2,
         totalTaskCostsInNanoDollars: 5_000_000_000,
         totalInputTokens: 2000,
         totalOutputTokens: 4000,
@@ -688,6 +707,75 @@ describe('statistics.service', () => {
       expect(weekAgoStats?.outputTokens).toBe(3000);
 
       const outsideRangeStats = result.costPerDay.find((day) => day.date === toDateOnlyString(outsideRangeDate));
+      expect(outsideRangeStats).toBeUndefined();
+    });
+
+    it('returns correct word updated per day statistics within date range', async () => {
+      const userWord = getUserWord();
+      const today = new Date();
+      const weekAgo = daysAgo(6);
+      const outsideRangeDate = daysAgo(10);
+
+      await db.insert(Event).values([
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
+          createdAt: today,
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
+          createdAt: today,
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
+          createdAt: weekAgo,
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'uaTranslation',
+          createdAt: outsideRangeDate,
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'definition',
+          createdAt: today,
+        },
+        {
+          userId,
+          wordId: userWord.wordId,
+          type: EventType.WordUpdated,
+          fieldName: 'definition',
+          createdAt: outsideRangeDate,
+        },
+      ]);
+
+      const result = await getStatistics({ userId });
+
+      expect(result.general.totalWordsUpdated).toBe(6);
+
+      const todayStats = result.wordsUpdatedPerDay.find((day) => day.date === toDateOnlyString(today));
+      expect(todayStats).toBeDefined();
+      expect(todayStats?.uaTranslation).toBe(2);
+
+      const weekAgoStats = result.wordsUpdatedPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
+      expect(weekAgoStats).toBeDefined();
+      expect(weekAgoStats?.uaTranslation).toBe(1);
+
+      const outsideRangeStats = result.wordsUpdatedPerDay.find(
+        (day) => day.date === toDateOnlyString(outsideRangeDate),
+      );
       expect(outsideRangeStats).toBeUndefined();
     });
 

@@ -1,10 +1,11 @@
-import { type FC, useMemo, useRef } from 'react';
+import { type FC, useMemo, useRef, useState } from 'react';
 import { type ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Volume2, ExternalLink, RotateCcw, Loader2 } from 'lucide-react';
+import { Volume2, ExternalLink, RotateCcw, Loader2, Pencil } from 'lucide-react';
+import { EditTranslationDialog } from '@/components/edit-translation-dialog';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { Status, type UserWord } from '@/types/user-words.types';
@@ -51,6 +52,22 @@ export const WordsTable: FC<WordsTableProps> = ({
         description: 'Failed to reset word',
         variant: 'destructive',
       });
+    },
+  });
+
+  const [editingWord, setEditingWord] = useState<UserWord | null>(null);
+
+  const updateTranslation = useMutation({
+    mutationFn: async ({ wordId, value }: { wordId: number; value: string }) => {
+      return await actions.updateWord.orThrow({ wordId, uaTranslation: value });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['getUserWords'] });
+      setEditingWord(null);
+      toast({ title: 'Success', description: 'Translation updated' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update translation', variant: 'destructive' });
     },
   });
 
@@ -159,6 +176,15 @@ export const WordsTable: FC<WordsTableProps> = ({
                   </a>
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingWord(row.original)}
+                className="h-6 w-6 shrink-0 p-0"
+                title="Edit translation"
+              >
+                <Pencil className="h-3 w-3" />
+              </Button>
               {canReset && (
                 <Button
                   variant="ghost"
@@ -311,6 +337,14 @@ export const WordsTable: FC<WordsTableProps> = ({
           </div>
         </div>
       )}
+
+      <EditTranslationDialog
+        key={editingWord?.id}
+        editingWord={editingWord}
+        isPending={updateTranslation.isPending}
+        onClose={() => setEditingWord(null)}
+        onSave={(params) => updateTranslation.mutate(params)}
+      />
     </div>
   );
 };

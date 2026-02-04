@@ -48,6 +48,8 @@ const Event = defineTable({
       enum: Object.values(TaskType) as UnionToTuple<(typeof TaskType)[keyof typeof TaskType]>,
       optional: true,
     }),
+    wordId: column.number({ optional: true, references: () => Word.columns.id }),
+    fieldName: column.text({ optional: true }),
     durationMs: column.number({ optional: true }),
     costInNanoDollars: column.number({ optional: true }),
     inputTokens: column.number({ optional: true }),

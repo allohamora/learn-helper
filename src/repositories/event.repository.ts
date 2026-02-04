@@ -111,6 +111,29 @@ export const getGroupedByDayTaskCostEvents = async ({
     .groupBy(sql`date(${Event.createdAt})`);
 };
 
+export const getGroupedByDayWordUpdatedEvents = async ({
+  userId,
+  dateFrom,
+  dateTo,
+}: AuthParams<{ dateFrom: Date; dateTo: Date }>) => {
+  return await db
+    .select({
+      date: sql<string>`date(${Event.createdAt})`,
+      fieldName: Event.fieldName,
+      count: sql<number>`count(*)`,
+    })
+    .from(Event)
+    .where(
+      and(
+        eq(Event.userId, userId),
+        eq(Event.type, EventType.WordUpdated),
+        isNotNull(Event.fieldName),
+        and(gte(Event.createdAt, dateFrom), lte(Event.createdAt, dateTo)),
+      ),
+    )
+    .groupBy(Event.fieldName, sql`date(${Event.createdAt})`);
+};
+
 export const getTopMistakes = async ({ userId, limit }: AuthParams<{ limit: number }>) => {
   return await db
     .select({ count: sql<number>`count(*)`, value: Word.value, partOfSpeech: Word.partOfSpeech })

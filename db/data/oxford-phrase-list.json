@@ -2097,15 +2097,6 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/care_2"
   },
   {
-    "value": "carry on",
-    "definition": "to continue moving",
-    "uaTranslation": "продовжувати",
-    "level": "a2",
-    "spelling": "/ˈkeri ˈɒn/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/car/carry/carry_on_1_us_4.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/carry-on_1"
-  },
-  {
     "value": "carry (sth) out",
     "definition": "to do something that you have said you will do or have been asked to do",
     "uaTranslation": "виконувати",
@@ -2113,6 +2104,15 @@
     "spelling": "/ˈkæri ˈsʌmθɪŋ ˈaʊt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/car/carry/carry_sth_out_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/carry-out_1"
+  },
+  {
+    "value": "carry on",
+    "definition": "to continue moving",
+    "uaTranslation": "продовжувати",
+    "level": "a2",
+    "spelling": "/ˈkeri ˈɒn/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/c/car/carry/carry_on_1_us_4.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/carry-on_1"
   },
   {
     "value": "check in",
@@ -2781,6 +2781,15 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/less_3"
   },
   {
+    "value": "let me",
+    "definition": "used for making suggestions or as a polite way of telling people what you want them to do",
+    "uaTranslation": "дозволь мені",
+    "level": "a2",
+    "spelling": "/ˈlɛt mi/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/let/let_m/let_me_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/let_1"
+  },
+  {
     "value": "let me know",
     "definition": "to have information in your mind as a result of experience or because you have learned or been told it",
     "uaTranslation": "дай мені знати",
@@ -2790,13 +2799,13 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/know_1"
   },
   {
-    "value": "let me",
-    "definition": "used for making suggestions or as a polite way of telling people what you want them to do",
-    "uaTranslation": "дозволь мені",
+    "value": "look (sth) up",
+    "definition": "to become better",
+    "uaTranslation": "поліпшуватися",
     "level": "a2",
-    "spelling": "/ˈlɛt mi/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/let/let_m/let_me_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/let_1"
+    "spelling": "/ˈlʊk ˈsʌmθɪŋ ˈʌp/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/loo/look_/look_sth_up_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/look-up"
   },
   {
     "value": "look after (sb/sth/yourself)",
@@ -2815,15 +2824,6 @@
     "spelling": "/ˈlʊk ˈbæk ət ˈsʌmθɪŋ/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/loo/look_/look_back_at_sth_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/look-back"
-  },
-  {
-    "value": "look (sth) up",
-    "definition": "to become better",
-    "uaTranslation": "поліпшуватися",
-    "level": "a2",
-    "spelling": "/ˈlʊk ˈsʌmθɪŋ ˈʌp/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/l/loo/look_/look_sth_up_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/look-up"
   },
   {
     "value": "make a mistake",
@@ -3177,6 +3177,15 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/such"
   },
   {
+    "value": "take (sth) off",
+    "definition": "to leave the ground and begin to fly",
+    "uaTranslation": "злітати",
+    "level": "a2",
+    "spelling": "/ˈteɪk ˈsʌmθɪŋ ˈɔːf/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_sth_off_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/take-off_1"
+  },
+  {
     "value": "take care of (sb/sth/yourself)",
     "definition": "the process of caring for somebody/something and providing what they need for their health or protection",
     "uaTranslation": "піклуватися про (когось/щось/себе)",
@@ -3211,15 +3220,6 @@
     "spelling": "/ˈteɪk ˈpleɪs/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_place_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/place_1"
-  },
-  {
-    "value": "take (sth) off",
-    "definition": "to leave the ground and begin to fly",
-    "uaTranslation": "злітати",
-    "level": "a2",
-    "spelling": "/ˈteɪk ˈsʌmθɪŋ ˈɔːf/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_sth_off_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/take-off_1"
   },
   {
     "value": "the best thing",
@@ -3996,15 +3996,6 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/growth"
   },
   {
-    "value": "have no idea",
-    "definition": "a plan, thought or suggestion, especially about what to do in a particular situation",
-    "uaTranslation": "не мати жодного уявлення",
-    "level": "b1",
-    "spelling": "/hæv noʊ aɪˈdiːə/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/h/hav/have_/have_no_idea_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/idea"
-  },
-  {
     "value": "have (sth) in common",
     "definition": "an area of open land in a town or village that anyone may use",
     "uaTranslation": "мати (щось) спільне",
@@ -4012,6 +4003,15 @@
     "spelling": "/hæv ˈsʌmθɪŋ ɪn ˈkɑːmən/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/h/hav/have_/have_sth_in_common_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/common_2"
+  },
+  {
+    "value": "have no idea",
+    "definition": "a plan, thought or suggestion, especially about what to do in a particular situation",
+    "uaTranslation": "не мати жодного уявлення",
+    "level": "b1",
+    "spelling": "/hæv noʊ aɪˈdiːə/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/h/hav/have_/have_no_idea_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/idea"
   },
   {
     "value": "hear of (sb/sth)",
@@ -4293,15 +4293,6 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/look-out"
   },
   {
-    "value": "make a difference",
-    "definition": "the way in which two people or things are not like each other; the way in which somebody/something has changed",
-    "uaTranslation": "зробити внесок",
-    "level": "b1",
-    "spelling": "/ˈmeɪk ə ˈdɪfrəns/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/m/mak/make_/make_a_difference_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/difference"
-  },
-  {
     "value": "make (sth) up",
     "definition": "to form something",
     "uaTranslation": "утворювати",
@@ -4309,6 +4300,15 @@
     "spelling": "/ˈmeɪk ˈsʌmθɪŋ ˈʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/m/mak/make_/make_sth_up_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/make-up_1"
+  },
+  {
+    "value": "make a difference",
+    "definition": "the way in which two people or things are not like each other; the way in which somebody/something has changed",
+    "uaTranslation": "зробити внесок",
+    "level": "b1",
+    "spelling": "/ˈmeɪk ə ˈdɪfrəns/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/m/mak/make_/make_a_difference_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/difference"
   },
   {
     "value": "manage to do (sth)",
@@ -4860,15 +4860,6 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/try_1"
   },
   {
-    "value": "turn out",
-    "definition": "to be discovered to be; to prove to be",
-    "uaTranslation": "виявитися",
-    "level": "b1",
-    "spelling": "/tɜːrn ˈaʊt/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tur/turn_/turn_out_1_us_2.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/turn-out"
-  },
-  {
     "value": "turn (sth) up",
     "definition": "to be found, especially by chance, after being lost",
     "uaTranslation": "знаходитися",
@@ -4876,6 +4867,15 @@
     "spelling": "/ˈtɜːn ˈsʌmθɪŋ ˈʌp/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tur/turn_/turn_sth_up_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/turn-up_1"
+  },
+  {
+    "value": "turn out",
+    "definition": "to be discovered to be; to prove to be",
+    "uaTranslation": "виявитися",
+    "level": "b1",
+    "spelling": "/tɜːrn ˈaʊt/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tur/turn_/turn_out_1_us_2.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/turn-out"
   },
   {
     "value": "unable to do (sth)",
@@ -4914,15 +4914,6 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/well-known"
   },
   {
-    "value": "work on (sth)",
-    "definition": "to try to persuade somebody to agree to something or to do something",
-    "uaTranslation": "схиляти",
-    "level": "b1",
-    "spelling": "/ˈwɜːrk ɑːn ˈsʌmθɪŋ/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/wor/work_/work_on_sth_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/work-on"
-  },
-  {
     "value": "work (sth) out",
     "definition": "to train the body by physical exercise",
     "uaTranslation": "тренуватися",
@@ -4930,6 +4921,15 @@
     "spelling": "/ˈwɜːk ˈsʌmθɪŋ ˈaʊt/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/wor/work_/work_sth_out_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/work-out"
+  },
+  {
+    "value": "work on (sth)",
+    "definition": "to try to persuade somebody to agree to something or to do something",
+    "uaTranslation": "схиляти",
+    "level": "b1",
+    "spelling": "/ˈwɜːrk ɑːn ˈsʌmθɪŋ/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/w/wor/work_/work_on_sth_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/work-on"
   },
   {
     "value": "wrong with (sb/sth)",
@@ -4995,21 +4995,21 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/act_1"
   },
   {
-    "value": "aimed at doing (sth)",
-    "definition": "to try or plan to achieve something",
-    "uaTranslation": "спрямований на те, щоб робити (щось)",
-    "level": "b2",
-    "spelling": "/ˈeɪmd æt ˈduːɪŋ ˈsʌmθɪŋ/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/aim/aimed/aimed_at_doing_sth_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/aim_1"
-  },
-  {
     "value": "aimed at (sb)",
     "definition": "to try or plan to achieve something",
     "uaTranslation": "спрямований на (когось)",
     "level": "b2",
     "spelling": "/ˈeɪmd æt ˈsʌmbɑːdi/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/aim/aimed/aimed_at_sb_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/aim_1"
+  },
+  {
+    "value": "aimed at doing (sth)",
+    "definition": "to try or plan to achieve something",
+    "uaTranslation": "спрямований на те, щоб робити (щось)",
+    "level": "b2",
+    "spelling": "/ˈeɪmd æt ˈduːɪŋ ˈsʌmθɪŋ/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/a/aim/aimed/aimed_at_doing_sth_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/aim_1"
   },
   {
@@ -5985,6 +5985,15 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/sum-up"
   },
   {
+    "value": "take (sth) into account",
+    "definition": "an arrangement that somebody has with a bank, etc. to keep money there, take some out, etc",
+    "uaTranslation": "брати до уваги",
+    "level": "b2",
+    "spelling": "/ˈteɪk ˈsʌmθɪŋ ˈɪntu əˈkaʊnt/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_sth_into_account_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/account_1"
+  },
+  {
     "value": "take advantage of (sb/sth)",
     "definition": "a thing that helps you to be better or more successful than other people",
     "uaTranslation": "скористатися",
@@ -6001,15 +6010,6 @@
     "spelling": "/ˈteɪk ˈəʊvər/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_over_1_us_2.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/take-over"
-  },
-  {
-    "value": "take (sth) into account",
-    "definition": "an arrangement that somebody has with a bank, etc. to keep money there, take some out, etc",
-    "uaTranslation": "брати до уваги",
-    "level": "b2",
-    "spelling": "/ˈteɪk ˈsʌmθɪŋ ˈɪntu əˈkaʊnt/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/t/tak/take_/take_sth_into_account_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/account_1"
   },
   {
     "value": "that is",
@@ -6372,15 +6372,6 @@
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/given-that"
   },
   {
-    "value": "have nothing to do with (sb/sth)",
-    "definition": "not anything; no single thing",
-    "uaTranslation": "не мати жодного стосунку до",
-    "level": "c1",
-    "spelling": "/hæv ˈnʌθɪŋ tə ˈduː wɪð ˈsʌmbɑːdi/",
-    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/h/hav/have_/have_nothing_to_do_with_sb_1_us_1.mp3",
-    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/nothing"
-  },
-  {
     "value": "have (sb/sth) in mind",
     "definition": "the part of a person that makes them able to be aware of things, to think and to feel",
     "uaTranslation": "мати на увазі (когось/щось)",
@@ -6388,6 +6379,15 @@
     "spelling": "/hæv ˈsʌmbɑːdi ɪn ˈmaɪnd/",
     "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/h/hav/have_/have_sb_in_mind_1_us_1.mp3",
     "link": "https://www.oxfordlearnersdictionaries.com/definition/english/mind_1"
+  },
+  {
+    "value": "have nothing to do with (sb/sth)",
+    "definition": "not anything; no single thing",
+    "uaTranslation": "не мати жодного стосунку до",
+    "level": "c1",
+    "spelling": "/hæv ˈnʌθɪŋ tə ˈduː wɪð ˈsʌmbɑːdi/",
+    "pronunciation": "https://www.oxfordlearnersdictionaries.com/media/english/us_pron/h/hav/have_/have_nothing_to_do_with_sb_1_us_1.mp3",
+    "link": "https://www.oxfordlearnersdictionaries.com/definition/english/nothing"
   },
   {
     "value": "in a position to do (sth)",
