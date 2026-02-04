@@ -12,6 +12,7 @@
     "preview": "astro preview",
     "push": "astro db push --remote",
     "seed": "astro db execute db/seed.ts --remote",
+    "dump": "astro db execute db/dump.ts --remote",
     "astro": "astro",
     "prepare": "husky",
     "format": "prettier . --check",
