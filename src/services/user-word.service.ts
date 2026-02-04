@@ -86,22 +86,12 @@ export type WordData = {
   definition: string;
 };
 
-const removeReasoningSteps = <T extends { reasoningSteps: unknown }>(items: T[]) => {
-  return items.map(({ reasoningSteps, ...rest }) => rest);
-};
-
 export const toFillInTheGap = async (words: WordData[]) => {
   const { output, usage } = await generateText({
     model,
     output: Output.array({
       element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
         task: z.string().describe('3-15 word sentence with exactly one "___" blank replacing target word'),
         answer: z.string().describe('Exact word/phrase adapted grammatically (case-insensitive)'),
       }),
@@ -115,20 +105,10 @@ export const toFillInTheGap = async (words: WordData[]) => {
       '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
       '- Varied punctuation (., !, ?) based on sentence type',
       '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 Sentence Candidates: Write 3 complete sentences using the word. For each, count words explicitly (e.g., "1-She 2-has 3-a 4-new 5-car = 5 words") and check if within 3-15 range (yes/no)',
-      '3. Validate Each: For all 3 candidates check: word count 3-15 (yes/no), level-appropriate grammar (yes/no), natural English (yes/no), target word present (yes/no)',
-      '4. Select Best: Choose sentence with most "yes" validations. If no candidate has all "yes", generate 2 new candidates and validate. Select the best valid option',
-      '5. Create Task: Replace target word with "___", ensuring the task sentence (with blank) is 3-15 words. The answer must be grammatically adapted to fit the blank.',
-      '6. Final Validation: Check all requirements: task sentence 3-15 words (yes/no), exactly one ___ blank (yes/no), answer fills blank grammatically (yes/no), target word only in blank (yes/no), level-appropriate (yes/no). If any "no", fix the issue',
-      '',
       'Words:',
       JSON.stringify(words),
     ].join('\n'),
   });
-
-  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.FillInTheGap,
@@ -137,7 +117,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks, cost };
+  return { output, tasks: output, cost };
 };
 
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
@@ -146,12 +126,6 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     output: Output.array({
       element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
         sentence: z.string().describe('English sentence containing target word/phrase'),
         translation: z
           .string()
@@ -173,20 +147,10 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       '- Ukrainian translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
       '- ALL Ukrainian words must be separate: pronouns, prepositions, conjunctions, particles',
       '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 English Sentence Candidates: Write 3 sentences using the word. For each, count words explicitly (e.g., "1-She 2-has 3-a 4-new 5-car = 5 words") and check if within 3-15 range (yes/no). Punctuation marks are NOT words',
-      '3. Select Best English Sentence: Choose sentence with word count 3-15, level-appropriate grammar, and natural phrasing. If none valid, generate 2 new candidates. RE-COUNT to verify 3-15 words',
-      '4. Generate Ukrainian Translation: Translate selected sentence to natural, grammatically correct Ukrainian. Ensure proper verb conjugation, case agreement, and word choice. Count Ukrainian words explicitly and verify 3-15 range',
-      '5. Validate Translation: Check: word count 3-15 (yes/no), single-space separated (yes/no), punctuation attached to last word only (yes/no), first word capitalized only (yes/no), unambiguous word order when shuffled (yes/no), all words are separate tokens (yes/no). If any "no", revise the translation',
-      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), target word present (yes/no), Ukrainian translation 3-15 words (yes/no), translation accurate (yes/no), translation formatting correct (yes/no), unambiguous when shuffled (yes/no). If any "no", fix the issue',
-      '',
       'Words:',
       JSON.stringify(words),
     ].join('\n'),
   });
-
-  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.TranslateEnglishSentence,
@@ -195,7 +159,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks, cost };
+  return { output, tasks: output, cost };
 };
 
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
@@ -204,12 +168,6 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     output: Output.array({
       element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
         sentence: z.string().describe('Ukrainian sentence containing translated target word/phrase'),
         translation: z
           .string()
@@ -230,20 +188,10 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       '- English translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
       '- ALL English words must be separate: articles, prepositions, conjunctions, auxiliaries',
       '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 Ukrainian Sentence Candidates: Write 3 sentences using the word. For each, count words explicitly (e.g., "1-Вона 2-має 3-нову 4-машину = 4 words") and check if within 3-15 range (yes/no). Punctuation marks and hyphens are NOT words',
-      '3. Select Best Ukrainian Sentence: Choose sentence with word count 3-15, level-appropriate grammar, and natural phrasing. If none valid, generate 2 new candidates. RE-COUNT the selected sentence to verify 3-15 words',
-      '4. Generate English Translation: Translate selected sentence to natural, grammatically correct English. Include ALL articles, prepositions, and auxiliary verbs. Count English words explicitly and verify 3-15 range',
-      '5. Validate Translation: Check: word count 3-15 (yes/no), all articles present (yes/no), all prepositions present (yes/no), all auxiliaries present (yes/no), single-space separated (yes/no), punctuation attached to last word only (yes/no), first word capitalized only (yes/no), unambiguous word order when shuffled (yes/no). If any "no", revise the translation',
-      '6. Final Validation: Check all requirements: Ukrainian sentence 3-15 words (yes/no), target word/phrase present (yes/no), English translation 3-15 words (yes/no), translation grammatically perfect (yes/no), translation formatting correct (yes/no), unambiguous when shuffled (yes/no). If any "no", fix the issue',
-      '',
       'Words:',
       JSON.stringify(words),
     ].join('\n'),
   });
-
-  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.TranslateUkrainianSentence,
@@ -252,7 +200,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks, cost };
+  return { output, tasks: output, cost };
 };
 
 export const toSynonymAndAntonym = async (words: WordData[]) => {
@@ -261,12 +209,6 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     output: Output.array({
       element: z.object({
         id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
         synonym: z.string(),
         antonym: z.string(),
       }),
@@ -284,19 +226,10 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
       '- Both synonym and antonym must be actual words or phrases derived from the word\'s definition and part of speech; never use placeholders like "N/A", "none", "nothing", "no synonym", "no antonym"',
       '- If no exact match exists at target level, use alternatives: near-synonyms, gradable antonyms, or functional opposites',
       '',
-      'Reasoning Steps:',
-      "1. Analysis: Examine word's part of speech, CEFR level, and core meaning from definition",
-      '2. Generate 3 Synonym Candidates + 3 Antonym Candidates: List 3 different options for each',
-      '3. Validate Each: For all 6 candidates check: part of speech matches (yes/no), CEFR level appropriate (yes/no), not target word (yes/no), not a placeholder like "N/A", "none", "nothing", "no synonym" (yes/no), valid English word/phrase (yes/no)',
-      '4. Select Best Pair: Choose synonym and antonym with most "yes" validations. If no candidate has all "yes", generate 2 new candidates and validate. If still none, use near-synonym or functional opposite. Never output: N/A, none, nothing, no synonym, no antonym',
-      '5. Final Validation: Check all requirements: synonym is actual word/phrase (yes/no), antonym is actual word/phrase (yes/no), both same part of speech as target (yes/no), both CEFR-appropriate (yes/no), neither is target word (yes/no), no placeholders like N/A/none (yes/no). If any "no", fix the issue',
-      '',
       'Words:',
       JSON.stringify(words),
     ].join('\n'),
   });
-
-  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.SynonymAndAntonym,
@@ -305,7 +238,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks, cost };
+  return { output, tasks: output, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
