@@ -133,7 +133,7 @@ export const server = {
   updateWord: defineAction({
     input: z.object({
       wordId: z.number(),
-      uaTranslation: z.string().trim().min(1),
+      uaTranslation: z.string().trim().min(1).max(255),
     }),
     handler: auth(updateWord),
   }),
