@@ -308,80 +308,6 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
   return { object, tasks, cost };
 };
 
-export const toFindNonsenseSentence = async (words: WordData[]) => {
-  const { object, usage } = await generateObject({
-    model,
-    schema: z.array(
-      z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
-        options: z.array(
-          z
-            .object({
-              value: z.string().describe('Sentence (3-15 words, modern, natural) containing EXACT target word/phrase'),
-              isAnswer: z.boolean().describe('true for 1 nonsense sentence, false for 3 correct sentences'),
-              description: z
-                .string()
-                .optional()
-                .describe('Nonsense sentence (isAnswer: true) MUST have description field explaining why it is wrong'),
-            })
-            .describe('4 options: 1 nonsense, 3 correct'),
-        ),
-      }),
-    ),
-    prompt: [
-      `Create exactly ${words.length} nonsense detection tasks (one per input word)`,
-      '',
-      'Requirements:',
-      '- Correct sentences: natural, grammatically perfect, contain exact target word/phrase',
-      '- Nonsense sentence: grammatically correct but semantically absurd, MUST contain exact target word/phrase',
-      '- Nonsense should be creative, amusing, and paint a vivid mental picture - not just technically impossible',
-      '- Use unexpected combinations and playful absurdity rather than predictable impossibilities',
-      '- Level-appropriate grammar; varied punctuation (., !, ?)',
-      '',
-      'Nonsense = IMPOSSIBLE, not just unusual, difficult, or impractical:',
-      '- CORRECT: "The soup ate my fork for breakfast." (impossible - soup cannot eat)',
-      '- WRONG: "Eating soup with a fork is tricky." (difficult but possible - you CAN do it)',
-      '- WRONG: "The cat chased a bird." (unusual but possible)',
-      '',
-      'Nonsense types (vary across batch):',
-      '- Role reversal: "My homework ate my dog this morning."',
-      '- Personification with attitude: "The angry sandwich refused to be eaten."',
-      '- Scale absurdity: "The elephant hid inside my coffee cup."',
-      '- Emotional impossibility: "The rock felt deeply embarrassed about its color."',
-      '- Everyday absurdity: "I charged my phone by whispering to it."',
-      '- Logic inversion: "The faster I ran, the further away I got."',
-      '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 4-5 Correct Sentence Candidates: Write natural sentences using exact target word. For each, count words explicitly (e.g., "1-This 2-is 3-a 4-lovely 5-day = 5 words") and check if within 3-15 range (yes/no)',
-      '3. Generate 2-3 Nonsense Sentence Candidates: Write absurd sentences using exact target word with nonsense type. For each, count words and check if within 3-15 range (yes/no)',
-      '4. Validate All: For all candidates check: word count 3-15 (yes/no), contains exact target word (yes/no), grammatically valid structure (yes/no for correct)',
-      '5. Select Best: Pick 3 correct sentences + 1 nonsense sentence with best validation. Add description to nonsense explaining why it is wrong. If not enough valid options, generate new candidates',
-      '6. Final Validation: Check all requirements: exactly 4 options (yes/no), all 3-15 words (yes/no), all contain exact target word (yes/no), exactly 1 nonsense with description (yes/no), 3 correct natural sentences (yes/no), nonsense sentence is grammatically correct but semantically absurd (yes/no). If any "no", fix the issue',
-      '',
-      'Words:',
-      JSON.stringify(words),
-    ].join('\n'),
-  });
-
-  const tasks = removeReasoningSteps(object);
-
-  const cost = {
-    taskType: TaskType.FindNonsenseSentence,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-  };
-
-  return { object, tasks, cost };
-};
-
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const learningWords = await getLearningWords(body);
   if (!learningWords.length) {
@@ -390,7 +316,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       translateEnglishSentenceTasks: [],
       translateUkrainianSentenceTasks: [],
       synonymAndAntonymTasks: [],
-      findNonsenseSentenceTasks: [],
     };
   }
 
@@ -404,21 +329,18 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     }),
   );
 
-  const [fillInTheGap, translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym, findNonsenseSentence] =
-    await Promise.all([
-      toFillInTheGap(words),
-      toTranslateEnglishSentence(words),
-      toTranslateUkrainianSentence(words),
-      toSynonymAndAntonym(words),
-      toFindNonsenseSentence(words),
-    ]);
+  const [fillInTheGap, translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym] = await Promise.all([
+    toFillInTheGap(words),
+    toTranslateEnglishSentence(words),
+    toTranslateUkrainianSentence(words),
+    toSynonymAndAntonym(words),
+  ]);
 
   const events = [
     fillInTheGap.cost,
     translateEnglishSentence.cost,
     translateUkrainianSentence.cost,
     synonymAndAntonym.cost,
-    findNonsenseSentence.cost,
   ].map((cost) => ({
     ...cost,
     type: EventType.TaskCost as const,
@@ -432,6 +354,5 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     translateEnglishSentenceTasks: translateEnglishSentence.tasks,
     translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
     synonymAndAntonymTasks: synonymAndAntonym.tasks,
-    findNonsenseSentenceTasks: findNonsenseSentence.tasks,
   };
 };

@@ -57,7 +57,6 @@ These criteria define why a task belongs earlier or later in a sequence.
 - **Translate Ukrainian Sentence**: Arrange shuffled English words to form the translation of a Ukrainian sentence.
 - **Fill in the Gap**: Build contextual recall to anchor meaning.
 - **Synonym and Antonym**: Expand semantic links with near and opposite meanings.
-- **Find Nonsense Sentence**: Stress-test usage by spotting impossible contexts.
 
 ### Client tasks (runtime sequence)
 
@@ -84,7 +83,6 @@ Scores are 0-10 per criterion. Overall score is the average of all criteria (0-1
 | Translate Ukrainian Sentence | Server | 6           | 7    | 6    | 6        | 7        | 7          | 8        | 5          | 6.5     |
 | Fill in the Gap              | Server | 6           | 6    | 6    | 6        | 6        | 6          | 8        | 5          | 6.1     |
 | Synonym and Antonym          | Server | 5           | 6    | 6    | 6        | 5        | 6          | 7        | 5          | 5.8     |
-| Find Nonsense Sentence       | Server | 6           | 6    | 5    | 6        | 7        | 7          | 7        | 7          | 6.4     |
 
 ## Summary ranking
 
@@ -96,8 +94,7 @@ Scores are 0-10 per criterion. Overall score is the average of all criteria (0-1
 | Translate English Sentence   | 47/70   |
 | Translate Ukrainian Sentence | 47/70   |
 | Synonym and Antonym          | 45/70   |
-| Find Nonsense Sentence       | 42/70   |
-| **Overall**                  | 227/350 |
+| **Overall**                  | 185/280 |
 
 ### Client (runtime)
 

@@ -4,7 +4,6 @@ import {
   toTranslateEnglishSentence,
   toTranslateUkrainianSentence,
   toSynonymAndAntonym,
-  toFindNonsenseSentence,
   type WordData,
 } from '@/services/user-word.service';
 import { randomInt } from 'node:crypto';
@@ -182,39 +181,6 @@ describe.concurrent('user-word.service', () => {
         'Synonyms/antonyms based on definition field. Synonym/antonym positions may be swapped if both represent semantically valid relationships (e.g., if "presence" is given as synonym for "absence", this is acceptable as it shows a valid semantic relationship even if reversed). Part of speech null for phrases is acceptable.',
         'Clear, common vocabulary. Single words preferred, but phrases (2-4 words) are fully acceptable. Antonyms do not need to be direct opposites - semantically related contrasting phrases are valid (e.g., for "abandon": antonym could be "stay with", "keep", or "hold onto"). No target word repetition.',
         'Natural, lowercase format (hyphens ok). For articles: "a"→synonym "an", antonym "the" (or similar valid article relationships). Note: INPUT words may contain parentheses like "(sth)" - this refers to the source data, not the output.',
-      ]);
-    });
-  });
-
-  describe('toFindNonsenseSentence', () => {
-    it('generates nonsense detection tasks', async () => {
-      const { object, tasks } = await toFindNonsenseSentence(words);
-      console.log('to-find-nonsense-sentence', JSON.stringify(object, null, 2));
-
-      expect(tasks).toHaveLength(words.length);
-      expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
-      for (const task of tasks) {
-        expect(task).toHaveProperty('id');
-        expect(task).toHaveProperty('options');
-        expect(task.options).toHaveLength(4);
-        expect(task.options.filter((opt) => opt.isAnswer)).toHaveLength(1);
-        expect(task.options.filter((opt) => !opt.isAnswer)).toHaveLength(3);
-        for (const option of task.options) {
-          if (option.isAnswer) {
-            expect(option.description).toBeDefined();
-            expect(option.description?.length).toBeGreaterThan(0);
-          } else {
-            expect(option.description).toBeUndefined();
-          }
-        }
-      }
-
-      await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks, each with id matching input word.id and exactly 4 sentence options containing target word/phrase or natural variation (e.g., "for the first time"→"my first time").`,
-        'Options are 3-15 words, natural modern English.',
-        'CRITICAL: Per task must have exactly 3 correct sentences (isAnswer: false) and exactly 1 nonsense (isAnswer: true).',
-        'CRITICAL: Nonsense sentence (isAnswer: true) MUST have description field explaining why wrong. Nonsense obviously absurd/impossible/meaningless (e.g., chair swims, do it yesterday).',
-        'Tasks use words from various CEFR levels (A1-C1). Sentence complexity should generally match word level, but simpler grammar for higher-level words is acceptable as long as usage is correct.',
       ]);
     });
   });
