@@ -89,9 +89,9 @@ export const toFillInTheGap = async (words: WordData[]) => {
     model,
     output: Output.array({
       element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        task: z.string().describe('3-15 word sentence with exactly one "___" blank replacing target word'),
-        answer: z.string().describe('Exact word/phrase adapted grammatically (case-insensitive)'),
+        id: z.number(),
+        task: z.string(),
+        answer: z.string(),
       }),
     }),
     prompt: [
@@ -99,9 +99,12 @@ export const toFillInTheGap = async (words: WordData[]) => {
       `Create exactly ${words.length} fill-in-the-gap exercises (one per input word)`,
       '</task>',
       '<requirements>',
+      '- Each task.id matches the corresponding input word.id',
       '- Grammatically correct, natural, engaging and modern English sentences',
       '- Target word appears ONLY as "___" blank',
       '- Varied punctuation (., !, ?) based on sentence type',
+      '- Task: 3-15 word sentence with exactly one "___" blank replacing target word',
+      '- Answer: exact word/phrase adapted grammatically (case-insensitive)',
       '</requirements>',
       '<words>',
       JSON.stringify(words),
@@ -124,13 +127,9 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     model,
     output: Output.array({
       element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        sentence: z.string().describe('English sentence containing target word/phrase'),
-        translation: z
-          .string()
-          .describe(
-            'Ukrainian translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
-          ),
+        id: z.number(),
+        sentence: z.string(),
+        translation: z.string(),
       }),
     }),
     prompt: [
@@ -138,6 +137,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       `Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)`,
       '</task>',
       '<requirements>',
+      '- Each task.id matches the corresponding input word.id',
       '- English sentence: 3-15 words, modern, natural, containing target word/phrase',
       '- Varied punctuation (., !, ?) based on sentence type',
       '- Ukrainian translation: natural, grammatically correct',
@@ -167,13 +167,9 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     model,
     output: Output.array({
       element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        sentence: z.string().describe('Ukrainian sentence containing translated target word/phrase'),
-        translation: z
-          .string()
-          .describe(
-            'English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
-          ),
+        id: z.number(),
+        sentence: z.string(),
+        translation: z.string(),
       }),
     }),
     prompt: [
@@ -181,6 +177,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       `Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)`,
       '</task>',
       '<requirements>',
+      '- Each task.id matches the corresponding input word.id',
       '- Ukrainian sentence: 3-15 words, modern, natural, containing translated target word/phrase',
       '- Varied punctuation (., !, ?) based on sentence type',
       '- English translation: natural, grammatically perfect, includes ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, correct verb forms',
@@ -209,7 +206,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     model,
     output: Output.array({
       element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
+        id: z.number(),
         synonym: z.string(),
         antonym: z.string(),
       }),
@@ -219,6 +216,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
       `Create exactly ${words.length} synonym/antonym pairs based on the input word value (one per input word)`,
       '</task>',
       '<requirements>',
+      '- Each task.id matches the corresponding input word.id',
       '- Same part of speech as input word',
       '- Use only word meaning from the word value and preserve part of speech',
       '- Never use target word itself',
