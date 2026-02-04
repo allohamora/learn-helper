@@ -95,6 +95,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
       }),
     }),
     prompt: [
+      '<role>Act as an expert English exercise writer focused on fill-in-the-gap practice</role>',
       '<task>',
       `Create exactly ${words.length} fill-in-the-gap exercises (one per input word)`,
       '</task>',
@@ -133,6 +134,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       }),
     }),
     prompt: [
+      '<role>Act as an expert bilingual (English-Ukrainian) language teacher creating word-arrangement exercises.</role>',
       '<task>',
       `Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)`,
       '</task>',
@@ -173,6 +175,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
       }),
     }),
     prompt: [
+      '<role>Act as an expert bilingual (Ukrainian-English) language teacher creating word-arrangement exercises.</role>',
       '<task>',
       `Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)`,
       '</task>',
@@ -212,6 +215,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
       }),
     }),
     prompt: [
+      '<role>Act as an expert English lexicographer generating synonym/antonym pairs.</role>',
       '<task>',
       `Create exactly ${words.length} synonym/antonym pairs based on the input word value (one per input word)`,
       '</task>',
