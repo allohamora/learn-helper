@@ -32,6 +32,9 @@ expect.extend({
         }),
       }),
       prompt: [
+        '# Role',
+        'Act as a meticulous test evaluator.',
+        '',
         '# Task',
         'Compare the input against the statements and determine whether all statements are satisfied.',
         '',
