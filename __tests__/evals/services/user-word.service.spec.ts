@@ -68,10 +68,9 @@ describe.concurrent('user-word.service', () => {
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks, each with id matching input word.id, task field with one ___ blank, and answer field.`,
-        'Each task.task must contain exactly one ___ (three underscores) as the blank placeholder.',
-        'Sentences are 3-15 words, natural modern English. When the blank is filled with the answer, the sentence should be comprehensible - however, "a"/"an" mismatches (e.g., "a interesting" instead of "an interesting") are acceptable, as well as occasional awkward phrasing.',
-        'Answer is target word/phrase or grammatical adaptation. Examples: "be going to do (sth)" can be "are going to" in "We are ___ walk", "are going to do" in "We are ___ do homework". Target appears only as blank.',
+        `Exactly ${words.length} tasks with id matching input word.id, a task string containing one ___ blank, and an answer string.`,
+        'Sentence around the blank is short (3-15 words) and reads like natural English when filled, with minor awkwardness acceptable.',
+        'Answer is the target word/phrase or a reasonable grammatical form; the target appears only as the blank.',
       ]);
     });
   });
@@ -96,12 +95,9 @@ describe.concurrent('user-word.service', () => {
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks with id matching input word.id, English sentence (3-15 words with target word), and Ukrainian translation.`,
-        'English sentences are 3-15 words, natural modern English, first word capitalized, punctuation attached to words.',
-        'Target word/phrase or natural variation appears in the English sentence.',
-        'Ukrainian translations are 3-15 words, grammatically correct natural Ukrainian, single-space separated, first word capitalized, punctuation attached to words.',
-        'Ukrainian translation word order is unambiguous when shuffled — no two valid orderings exist.',
-        'ALL Ukrainian words are separate tokens: pronouns, prepositions, conjunctions, particles are individual words.',
+        `Exactly ${words.length} tasks with id matching input word.id, an English sentence, and a Ukrainian translation.`,
+        'English sentences are 3-15 words, natural, capitalized, and include the target word/phrase.',
+        'Ukrainian translations are 3-15 words and read as natural, grammatical Ukrainian.',
       ]);
     });
   });
@@ -126,12 +122,9 @@ describe.concurrent('user-word.service', () => {
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks with id matching input word.id, Ukrainian sentence (3-15 words), and English translation.`,
-        'Ukrainian sentences are 3-15 words, natural modern Ukrainian, first word capitalized.',
-        'English translations are 3-15 words, grammatically perfect, include ALL articles, ALL prepositions, ALL auxiliary verbs, correct verb forms.',
-        'English translation word order is unambiguous when shuffled — no two valid orderings exist.',
-        'ALL English words are separate tokens: articles, prepositions, conjunctions, auxiliaries are individual words.',
-        'Minor Ukrainian phrasing variations are acceptable as long as the meaning is clear.',
+        `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
+        'Ukrainian sentences are 3-15 words, natural, and capitalized.',
+        'English translations are 3-15 words and read as grammatical, natural English.',
       ]);
     });
   });
@@ -154,11 +147,9 @@ describe.concurrent('user-word.service', () => {
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks with id, synonym, antonym fields. Task ids match input word ids.`,
-        'CRITICAL: Both synonym AND antonym fields must be non-empty strings. Empty strings are NOT acceptable - a valid word or phrase must be provided for each field.',
-        'Synonyms/antonyms based on word value. Synonym/antonym positions may be swapped if both represent semantically valid relationships (e.g., if "presence" is given as synonym for "absence", this is acceptable as it shows a valid semantic relationship even if reversed). Part of speech null for phrases is acceptable.',
-        'Clear, common vocabulary. Single words preferred, but phrases (2-4 words) are fully acceptable. Antonyms do not need to be direct opposites - semantically related contrasting phrases are valid (e.g., for "abandon": antonym could be "stay with", "keep", or "hold onto"). No target word repetition.',
-        'Natural, lowercase format (hyphens ok). For articles: "a"→synonym "an", antonym "the" (or similar valid article relationships). Note: INPUT words may contain parentheses like "(sth)" - this refers to the source data, not the output.',
+        `Exactly ${words.length} tasks with id matching input word.id, plus non-empty synonym and antonym strings.`,
+        'Synonym and antonym are reasonable semantic matches for the target word/phrase, and they do not repeat the target word.',
+        'Use common, clear vocabulary; single words or short phrases are acceptable.',
       ]);
     });
   });
