@@ -250,7 +250,11 @@ const getWordsUpdatedPerDayStatistics = async (data: AuthParams<{ dateTo: Date; 
   const events = await getGroupedByDayWordUpdatedEvents(data);
   for (const item of events) {
     const target = state[item.date];
-    if (target && item.fieldName === 'uaTranslation') {
+    if (!target) {
+      throw new Error(`Date ${item.date} is missing in the state`);
+    }
+
+    if (item.fieldName === 'uaTranslation') {
       target.uaTranslation = item.count;
     }
   }
