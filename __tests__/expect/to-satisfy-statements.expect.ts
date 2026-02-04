@@ -25,25 +25,21 @@ expect.extend({
       model,
       output: Output.object({
         schema: z.object({
-          reason: z.string().nullable().describe('explanation if the input does not satisfy the statements'),
-          satisfies: z.boolean().describe('boolean indicating if the input satisfies all the statements'),
-          actual: z
-            .string()
-            .nullable()
-            .describe(
-              'stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}])',
-            ),
-          expected: z
-            .string()
-            .nullable()
-            .describe(
-              'stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}])',
-            ),
+          reason: z.string().nullable(),
+          satisfies: z.boolean(),
+          actual: z.string().nullable(),
+          expected: z.string().nullable(),
         }),
       }),
       prompt: [
         '# Task',
         'Compare the input against the statements and determine whether all statements are satisfied.',
+        '',
+        '## Output Requirements',
+        '- `reason`: explanation if the input does not satisfy the statements.',
+        '- `satisfies`: boolean indicating if the input satisfies all the statements.',
+        '- `actual`: stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}]).',
+        '- `expected`: stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}]).',
         '',
         '## Input',
         '```json',
