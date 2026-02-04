@@ -71,7 +71,7 @@ const learningChartConfig = {
 
 const wordUpdatedChartConfig = {
   count: {
-    label: 'Updated',
+    label: 'uaTranslation',
     color: 'var(--chart-1)',
   },
 } satisfies ChartConfig;
@@ -600,7 +600,7 @@ export const Statistics: FC = () => {
         <Card className="py-4 md:py-6">
           <CardHeader className="space-y-1 px-4 md:px-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-semibold">Updated (uaTranslation)</CardTitle>
+              <CardTitle className="text-base font-semibold">Updated</CardTitle>
               <Badge variant="secondary" className="font-normal">
                 <Calendar className="mr-1 h-3 w-3" />
                 Last 7 days
