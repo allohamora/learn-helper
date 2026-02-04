@@ -66,6 +66,8 @@ const google = createGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
 });
 
+const model = google('gemini-2.5-flash-lite');
+
 const providerOptions = {
   google: {
     thinkingConfig: {
@@ -74,8 +76,6 @@ const providerOptions = {
     },
   } as GoogleGenerativeAIProviderOptions,
 };
-
-const model = google('gemini-2.5-flash-lite');
 
 const INPUT_NANO_DOLLARS_PER_TOKEN = 100;
 const OUTPUT_NANO_DOLLARS_PER_TOKEN = 400;
@@ -96,6 +96,7 @@ export type WordData = {
 export const toFillInTheGap = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
+    providerOptions,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -103,7 +104,6 @@ export const toFillInTheGap = async (words: WordData[]) => {
         answer: z.string(),
       }),
     }),
-    providerOptions,
     prompt: [
       '<role>Act as an expert English exercise writer (fill-in-the-gap)</role>',
       `<task>Create exactly ${words.length} tasks, one per input word</task>`,
@@ -135,6 +135,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
+    providerOptions,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -142,7 +143,6 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
         translation: z.string(),
       }),
     }),
-    providerOptions,
     prompt: [
       '<role>Act as an expert bilingual teacher (English-Ukrainian)</role>',
       `<task>Create exactly ${words.length} English->Ukrainian word-order tasks, one per input word</task>`,
@@ -173,6 +173,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
+    providerOptions,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -180,7 +181,6 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
         translation: z.string(),
       }),
     }),
-    providerOptions,
     prompt: [
       '<role>Act as an expert bilingual teacher (Ukrainian-English)</role>',
       `<task>Create exactly ${words.length} Ukrainian->English word-order tasks, one per input word</task>`,
@@ -211,6 +211,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
 export const toSynonymAndAntonym = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
+    providerOptions,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -218,7 +219,6 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
         antonym: z.string(),
       }),
     }),
-    providerOptions,
     prompt: [
       '<role>Act as an expert English lexicographer (synonym/antonym)</role>',
       `<task>Create exactly ${words.length} synonym/antonym pairs, one per input word</task>`,
