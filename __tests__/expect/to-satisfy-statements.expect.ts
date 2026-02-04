@@ -1,6 +1,6 @@
 import { expect } from 'vitest';
 import { OPENAI_API_KEY } from 'astro:env/server';
-import { generateObject } from 'ai';
+import { generateText, Output } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { z } from 'zod';
 
@@ -21,24 +21,25 @@ const model = openai('gpt-5-nano');
 
 expect.extend({
   toSatisfyStatements: async (input, statements) => {
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model,
-      output: 'object',
-      schema: z.object({
-        reason: z.string().nullable().optional().describe('explanation if the input does not satisfy the statements'),
-        satisfies: z.boolean().describe('boolean indicating if the input satisfies all the statements'),
-        actual: z
-          .any()
-          .optional()
-          .describe(
-            'the actual value from input that failed the constraint (extract only the relevant part in the same json format as expected, example: [{ "id": 1, "value": { "key": "value" } }])',
-          ),
-        expected: z
-          .any()
-          .optional()
-          .describe(
-            'the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{ "id": 1, "value": { "key": "value" } }])',
-          ),
+      output: Output.object({
+        schema: z.object({
+          reason: z.string().nullable().describe('explanation if the input does not satisfy the statements'),
+          satisfies: z.boolean().describe('boolean indicating if the input satisfies all the statements'),
+          actual: z
+            .string()
+            .nullable()
+            .describe(
+              'stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}])',
+            ),
+          expected: z
+            .string()
+            .nullable()
+            .describe(
+              'stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}])',
+            ),
+        }),
       }),
       prompt: [
         'Compare the following input against the provided statements and determine if the input satisfies all the statements.',
@@ -56,12 +57,12 @@ expect.extend({
     });
 
     return {
-      pass: object.satisfies,
-      actual: object.actual,
-      expected: object.expected,
+      pass: output.satisfies,
+      actual: output.actual,
+      expected: output.expected,
       message: () =>
-        !object.satisfies
-          ? `Expected object to satisfy constraints, but it doesn't. ${object.reason || ''}`
+        !output.satisfies
+          ? `Expected object to satisfy constraints, but it doesn't. ${output.reason || ''}`
           : 'Object satisfies all constraints',
     };
   },
