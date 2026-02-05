@@ -68,17 +68,6 @@ const google = createGoogleGenerativeAI({
 
 const model = google('gemini-2.5-flash-lite');
 
-const providerOptions = {
-  google: {
-    thinkingConfig: {
-      includeThoughts: true,
-      thinkingBudget: 1024,
-    },
-  } satisfies GoogleGenerativeAIProviderOptions,
-};
-
-const temperature = 0.5;
-
 const INPUT_NANO_DOLLARS_PER_TOKEN = 100;
 const OUTPUT_NANO_DOLLARS_PER_TOKEN = 400;
 
@@ -260,8 +249,15 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
 export const toSynonymAndAntonym = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
-    providerOptions,
-    temperature,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    temperature: 0.7,
     output: Output.array({
       element: z.object({
         id: z.number(),
