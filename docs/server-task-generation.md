@@ -47,7 +47,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Sentence length**: Keep tasks to max 15 words with exactly one "\_\_\_" blank.
 - **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence.
 - **Exact target usage**: Use the target word/phrase as-is (case-insensitive); only apply necessary grammatical inflection (e.g., abandon -> abandoned, be -> am/is/are). Do not swap function words such as articles or prepositions.
-- **Leading "be" adaptation in blanks**: For phrases that start with base **be** (for example, "be going to do (sth)"), if the sentence already contains the finite auxiliary immediately outside the blank ("am/is/are/was/were"), the blank answer may omit the leading base "be" (for example, "She is \_\_\_ homework." -> "going to do").
+- **Leading "be" adaptation in blanks**: For targets that start with base **be** (for example, "be going to do (sth)"), keep whichever **be** form makes the sentence grammatical: base **be** can stay, **be** can be inflected (am/is/are/was/were), or leading **be** can be omitted when its finite form is already immediately outside the blank.
 - **Phrase adaptation**: When the target includes placeholders like "agree with (sb)" or "(sth)", replace placeholders with real words outside the blank. If the placeholder is the final element and the phrase remains grammatical without it, omission is acceptable (e.g., "I like (sb)" -> "I like").
 - **Article context**: For articles (a/an), ensure the following word requires the correct article based on sound.
 - **Function words**: For articles, prepositions, conjunctions, or modals, create contexts where the exact word is required, not interchangeable.
@@ -88,6 +88,16 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Word: "understand"
   - Task: "Do you \_\_\_ the question?"
   - Answer: "understand"
+
+- **Be-phrase with inflected auxiliary in blank**:
+  - Word: "be going to do (sth)"
+  - Task: "She \_\_\_ her homework tonight."
+  - Answer: "is going to do"
+
+- **Be-phrase with base be after modal**:
+  - Word: "be going to do (sth)"
+  - Task: "They will \_\_\_ extra practice this evening."
+  - Answer: "be going to do"
 
 - **Be-phrase split across auxiliary + blank**:
   - Word: "be going to do (sth)"
