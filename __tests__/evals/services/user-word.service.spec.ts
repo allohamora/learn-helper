@@ -71,10 +71,11 @@ describe.concurrent('user-word.service', () => {
         `Exactly ${words.length} tasks with id matching input word.id, a task string containing exactly one ___ blank, and an answer string.`,
         'Sentence is max 15 words and reads as natural English when the blank is filled with the answer; no redundant or contradictory words.',
         'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
-        'Answer is the input word/phrase (case-insensitive) with (sb)/(sth) placeholders stripped and only minimal grammatical inflection applied; the target does not appear elsewhere in the sentence.',
+        'Sentence punctuation is valid for one sentence and may end with ".", "!", or "?".',
+        'Answer is derived from the input word/phrase (case-insensitive) with (sb)/(sth) placeholders stripped and only minimal grammatical adaptation applied. It may omit a leading base auxiliary (for example, "be") when its finite form is already present immediately outside the blank (for example, "are ___"). The target does not appear elsewhere in the sentence.',
         'If the target includes (sb)/(sth), replace placeholders with real words outside the blank, or omit a trailing placeholder only when the resulting phrase remains grammatical.',
         'For articles (a/an), the word after the blank requires that exact article by sound; for other function words, the context requires that exact word.',
-        'Sentences are modern, conversational, and varied in structure and topic.',
+        'Sentences are modern, conversational, varied in structure/topic, and prefer interesting or relatable scenarios over generic drills.',
       ]);
     });
   });
@@ -131,7 +132,8 @@ describe.concurrent('user-word.service', () => {
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
         'Ukrainian sentences are max 15 words, natural, and capitalized.',
-        'English translations are max 15 words, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. Replace (sb)/(sth), or omit a trailing placeholder only when grammatical.',
+        'English translations are max 15 words, natural, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. Replace (sb)/(sth), or omit a trailing placeholder only when grammatical.',
+        'English translations use single spaces with punctuation attached to tokens (internal commas allowed; final punctuation attached to the last token).',
         'English translations include required articles, prepositions, and auxiliaries as separate tokens, with correct a/an usage and verb forms.',
         'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
         'English translations have a single unambiguous word order when shuffled, with articles/prepositions/conjunctions/auxiliaries as separate tokens.',
@@ -160,6 +162,7 @@ describe.concurrent('user-word.service', () => {
         `Exactly ${words.length} tasks with id matching input word.id, plus non-empty synonym and antonym strings.`,
         'Synonym and antonym are reasonable semantic matches for the target word/phrase, and they do not repeat the target word.',
         'Synonym and antonym match the target part of speech; for function words, keep the same category.',
+        'Synonym and antonym are real words only; avoid placeholders like "N/A" or "none".',
         'Use common, clear vocabulary; single words or short phrases are acceptable.',
       ]);
     });
