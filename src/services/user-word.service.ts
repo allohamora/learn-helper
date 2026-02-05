@@ -270,7 +270,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
       '- Id: task.id matches input word.id.',
       '- Synonym and antonym match the target part of speech; for function words, keep the same category.',
       '- Do not use the target word/phrase in either output.',
-      '- Use real words/phrases only (no placeholders like "N/A").',
+      '- Use real words/phrases only (no placeholders like "N/A" or "none").',
       '- If no exact match exists, use near-synonyms or functional opposites.',
       '- Use common, clear vocabulary; single words or short phrases are acceptable.',
       '</requirements>',
