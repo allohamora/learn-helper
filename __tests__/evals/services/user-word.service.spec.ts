@@ -10,6 +10,18 @@ import { randomInt } from 'node:crypto';
 import '__tests__/expect/to-satisfy-statements.expect';
 
 describe.concurrent('user-word.service', () => {
+  const countWordsBySpaces = (value: string) => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return 0;
+    }
+
+    return (trimmedValue.match(/ /gim)?.length ?? 0) + 1;
+  };
+
+  const hasForbiddenSemicolonOrColon = (value: string) => /[;:]/gim.test(value);
+
   const word = (data: Omit<WordData, 'id'>) => ({
     id: randomInt(1, 10000),
     ...data,
@@ -65,6 +77,9 @@ describe.concurrent('user-word.service', () => {
         expect(task).toHaveProperty('task');
         expect(task).toHaveProperty('answer');
         expect(task.task).toContain('___');
+        expect(task.task.match(/___/gim)?.length ?? 0).toBe(1);
+        expect(countWordsBySpaces(task.task)).toBeLessThanOrEqual(15);
+        expect(hasForbiddenSemicolonOrColon(task.task)).toBe(false);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -97,6 +112,10 @@ describe.concurrent('user-word.service', () => {
         expect(task.translation.length).toBeGreaterThan(0);
         expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
         expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
+        expect(countWordsBySpaces(task.sentence)).toBeLessThanOrEqual(15);
+        expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
+        expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
+        expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
@@ -127,6 +146,10 @@ describe.concurrent('user-word.service', () => {
         expect(task.translation.length).toBeGreaterThan(0);
         expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
         expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
+        expect(countWordsBySpaces(task.sentence)).toBeLessThanOrEqual(15);
+        expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
+        expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
+        expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
