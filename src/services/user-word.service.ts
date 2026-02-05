@@ -150,8 +150,15 @@ export const toFillInTheGap = async (words: WordData[]) => {
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
-    providerOptions,
-    temperature,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    temperature: 0.7,
     output: Output.array({
       element: z.object({
         id: z.number(),
