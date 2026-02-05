@@ -169,14 +169,25 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     prompt: [
       '<role>Act as an expert bilingual exercise writer (English-Ukrainian).</role>',
       `<task>Create exactly ${words.length} English->Ukrainian word-order tasks, one per input word.</task>`,
+      '<workflow>',
+      '- For each input item, write a planning row with (id, word, partOfSpeech).',
+      '- Build targetUsed from word: remove only (sb)/(sth). Keep all other words in the same order.',
+      '- Write one English draft sentence that contains targetUsed exactly once as a contiguous span.',
+      '- Write one Ukrainian draft translation for that same English sentence.',
+      '- Map drafts to output fields with the same id: sentence = English draft, translation = Ukrainian draft.',
+      '- In reasoning/thought summary, show compact per-item logs: id, word, partOfSpeech, targetUsed, sentence.',
+      '</workflow>',
       '<requirements>',
       '- Id: task.id matches input word.id.',
-      '- English sentence: max 15 words, sentence case, natural, and contains the target phrase (case-insensitive). Minimal variants are allowed only for verb/auxiliary inflection inside the target for agreement; do not swap articles or other function words.',
+      '- English sentence: max 15 words, sentence case, natural, single sentence, and contains targetUsed exactly once (case-insensitive).',
+      '- Target integrity: do not paraphrase or shorten the target phrase. Do not drop, reorder, or replace function words (articles, prepositions, conjunctions, particles, modals).',
+      '- Minimal variant is allowed only for verb/auxiliary inflection needed for agreement within the target phrase.',
       '- If target includes (sb)/(sth), replace placeholders with real words. A trailing placeholder may be omitted only when grammatical.',
       '- Ukrainian translation: max 15 words, sentence case, natural and grammatical, single spaces, punctuation attached to tokens (internal commas allowed).',
       '- Both fields must be single sentences. Do not use semicolons or colons, and do not join independent clauses.',
       '- Ukrainian translation must have one unambiguous order when shuffled; keep pronouns/prepositions/conjunctions/particles as separate tokens.',
       '- Ensure correct Ukrainian adjective-noun agreement (gender/number/case).',
+      '- Final check per item before output: verify the full targetUsed text appears contiguously in English sentence exactly once. If not, rewrite.',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
@@ -195,8 +206,15 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
-    providerOptions,
-    temperature,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    temperature: 0.7,
     output: Output.array({
       element: z.object({
         id: z.number(),
