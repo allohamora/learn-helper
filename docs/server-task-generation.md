@@ -37,11 +37,11 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Keep tasks unique**: Avoid repeating sentence structures, topics, or contexts across different words.
 - **Make it enjoyable**: Prefer interesting or relatable scenarios over generic drills.
 - **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type.
+- **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses into one task.
 - **Sentence length**: Keep tasks to max 15 words with exactly one "\_\_\_" blank.
 - **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence.
-- **Exact target usage**: Use the target word/phrase as-is (case-insensitive); only apply necessary grammatical inflection.
-- **Grammatical fit**: The sentence must not require extra helper verbs or missing complements outside the blank.
-- **Phrase adaptation**: When the target includes placeholders like "agree with (sb)" or "(sth)", replace placeholders with real words outside the blank; do not include placeholders in the answer.
+- **Exact target usage**: Use the target word/phrase as-is (case-insensitive); only apply necessary grammatical inflection (e.g., abandon -> abandoned, be -> am/is/are). Do not swap function words such as articles or prepositions.
+- **Phrase adaptation**: When the target includes placeholders like "agree with (sb)" or "(sth)", replace placeholders with real words outside the blank. If the placeholder is the final element and the phrase remains grammatical without it, omission is acceptable (e.g., "I like (sb)" -> "I like").
 - **Article context**: For articles (a/an), ensure the following word requires the correct article based on sound.
 - **Function words**: For articles, prepositions, conjunctions, or modals, create contexts where the exact word is required, not interchangeable.
 
@@ -107,17 +107,17 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 {
   id: number;
   sentence: string; // English sentence with target word (max 15 words)
-  translation: string; // Ukrainian translation (max 15 words, single spaces, punctuation attached, sentence case)
+  translation: string; // Ukrainian translation (max 15 words, single spaces, punctuation attached to tokens, sentence case)
 }
 ```
 
 **Notes**:
 
 - **Natural language**: English sentences and Ukrainian translations must sound fluent and authentic.
-- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type.
-- **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive); no paraphrase.
-- **Translation formatting**: Ukrainian translations are max 15 words, sentence case, single-space separated, with punctuation attached to the final word.
-- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged.
+- **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"). Do not swap function words such as articles or prepositions.
+- **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses.
+- **Translation formatting**: Ukrainian translations are max 15 words, sentence case, single-space separated, with punctuation attached to tokens (internal commas allowed; final punctuation attached to the last word).
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged. If the placeholder is final and the phrase remains grammatical without it, omission is acceptable.
 - **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled.
 - **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens.
 - **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian.
@@ -167,18 +167,18 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 {
   id: number;
   sentence: string; // Ukrainian sentence with translated target word (max 15 words)
-  translation: string; // English translation (max 15 words, single spaces, punctuation attached, sentence case)
+  translation: string; // English translation (max 15 words, single spaces, punctuation attached to tokens, sentence case)
 }
 ```
 
 **Notes**:
 
 - **Natural language**: Ukrainian sentences and English translations must sound fluent and authentic.
-- **Punctuation variety**: Use statements (.), questions (?), and exclamations (!) based on sentence type.
-- **Ukrainian sentence**: Mid-length, sentence case, with meaningful punctuation.
+- **Ukrainian sentence**: Mid-length, sentence case.
+- **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses.
 - **English completeness**: Include ALL required articles (a/an/the), prepositions, and auxiliary verbs; use correct verb forms.
-- **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive); no paraphrase.
-- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged.
+- **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"). Do not swap function words such as articles or prepositions.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged. If the placeholder is final and the phrase remains grammatical without it, omission is acceptable.
 - **Unambiguous word order**: The English translation must have one clear valid order when shuffled.
 - **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens.
 

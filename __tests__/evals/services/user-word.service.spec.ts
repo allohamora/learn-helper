@@ -70,8 +70,9 @@ describe.concurrent('user-word.service', () => {
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a task string containing exactly one ___ blank, and an answer string.`,
         'Sentence is max 15 words and reads as natural English when the blank is filled with the answer; no redundant or contradictory words.',
+        'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
         'Answer is the input word/phrase (case-insensitive) with (sb)/(sth) placeholders stripped and only minimal grammatical inflection applied; the target does not appear elsewhere in the sentence.',
-        'If the target includes (sb)/(sth), the replacement words appear in the sentence outside the blank.',
+        'If the target includes (sb)/(sth), replace placeholders with real words outside the blank, or omit a trailing placeholder only when the resulting phrase remains grammatical.',
         'For articles (a/an), the word after the blank requires that exact article by sound; for other function words, the context requires that exact word.',
         'Sentences are modern, conversational, and varied in structure and topic.',
       ]);
@@ -99,9 +100,9 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, an English sentence, and a Ukrainian translation.`,
-        'English sentences are max 15 words, natural, capitalized, and contain the target phrase (case-insensitive) or a minimal grammatical variant (auxiliaries/articles/possessives); replace (sb)/(sth).',
+        'English sentences are max 15 words, natural, capitalized, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. Replace (sb)/(sth), or omit a trailing placeholder only when grammatical.',
         'Ukrainian translations are max 15 words, natural, sentence case, single spaces, standard punctuation (internal commas allowed; final punctuation attached).',
-        'Punctuation is meaningful for the sentence type (., ?, !), not added just for formatting.',
+        'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
         'Ukrainian translations have a single unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles kept as separate tokens.',
         'Ukrainian adjective-noun agreement is correct for gender/number/case.',
       ]);
@@ -129,10 +130,10 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
-        'Ukrainian sentences are max 15 words, natural, and capitalized, with appropriate punctuation.',
-        'English translations are max 15 words, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant (auxiliaries/articles/possessives); replace (sb)/(sth).',
+        'Ukrainian sentences are max 15 words, natural, and capitalized.',
+        'English translations are max 15 words, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. Replace (sb)/(sth), or omit a trailing placeholder only when grammatical.',
         'English translations include required articles, prepositions, and auxiliaries as separate tokens, with correct a/an usage and verb forms.',
-        'Punctuation is meaningful for the sentence type (., ?, !), not added just for formatting.',
+        'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
         'English translations have a single unambiguous word order when shuffled, with articles/prepositions/conjunctions/auxiliaries as separate tokens.',
       ]);
     });
