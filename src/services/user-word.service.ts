@@ -98,8 +98,15 @@ export type WordData = {
 export const toFillInTheGap = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
-    providerOptions,
-    temperature,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    temperature: 0.7,
     output: Output.array({
       element: z.object({
         id: z.number(),
@@ -108,16 +115,23 @@ export const toFillInTheGap = async (words: WordData[]) => {
       }),
     }),
     prompt: [
-      '<role>Act as an expert English exercise writer (fill-in-the-gap)</role>',
-      `<task>Create exactly ${words.length} tasks, one per input word</task>`,
+      '<role>Act as an expert English exercise writer for fill-in-the-gap tasks.</role>',
+      `<task>Create exactly ${words.length} tasks, one per input word, using the split workflow below.</task>`,
+      '<workflow>',
+      '- For each word, first create one natural draft sentence that contains the target phrase exactly once.',
+      '- Put each draft in reasoning/thought summary as: id + draftSentence.',
+      '- Then split that same draft into output fields: answer = the target span, task = draft with that span replaced by "___".',
+      '- Do not invent a new sentence after splitting; output must come from the draft sentence.',
+      '</workflow>',
       '<requirements>',
       '- Id: task.id matches input word.id.',
-      '- Answer: input word/phrase with (sb)/(sth) removed; apply only grammatical inflection (e.g. conjugate auxiliaries to match the subject); do not substitute any word for a different word.',
-      '- Sentence: exactly one "___" blank; substituting the answer into ___ produces a grammatically correct, natural, modern sentence of max 15 words. The target must not appear elsewhere in the sentence.',
-      '- Use a single sentence only. Avoid semicolons or colons; do not join two independent clauses.',
-      '- If the target includes (sb)/(sth), replace placeholders with real words outside the blank. You may omit a trailing placeholder only when the resulting phrase remains grammatical.',
-      '- For articles (a/an), the word after ___ must require that exact article by sound. For other function words (prepositions, conjunctions, modals), create context where only that exact word fits.',
-      '- Vary sentence structures and topics across tasks.',
+      '- Task: one natural, modern sentence (max 15 words) with exactly one "___" blank; single sentence only; no semicolons or colons.',
+      '- Filled task (replace ___ with answer) must be grammatical and natural. The target appears only in the blank, with no identical adjacent words after filling.',
+      '- Answer: start from input word/phrase and remove (sb)/(sth). Allow only necessary inflection/conjugation; do not swap or drop other words. If target contains "be", output am/is/are/was/were (never bare "be").',
+      '- If target has (sb)/(sth), replace placeholders with real words outside the blank. You may omit only a trailing placeholder when still grammatical.',
+      '- Keep phrase role natural in context (e.g., "for the first time" should be used adverbially, not as a noun phrase).',
+      '- For a/an, the next word must require that article by sound. For other function words, build context where only the exact target fits.',
+      '- Vary structures and topics across tasks.',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
