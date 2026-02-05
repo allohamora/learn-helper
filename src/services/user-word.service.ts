@@ -187,7 +187,6 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
       '- Both fields must be single sentences. Do not use semicolons or colons, and do not join independent clauses.',
       '- Ukrainian translation must have one unambiguous order when shuffled; keep pronouns/prepositions/conjunctions/particles as separate tokens.',
       '- Ensure correct Ukrainian adjective-noun agreement (gender/number/case).',
-      '- Final check per item before output: verify the full targetUsed text appears contiguously in English sentence exactly once. If not, rewrite.',
       '</requirements>',
       `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
