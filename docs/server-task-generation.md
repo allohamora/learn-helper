@@ -139,7 +139,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"). Do not swap function words such as articles or prepositions.
 - **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses.
 - **Translation formatting**: Ukrainian translations are max 15 words, sentence case, single-space separated, with punctuation attached to tokens (internal commas allowed; final punctuation attached to the last word).
-- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged. If the placeholder is final and the phrase remains grammatical without it, omission is acceptable.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace every placeholder with real words and keep the rest of the phrase unchanged. Do not omit placeholders.
 - **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled.
 - **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens.
 - **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian.
@@ -157,6 +157,12 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Sentence: "I take care of my plants"
   - Translation: "Я доглядаю за своїми рослинами"
   - Scrambled: ["доглядаю", "своїми", "Я", "за", "рослинами"]
+
+- **Internal placeholder adaptation**:
+  - Word: "take (sb) out"
+  - Sentence: "I will take her out tonight."
+  - Translation: "Я поведу її гуляти сьогодні ввечері."
+  - Scrambled: ["гуляти", "ввечері.", "сьогодні", "Я", "її", "поведу"]
 
 - **Question sentence**:
   - Word: "ready"
@@ -200,7 +206,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses.
 - **English completeness**: Include ALL required articles (a/an/the), prepositions, and auxiliary verbs; use correct verb forms.
 - **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"). Do not swap function words such as articles or prepositions.
-- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace placeholders with real words but keep the rest unchanged. If the placeholder is final and the phrase remains grammatical without it, omission is acceptable.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace every placeholder with real words and keep the rest of the phrase unchanged. Do not omit placeholders.
 - **Unambiguous word order**: The English translation must have one clear valid order when shuffled.
 - **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens.
 
@@ -223,6 +229,12 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Sentence: "Вони збираються робити домашнє завдання завтра"
   - Translation: "They are going to do homework tomorrow"
   - Scrambled: ["are", "They", "tomorrow", "homework", "to", "going", "do"]
+
+- **Internal placeholder adaptation**:
+  - Word: "take (sb) out"
+  - Sentence: "Я виведу її сьогодні ввечері."
+  - Translation: "I will take her out tonight."
+  - Scrambled: ["take", "I", "out", "her", "tonight.", "will"]
 
 **Ranking**:
 
