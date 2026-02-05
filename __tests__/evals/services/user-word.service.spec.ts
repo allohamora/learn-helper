@@ -45,6 +45,10 @@ describe.concurrent('user-word.service', () => {
         value: 'for the first time',
         partOfSpeech: null,
       },
+      {
+        value: 'take (sb) out',
+        partOfSpeech: null,
+      },
 
       {
         value: 'ability',
@@ -87,7 +91,7 @@ describe.concurrent('user-word.service', () => {
         'Sentence is max 15 words and reads as natural English when the blank is filled with the answer; no redundant or contradictory words.',
         'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
         'Sentence punctuation is valid for one sentence and may end with ".", "!", or "?".',
-        'Answer is derived from the input word/phrase (case-insensitive) with (sb)/(sth) placeholders stripped and only minimal grammatical adaptation applied. It may omit a leading base auxiliary (for example, "be") when its finite form is already present immediately outside the blank (for example, "are ___"). The target does not appear elsewhere in the sentence.',
+        'Answer is derived from the input word/phrase (case-insensitive) with (sb)/(sth) placeholders stripped and only minimal grammatical adaptation applied. For targets that start with "be", whichever be-form is grammatical is allowed: keep base be, inflect be (am/is/are/was/were), or omit leading be when its finite form is already immediately outside the blank. The target does not appear elsewhere in the sentence.',
         'If the target includes (sb)/(sth), replace placeholders with real words outside the blank, or omit a trailing placeholder only when the resulting phrase remains grammatical.',
         'For articles (a/an), the word after the blank requires that exact article by sound; for other function words, the context requires that exact word.',
         'Sentences are modern, conversational, varied in structure/topic, and prefer interesting or relatable scenarios over generic drills.',
@@ -120,7 +124,7 @@ describe.concurrent('user-word.service', () => {
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, an English sentence, and a Ukrainian translation.`,
-        'English sentences are max 15 words, natural, capitalized, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. Replace (sb)/(sth), or omit a trailing placeholder only when grammatical.',
+        'English sentences are max 15 words, natural, capitalized, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. For targets with placeholders, replace every (sb)/(sth) with real words and do not omit placeholders (including internal slots, e.g., "take (sb) out" -> "take her out").',
         'Ukrainian translations are max 15 words, natural, sentence case, single spaces, standard punctuation (internal commas allowed; final punctuation attached).',
         'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
         'Ukrainian translations have a single unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles kept as separate tokens.',
@@ -155,7 +159,7 @@ describe.concurrent('user-word.service', () => {
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
         'Ukrainian sentences are max 15 words, natural, and capitalized.',
-        'English translations are max 15 words, natural, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. Replace (sb)/(sth), or omit a trailing placeholder only when grammatical.',
+        'English translations are max 15 words, natural, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. For targets with placeholders, replace every (sb)/(sth) with real words and do not omit placeholders (including internal slots, e.g., "take (sb) out" -> "take her out").',
         'English translations use single spaces with punctuation attached to tokens (internal commas allowed; final punctuation attached to the last token).',
         'English translations include required articles, prepositions, and auxiliaries as separate tokens, with correct a/an usage and verb forms.',
         'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
