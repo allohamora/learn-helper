@@ -134,7 +134,7 @@ export const toFillInTheGap = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { reasoning, output, tasks: output, cost };
+  return { reasoning, tasks: output, cost };
 };
 
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
@@ -188,7 +188,7 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { reasoning, output, tasks: output, cost };
+  return { reasoning, tasks: output, cost };
 };
 
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
@@ -241,7 +241,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { reasoning, output, tasks: output, cost };
+  return { reasoning, tasks: output, cost };
 };
 
 export const toSynonymAndAntonym = async (words: WordData[]) => {
@@ -285,7 +285,7 @@ export const toSynonymAndAntonym = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { reasoning, output, tasks: output, cost };
+  return { reasoning, tasks: output, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
