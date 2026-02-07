@@ -42,7 +42,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"). Do not swap function words such as articles or prepositions.
 - **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses.
 - **Translation formatting**: Ukrainian translations are max 15 words, sentence case, single-space separated, with punctuation attached to tokens (internal commas allowed; final punctuation attached to the last word).
-- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace every placeholder with real words and keep the rest of the phrase unchanged. Do not omit placeholders.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace every placeholder with a concrete real word (e.g., "take (sb) out" -> "take her out", "do (sth)" -> "do homework") and keep the rest of the phrase unchanged. Never output literal placeholder text like "sb" or "sth".
 - **Unambiguous word order**: The Ukrainian translation must have one clear valid order when shuffled.
 - **All words separate**: Pronouns, prepositions, conjunctions, and particles must be separate tokens.
 - **Adjective-noun agreement**: Ensure correct gender, number, and case agreement in Ukrainian.
@@ -109,7 +109,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses.
 - **English completeness**: Include ALL required articles (a/an/the), prepositions, and auxiliary verbs; use correct verb forms.
 - **English sentence**: Mid-length, sentence case, and includes the exact target word/phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"). Do not swap function words such as articles or prepositions.
-- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace every placeholder with real words and keep the rest of the phrase unchanged. Do not omit placeholders.
+- **Exact target usage**: If the target includes placeholders like "(sb)" or "(sth)", replace every placeholder with a concrete real word (e.g., "take (sb) out" -> "take her out", "do (sth)" -> "do homework") and keep the rest of the phrase unchanged. Never output literal placeholder text like "sb" or "sth".
 - **Unambiguous word order**: The English translation must have one clear valid order when shuffled.
 - **All words separate**: Articles, prepositions, conjunctions, and auxiliaries must be separate tokens.
 
