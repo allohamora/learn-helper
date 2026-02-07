@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  toFillInTheGap,
   toTranslateEnglishSentence,
   toTranslateUkrainianSentence,
   toSynonymAndAntonym,
@@ -71,30 +70,6 @@ describe.concurrent('user-word.service', () => {
       },
     ] satisfies Omit<WordData, 'id'>[]
   ).map((data) => word(data));
-
-  describe('toFillInTheGap', () => {
-    it('generates fill-in-the-gap tasks', async () => {
-      const { output, tasks } = await toFillInTheGap(words);
-      console.log('fill-in-the-gap', JSON.stringify(output, null, 2));
-
-      expect(tasks).toHaveLength(words.length);
-      expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
-      for (const task of tasks) {
-        expect(task).toHaveProperty('id');
-        expect(task).toHaveProperty('task');
-        expect(task).toHaveProperty('answer');
-        expect(task.task).toContain('___');
-      }
-
-      await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks, each with id matching input word.id, task field with one ___ blank, and answer field.`,
-        'Each task.task must contain exactly one ___ (three underscores) as the blank placeholder.',
-        'Sentences are 3-15 words, natural modern English. When the blank is filled with the answer, the sentence should be comprehensible - however, "a"/"an" mismatches (e.g., "a interesting" instead of "an interesting") are acceptable, as well as occasional awkward phrasing.',
-        'Answer is target word/phrase or grammatical adaptation. Examples: "be going to do (sth)" can be "are going to" in "We are ___ walk", "are going to do" in "We are ___ do homework". Target appears only as blank.',
-        'Tasks cover various CEFR levels, which is expected.',
-      ]);
-    });
-  });
 
   describe('toTranslateEnglishSentence', () => {
     it('generates English to Ukrainian translation tasks', async () => {

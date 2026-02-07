@@ -16,114 +16,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ## Task Types
 
-### 1. Fill in the Gap
-
-**Description**: Students complete a sentence by filling in a blank with the target word or phrase.
-
-**Schema**:
-
-```typescript
-{
-  id: number;
-  task: string; // Sentence with "___" placeholder (3-15 words)
-  answer: string; // Correct word/phrase to fill the blank
-}
-```
-
-**Notes**:
-
-- **Grammatically correct**: All sentences must be grammatically correct and use natural, fluent English
-- **Natural language**: Content should sound authentic and conversational, as a native speaker would use it
-- **Keep tasks unique**: Avoid repeating sentence structures, topics, or contexts across different words to maintain engagement
-- **Make it enjoyable**: Use interesting, relatable scenarios that learners can connect with their daily lives
-- **Level-appropriate grammar**: Match sentence complexity to the word's CEFR level - for B1, use structures like second conditional; for B2, use mixed conditionals or complex tenses; for A2, keep structures simple
-- **Modern expressions**: Prefer modern, conversational English over formal or outdated expressions
-- **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type
-- **Phrase adaptation**: When target is a phrase with placeholders like "agree with (sb)", adapt naturally by providing context (e.g., "I agree with you")
-- **Article context**: For articles (a/an), ensure the sentence requires that specific article based on the following word's sound (vowel vs. consonant)
-- **Clarity over complexity**: Keep sentences concise (3-15 words) to maintain focus on the target vocabulary
-- **Function words**: For grammatical words (articles, prepositions, conjunctions), create contexts where their specific usage is meaningful and not interchangeable
-- **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence
-- **Case handling**: Answers are evaluated case-insensitively, but should be provided in the appropriate form
-
-**Examples**:
-
-- **Simple word**:
-  - Word: "achieve"
-  - Task: "She worked hard to \_\_\_ her goals."
-  - Answer: "achieve"
-
-- **Phrase**:
-  - Word: "agree with (sb)"
-  - Task: "I \_\_\_ you."
-  - Answer: "agree with" (adapts placeholder naturally)
-
-- **Multi-word phrase**:
-  - Word: "look forward to"
-  - Task: "We \_\_\_ the weekend."
-  - Answer: "look forward to"
-
-- **Article (a)**:
-  - Word: "a"
-  - Task: "She wants to buy \_\_\_ new car."
-  - Answer: "a"
-
-- **Article (an)**:
-  - Word: "an"
-  - Task: "He ate \_\_\_ apple for breakfast."
-  - Answer: "an"
-
-- **Exclamation sentence**:
-  - Word: "amazing"
-  - Task: "This view is \_\_\_!"
-  - Answer: "amazing"
-
-- **Question sentence**:
-  - Word: "understand"
-  - Task: "Do you \_\_\_ the question?"
-  - Answer: "understand"
-
-- **Level A1** (Simple present tense, basic daily routine):
-  - Word: "eat"
-  - Task: "I \_\_\_ breakfast every morning."
-  - Answer: "eat"
-
-- **Level A2** (Simple past tense, familiar context):
-  - Word: "visit"
-  - Task: "We \_\_\_ our grandparents last weekend."
-  - Answer: "visited"
-
-- **Level B1** (Second conditional, hypothetical situation):
-  - Word: "choose"
-  - Task: "If I could \_\_\_ any job, I would be a pilot."
-  - Answer: "choose"
-
-- **Level B2** (Present perfect tense, achievement context):
-  - Word: "accomplish"
-  - Task: "She has \_\_\_ more than anyone expected this year."
-  - Answer: "accomplished"
-
-- **Level C1** (Modal verb with advanced vocabulary, subtle meaning):
-  - Word: "undermine"
-  - Task: "His constant criticism could \_\_\_ her confidence."
-  - Answer: "undermine"
-
-**Ranking**:
-
-| Parameter             | Score | Reason                                                                 |
-| --------------------- | ----- | ---------------------------------------------------------------------- |
-| Retrieval Effort      | 7     | Must produce word from memory; sentence context provides some cues     |
-| Cognitive Load        | 6     | Single sentence focus; slightly complex due to context parsing         |
-| Association Building  | 7     | Word appears in meaningful context; builds sentence-level associations |
-| Feedback Quality      | 6     | Shows correct answer; lacks explanation of word usage                  |
-| Spacing Compatibility | 7     | Easy to repeat; different sentences keep it fresh                      |
-| Engagement Factor     | 5     | Can feel repetitive; lacks gamification elements                       |
-| Transfer Potential    | 8     | Strong context exposure; mimics real reading situations                |
-| **Overall**           | 46/70 |                                                                        |
-
----
-
-### 2. Translate English Sentence
+### 1. Translate English Sentence
 
 **Description**: Students arrange shuffled Ukrainian words to form the correct translation of an English sentence containing the target word/phrase.
 
@@ -184,7 +77,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 3. Translate Ukrainian Sentence
+### 2. Translate Ukrainian Sentence
 
 **Description**: Students arrange shuffled English words to form the correct translation of a Ukrainian sentence containing the translated target word/phrase.
 
@@ -249,8 +142,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 | Task Type                    | Score   |
 | ---------------------------- | ------- |
-| Fill in the Gap              | 46/70   |
 | Translate English Sentence   | 47/70   |
 | Translate Ukrainian Sentence | 47/70   |
 | Synonym and Antonym          | 45/70   |
-| **Overall**                  | 185/280 |
+| **Overall**                  | 139/210 |
