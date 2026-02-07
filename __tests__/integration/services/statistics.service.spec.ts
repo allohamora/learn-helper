@@ -921,16 +921,10 @@ describe('statistics.service', () => {
           type: EventType.HintViewed,
           taskType: TaskType.TranslationToWord,
         },
-        {
-          userId,
-          userWordId: userWord2.id,
-          type: EventType.HintViewed,
-          taskType: TaskType.WordOrder,
-        },
       ]);
 
       const result = await getStatistics({ userId });
-      expect(result.general.totalHintsViewed).toBe(5);
+      expect(result.general.totalHintsViewed).toBe(4);
     });
 
     it('counts hint viewed events only for the specified user', async () => {
@@ -1013,20 +1007,6 @@ describe('statistics.service', () => {
           taskType: TaskType.TranslationToWord,
           createdAt: yesterday,
         },
-        {
-          userId,
-          userWordId: userWord2.id,
-          type: EventType.HintViewed,
-          taskType: TaskType.WordOrder,
-          createdAt: yesterday,
-        },
-        {
-          userId,
-          userWordId: userWord1.id,
-          type: EventType.HintViewed,
-          taskType: TaskType.FillInTheGap,
-          createdAt: weekAgo,
-        },
       ]);
 
       const result = await getStatistics({ userId });
@@ -1037,11 +1017,11 @@ describe('statistics.service', () => {
 
       const yesterdayStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(yesterday));
       expect(yesterdayStats).toBeDefined();
-      expect(yesterdayStats?.hintsViewed).toBe(2);
+      expect(yesterdayStats?.hintsViewed).toBe(1);
 
       const weekAgoStats = result.learningPerDay.find((day) => day.date === toDateOnlyString(weekAgo));
       expect(weekAgoStats).toBeDefined();
-      expect(weekAgoStats?.hintsViewed).toBe(1);
+      expect(weekAgoStats?.hintsViewed).toBe(0);
     });
 
     it('returns top hinted words with word details', async () => {

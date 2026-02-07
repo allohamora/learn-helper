@@ -293,10 +293,8 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const learningWords = await getLearningWords(body);
   if (!learningWords.length) {
     return {
-      fillInTheGapTasks: [],
       translateEnglishSentenceTasks: [],
       translateUkrainianSentenceTasks: [],
-      synonymAndAntonymTasks: [],
     };
   }
 
@@ -308,19 +306,12 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     }),
   );
 
-  const [fillInTheGap, translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym] = await Promise.all([
-    toFillInTheGap(words),
+  const [translateEnglishSentence, translateUkrainianSentence] = await Promise.all([
     toTranslateEnglishSentence(words),
     toTranslateUkrainianSentence(words),
-    toSynonymAndAntonym(words),
   ]);
 
-  const events = [
-    fillInTheGap.cost,
-    translateEnglishSentence.cost,
-    translateUkrainianSentence.cost,
-    synonymAndAntonym.cost,
-  ].map((cost) => ({
+  const events = [translateEnglishSentence.cost, translateUkrainianSentence.cost].map((cost) => ({
     ...cost,
     type: EventType.TaskCost as const,
     userId: body.userId,
@@ -329,9 +320,7 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   await insertEvents(events);
 
   return {
-    fillInTheGapTasks: fillInTheGap.tasks,
     translateEnglishSentenceTasks: translateEnglishSentence.tasks,
     translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
-    synonymAndAntonymTasks: synonymAndAntonym.tasks,
   };
 };

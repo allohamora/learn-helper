@@ -33,10 +33,12 @@ export enum TaskType {
   PronunciationToWord = 'pronunciation-to-word',
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
+
+  // deprecated, but we have these in the database
   FillInTheGap = 'fill-in-the-gap',
   SynonymAndAntonym = 'synonym-and-antonym',
-  FindNonsenseSentence = 'find-nonsense-sentence', // deprecated, but we have this in database
-  WordOrder = 'word-order', // deprecated, but we have this in database
+  FindNonsenseSentence = 'find-nonsense-sentence',
+  WordOrder = 'word-order',
 }
 
 export type ToWordData = {
@@ -119,23 +121,6 @@ export type TranslateUkrainianSentenceTask = {
   data: WordArrangementData;
 };
 
-export type FillInTheGapTask = {
-  id: string;
-  type: TaskType.FillInTheGap;
-  data: TextToWordData;
-};
-
-export type SynonymAndAntonymData = ToWordData & {
-  synonym: string;
-  antonym: string;
-};
-
-export type SynonymAndAntonymTask = {
-  id: string;
-  type: TaskType.SynonymAndAntonym;
-  data: SynonymAndAntonymData;
-};
-
 export type LearningTask =
   | ShowcaseTask
   | WordToDefinitionTask
@@ -144,6 +129,4 @@ export type LearningTask =
   | TranslationToWordTask
   | PronunciationToWordTask
   | TranslateEnglishSentenceTask
-  | TranslateUkrainianSentenceTask
-  | FillInTheGapTask
-  | SynonymAndAntonymTask;
+  | TranslateUkrainianSentenceTask;

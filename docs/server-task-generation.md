@@ -22,111 +22,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ## Task Types
 
-### 1. Fill in the Gap
-
-**Description**: Students complete a sentence by filling in a blank with the target word or phrase.
-
-**Schema**:
-
-```typescript
-{
-  id: number;
-  task: string; // Sentence with "___" placeholder (max 15 words)
-  answer: string; // Correct word/phrase to fill the blank
-}
-```
-
-**Notes**:
-
-- **Grammatically correct**: Sentences must be fully grammatical and natural when the blank is filled with the answer.
-- **Natural language**: Use authentic, conversational English that sounds modern and fluent.
-- **Keep tasks unique**: Avoid repeating sentence structures, topics, or contexts across different words.
-- **Make it enjoyable**: Prefer interesting or relatable scenarios over generic drills.
-- **Punctuation**: Sentences can end with periods (.), exclamation marks (!), or question marks (?) based on the sentence type.
-- **Single sentence only**: Avoid semicolons or colons; do not join two independent clauses into one task.
-- **Sentence length**: Keep tasks to max 15 words with exactly one "\_\_\_" blank.
-- **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence.
-- **Exact target usage**: Use the target word/phrase as-is (case-insensitive); only apply necessary grammatical inflection (e.g., abandon -> abandoned, be -> am/is/are). Do not swap function words such as articles or prepositions.
-- **Leading "be" adaptation in blanks**: For targets that start with base **be** (for example, "be going to do (sth)"), keep whichever **be** form makes the sentence grammatical: base **be** can stay, **be** can be inflected (am/is/are/was/were), or leading **be** can be omitted when its finite form is already immediately outside the blank.
-- **Placeholder handling in blanks**: When the target includes placeholders like "(sb)" or "(sth)", handle them by position:
-  - If the placeholder is internal (not first or last), replace it with a concrete word and keep parentheses in the answer (e.g., "take (sb) out" -> "take (her) out").
-  - If the placeholder is the first or last element, remove it from the answer (e.g., "to do (sth)" -> "to do").
-- **Article context**: For articles (a/an), ensure the following word requires the correct article based on sound.
-- **Function words**: For articles, prepositions, conjunctions, or modals, create contexts where the exact word is required, not interchangeable.
-
-**Examples**:
-
-- **Simple word**:
-  - Word: "achieve"
-  - Task: "She worked hard to \_\_\_ her goals."
-  - Answer: "achieve"
-
-- **Internal placeholder**:
-  - Word: "take (sb) out"
-  - Task: "I need to \_\_\_."
-  - Answer: "take (her) out"
-
-- **Trailing placeholder removed**:
-  - Word: "to do (sth)"
-  - Task: "I need to \_\_\_ my homework."
-  - Answer: "to do"
-
-- **Multi-word phrase**:
-  - Word: "look forward to"
-  - Task: "We \_\_\_ the weekend."
-  - Answer: "look forward to"
-
-- **Article (a)**:
-  - Word: "a"
-  - Task: "She wants to buy \_\_\_ new car."
-  - Answer: "a"
-
-- **Article (an)**:
-  - Word: "an"
-  - Task: "He ate \_\_\_ apple for breakfast."
-  - Answer: "an"
-
-- **Exclamation sentence**:
-  - Word: "amazing"
-  - Task: "This view is \_\_\_!"
-  - Answer: "amazing"
-
-- **Question sentence**:
-  - Word: "understand"
-  - Task: "Do you \_\_\_ the question?"
-  - Answer: "understand"
-
-- **Be-phrase with inflected auxiliary in blank**:
-  - Word: "be going to do (sth)"
-  - Task: "She \_\_\_ her homework tonight."
-  - Answer: "is going to do"
-
-- **Be-phrase with base be after modal**:
-  - Word: "be going to do (sth)"
-  - Task: "They will \_\_\_ extra practice this evening."
-  - Answer: "be going to do"
-
-- **Be-phrase split across auxiliary + blank**:
-  - Word: "be going to do (sth)"
-  - Task: "They are \_\_\_ their homework tonight."
-  - Answer: "going to do"
-
-**Ranking**:
-
-| Parameter             | Score | Reason                                                                 |
-| --------------------- | ----- | ---------------------------------------------------------------------- |
-| Retrieval Effort      | 7     | Must produce word from memory; sentence context provides some cues     |
-| Cognitive Load        | 6     | Single sentence focus; slightly complex due to context parsing         |
-| Association Building  | 7     | Word appears in meaningful context; builds sentence-level associations |
-| Feedback Quality      | 6     | Shows correct answer; lacks explanation of word usage                  |
-| Spacing Compatibility | 7     | Easy to repeat; different sentences keep it fresh                      |
-| Engagement Factor     | 5     | Can feel repetitive; lacks gamification elements                       |
-| Transfer Potential    | 8     | Strong context exposure; mimics real reading situations                |
-| **Overall**           | 46/70 |                                                                        |
-
----
-
-### 2. Translate English Sentence
+### 1. Translate English Sentence
 
 **Description**: Students arrange shuffled Ukrainian words to form the correct translation of an English sentence containing the target word/phrase.
 
@@ -192,7 +88,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 3. Translate Ukrainian Sentence
+### 2. Translate Ukrainian Sentence
 
 **Description**: Students arrange shuffled English words to form the correct translation of a Ukrainian sentence containing the translated target word/phrase.
 
@@ -258,66 +154,10 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 4. Synonym and Antonym
-
-**Description**: Students provide a synonym and an antonym for the target word or phrase.
-
-**Schema**:
-
-```typescript
-{
-  id: number;
-  synonym: string; // Common, clear synonym (single word or short phrase)
-  antonym: string; // Common, clear antonym (single word or short phrase)
-}
-```
-
-**Notes**:
-
-- **Same part of speech**: Synonym and antonym must match the target word's part of speech; for function words, keep the same category.
-- **No repetition**: Do not repeat the target word or phrase in either output.
-- **Real words only**: Avoid placeholders like "N/A" or "none".
-- **Near matches allowed**: If no exact synonym/antonym exists, use the closest semantic match or functional opposite.
-- **Clarity**: Use common, clear vocabulary; single words or short phrases are acceptable.
-
-**Examples**:
-
-- **Verb**:
-  - Word: "arrive"
-  - Synonym: "reach"
-  - Antonym: "leave"
-
-- **Noun**:
-  - Word: "victory"
-  - Synonym: "triumph"
-  - Antonym: "defeat"
-
-- **Adjective**:
-  - Word: "fragile"
-  - Synonym: "delicate"
-  - Antonym: "sturdy"
-
-**Ranking**:
-
-| Parameter             | Score | Reason                                                      |
-| --------------------- | ----- | ----------------------------------------------------------- |
-| Retrieval Effort      | 6     | Must recall related words; less context than sentence tasks |
-| Cognitive Load        | 5     | Lightweight recall; two outputs required                    |
-| Association Building  | 8     | Builds strong semantic networks around the target word      |
-| Feedback Quality      | 5     | Correct/incorrect matching; limited explanatory context     |
-| Spacing Compatibility | 6     | Easy to repeat with variants                                |
-| Engagement Factor     | 5     | Can feel dry without gamification                           |
-| Transfer Potential    | 5     | Helpful for meaning, less for real-world usage contexts     |
-| **Overall**           | 45/70 |                                                             |
-
----
-
 ## Summary Ranking
 
-| Task Type                    | Score   |
-| ---------------------------- | ------- |
-| Fill in the Gap              | 46/70   |
-| Translate English Sentence   | 47/70   |
-| Translate Ukrainian Sentence | 47/70   |
-| Synonym and Antonym          | 45/70   |
-| **Overall**                  | 185/280 |
+| Task Type                    | Score  |
+| ---------------------------- | ------ |
+| Translate English Sentence   | 47/70  |
+| Translate Ukrainian Sentence | 47/70  |
+| **Overall**                  | 94/140 |
