@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  toTranslateEnglishSentence,
-  toTranslateUkrainianSentence,
-  toSynonymAndAntonym,
-  type WordData,
-} from '@/services/user-word.service';
+import { toTranslateEnglishSentence, toTranslateUkrainianSentence, type WordData } from '@/services/user-word.service';
 import { randomInt } from 'node:crypto';
 import '__tests__/expect/to-satisfy-statements.expect';
 
@@ -129,33 +124,6 @@ describe.concurrent('user-word.service', () => {
         'ALL English words are separate tokens: articles, prepositions, conjunctions, auxiliaries are individual words.',
         'Tasks cover various CEFR levels (A1-C1), which is expected.',
         'Minor Ukrainian phrasing variations are acceptable as long as the meaning is clear.',
-      ]);
-    });
-  });
-
-  describe('toSynonymAndAntonym', () => {
-    it('generates synonym and antonym tasks', async () => {
-      const { output, tasks } = await toSynonymAndAntonym(words);
-      console.log('to-synonym-and-antonym', JSON.stringify(output, null, 2));
-
-      expect(tasks).toHaveLength(words.length);
-      expect(tasks.map((task) => task.id).toSorted()).toEqual(words.map((word) => word.id).toSorted());
-      for (const task of tasks) {
-        expect(task).toHaveProperty('id');
-        expect(task).toHaveProperty('synonym');
-        expect(task).toHaveProperty('antonym');
-        expect(typeof task.synonym).toBe('string');
-        expect(typeof task.antonym).toBe('string');
-        expect(task.synonym.length).toBeGreaterThan(0);
-        expect(task.antonym.length).toBeGreaterThan(0);
-      }
-
-      await expect({ words, tasks }).toSatisfyStatements([
-        `Exactly ${words.length} tasks with id, synonym, antonym fields. Task ids match input word ids.`,
-        'CRITICAL: Both synonym AND antonym fields must be non-empty strings. Empty strings are NOT acceptable - a valid word or phrase must be provided for each field.',
-        'Synonyms/antonyms based on definition field. Synonym/antonym positions may be swapped if both represent semantically valid relationships (e.g., if "presence" is given as synonym for "absence", this is acceptable as it shows a valid semantic relationship even if reversed). Part of speech null for phrases is acceptable.',
-        'Clear, common vocabulary. Single words preferred, but phrases (2-4 words) are fully acceptable. Antonyms do not need to be direct opposites - semantically related contrasting phrases are valid (e.g., for "abandon": antonym could be "stay with", "keep", or "hold onto"). No target word repetition.',
-        'Natural, lowercase format (hyphens ok). For articles: "a"→synonym "an", antonym "the" (or similar valid article relationships). Note: INPUT words may contain parentheses like "(sth)" - this refers to the source data, not the output.',
       ]);
     });
   });
