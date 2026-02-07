@@ -48,7 +48,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Target word placement**: The target word/phrase should appear only in the blank, nowhere else in the sentence.
 - **Exact target usage**: Use the target word/phrase as-is (case-insensitive); only apply necessary grammatical inflection (e.g., abandon -> abandoned, be -> am/is/are). Do not swap function words such as articles or prepositions.
 - **Leading "be" adaptation in blanks**: For targets that start with base **be** (for example, "be going to do (sth)"), keep whichever **be** form makes the sentence grammatical: base **be** can stay, **be** can be inflected (am/is/are/was/were), or leading **be** can be omitted when its finite form is already immediately outside the blank.
-- **Phrase adaptation**: When the target includes placeholders like "agree with (sb)" or "(sth)", replace placeholders with real words outside the blank. If the placeholder is the final element and the phrase remains grammatical without it, omission is acceptable (e.g., "I like (sb)" -> "I like").
+- **Placeholder handling in blanks**: When the target includes placeholders like "(sb)" or "(sth)", handle them by position:
+  - If the placeholder is internal (not first or last), replace it with a concrete word and keep parentheses in the answer (e.g., "take (sb) out" -> "take (her) out").
+  - If the placeholder is the first or last element, remove it from the answer (e.g., "to do (sth)" -> "to do").
 - **Article context**: For articles (a/an), ensure the following word requires the correct article based on sound.
 - **Function words**: For articles, prepositions, conjunctions, or modals, create contexts where the exact word is required, not interchangeable.
 
@@ -59,10 +61,15 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Task: "She worked hard to \_\_\_ her goals."
   - Answer: "achieve"
 
-- **Phrase**:
-  - Word: "agree with (sb)"
-  - Task: "I \_\_\_ you."
-  - Answer: "agree with" (adapts placeholder naturally)
+- **Internal placeholder**:
+  - Word: "take (sb) out"
+  - Task: "I need to \_\_\_."
+  - Answer: "take (her) out"
+
+- **Trailing placeholder removed**:
+  - Word: "to do (sth)"
+  - Task: "I need to \_\_\_ my homework."
+  - Answer: "to do"
 
 - **Multi-word phrase**:
   - Word: "look forward to"
