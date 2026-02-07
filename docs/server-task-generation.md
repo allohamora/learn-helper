@@ -140,9 +140,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ## Summary Ranking
 
-| Task Type                    | Score   |
-| ---------------------------- | ------- |
-| Translate English Sentence   | 47/70   |
-| Translate Ukrainian Sentence | 47/70   |
-| Synonym and Antonym          | 45/70   |
-| **Overall**                  | 139/210 |
+| Task Type                    | Score  |
+| ---------------------------- | ------ |
+| Translate English Sentence   | 47/70  |
+| Translate Ukrainian Sentence | 47/70  |
+| **Overall**                  | 94/140 |

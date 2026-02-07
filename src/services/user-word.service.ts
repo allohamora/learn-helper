@@ -205,66 +205,12 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
   return { output, tasks, cost };
 };
 
-export const toSynonymAndAntonym = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
-    model,
-    output: Output.array({
-      element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
-        synonym: z.string(),
-        antonym: z.string(),
-      }),
-    }),
-    prompt: [
-      `Create exactly ${words.length} synonym/antonym pairs based on the definition field (one per input word)`,
-      '',
-      'Requirements:',
-      '- Same part of speech as input word',
-      '- Match CEFR level: A1 words need simple synonyms (glad, large), not advanced (elated, substantial)',
-      '- Use "definition" for meaning, but preserve part of speech',
-      '- Never use target word itself',
-      '- Use only words from the same category: modal -> modal, article -> article, preposition -> preposition',
-      '- Never substitute with content words (adjectives, verbs, nouns)',
-      '- Both synonym and antonym must be actual words or phrases derived from the word\'s definition and part of speech; never use placeholders like "N/A", "none", "nothing", "no synonym", "no antonym"',
-      '- If no exact match exists at target level, use alternatives: near-synonyms, gradable antonyms, or functional opposites',
-      '',
-      'Reasoning Steps:',
-      "1. Analysis: Examine word's part of speech, CEFR level, and core meaning from definition",
-      '2. Generate 3 Synonym Candidates + 3 Antonym Candidates: List 3 different options for each',
-      '3. Validate Each: For all 6 candidates check: part of speech matches (yes/no), CEFR level appropriate (yes/no), not target word (yes/no), not a placeholder like "N/A", "none", "nothing", "no synonym" (yes/no), valid English word/phrase (yes/no)',
-      '4. Select Best Pair: Choose synonym and antonym with most "yes" validations. If no candidate has all "yes", generate 2 new candidates and validate. If still none, use near-synonym or functional opposite. Never output: N/A, none, nothing, no synonym, no antonym',
-      '5. Final Validation: Check all requirements: synonym is actual word/phrase (yes/no), antonym is actual word/phrase (yes/no), both same part of speech as target (yes/no), both CEFR-appropriate (yes/no), neither is target word (yes/no), no placeholders like N/A/none (yes/no). If any "no", fix the issue',
-      '',
-      'Words:',
-      JSON.stringify(words),
-    ].join('\n'),
-  });
-
-  const tasks = removeReasoningSteps(output);
-
-  const cost = {
-    taskType: TaskType.SynonymAndAntonym,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-  };
-
-  return { output, tasks, cost };
-};
-
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const learningWords = await getLearningWords(body);
   if (!learningWords.length) {
     return {
       translateEnglishSentenceTasks: [],
       translateUkrainianSentenceTasks: [],
-      synonymAndAntonymTasks: [],
     };
   }
 
@@ -278,25 +224,21 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     }),
   );
 
-  const [translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym] = await Promise.all([
+  const [translateEnglishSentence, translateUkrainianSentence] = await Promise.all([
     toTranslateEnglishSentence(words),
     toTranslateUkrainianSentence(words),
-    toSynonymAndAntonym(words),
   ]);
 
-  const events = [translateEnglishSentence.cost, translateUkrainianSentence.cost, synonymAndAntonym.cost].map(
-    (cost) => ({
-      ...cost,
-      type: EventType.TaskCost as const,
-      userId: body.userId,
-      userWordIds: learningWords.map(({ id }) => id),
-    }),
-  );
+  const events = [translateEnglishSentence.cost, translateUkrainianSentence.cost].map((cost) => ({
+    ...cost,
+    type: EventType.TaskCost as const,
+    userId: body.userId,
+    userWordIds: learningWords.map(({ id }) => id),
+  }));
   await insertEvents(events);
 
   return {
     translateEnglishSentenceTasks: translateEnglishSentence.tasks,
     translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
-    synonymAndAntonymTasks: synonymAndAntonym.tasks,
   };
 };
