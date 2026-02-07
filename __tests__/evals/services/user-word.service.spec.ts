@@ -15,6 +15,7 @@ describe.concurrent('user-word.service', () => {
   };
 
   const hasForbiddenSemicolonOrColon = (value: string) => /[;:]/gim.test(value);
+  const hasForbiddenDash = (value: string) => /[–—]/gim.test(value);
 
   const word = (data: Omit<WordData, 'id'>) => ({
     id: randomInt(1, 10000),
@@ -84,15 +85,18 @@ describe.concurrent('user-word.service', () => {
         expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
         expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
         expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
+        expect(hasForbiddenDash(task.sentence)).toBe(false);
+        expect(hasForbiddenDash(task.translation)).toBe(false);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, an English sentence, and a Ukrainian translation.`,
-        'English sentences are max 15 words, natural, capitalized, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. For targets with placeholders, replace every (sb)/(sth) with real words and do not omit placeholders (including internal slots, e.g., "take (sb) out" -> "take her out").',
-        'Ukrainian translations are max 15 words, natural, sentence case, single spaces, standard punctuation (internal commas allowed; final punctuation attached).',
-        'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
-        'Ukrainian translations have a single unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles kept as separate tokens.',
-        'Ukrainian adjective-noun agreement is correct for gender/number/case.',
+        'English sentences are max 15 words, natural, sentence case, and contain the target phrase (case-insensitive) or a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to"). All function words unchanged. Parenthesized placeholders replaced with concrete words, never output literally.',
+        'Ukrainian translations are max 15 words, sentence case, single spaces, punctuation attached to tokens. No dashes (–, —). Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English.',
+        'Single sentence only. No semicolons, colons, or dashes. No joined independent clauses.',
+        'Ukrainian translations have one unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles as separate tokens.',
+        'Ukrainian grammar should be generally correct. Do NOT flag declension variations as errors. Both singular and plural accusative/genitive forms are valid (e.g., "бабусю і дідуся", "бабусів і дідусів", "бабусь і дідусів" are all acceptable).',
+        'Sentences use specific real-world context, not vague or abstract phrases.',
       ]);
     });
   });
@@ -118,16 +122,18 @@ describe.concurrent('user-word.service', () => {
         expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
         expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
         expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
+        expect(hasForbiddenDash(task.sentence)).toBe(false);
+        expect(hasForbiddenDash(task.translation)).toBe(false);
       }
 
       await expect({ words, tasks }).toSatisfyStatements([
         `Exactly ${words.length} tasks with id matching input word.id, a Ukrainian sentence, and an English translation.`,
-        'Ukrainian sentences are max 15 words, natural, and capitalized.',
-        'English translations are max 15 words, natural, grammatical, sentence case, and contain the target phrase (case-insensitive) or a minimal grammatical variant limited to inflection/conjugation of verbs or auxiliaries within the target (e.g., "be going to" -> "is going to"); do not swap articles or other function words. For targets with placeholders, replace every (sb)/(sth) with real words and do not omit placeholders (including internal slots, e.g., "take (sb) out" -> "take her out").',
-        'English translations use single spaces with punctuation attached to tokens (internal commas allowed; final punctuation attached to the last token).',
-        'English translations include required articles, prepositions, and auxiliaries as separate tokens, with correct a/an usage and verb forms.',
-        'Use a single sentence only; avoid semicolons or colons and do not join two independent clauses.',
-        'English translations have a single unambiguous word order when shuffled, with articles/prepositions/conjunctions/auxiliaries as separate tokens.',
+        'Ukrainian sentences are max 15 words, sentence case. No dashes (–, —). Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English. Do NOT flag grammar style preferences as errors. Accept all valid Ukrainian constructions: alternative declension forms (e.g., "бабусю і дідуся" and "бабусів і дідусів" are both valid), active impersonal voice (e.g., "покинули") alongside passive (e.g., "було покинуто"), and flexible word order.',
+        'English translations are max 15 words, sentence case, and contain the target phrase (case-insensitive) or a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to"). All function words unchanged. Parenthesized placeholders replaced with concrete words, never output literally.',
+        'English translations use single spaces, punctuation attached to tokens. Include required articles/prepositions/auxiliaries as separate tokens.',
+        'Single sentence only. No semicolons, colons, or dashes. No joined independent clauses.',
+        'English translations have one unambiguous word order when shuffled.',
+        'Sentences use specific real-world context, not vague or abstract phrases.',
       ]);
     });
   });
