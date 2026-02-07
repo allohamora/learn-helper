@@ -84,60 +84,6 @@ export type WordData = {
   partOfSpeech: string | null;
 };
 
-export const toFillInTheGap = async (words: WordData[]) => {
-  const { reasoning, output, usage } = await generateText({
-    model,
-    providerOptions: {
-      google: {
-        thinkingConfig: {
-          includeThoughts: true,
-          thinkingBudget: 2048,
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-    },
-    temperature: 0.7,
-    output: Output.array({
-      element: z.object({
-        id: z.number(),
-        answer: z.string(),
-        task: z.string(),
-      }),
-    }),
-    prompt: [
-      '<role>Act as an expert English exercise writer for fill-in-the-gap tasks.</role>',
-      `<task>Create exactly ${words.length} tasks, one per input word, using the split workflow below.</task>`,
-      '<workflow>',
-      '- For each word, first create one natural draft sentence that contains the target phrase or an allowed minimal inflected variant exactly once.',
-      '- Then split that same draft into output fields: answer = the target span used in the draft, task = draft with that span replaced by "___".',
-      '- Do not invent a new sentence after splitting; output must come from the draft sentence.',
-      '</workflow>',
-      '<requirements>',
-      '- Id: task.id matches input word.id.',
-      '- Task: one natural, modern sentence (max 15 words) with exactly one "___" blank; single sentence only; no semicolons or colons.',
-      '- Task punctuation may end with ".", "!", or "?".',
-      '- Filled task (replace ___ with answer) must be grammatical and natural. The target appears only in the blank, with no identical adjacent words after filling.',
-      '- Answer: start from input word/phrase and remove (sb)/(sth). Allow only necessary inflection/conjugation; do not swap or drop other words except allowed leading-be adaptation for targets that start with "be".',
-      '- Leading-be adaptation: for targets that start with base "be", keep whichever be-form is grammatical in context: base "be", inflected "am/is/are/was/were", or omitted leading "be" when its finite form is already immediately outside the blank.',
-      '- If target has (sb)/(sth), replace placeholders with real words outside the blank. You may omit only a trailing placeholder when still grammatical.',
-      '- Keep phrase role natural in context (e.g., "for the first time" should be used adverbially, not as a noun phrase).',
-      '- For a/an, the next word must require that article by sound. For other function words, build context where only the exact target fits.',
-      '- Prefer interesting or relatable scenarios over generic drills.',
-      '- Vary structures and topics across tasks.',
-      '</requirements>',
-      `<words>${JSON.stringify(words)}</words>`,
-    ].join('\n'),
-  });
-
-  const cost = {
-    taskType: TaskType.FillInTheGap,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-  };
-
-  return { reasoning, tasks: output, cost };
-};
-
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
   const { reasoning, output, usage } = await generateText({
     model,
@@ -237,50 +183,6 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
   });
   const cost = {
     taskType: TaskType.TranslateUkrainianSentence,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-  };
-
-  return { reasoning, tasks: output, cost };
-};
-
-export const toSynonymAndAntonym = async (words: WordData[]) => {
-  const { reasoning, output, usage } = await generateText({
-    model,
-    providerOptions: {
-      google: {
-        thinkingConfig: {
-          includeThoughts: true,
-          thinkingBudget: 2048,
-        },
-      } satisfies GoogleGenerativeAIProviderOptions,
-    },
-    temperature: 0.7,
-    output: Output.array({
-      element: z.object({
-        id: z.number(),
-        synonym: z.string(),
-        antonym: z.string(),
-      }),
-    }),
-    prompt: [
-      '<role>Act as an expert English lexicographer (synonym/antonym)</role>',
-      `<task>Create exactly ${words.length} synonym/antonym pairs, one per input word</task>`,
-      '<requirements>',
-      '- Id: task.id matches input word.id.',
-      '- Synonym and antonym match the target part of speech; for function words, keep the same category.',
-      '- Do not use the target word/phrase in either output.',
-      '- Use real words/phrases only (no placeholders like "N/A" or "none").',
-      '- If no exact match exists, use near-synonyms or functional opposites.',
-      '- Use common, clear vocabulary; single words or short phrases are acceptable.',
-      '</requirements>',
-      `<words>${JSON.stringify(words)}</words>`,
-    ].join('\n'),
-  });
-
-  const cost = {
-    taskType: TaskType.SynonymAndAntonym,
     costInNanoDollars: calculateCostInNanoDollars(usage),
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
