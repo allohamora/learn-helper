@@ -90,56 +90,6 @@ const removeReasoningSteps = <T extends { reasoningSteps: unknown }>(items: T[])
   return items.map(({ reasoningSteps, ...rest }) => rest);
 };
 
-export const toFillInTheGap = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
-    model,
-    output: Output.array({
-      element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
-        task: z.string().describe('3-15 word sentence with exactly one "___" blank replacing target word'),
-        answer: z.string().describe('Exact word/phrase adapted grammatically (case-insensitive)'),
-      }),
-    }),
-    prompt: [
-      `Create exactly ${words.length} fill-in-the-gap exercises (one per input word)`,
-      '',
-      'Requirements:',
-      '- Grammatically correct, natural, engaging and modern English sentences',
-      '- Target word appears ONLY as "___" blank',
-      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
-      '- Varied punctuation (., !, ?) based on sentence type',
-      '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 Sentence Candidates: Write 3 complete sentences using the word. For each, count words explicitly (e.g., "1-She 2-has 3-a 4-new 5-car = 5 words") and check if within 3-15 range (yes/no)',
-      '3. Validate Each: For all 3 candidates check: word count 3-15 (yes/no), level-appropriate grammar (yes/no), natural English (yes/no), target word present (yes/no)',
-      '4. Select Best: Choose sentence with most "yes" validations. If no candidate has all "yes", generate 2 new candidates and validate. Select the best valid option',
-      '5. Create Task: Replace target word with "___", ensuring the task sentence (with blank) is 3-15 words. The answer must be grammatically adapted to fit the blank.',
-      '6. Final Validation: Check all requirements: task sentence 3-15 words (yes/no), exactly one ___ blank (yes/no), answer fills blank grammatically (yes/no), target word only in blank (yes/no), level-appropriate (yes/no). If any "no", fix the issue',
-      '',
-      'Words:',
-      JSON.stringify(words),
-    ].join('\n'),
-  });
-
-  const tasks = removeReasoningSteps(output);
-
-  const cost = {
-    taskType: TaskType.FillInTheGap,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
-    inputTokens: usage.inputTokens,
-    outputTokens: usage.outputTokens,
-  };
-
-  return { output, tasks, cost };
-};
-
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
   const { output, usage } = await generateText({
     model,
@@ -312,7 +262,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
   const learningWords = await getLearningWords(body);
   if (!learningWords.length) {
     return {
-      fillInTheGapTasks: [],
       translateEnglishSentenceTasks: [],
       translateUkrainianSentenceTasks: [],
       synonymAndAntonymTasks: [],
@@ -329,28 +278,23 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
     }),
   );
 
-  const [fillInTheGap, translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym] = await Promise.all([
-    toFillInTheGap(words),
+  const [translateEnglishSentence, translateUkrainianSentence, synonymAndAntonym] = await Promise.all([
     toTranslateEnglishSentence(words),
     toTranslateUkrainianSentence(words),
     toSynonymAndAntonym(words),
   ]);
 
-  const events = [
-    fillInTheGap.cost,
-    translateEnglishSentence.cost,
-    translateUkrainianSentence.cost,
-    synonymAndAntonym.cost,
-  ].map((cost) => ({
-    ...cost,
-    type: EventType.TaskCost as const,
-    userId: body.userId,
-    userWordIds: learningWords.map(({ id }) => id),
-  }));
+  const events = [translateEnglishSentence.cost, translateUkrainianSentence.cost, synonymAndAntonym.cost].map(
+    (cost) => ({
+      ...cost,
+      type: EventType.TaskCost as const,
+      userId: body.userId,
+      userWordIds: learningWords.map(({ id }) => id),
+    }),
+  );
   await insertEvents(events);
 
   return {
-    fillInTheGapTasks: fillInTheGap.tasks,
     translateEnglishSentenceTasks: translateEnglishSentence.tasks,
     translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
     synonymAndAntonymTasks: synonymAndAntonym.tasks,
