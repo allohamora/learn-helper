@@ -34,7 +34,7 @@ export enum TaskType {
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
 
-  // deprecated, but we have this in database
+  // deprecated, but we have these in the database
   FillInTheGap = 'fill-in-the-gap',
   SynonymAndAntonym = 'synonym-and-antonym',
   FindNonsenseSentence = 'find-nonsense-sentence',
