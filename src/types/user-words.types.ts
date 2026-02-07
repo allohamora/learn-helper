@@ -33,10 +33,12 @@ export enum TaskType {
   PronunciationToWord = 'pronunciation-to-word',
   TranslateEnglishSentence = 'translate-english-sentence',
   TranslateUkrainianSentence = 'translate-ukrainian-sentence',
-  FillInTheGap = 'fill-in-the-gap', // deprecated, but we have this in database
-  SynonymAndAntonym = 'synonym-and-antonym', // deprecated, but we have this in database
-  FindNonsenseSentence = 'find-nonsense-sentence', // deprecated, but we have this in database
-  WordOrder = 'word-order', // deprecated, but we have this in database
+
+  // deprecated, but we have this in database
+  FillInTheGap = 'fill-in-the-gap',
+  SynonymAndAntonym = 'synonym-and-antonym',
+  FindNonsenseSentence = 'find-nonsense-sentence',
+  WordOrder = 'word-order',
 }
 
 export type ToWordData = {
