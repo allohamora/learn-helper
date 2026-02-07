@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { OPENAI_API_KEY } from 'astro:env/server';
 import { generateText, Output } from 'ai';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenAI, type OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { z } from 'zod';
 
 type CustomMatchers = {
@@ -23,33 +23,38 @@ expect.extend({
   toSatisfyStatements: async (input, statements) => {
     const { output } = await generateText({
       model,
+      providerOptions: {
+        openai: {
+          reasoningEffort: 'medium',
+        } satisfies OpenAIResponsesProviderOptions,
+      },
       output: Output.object({
         schema: z.object({
-          reason: z.string().nullable().describe('explanation if the input does not satisfy the statements'),
-          satisfies: z.boolean().describe('boolean indicating if the input satisfies all the statements'),
-          actual: z
-            .string()
-            .nullable()
-            .describe(
-              'stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}])',
-            ),
-          expected: z
-            .string()
-            .nullable()
-            .describe(
-              'stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}])',
-            ),
+          reason: z.string().nullable(),
+          satisfies: z.boolean(),
+          actual: z.string().nullable(),
+          expected: z.string().nullable(),
         }),
       }),
       prompt: [
-        'Compare the following input against the provided statements and determine if the input satisfies all the statements.',
+        '# Role',
+        'Act as a meticulous test evaluator.',
         '',
-        'Input:',
+        '# Task',
+        'Compare the input against the statements and determine whether all statements are satisfied.',
+        '',
+        '## Output Requirements',
+        '- `reason`: explanation if the input does not satisfy the statements.',
+        '- `satisfies`: boolean indicating if the input satisfies all the statements.',
+        '- `actual`: stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}]).',
+        '- `expected`: stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}]).',
+        '',
+        '## Input',
         '```json',
         JSON.stringify(input),
         '```',
         '',
-        'Statements:',
+        '## Statements',
         '```json',
         JSON.stringify(statements),
         '```',

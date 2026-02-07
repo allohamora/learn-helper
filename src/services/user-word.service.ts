@@ -10,7 +10,7 @@ import { Status, TaskType, type DiscoveryStatus } from '@/types/user-words.types
 import { EventType } from '@/types/event.types';
 import { db } from 'astro:db';
 import { generateText, Output, type LanguageModelUsage } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGoogleGenerativeAI, type GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { z } from 'zod';
 import { GEMINI_API_KEY } from 'astro:env/server';
 import { getLearningWords } from '@/repositories/user-word.repository';
@@ -82,61 +82,62 @@ export type WordData = {
   id: number;
   value: string;
   partOfSpeech: string | null;
-  level: string;
-  definition: string;
-};
-
-const removeReasoningSteps = <T extends { reasoningSteps: unknown }>(items: T[]) => {
-  return items.map(({ reasoningSteps, ...rest }) => rest);
 };
 
 export const toTranslateEnglishSentence = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
+  const { reasoning, output, usage } = await generateText({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    temperature: 0.7,
     output: Output.array({
       element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
-        sentence: z.string().describe('English sentence containing target word/phrase'),
-        translation: z
-          .string()
-          .describe(
-            'Ukrainian translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
-          ),
+        id: z.number(),
+        sentence: z.string(),
+        translation: z.string(),
       }),
     }),
     prompt: [
-      `Create exactly ${words.length} English->Ukrainian word arrangement tasks (one per input word)`,
-      '',
-      'Requirements:',
-      '- English sentence: 3-15 words, modern, natural, containing target word/phrase',
-      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
-      '- Varied punctuation (., !, ?) based on sentence type',
-      '- Ukrainian translation: natural, grammatically correct',
-      '- When generating Ukrainian text, ensure adjective-noun agreement (gender, number, case)',
-      '- Ukrainian translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
-      '- Ukrainian translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
-      '- ALL Ukrainian words must be separate: pronouns, prepositions, conjunctions, particles',
-      '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 English Sentence Candidates: Write 3 sentences using the word. For each, count words explicitly (e.g., "1-She 2-has 3-a 4-new 5-car = 5 words") and check if within 3-15 range (yes/no). Punctuation marks are NOT words',
-      '3. Select Best English Sentence: Choose sentence with word count 3-15, level-appropriate grammar, and natural phrasing. If none valid, generate 2 new candidates. RE-COUNT to verify 3-15 words',
-      '4. Generate Ukrainian Translation: Translate selected sentence to natural, grammatically correct Ukrainian. Ensure proper verb conjugation, case agreement, and word choice. Count Ukrainian words explicitly and verify 3-15 range',
-      '5. Validate Translation: Check: word count 3-15 (yes/no), single-space separated (yes/no), punctuation attached to last word only (yes/no), first word capitalized only (yes/no), unambiguous word order when shuffled (yes/no), all words are separate tokens (yes/no). If any "no", revise the translation',
-      '6. Final Validation: Check all requirements: English sentence 3-15 words (yes/no), target word present (yes/no), Ukrainian translation 3-15 words (yes/no), translation accurate (yes/no), translation formatting correct (yes/no), unambiguous when shuffled (yes/no). If any "no", fix the issue',
-      '',
-      'Words:',
-      JSON.stringify(words),
+      '<role>Expert bilingual exercise writer (English-Ukrainian).</role>',
+      `<task>Create exactly ${words.length} English->Ukrainian word-order tasks, one per input word.</task>`,
+      '<workflow>',
+      '1. For each word, build the target pattern from its value.',
+      '2. Write an English sentence with specific real-world context.',
+      '3. Translate it into natural Ukrainian a native speaker would actually say.',
+      '4. Output: id = word.id, sentence = English, translation = Ukrainian.',
+      '</workflow>',
+      '<requirements>',
+      'English sentence:',
+      '- Complete sentence (subject + verb), sentence case, max 15 words.',
+      '- Single sentence. No semicolons, colons, or dashes (–, —, -).',
+      '- Must contain ALL non-placeholder tokens from the target in order.',
+      '- For phrasal verbs, include every particle (e.g., "take (sb) out" requires "take" AND "out").',
+      '- Only verb/auxiliary inflection allowed (e.g., "be going to" -> "is going to").',
+      '- Keep all function words unchanged.',
+      '- If the target is "a", place it before a consonant-starting word (not "an").',
+      '- Use specific context, not vague abstract sentences.',
+      'Ukrainian translation:',
+      '- Max 15 words, sentence case, single sentence.',
+      '- Must sound natural to a native Ukrainian speaker.',
+      '- Use idiomatic Ukrainian, not word-for-word translation from English.',
+      '- Single spaces, punctuation attached to tokens.',
+      '- NEVER use dash characters (–, —, -) in the translation. Rephrase to avoid them.',
+      '- One unambiguous word order when shuffled.',
+      '- Pronouns/prepositions/conjunctions/particles as separate tokens.',
+      '- Correct adjective-noun agreement (gender/number/case).',
+      'Placeholders:',
+      '- Replace every parenthesized placeholder with a concrete word.',
+      '- Never output literal placeholder text in the sentence.',
+      '</requirements>',
+      `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
   });
-
-  const tasks = removeReasoningSteps(output);
 
   const cost = {
     taskType: TaskType.TranslateEnglishSentence,
@@ -145,56 +146,63 @@ export const toTranslateEnglishSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks, cost };
+  return { reasoning, tasks: output, cost };
 };
 
 export const toTranslateUkrainianSentence = async (words: WordData[]) => {
-  const { output, usage } = await generateText({
+  const { reasoning, output, usage } = await generateText({
     model,
+    providerOptions: {
+      google: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 2048,
+        },
+      } satisfies GoogleGenerativeAIProviderOptions,
+    },
+    temperature: 0.7,
     output: Output.array({
       element: z.object({
-        id: z.number().describe('Each task.id matches the corresponding input word.id'),
-        reasoningSteps: z.array(
-          z.object({
-            name: z.string(),
-            text: z.string(),
-          }),
-        ),
-        sentence: z.string().describe('Ukrainian sentence containing translated target word/phrase'),
-        translation: z
-          .string()
-          .describe(
-            'English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
-          ),
+        id: z.number(),
+        sentence: z.string(),
+        translation: z.string(),
       }),
     }),
     prompt: [
-      `Create exactly ${words.length} Ukrainian->English word arrangement tasks (one per input word)`,
-      '',
-      'Requirements:',
-      '- Ukrainian sentence: 3-15 words, modern, natural, containing translated target word/phrase',
-      '- Sentences are level-appropriate: A1 simple, B1 uses conditionals/complex structures, B2+ uses advanced grammar, etc',
-      '- Varied punctuation (., !, ?) based on sentence type',
-      '- English translation: natural, grammatically perfect, includes ALL articles (a/an/the), ALL prepositions (to/at/in/for), ALL auxiliary verbs, correct verb forms',
-      '- English translation: 3-15 words, single spaces, punctuation attached to words, first word capitalized only',
-      '- English translation must have unambiguous word order when shuffled (no two valid orderings of the words)',
-      '- ALL English words must be separate: articles, prepositions, conjunctions, auxiliaries',
-      '',
-      'Reasoning Steps:',
-      '1. Analysis: Identify CEFR level and appropriate grammar structures for this word',
-      '2. Generate 3 Ukrainian Sentence Candidates: Write 3 sentences using the word. For each, count words explicitly (e.g., "1-Вона 2-має 3-нову 4-машину = 4 words") and check if within 3-15 range (yes/no). Punctuation marks and hyphens are NOT words',
-      '3. Select Best Ukrainian Sentence: Choose sentence with word count 3-15, level-appropriate grammar, and natural phrasing. If none valid, generate 2 new candidates. RE-COUNT the selected sentence to verify 3-15 words',
-      '4. Generate English Translation: Translate selected sentence to natural, grammatically correct English. Include ALL articles, prepositions, and auxiliary verbs. Count English words explicitly and verify 3-15 range',
-      '5. Validate Translation: Check: word count 3-15 (yes/no), all articles present (yes/no), all prepositions present (yes/no), all auxiliaries present (yes/no), single-space separated (yes/no), punctuation attached to last word only (yes/no), first word capitalized only (yes/no), unambiguous word order when shuffled (yes/no). If any "no", revise the translation',
-      '6. Final Validation: Check all requirements: Ukrainian sentence 3-15 words (yes/no), target word/phrase present (yes/no), English translation 3-15 words (yes/no), translation grammatically perfect (yes/no), translation formatting correct (yes/no), unambiguous when shuffled (yes/no). If any "no", fix the issue',
-      '',
-      'Words:',
-      JSON.stringify(words),
+      '<role>Expert bilingual exercise writer (Ukrainian-English).</role>',
+      `<task>Create exactly ${words.length} Ukrainian->English word-order tasks, one per input word.</task>`,
+      '<workflow>',
+      '1. For each word, build the target pattern from its value.',
+      '2. Write an English sentence with specific real-world context.',
+      '3. Write a natural Ukrainian sentence a native speaker would actually say.',
+      '4. Output: id = word.id, sentence = Ukrainian, translation = English.',
+      '</workflow>',
+      '<requirements>',
+      'Ukrainian sentence:',
+      '- Max 15 words, sentence case, grammatical, single sentence.',
+      '- No semicolons or colons.',
+      '- NEVER use dash characters (–, —, -) in the sentence. Rephrase to avoid them.',
+      '- Must sound natural to a native Ukrainian speaker.',
+      '- Use idiomatic Ukrainian, not word-for-word translation from English.',
+      'English translation:',
+      '- Complete sentence (subject + verb), sentence case, max 15 words.',
+      '- Single sentence. No semicolons, colons, or dashes (–, —, -).',
+      '- Must contain ALL non-placeholder tokens from the target in order.',
+      '- For phrasal verbs, include every particle (e.g., "take (sb) out" requires "take" AND "out").',
+      '- Only verb/auxiliary inflection allowed (e.g., "be going to" -> "is going to").',
+      '- Keep all function words unchanged.',
+      '- If the target is "a", place it before a consonant-starting word (not "an").',
+      '- Use specific context, not vague abstract sentences.',
+      '- Include required articles/prepositions/auxiliaries as separate tokens.',
+      '- Single spaces, punctuation attached to tokens.',
+      '- One unambiguous word order when shuffled.',
+      'Placeholders:',
+      '- Replace every parenthesized placeholder with a concrete word.',
+      '- Never output literal placeholder text in the translation.',
+      '</requirements>',
+      `<words>${JSON.stringify(words)}</words>`,
     ].join('\n'),
   });
-
-  const tasks = removeReasoningSteps(output);
-
   const cost = {
     taskType: TaskType.TranslateUkrainianSentence,
     costInNanoDollars: calculateCostInNanoDollars(usage),
@@ -202,7 +210,7 @@ export const toTranslateUkrainianSentence = async (words: WordData[]) => {
     outputTokens: usage.outputTokens,
   };
 
-  return { output, tasks, cost };
+  return { reasoning, tasks: output, cost };
 };
 
 export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
@@ -219,8 +227,6 @@ export const getLearningTasks = async (body: AuthParams<{ limit: number }>) => {
       id,
       value: word.value,
       partOfSpeech: word.partOfSpeech,
-      level: word.level,
-      definition: word.definition,
     }),
   );
 

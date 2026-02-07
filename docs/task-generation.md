@@ -55,8 +55,6 @@ These criteria define why a task belongs earlier or later in a sequence.
 
 - **Translate English Sentence**: Arrange shuffled Ukrainian words to form the translation of an English sentence.
 - **Translate Ukrainian Sentence**: Arrange shuffled English words to form the translation of a Ukrainian sentence.
-- **Fill in the Gap**: Build contextual recall to anchor meaning.
-- **Synonym and Antonym**: Expand semantic links with near and opposite meanings.
 
 ### Client tasks (runtime sequence)
 
@@ -81,20 +79,16 @@ Scores are 0-10 per criterion. Overall score is the average of all criteria (0-1
 | Pronunciation to Word        | Client | 3           | 3    | 4    | 10       | 6        | 7          | 8        | 7          | 6.0     |
 | Translate English Sentence   | Server | 7           | 7    | 6    | 6        | 7        | 6          | 8        | 6          | 6.6     |
 | Translate Ukrainian Sentence | Server | 6           | 7    | 6    | 6        | 7        | 7          | 8        | 5          | 6.5     |
-| Fill in the Gap              | Server | 6           | 6    | 6    | 6        | 6        | 6          | 8        | 5          | 6.1     |
-| Synonym and Antonym          | Server | 5           | 6    | 6    | 6        | 5        | 6          | 7        | 5          | 5.8     |
 
 ## Summary ranking
 
 ### Server (AI-generated)
 
-| Task Type                    | Score   |
-| ---------------------------- | ------- |
-| Fill in the Gap              | 46/70   |
-| Translate English Sentence   | 47/70   |
-| Translate Ukrainian Sentence | 47/70   |
-| Synonym and Antonym          | 45/70   |
-| **Overall**                  | 185/280 |
+| Task Type                    | Score  |
+| ---------------------------- | ------ |
+| Translate English Sentence   | 47/70  |
+| Translate Ukrainian Sentence | 47/70  |
+| **Overall**                  | 94/140 |
 
 ### Client (runtime)
 
