@@ -15,7 +15,7 @@ describe.concurrent('user-word.service', () => {
   };
 
   const hasForbiddenSemicolonOrColon = (value: string) => /[;:]/gim.test(value);
-  const hasForbiddenDash = (value: string) => /[–—]/gim.test(value);
+  const hasForbiddenDash = (value: string) => /[-–]/gim.test(value);
 
   const word = (data: Omit<WordData, 'id'>) => ({
     id: randomInt(1, 10000),
