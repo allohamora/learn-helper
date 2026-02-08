@@ -30,7 +30,10 @@ export const EditTranslationDialog: FC<EditTranslationDialogProps> = ({ editingW
     >
       <DialogContent onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Edit translation for &quot;{editingWord?.word.value}&quot;</DialogTitle>
+          <DialogTitle>
+            Edit translation for &quot;{editingWord?.word.value}&quot;
+            {editingWord?.word.partOfSpeech ? ` (${editingWord.word.partOfSpeech})` : ''}
+          </DialogTitle>
         </DialogHeader>
         <input
           type="text"
