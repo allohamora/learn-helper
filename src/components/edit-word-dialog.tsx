@@ -1,23 +1,16 @@
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { UserWord } from '@/types/user-words.types';
+import { useEditWord } from '@/components/providers/edit-word';
 
-type EditTranslationDialogProps = {
-  editingWord: UserWord | null;
-  isPending: boolean;
-  onClose: () => void;
-  onSave: (params: { wordId: number; value: string }) => void;
-};
-
-export const EditTranslationDialog: FC<EditTranslationDialogProps> = ({ editingWord, isPending, onClose, onSave }) => {
-  const [editValue, setEditValue] = useState(editingWord?.word.uaTranslation ?? '');
+export const EditWordDialog: FC = () => {
+  const { editingWord, editTranslation, setEditTranslation, closeEditWord, updateWord } = useEditWord();
 
   const handleSave = () => {
-    const trimmed = editValue.trim();
+    const trimmed = editTranslation.trim();
     if (trimmed.length > 0 && editingWord) {
-      onSave({ wordId: editingWord.word.id, value: trimmed });
+      updateWord.mutate({ wordId: editingWord.word.id, value: trimmed });
     }
   };
 
@@ -25,18 +18,22 @@ export const EditTranslationDialog: FC<EditTranslationDialogProps> = ({ editingW
     <Dialog
       open={editingWord !== null}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open) closeEditWord();
       }}
     >
       <DialogContent onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Edit translation for &quot;{editingWord?.word.value}&quot;</DialogTitle>
+          <DialogTitle>
+            Edit translation for &quot;{editingWord?.word.value}&quot;
+            {editingWord?.word.partOfSpeech ? ` (${editingWord.word.partOfSpeech})` : ''}
+          </DialogTitle>
         </DialogHeader>
         <input
           type="text"
-          value={editValue}
-          onChange={(event) => setEditValue(event.target.value)}
+          value={editTranslation}
+          onChange={(event) => setEditTranslation(event.target.value)}
           onKeyDown={(event) => {
+            if (updateWord.isPending) return;
             if (event.key === 'Enter') {
               handleSave();
             }
@@ -47,8 +44,8 @@ export const EditTranslationDialog: FC<EditTranslationDialogProps> = ({ editingW
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={handleSave} disabled={isPending || editValue.trim().length === 0}>
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+          <Button onClick={handleSave} disabled={updateWord.isPending || editTranslation.trim().length === 0}>
+            {updateWord.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>
