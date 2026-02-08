@@ -2,18 +2,21 @@ import { type FC, type MouseEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Volume2, ExternalLink, ArrowRight } from 'lucide-react';
+import { Volume2, ExternalLink, ArrowRight, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import { List, type ShowcaseTask } from '@/types/user-words.types';
+import { useEditWord } from '@/components/providers/edit-word';
+import { List, type ShowcaseTask, type UserWord } from '@/types/user-words.types';
 
 type ShowcaseCardProps = {
   onNext: () => void;
+  userWord?: UserWord;
   data: ShowcaseTask['data'];
 };
 
-export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, data }) => {
+export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, userWord, data }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
+  const { openEditWord } = useEditWord();
 
   const handlePlayPronunciation = (event: MouseEvent) => {
     event.preventDefault();
@@ -40,6 +43,22 @@ export const ShowcaseCard: FC<ShowcaseCardProps> = ({ onNext, data }) => {
             </div>
 
             <div className="flex items-center gap-1">
+              {userWord && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openEditWord(userWord);
+                  }}
+                  className="h-8 w-8 shrink-0 p-0"
+                  title="Edit translation"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+
               {data.pronunciation && (
                 <Button
                   variant="ghost"

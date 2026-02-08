@@ -363,7 +363,9 @@ export const Learning: FC = () => {
       <div>
         {!isFinished ? (
           <>
-            {currentTask?.type === TaskType.Showcase && <ShowcaseCard data={currentTask.data} onNext={onNext} />}
+            {currentTask?.type === TaskType.Showcase && (
+              <ShowcaseCard data={currentTask.data} onNext={onNext} userWord={state[currentTask.data.id]} />
+            )}
 
             {currentTask?.type === TaskType.WordToDefinition && (
               <WordToOptions
