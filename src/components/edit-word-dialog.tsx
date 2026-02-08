@@ -33,6 +33,7 @@ export const EditWordDialog: FC = () => {
           value={editTranslation}
           onChange={(event) => setEditTranslation(event.target.value)}
           onKeyDown={(event) => {
+            if (updateWord.isPending) return;
             if (event.key === 'Enter') {
               handleSave();
             }
