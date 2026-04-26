@@ -5,7 +5,7 @@ import type { AuthParams } from '@/types/auth.types';
 import { Level, List, Status, TaskType } from '@/types/user-words.types';
 import { EventType } from '@/types/event.types';
 import { ActionError, defineAction, type ActionAPIContext } from 'astro:actions';
-import { z } from 'astro:schema';
+import { z } from 'astro/zod';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { getStatistics } from '@/services/statistics.service';
 import { updateWord } from '@/services/word.service';
@@ -48,9 +48,9 @@ const rateLimit = <T, R>(fn: (data: AuthParams<T>) => Promise<R>) => {
 export const server = {
   getUserWords: defineAction({
     input: z.object({
-      level: z.nativeEnum(Level).optional(),
-      list: z.nativeEnum(List).optional(),
-      status: z.nativeEnum(Status).optional(),
+      level: z.enum(Level).optional(),
+      list: z.enum(List).optional(),
+      status: z.enum(Status).optional(),
       search: z.string().trim().optional(),
       cursor: z.string().optional(),
       limit: z.number().min(1).max(100).default(50),
@@ -95,18 +95,18 @@ export const server = {
           z.object({
             type: z.literal(EventType.WordDiscovered),
             userWordId: z.number(),
-            status: z.nativeEnum(Status),
+            status: z.enum(Status),
             durationMs: z.number(),
           }),
           z.object({
             type: z.literal(EventType.LearningMistakeMade),
             userWordId: z.number(),
-            taskType: z.nativeEnum(TaskType),
+            taskType: z.enum(TaskType),
           }),
           z.object({
             type: z.enum([EventType.LearningTaskCompleted, EventType.RetryLearningTaskCompleted]),
             durationMs: z.number(),
-            taskType: z.nativeEnum(TaskType),
+            taskType: z.enum(TaskType),
           }),
           z.object({
             type: z.literal(EventType.ShowcaseTaskCompleted),
@@ -119,7 +119,7 @@ export const server = {
           z.object({
             type: z.literal(EventType.HintViewed),
             userWordId: z.number(),
-            taskType: z.nativeEnum(TaskType),
+            taskType: z.enum(TaskType),
           }),
         ]),
       ),
