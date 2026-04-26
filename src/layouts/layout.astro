@@ -1,7 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import { Toaster } from '@/components/ui/toaster';
-import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components';
+import { Show, UserButton, SignInButton } from '@clerk/astro/components';
 import { ensureUserWordsExists } from '@/repositories/user-word.repository';
 import { BarChart, Book, Lightbulb, Search } from 'lucide-react';
 import '@/styles/global.css';
@@ -91,12 +91,12 @@ await ensureUserWordsExists(userId);
         </div>
 
         <div class="flex items-center md:ml-auto">
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal" />
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             <UserButton />
-          </SignedIn>
+          </Show>
         </div>
       </div>
     </nav>
