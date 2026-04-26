@@ -200,7 +200,7 @@ const toClientTasks = (words: UserWord[]) => {
   ];
 };
 
-const toServerTasks = (words: UserWord[], tasksData: TasksData) => {
+const toServerTasks = (_words: UserWord[], tasksData: TasksData) => {
   const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasksData.translateEnglishSentenceTasks);
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasksData.translateUkrainianSentenceTasks);
 

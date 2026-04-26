@@ -1,7 +1,6 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import { Toaster } from '@/components/ui/toaster';
-import { SignedIn, SignedOut, UserButton, SignInButton } from '@clerk/astro/components';
+import { Show, UserButton, SignInButton } from '@clerk/astro/components';
 import { ensureUserWordsExists } from '@/repositories/user-word.repository';
 import { BarChart, Book, Lightbulb, Search } from 'lucide-react';
 import '@/styles/global.css';
@@ -35,7 +34,6 @@ await ensureUserWordsExists(userId);
         enabled: import.meta.env.DEV,
       });
     </script>
-    <ClientRouter />
     <script>
       const getThemePreference = () => {
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -46,7 +44,6 @@ await ensureUserWordsExists(userId);
         document.documentElement.classList[isDark ? 'add' : 'remove']('dark');
       };
 
-      document.addEventListener('astro:after-swap', applyTheme);
       applyTheme();
     </script>
   </head>
@@ -91,12 +88,12 @@ await ensureUserWordsExists(userId);
         </div>
 
         <div class="flex items-center md:ml-auto">
-          <SignedOut>
+          <Show when="signed-out">
             <SignInButton mode="modal" />
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             <UserButton />
-          </SignedIn>
+          </Show>
         </div>
       </div>
     </nav>

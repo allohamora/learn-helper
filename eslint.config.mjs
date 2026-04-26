@@ -22,12 +22,12 @@ export default defineConfig(
   pluginReact.configs.flat['jsx-runtime'],
   reactHooks.configs.flat.recommended,
   pluginJsxA11y.flatConfigs.recommended,
+  beautifulSort.configs.recommended,
   eslintPluginPrettierRecommended,
   { ignores: ['node_modules', 'dist', '.astro'] },
   {
     files: ['**/*.{ts,tsx,astro}'],
     languageOptions: { globals: { ...globals.browser }, parserOptions: { project: true } },
-    plugins: { 'beautiful-sort': beautifulSort },
     settings: {
       react: {
         version: 'detect',
