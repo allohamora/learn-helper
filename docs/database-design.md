@@ -22,8 +22,8 @@ erDiagram
     grammar_topic {
         id uuid PK
         title text "unique (e.g. Affirmative Present Simple)"
-        description text
-        examples jsonb "string[]"
+        summary text "(for preview card)"
+        description text "(markdown, for showcase task)"
         link text "optional"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
@@ -135,9 +135,11 @@ erDiagram
 
 ### user_grammar_topic_task_type
 
-> TODO: define specific task types for grammar topics
-
 - showcase
+- make_sentence
+- translate_to_english
+- fill_in_the_blank
+- find_mistake
 
 ### learning_status
 
@@ -165,3 +167,51 @@ erDiagram
 - preposition
 - pronoun
 - verb
+
+## Grammar tasks\*
+
+All tasks are BE-generated (LLM). When user starts reading the showcase article, the client requests task generation in the background.
+
+Each session generates 4 tasks per grammar topic. Topics alternate: old | old | new | old | old | new, etc.
+
+### showcase
+
+Read the grammar topic markdown article (description field).
+
+### make_sentence
+
+Arrange shuffled word tiles into a correct sentence.
+
+```
+[ to ] [ doesn't ] [ school ] [ She ] [ go ]
+→ [ She ] [ doesn't ] [ go ] [ to ] [ school ]
+```
+
+### translate_to_english
+
+See a Ukrainian sentence, build the English translation from shuffled word tiles.
+
+```
+"Вона не ходить до школи"
+[ to ] [ doesn't ] [ school ] [ She ] [ go ]
+→ [ She ] [ doesn't ] [ go ] [ to ] [ school ]
+```
+
+### fill_in_the_blank
+
+Pick words from a shuffled word bank to fill one or more blanks. Word bank includes correct words + distractors.
+
+```
+If I ___ you, I ___ do this.
+Word bank (shuffled): [ would ] [ was ] [ will ] [ were ] [ am ]
+→ [ were ] , [ would ]
+```
+
+### find_mistake
+
+Tap the word that contains a grammar mistake.
+
+```
+[ She ] [ don't ] [ go ] [ to ] [ school ]
+→ tap [ don't ] (should be "doesn't")
+```
