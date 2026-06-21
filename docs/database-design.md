@@ -28,7 +28,7 @@ erDiagram
         word_id uuid FK
         words_to_unlock number "default 0"
         encounter_count number "default 0"
-        status text "waiting | learning | learned | known"
+        status varchar(16) "enum: user_word_status"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -36,12 +36,12 @@ erDiagram
     event {
         id uuid PK
         user_id text
+        type varchar(48) "enum: event_type"
         user_word_id uuid FK "optional"
         user_word_ids json "optional"
-        type text
-        status text "optional"
-        task_type text "optional"
         word_id uuid FK "optional"
+        status varchar(16) "optional"
+        user_word_task_type varchar(48) "optional, enum: user_word_task_type"
         field_name text "optional"
         duration_ms number "optional"
         cost_in_nano_dollars number "optional"
@@ -56,3 +56,35 @@ erDiagram
     user_word ||--o{ event : "one-to-many"
     word ||--o{ event : "one-to-many"
 ```
+
+## Enums
+
+### event_type
+
+- user_word_discovered
+- user_word_task_failed
+- user_word_task_showcase_viewed
+- user_word_task_passed
+- user_word_task_retry_passed
+- user_word_task_hint_used
+- user_word_task_generated
+- user_word_moved_to_next_step
+- word_updated
+
+### user_word_task_type
+
+- showcase
+- word_to_definition
+- definition_to_word
+- word_to_translation
+- translation_to_word
+- pronunciation_to_word
+- translate_english_sentence
+- translate_ukrainian_sentence
+
+### user_word_status
+
+- waiting
+- learning
+- learned
+- known
