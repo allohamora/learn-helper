@@ -103,43 +103,43 @@ erDiagram
 
 ### event_type
 
-- user_vocabulary_item_discovered
-- user_vocabulary_item_task_failed
-- user_vocabulary_item_task_showcase_viewed
-- user_vocabulary_item_task_passed
-- user_vocabulary_item_task_retry_passed
-- user_vocabulary_item_task_hint_used
-- user_vocabulary_item_task_generated
-- user_vocabulary_item_moved_to_next_step
-- vocabulary_item_updated
-- user_grammar_topic_discovered
-- user_grammar_topic_task_failed
-- user_grammar_topic_task_showcase_viewed
-- user_grammar_topic_task_passed
-- user_grammar_topic_task_retry_passed
-- user_grammar_topic_task_hint_used
-- user_grammar_topic_task_generated
-- user_grammar_topic_moved_to_next_step
-- grammar_topic_updated
+- user-vocabulary-item-discovered
+- user-vocabulary-item-task-failed
+- user-vocabulary-item-task-showcase-viewed
+- user-vocabulary-item-task-passed
+- user-vocabulary-item-task-retry-passed
+- user-vocabulary-item-task-hint-used
+- user-vocabulary-item-task-generated
+- user-vocabulary-item-moved-to-next-step
+- vocabulary-item-updated
+- user-grammar-topic-discovered
+- user-grammar-topic-task-failed
+- user-grammar-topic-task-showcase-viewed
+- user-grammar-topic-task-passed
+- user-grammar-topic-task-retry-passed
+- user-grammar-topic-task-hint-used
+- user-grammar-topic-task-generated
+- user-grammar-topic-moved-to-next-step
+- grammar-topic-updated
 
 ### user_vocabulary_item_task_type
 
 - showcase
-- vocabulary_item_to_definition
-- definition_to_vocabulary_item
-- vocabulary_item_to_translation
-- translation_to_vocabulary_item
-- pronunciation_to_vocabulary_item
-- translate_english_sentence
-- translate_ukrainian_sentence
+- vocabulary-item-to-definition
+- definition-to-vocabulary-item
+- vocabulary-item-to-translation
+- translation-to-vocabulary-item
+- pronunciation-to-vocabulary-item
+- translate-english-sentence
+- translate-ukrainian-sentence
 
 ### user_grammar_topic_task_type
 
 - showcase
-- make_sentence
-- translate_to_english
-- fill_in_the_blank
-- find_mistake
+- make-sentence
+- translate-to-english
+- fill-in-the-blank
+- find-mistake
 
 ### learning_status
 
@@ -152,18 +152,18 @@ erDiagram
 
 - adjective
 - adverb
-- auxiliary verb
+- auxiliary-verb
 - conjunction
-- definite article
+- definite-article
 - determiner
 - exclamation
-- indefinite article
-- infinitive marker
-- linking verb
-- modal verb
+- indefinite-article
+- infinitive-marker
+- linking-verb
+- modal-verb
 - noun
 - number
-- ordinal number
+- ordinal-number
 - preposition
 - pronoun
 - verb
