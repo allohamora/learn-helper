@@ -99,6 +99,8 @@ erDiagram
     grammar_topic ||--o{ event : "one-to-many"
 ```
 
+> **Note:** Many-to-many arrows imply a junction table (e.g. `vocabulary_list_vocabulary_item`, `grammar_topic_list_grammar_topic`).
+
 ## Enums
 
 ### event_type
