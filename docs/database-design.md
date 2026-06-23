@@ -170,11 +170,34 @@ erDiagram
 - pronoun
 - verb
 
+## Learning queue pattern
+
+Both vocabulary items and grammar topics use the **[new, old, old]** (1:2) queue pattern with `E = 3` encounters per item and `S = 3` spacing (`REVIEW_AFTER_VALUE`).
+
+Each item needs `R = E - 1 = 2` reviews. The 1:2 ratio provides exactly 2 old slots per new item, matching review demand at steady state.
+
+### Comparison: [new, old, old] vs [new, old]
+
+|                       | [new, old, old] (1:2) | [new, old] (1:1)  |
+| --------------------- | --------------------- | ----------------- |
+| **Formulas**          |                       |                   |
+| Bank at end           | `R × S`               | `≈ N / 2`         |
+| Review-only tail      | `S × R(R+1) / 2`      | `(R-1) × N + S`   |
+| Tail %                | `≈ 0%` for large N    | `≈ 33%` always    |
+| **Words (N = 5000)**  |                       |                   |
+| Bank                  | 6                     | ~2500             |
+| Tail                  | 9 slots (0.06%)       | ~5003 slots (33%) |
+| **Grammar (N ≈ 150)** |                       |                   |
+| Bank                  | 6                     | ~75               |
+| Tail                  | 9 slots (2%)          | ~153 slots (33%)  |
+
+With 1:1 half the items remain in the bank when new content runs out, creating a 33% review-only tail. With 1:2 the tail is fixed at 9 slots regardless of content size.
+
 ## Grammar tasks\*
 
 All tasks are BE-generated (LLM). When user starts reading the showcase article, the client requests task generation in the background.
 
-Each session generates 4 tasks per grammar topic. Topics alternate: old | old | new | old | old | new, etc.
+Each session generates 4 tasks per grammar topic. Topics follow the [new, old, old] queue pattern.
 
 ### showcase
 
