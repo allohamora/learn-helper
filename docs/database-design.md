@@ -67,6 +67,30 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
+    file {
+        id uuid PK
+        user_id uuid FK
+        file_name text "(original filename)"
+        file_path text "(relative path on disk)"
+        mime_type varchar(64)
+        size_bytes integer
+        hash varchar(64) "(SHA-256, for caching/integrity)"
+        created_at timestamptz "default NOW"
+        updated_at timestamptz "default NOW"
+    }
+
+    reading {
+        id uuid PK
+        user_id uuid FK
+        file_id uuid FK "unique"
+        title text
+        total_pages integer "set after upload"
+        current_page integer "default 0"
+        duration_ms integer "default 0"
+        created_at timestamptz "default NOW"
+        updated_at timestamptz "default NOW"
+    }
+
     event {
         id uuid PK
         user_id uuid FK
@@ -76,6 +100,7 @@ erDiagram
         vocabulary_item_id uuid FK "optional"
         user_grammar_topic_id uuid FK "optional"
         grammar_topic_id uuid FK "optional"
+        reading_id uuid FK "optional"
         status varchar(16) "optional, enum: learning_status"
         user_vocabulary_item_task_type varchar(48) "optional, enum: user_vocabulary_item_task_type"
         user_grammar_topic_task_type varchar(48) "optional, enum: user_grammar_topic_task_type"
@@ -99,6 +124,10 @@ erDiagram
     user_grammar_topic ||--o{ event : "one-to-many"
     vocabulary_item ||--o{ event : "one-to-many"
     grammar_topic ||--o{ event : "one-to-many"
+    user ||--o{ file : "one-to-many"
+    user ||--o{ reading : "one-to-many"
+    file ||--|| reading : "one-to-one"
+    reading ||--o{ event : "one-to-many"
 ```
 
 > **Note:** Many-to-many arrows imply a junction table (e.g. `vocabulary_list_vocabulary_item`, `grammar_topic_list_grammar_topic`).
@@ -125,6 +154,9 @@ erDiagram
 - user-grammar-topic-task-generated
 - user-grammar-topic-moved-to-next-step
 - grammar-topic-updated
+- reading-uploaded
+- reading-downloaded
+- reading-deleted
 
 ### user_vocabulary_item_task_type
 
@@ -312,3 +344,42 @@ Tap the word that contains a grammar mistake.
 [ She ] [ don't ] [ go ] [ to ] [ school ]
 → tap [ don't ] (should be "doesn't")
 ```
+
+## Readings
+
+Users upload PDF files and read them via an integrated in-app reader. The app tracks the current page as a bookmark so users can resume where they left off.
+
+Each reading belongs to one user. File data is stored on the local filesystem; metadata and progress live in the database.
+
+### Storage
+
+- **File table**: Generic, reusable for future file types. Stores physical file info (`file_path`, `mime_type`, `size_bytes`) and a SHA-256 `hash` for cache invalidation.
+- **Reading table**: Domain entity linking a user to a file with a `title`, `total_pages`, and `current_page` bookmark.
+
+### Upload flow
+
+Client uploads PDF via multipart form → Server validates (mime type, size limit) → computes SHA-256 hash → stores file at `uploads/{user_id}/{file_id}.pdf` → creates `file` + `reading` records (`total_pages` extracted server-side).
+
+### Download / serve flow
+
+Server sets `ETag: {hash}` and `Cache-Control: public, max-age=31536000, immutable`. On file replacement the hash changes, so the browser fetches the new version automatically.
+
+### File replacement
+
+User or admin uploads a new file for an existing reading → Server replaces the file on disk → updates `file.hash`, `file.size_bytes`, `file.updated_at` → updates `reading.total_pages`.
+
+### Reading progress
+
+Client sends a heartbeat every ~1 minute with `current_page` and `+duration_ms` → Server updates `reading.current_page` and increments `reading.duration_ms`.
+
+Page numbering is 1-indexed (matching pdf.js). `current_page = 0` (default) means the user hasn't opened the PDF yet.
+
+Stats displayed on the readings list: `"Title — 42 / 100 — 5 min"`.
+
+### File path pattern
+
+```
+uploads/{user_id}/{file_id}.pdf
+```
+
+> **Nomad note:** The `uploads/` directory must be on a persistent volume to survive allocation restarts.
