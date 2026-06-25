@@ -47,8 +47,9 @@ erDiagram
         id uuid PK
         user_id uuid FK "unique with vocabulary_item_id"
         vocabulary_item_id uuid FK
-        vocabulary_items_to_unlock integer "default 0"
-        encounter_count integer "default 0"
+        queue_bucket integer
+        queue_slot integer
+        encounter_count integer
         status varchar(16) "enum: learning_status"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
@@ -58,8 +59,9 @@ erDiagram
         id uuid PK
         user_id uuid FK "unique with grammar_topic_id"
         grammar_topic_id uuid FK
-        topics_to_unlock integer "default 0"
-        encounter_count integer "default 0"
+        queue_bucket integer
+        queue_slot integer
+        encounter_count integer
         status varchar(16) "enum: learning_status"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
@@ -192,6 +194,76 @@ Each item needs `R = E - 1 = 2` reviews. The 1:2 ratio provides exactly 2 old sl
 | Tail                  | 9 slots (2%)          | ~153 slots (33%)  |
 
 With 1:1 half the items remain in the bank when new content runs out, creating a 33% review-only tail. With 1:2 the tail is fixed at 9 slots regardless of content size.
+
+### Queue implementation (queue_bucket / queue_slot)
+
+The queue is physically ordered by `(queue_bucket, queue_slot)` pairs. Each queue_bucket has 3 queue_slots following the **[new, old, old]** pattern, where **new** = `encounter_count = 0` and **old** = `encounter_count > 0`:
+
+| queue_bucket | queue_slot | Type |
+| ------------ | ---------- | ---- |
+| 1            | 1          | new  |
+| 1            | 2          | old  |
+| 1            | 3          | old  |
+| 2            | 1          | new  |
+| 2            | 2          | old  |
+| 2            | 3          | old  |
+
+#### Placement rules
+
+**New item:** find the current max new position (`encounter_count = 0`, `ORDER BY queue_bucket DESC, queue_slot DESC`) → place at `(max_queue_bucket + 1, 1)`.
+
+**Old item:** find the current max old position `(queue_bucket, queue_slot)` (`encounter_count > 0`, `ORDER BY queue_bucket DESC, queue_slot DESC`):
+
+- If it fits in the current bucket (`queue_slot < 3`): place at `(queue_bucket, queue_slot + 1)`
+- Otherwise: place at `(queue_bucket + 1, 2)` (slot resets: `3 - 2 + 1 = 2`)
+
+#### Initial old offset
+
+- **Vocabulary:** first old item is inserted at **bucket 13**, giving two full sessions (12 new items) before reviews begin (new#1, new#2, ..., new#12, new#13, old#1, old#2, new#14, old#3, old#4).
+- **Grammar:** first old item is inserted at **bucket 2**, giving two new topics before reviews begin (new#1, new#2, old#1).
+
+#### Auto-balancing
+
+The queue_bucket/queue_slot scheme is self-balancing after items are moved to the next step (popped from the queue) from arbitrary positions. `ORDER BY queue_bucket, queue_slot` always returns items in the correct [new, old, old] sequence regardless of gaps.
+
+#### Indexes
+
+```sql
+-- Read queue (fetch next items)
+CREATE INDEX queue_items_next_idx
+  ON queue_items (user_id, queue_bucket, queue_slot);
+
+-- Find max position for inserting old/new items
+CREATE INDEX queue_items_encounter_bucket_idx
+  ON queue_items (user_id, encounter_count, queue_bucket DESC, queue_slot DESC);
+```
+
+#### Queries
+
+```sql
+-- Fetch next session (6 items)
+SELECT *
+FROM queue_items
+WHERE user_id = ?
+ORDER BY queue_bucket, queue_slot
+LIMIT 6;
+
+-- Find max old position (for placing next review)
+SELECT *
+FROM queue_items
+WHERE user_id = ?
+  AND encounter_count > 0
+ORDER BY queue_bucket DESC, queue_slot DESC
+LIMIT 1;
+
+-- Find max new position (for placing next new item)
+SELECT *
+FROM queue_items
+WHERE user_id = ?
+  AND encounter_count = 0
+ORDER BY queue_bucket DESC, queue_slot DESC
+LIMIT 1;
+```
 
 ## Grammar tasks\*
 
