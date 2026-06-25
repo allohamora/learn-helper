@@ -154,6 +154,7 @@ erDiagram
 - user-grammar-topic-task-generated
 - user-grammar-topic-moved-to-next-step
 - grammar-topic-updated
+- reading-time-spent "fires every 5 minutes of active reading"
 - reading-uploaded
 - reading-downloaded
 - reading-deleted
