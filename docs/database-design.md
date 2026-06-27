@@ -1,5 +1,7 @@
 # Database Design
 
+> **Abstract design.** This document captures the major structural decisions — the learning algorithm, queue mechanics, session logic — not a precise implementation spec. Minor details (missing `created_at` on some tables, `id` presence, exact index definitions) may be imprecise or incomplete and are expected to change during implementation. Don't get hung up on them here.
+
 ```mermaid
 erDiagram
     user {
@@ -235,6 +237,12 @@ erDiagram
 ## List-based learning
 
 Both vocabulary and grammar are organised around **lists**. A user enrolls in a list; the list drives what they discover and review. Learning state (`encounter_count`, `status`) is stored globally per user per item — if an item is learned via one list it is learned everywhere.
+
+### Learning philosophy: always-on, no time gates
+
+The queue is designed for **infinite, on-demand practice** — the user opens the app whenever they want and there is always something to do. This is a deliberate rejection of the Anki/time-gated model where items have a `next_review_at` timestamp and the user hits a wall ("nothing due today") after clearing the deck.
+
+A `next_review_at` approach is explicitly **not used** here. Locking items behind a future timestamp would force the user to either stop learning or switch to new words only, which defeats the purpose of review. Instead, reviewed items go to the back of the FIFO queue (`enqueued_at` reset to `NOW()`), so the queue is always full and always playable.
 
 ### User flow
 
