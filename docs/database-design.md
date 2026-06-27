@@ -44,33 +44,26 @@ erDiagram
     }
 
     vocabulary_list_vocabulary_item {
-        id uuid PK
-        vocabulary_list_id uuid FK
-        vocabulary_item_id uuid FK
+        vocabulary_list_id uuid FK PK
+        vocabulary_item_id uuid FK PK
         created_at timestamptz "default NOW"
-        updated_at timestamptz "default NOW"
     }
 
     grammar_topic_list_grammar_topic {
-        id uuid PK
-        grammar_topic_list_id uuid FK
-        grammar_topic_id uuid FK
+        grammar_topic_list_id uuid FK PK
+        grammar_topic_id uuid FK PK
         created_at timestamptz "default NOW"
-        updated_at timestamptz "default NOW"
     }
 
     user_vocabulary_list {
-        id uuid PK
-        user_id uuid FK
-        vocabulary_list_id uuid FK "unique with user_id"
+        user_id uuid FK PK
+        vocabulary_list_id uuid FK PK
         created_at timestamptz "default NOW"
-        updated_at timestamptz "default NOW"
     }
 
     user_grammar_topic_list {
-        id uuid PK
-        user_id uuid FK
-        grammar_topic_list_id uuid FK "unique with user_id"
+        user_id uuid FK PK
+        grammar_topic_list_id uuid FK PK
         session_counter integer "default 0"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
@@ -346,14 +339,6 @@ Same query shape for grammar (swap junction table and `user_grammar_topic`).
 ### Indexes
 
 ```sql
--- Junction tables: list membership lookup + uniqueness enforcement
-CREATE UNIQUE INDEX ON vocabulary_list_vocabulary_item (vocabulary_list_id, vocabulary_item_id);
-CREATE UNIQUE INDEX ON grammar_topic_list_grammar_topic (grammar_topic_list_id, grammar_topic_id);
-
--- User enrollment lookup
-CREATE UNIQUE INDEX ON user_vocabulary_list (user_id, vocabulary_list_id);
-CREATE UNIQUE INDEX ON user_grammar_topic_list (user_id, grammar_topic_list_id);
-
 -- Reading: one file per reading
 CREATE UNIQUE INDEX ON reading (file_id);
 
