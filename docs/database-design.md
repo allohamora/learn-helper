@@ -86,7 +86,7 @@ erDiagram
         id uuid PK
         user_id uuid FK "unique with grammar_topic_id"
         grammar_topic_id uuid FK
-        encounter_count integer
+        encounter_count integer "0=new, 1+=review"
         status varchar(16) "enum: learning_status"
         enqueued_at timestamptz "default NOW"
         created_at timestamptz "default NOW"
@@ -271,17 +271,6 @@ Grammar has one topic per session. The app picks whether the session is **new** 
 | 2                     | review       |
 
 `session_counter` increments after each completed session.
-
-**Topic selection (sequential, with fallback):**
-
-```
-primary = fetch 1 topic matching session type (ORDER BY enqueued_at)
-if primary is empty:
-    fallback = fetch 1 topic of the other type
-    if fallback is empty: list is done → return null
-    return fallback
-return primary
-```
 
 ## Grammar tasks\*
 
