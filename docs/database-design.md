@@ -260,35 +260,6 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
    - A **Learning** button — start a review session of previously seen items.
 4. Tapping a button starts a session scoped to that list.
 
-### Vocabulary sessions
-
-Sessions are list-scoped by joining through the junction table. Two separate queries, one for each button:
-
-```sql
--- Discovery: next new words in this list
-SELECT uvi.*
-FROM vocabulary_list_vocabulary_item vlvi
-JOIN user_vocabulary_item uvi
-  ON uvi.vocabulary_item_id = vlvi.vocabulary_item_id AND uvi.user_id = :user_id
-WHERE vlvi.vocabulary_list_id = :list_id
-  AND uvi.encounter_count = 0
-ORDER BY uvi.enqueued_at
-LIMIT :n;
-
--- Learning: next review words in this list
-SELECT uvi.*
-FROM vocabulary_list_vocabulary_item vlvi
-JOIN user_vocabulary_item uvi
-  ON uvi.vocabulary_item_id = vlvi.vocabulary_item_id AND uvi.user_id = :user_id
-WHERE vlvi.vocabulary_list_id = :list_id
-  AND uvi.encounter_count > 0
-  AND uvi.status != 'learned'
-ORDER BY uvi.enqueued_at
-LIMIT :n;
-```
-
-After each encounter `enqueued_at` is reset to `NOW()` so the item moves to the back of the review queue.
-
 ### Grammar sessions
 
 Grammar has one topic per session. The app picks whether the session is **new** or **review** by following the **[new, old, old]** rhythm tracked in `user_grammar_topic_list.session_counter`:
@@ -310,69 +281,6 @@ if primary is empty:
     if fallback is empty: list is done → return null
     return fallback
 return primary
-```
-
-```sql
--- New topic
-SELECT ugt.*
-FROM grammar_topic_list_grammar_topic glt
-JOIN user_grammar_topic ugt
-  ON ugt.grammar_topic_id = glt.grammar_topic_id AND ugt.user_id = :user_id
-WHERE glt.grammar_topic_list_id = :list_id
-  AND ugt.encounter_count = 0
-ORDER BY ugt.enqueued_at
-LIMIT 1;
-
--- Review topic
-SELECT ugt.*
-FROM grammar_topic_list_grammar_topic glt
-JOIN user_grammar_topic ugt
-  ON ugt.grammar_topic_id = glt.grammar_topic_id AND ugt.user_id = :user_id
-WHERE glt.grammar_topic_list_id = :list_id
-  AND ugt.encounter_count > 0
-  AND ugt.status != 'learned'
-ORDER BY ugt.enqueued_at
-LIMIT 1;
-```
-
-### Progress bar
-
-```sql
-SELECT
-  COUNT(*) FILTER (WHERE uvi.status = 'learned') AS learned,
-  COUNT(*) AS total
-FROM vocabulary_list_vocabulary_item vlvi
-LEFT JOIN user_vocabulary_item uvi
-  ON uvi.vocabulary_item_id = vlvi.vocabulary_item_id AND uvi.user_id = :user_id
-WHERE vlvi.vocabulary_list_id = :list_id;
-```
-
-Same query shape for grammar (swap junction table and `user_grammar_topic`).
-
-### Indexes
-
-```sql
--- Reading: one file per reading
-CREATE UNIQUE INDEX ON reading (file_id);
-
--- Session queries: discovery (new items)
-CREATE INDEX ON user_vocabulary_item (user_id, enqueued_at, vocabulary_item_id)
-  WHERE encounter_count = 0;
-
--- Session queries: review (old items)
-CREATE INDEX ON user_vocabulary_item (user_id, enqueued_at, vocabulary_item_id)
-  WHERE encounter_count > 0 AND status != 'learned';
-
--- Same for grammar
-CREATE INDEX ON user_grammar_topic (user_id, enqueued_at, grammar_topic_id)
-  WHERE encounter_count = 0;
-
-CREATE INDEX ON user_grammar_topic (user_id, enqueued_at, grammar_topic_id)
-  WHERE encounter_count > 0 AND status != 'learned';
-
--- Event table: activity feed and analytics
-CREATE INDEX ON event (user_id, created_at DESC);
-CREATE INDEX ON event (user_id, type, created_at DESC);
 ```
 
 ## Grammar tasks\*
