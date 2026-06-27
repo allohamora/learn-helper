@@ -234,6 +234,12 @@ erDiagram
 - pronoun
 - verb
 
+## Event table notes
+
+### `user_vocabulary_item_ids`
+
+Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
+
 ## List-based learning
 
 Both vocabulary and grammar are organised around **lists**. A user enrolls in a list; the list drives what they discover and review. Learning state (`encounter_count`, `status`) is stored globally per user per item — if an item is learned via one list it is learned everywhere.
