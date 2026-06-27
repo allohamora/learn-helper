@@ -1,4 +1,4 @@
-# Business Requirements
+# Requirements
 
 ## Purpose
 
@@ -12,9 +12,9 @@ A single user type: a Ukrainian speaker learning English. No admin roles, no mul
 
 ### Always-on, no time gates
 
-The app is designed for on-demand practice. A user opens it whenever they want and always has something to do. This is a deliberate rejection of the Anki model where items are locked behind a future `next_review_at` timestamp and the user hits a wall after clearing the deck.
+The app is designed for on-demand practice. A user opens it whenever they want and always has something to do. This is a deliberate rejection of the Anki model where items are locked behind a future review date and the user hits a wall after clearing the deck.
 
-Instead, reviewed items go to the back of the FIFO queue. The queue is always full and always playable.
+Instead, reviewed items go to the back of the queue. The queue is always full and always playable.
 
 ### Global learning state
 
@@ -38,8 +38,8 @@ A user can enroll in multiple lists. The same word can appear in multiple lists.
 
 Each list exposes two session buttons:
 
-- **Discovery** — introduces new, unseen words (`encounter_count = 0`). The user sees each word for the first time.
-- **Learning** — reviews previously seen words (`encounter_count > 0`, `status != learned`). The user practices words they are actively working through.
+- **Discovery** — introduces words the user has never seen before.
+- **Learning** — reviews words the user has already encountered but not yet mastered.
 
 Sessions are list-scoped: only words belonging to that list appear.
 
@@ -47,18 +47,18 @@ Sessions are list-scoped: only words belonging to that list appear.
 
 Each word per user moves through these statuses:
 
-- `waiting` — enrolled but not yet discovered
-- `learning` — discovered, actively in review rotation
-- `learned` — completed the learning cycle; no longer appears in Learning sessions
-- `known` — user marked as already known before discovery
+- waiting — enrolled but not yet discovered
+- learning — discovered, actively in review rotation
+- learned — completed the learning cycle; no longer appears in Learning sessions
+- known — user marked as already known before discovery
 
 ### Queue mechanics
 
-Words are ordered by `enqueued_at`. After each encounter, `enqueued_at` resets to `NOW()`, pushing the word to the back of the queue. The queue is infinite and always non-empty as long as there are unlearned words in the list.
+Words are served in the order they were last reviewed — the longest-untouched word comes first. After each encounter, the word moves to the back of the queue. The queue is always non-empty as long as there are unlearned words in the list.
 
 ### Progress bar
 
-Each list shows a progress bar: `learned / total` words in that list for the current user.
+Each list shows a progress bar: learned vs. total words in that list for the current user.
 
 ### Task types
 
@@ -83,19 +83,9 @@ Grammar topics are also organised into lists (e.g. "A1 Grammar", "B2 Grammar"). 
 
 ### Session rhythm
 
-Grammar sessions follow a **[new, old, old]** rhythm tracked via a `session_counter` on the user-list record:
+Grammar sessions follow a repeating **new → review → review** pattern. New content is introduced regularly but not every session, giving review sessions space to reinforce recent topics.
 
-| `session_counter % 3` | Session type |
-| --------------------- | ------------ |
-| 0                     | new topic    |
-| 1                     | review       |
-| 2                     | review       |
-
-This ensures new content is introduced regularly but not every session, giving review sessions space to reinforce recent topics.
-
-### Topic selection with fallback
-
-The app picks the next topic based on the current session type, ordered by `enqueued_at`. If no topic of the preferred type is available (e.g. all new topics are exhausted), it falls back to the other type. If neither has topics, the list is complete.
+If no topic of the preferred type is available (e.g. all new topics are exhausted), the system falls back to the other type. If neither has topics, the list is complete.
 
 ### Task types
 
@@ -119,19 +109,18 @@ Users upload PDF files and read them via an in-app reader. Reading builds passiv
 
 - Each PDF belongs to one user.
 - The app tracks the current page as a bookmark so users can resume where they left off.
-- Reading time is tracked in milliseconds and displayed on the readings list.
-- Stats shown: `"Title — 42 / 100 pages — 5 min"`.
+- Reading time is tracked and displayed on the readings list.
+- The list shows each book's title, page progress, and total reading time.
 
 ### Upload and storage
 
-- Client uploads a PDF via multipart form.
-- Server validates mime type and size, computes a SHA-256 hash, stores the file at `uploads/{user_id}/{file_id}.pdf`.
-- File metadata and reading progress are stored in the database; the file itself lives on disk.
-- The hash is used for HTTP caching (`ETag`). Replacing a file updates the hash, invalidating the client cache automatically.
+- Users upload a PDF through the app.
+- The server validates the file type and size before accepting it.
+- File metadata and reading progress are stored in the database; the file itself lives on the server.
 
 ### Progress tracking
 
-The client sends a heartbeat roughly every minute with the current page and elapsed time. The server updates the bookmark and increments total reading duration.
+The app periodically saves the user's current page and accumulated reading time so progress is preserved across sessions.
 
 ---
 
