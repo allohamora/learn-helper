@@ -209,10 +209,10 @@ erDiagram
 
 ### learning_status
 
-- waiting
-- learning
-- learned
-- known
+- waiting — enrolled but not yet discovered; eligible for Discovery sessions only
+- learning — discovered, actively in review rotation; eligible for Learning sessions only
+- learned — completed the learning cycle; no longer appears in any session
+- known — user marked as already known before discovery; skips Discovery entirely
 
 ### part_of_speech
 
