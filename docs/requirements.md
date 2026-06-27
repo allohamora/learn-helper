@@ -52,6 +52,14 @@ Each word per user moves through these statuses:
 - learned — completed the learning cycle; no longer appears in Learning sessions
 - known — user marked as already known before discovery
 
+### Status transitions
+
+Transitions between statuses are **user-driven**: the app presents the word and the user decides whether they recalled it correctly. The app never advances a word automatically.
+
+- **waiting → learning**: triggered when the user encounters the word for the first time in a Discovery session.
+- **learning → learned**: triggered after the user has successfully confirmed the word **3 times** across Learning sessions. Once the threshold is reached, the next confirmation moves the word to `learned`.
+- **waiting → known**: triggered when the user explicitly marks a word as already known during a Discovery session, skipping the learning cycle entirely.
+
 ### Queue mechanics
 
 Words are served in the order they were last reviewed — the longest-untouched word comes first. After each encounter, the word moves to the back of the queue. The queue is always non-empty as long as there are unlearned words in the list.
