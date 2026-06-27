@@ -234,6 +234,16 @@ erDiagram
 - pronoun
 - verb
 
+## Field notes
+
+### `user_grammar_topic.encounter_count`
+
+Tracks the total number of times the user has reviewed this grammar topic. `0` means the topic has never been seen (new); `1+` means it has been reviewed at least once. Do **not** drop this field — `status` tells you the lifecycle stage, but `encounter_count` is the only record of how many times the topic has actually been reviewed.
+
+### `user_vocabulary_item.encounter_count`
+
+Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
+
 ## Event table notes
 
 ### `user_vocabulary_item_ids`
