@@ -134,7 +134,6 @@ erDiagram
         input_tokens integer "optional"
         output_tokens integer "optional"
         created_at timestamptz "default NOW"
-        updated_at timestamptz "default NOW"
     }
 
     user ||--o{ user_vocabulary_list : "one-to-many"
