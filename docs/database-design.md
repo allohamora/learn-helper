@@ -43,14 +43,46 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
+    vocabulary_list_vocabulary_item {
+        id uuid PK
+        vocabulary_list_id uuid FK
+        vocabulary_item_id uuid FK
+        created_at timestamptz "default NOW"
+        updated_at timestamptz "default NOW"
+    }
+
+    grammar_topic_list_grammar_topic {
+        id uuid PK
+        grammar_topic_list_id uuid FK
+        grammar_topic_id uuid FK
+        created_at timestamptz "default NOW"
+        updated_at timestamptz "default NOW"
+    }
+
+    user_vocabulary_list {
+        id uuid PK
+        user_id uuid FK
+        vocabulary_list_id uuid FK "unique with user_id"
+        created_at timestamptz "default NOW"
+        updated_at timestamptz "default NOW"
+    }
+
+    user_grammar_topic_list {
+        id uuid PK
+        user_id uuid FK
+        grammar_topic_list_id uuid FK "unique with user_id"
+        session_counter integer "default 0"
+        created_at timestamptz "default NOW"
+        updated_at timestamptz "default NOW"
+    }
+
     user_vocabulary_item {
         id uuid PK
         user_id uuid FK "unique with vocabulary_item_id"
         vocabulary_item_id uuid FK
-        queue_bucket integer
-        queue_slot integer
         encounter_count integer
         status varchar(16) "enum: learning_status"
+        enqueued_at timestamptz "default NOW"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -59,10 +91,9 @@ erDiagram
         id uuid PK
         user_id uuid FK "unique with grammar_topic_id"
         grammar_topic_id uuid FK
-        queue_bucket integer
-        queue_slot integer
         encounter_count integer
         status varchar(16) "enum: learning_status"
+        enqueued_at timestamptz "default NOW"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -113,11 +144,17 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
+    user ||--o{ user_vocabulary_list : "one-to-many"
+    vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
+    user ||--o{ user_grammar_topic_list : "one-to-many"
+    grammar_topic_list ||--o{ user_grammar_topic_list : "one-to-many"
     user ||--o{ user_vocabulary_item : "one-to-many"
     user ||--o{ user_grammar_topic : "one-to-many"
     user ||--o{ event : "one-to-many"
-    vocabulary_list }o--o{ vocabulary_item : "many-to-many"
-    grammar_topic_list }o--o{ grammar_topic : "many-to-many"
+    vocabulary_list ||--o{ vocabulary_list_vocabulary_item : "one-to-many"
+    vocabulary_item ||--o{ vocabulary_list_vocabulary_item : "one-to-many"
+    grammar_topic_list ||--o{ grammar_topic_list_grammar_topic : "one-to-many"
+    grammar_topic ||--o{ grammar_topic_list_grammar_topic : "one-to-many"
     vocabulary_item ||--o{ user_vocabulary_item : "one-to-many"
     grammar_topic ||--o{ user_grammar_topic : "one-to-many"
     user_vocabulary_item ||--o{ event : "one-to-many"
@@ -129,8 +166,6 @@ erDiagram
     file ||--|| reading : "one-to-one"
     reading ||--o{ event : "one-to-many"
 ```
-
-> **Note:** Many-to-many arrows imply a junction table (e.g. `vocabulary_list_vocabulary_item`, `grammar_topic_list_grammar_topic`).
 
 ## Enums
 
@@ -205,97 +240,134 @@ erDiagram
 - pronoun
 - verb
 
-## Learning queue pattern
+## List-based learning
 
-Both vocabulary items and grammar topics use the **[new, old, old]** (1:2) queue pattern with `E = 3` encounters per item and `S = 3` spacing (`REVIEW_AFTER_VALUE`).
+Both vocabulary and grammar are organised around **lists**. A user enrolls in a list; the list drives what they discover and review. Learning state (`encounter_count`, `status`) is stored globally per user per item — if an item is learned via one list it is learned everywhere.
 
-Each item needs `R = E - 1 = 2` reviews. The 1:2 ratio provides exactly 2 old slots per new item, matching review demand at steady state.
+### User flow
 
-### Comparison: [new, old, old] vs [new, old]
+1. User opens Vocabulary (or Grammar).
+2. They see all available lists with an **Add** button.
+3. After adding a list they see it in their list with:
+   - A **progress bar** — `learned / total` items in that list.
+   - A **Discovery** button — start a session of new, unseen items.
+   - A **Learning** button — start a review session of previously seen items.
+4. Tapping a button starts a session scoped to that list.
 
-|                       | [new, old, old] (1:2) | [new, old] (1:1)  |
-| --------------------- | --------------------- | ----------------- |
-| **Formulas**          |                       |                   |
-| Bank at end           | `R × S`               | `≈ N / 2`         |
-| Review-only tail      | `S × R(R+1) / 2`      | `(R-1) × N + S`   |
-| Tail %                | `≈ 0%` for large N    | `≈ 33%` always    |
-| **Words (N = 5000)**  |                       |                   |
-| Bank                  | 6                     | ~2500             |
-| Tail                  | 9 slots (0.06%)       | ~5003 slots (33%) |
-| **Grammar (N ≈ 150)** |                       |                   |
-| Bank                  | 6                     | ~75               |
-| Tail                  | 9 slots (2%)          | ~153 slots (33%)  |
+### Vocabulary sessions
 
-With 1:1 half the items remain in the bank when new content runs out, creating a 33% review-only tail. With 1:2 the tail is fixed at 9 slots regardless of content size.
-
-### Queue implementation (queue_bucket / queue_slot)
-
-The queue is physically ordered by `(queue_bucket, queue_slot)` pairs. Each queue_bucket has 3 queue_slots following the **[new, old, old]** pattern, where **new** = `encounter_count = 0` and **old** = `encounter_count > 0`:
-
-| queue_bucket | queue_slot | Type |
-| ------------ | ---------- | ---- |
-| 1            | 1          | new  |
-| 1            | 2          | old  |
-| 1            | 3          | old  |
-| 2            | 1          | new  |
-| 2            | 2          | old  |
-| 2            | 3          | old  |
-
-#### Placement rules
-
-**New item:** find the current max new position (`encounter_count = 0`, `ORDER BY queue_bucket DESC, queue_slot DESC`) → place at `(max_queue_bucket + 1, 1)`.
-
-**Old item:** find the current max old position `(queue_bucket, queue_slot)` (`encounter_count > 0`, `ORDER BY queue_bucket DESC, queue_slot DESC`):
-
-- If it fits in the current bucket (`queue_slot < 3`): place at `(queue_bucket, queue_slot + 1)`
-- Otherwise: place at `(queue_bucket + 1, 2)` (slot resets: `3 - 2 + 1 = 2`)
-
-#### Initial old offset
-
-- **Vocabulary:** first old item is inserted at **bucket 13**, giving two full sessions (12 new items) before reviews begin (new#1, new#2, ..., new#12, new#13, old#1, old#2, new#14, old#3, old#4).
-- **Grammar:** first old item is inserted at **bucket 2**, giving two new topics before reviews begin (new#1, new#2, old#1).
-
-#### Auto-balancing
-
-The queue_bucket/queue_slot scheme is self-balancing after items are moved to the next step (popped from the queue) from arbitrary positions. `ORDER BY queue_bucket, queue_slot` always returns items in the correct [new, old, old] sequence regardless of gaps.
-
-#### Indexes
+Sessions are list-scoped by joining through the junction table. Two separate queries, one for each button:
 
 ```sql
--- Read queue (fetch next items)
-CREATE INDEX queue_items_next_idx
-  ON queue_items (user_id, queue_bucket, queue_slot);
+-- Discovery: next new words in this list
+SELECT uvi.*
+FROM vocabulary_list_vocabulary_item vlvi
+JOIN user_vocabulary_item uvi
+  ON uvi.vocabulary_item_id = vlvi.vocabulary_item_id AND uvi.user_id = :user_id
+WHERE vlvi.vocabulary_list_id = :list_id
+  AND uvi.encounter_count = 0
+ORDER BY uvi.enqueued_at
+LIMIT :n;
 
--- Find max position for inserting old/new items
-CREATE INDEX queue_items_encounter_bucket_idx
-  ON queue_items (user_id, encounter_count, queue_bucket DESC, queue_slot DESC);
+-- Learning: next review words in this list
+SELECT uvi.*
+FROM vocabulary_list_vocabulary_item vlvi
+JOIN user_vocabulary_item uvi
+  ON uvi.vocabulary_item_id = vlvi.vocabulary_item_id AND uvi.user_id = :user_id
+WHERE vlvi.vocabulary_list_id = :list_id
+  AND uvi.encounter_count > 0
+  AND uvi.status != 'learned'
+ORDER BY uvi.enqueued_at
+LIMIT :n;
 ```
 
-#### Queries
+After each encounter `enqueued_at` is reset to `NOW()` so the item moves to the back of the review queue.
+
+### Grammar sessions
+
+Grammar has one topic per session. The app picks whether the session is **new** or **review** by following the **[new, old, old]** rhythm tracked in `user_grammar_topic_list.session_counter`:
+
+| `session_counter % 3` | Session type |
+| --------------------- | ------------ |
+| 0                     | new topic    |
+| 1                     | review       |
+| 2                     | review       |
+
+`session_counter` increments after each completed session.
+
+**Topic selection (sequential, with fallback):**
+
+```
+primary = fetch 1 topic matching session type (ORDER BY enqueued_at)
+if primary is empty:
+    fallback = fetch 1 topic of the other type
+    if fallback is empty: list is done → return null
+    return fallback
+return primary
+```
 
 ```sql
--- Fetch next session (6 items)
-SELECT *
-FROM queue_items
-WHERE user_id = ?
-ORDER BY queue_bucket, queue_slot
-LIMIT 6;
-
--- Find max old position (for placing next review)
-SELECT *
-FROM queue_items
-WHERE user_id = ?
-  AND encounter_count > 0
-ORDER BY queue_bucket DESC, queue_slot DESC
+-- New topic
+SELECT ugt.*
+FROM grammar_topic_list_grammar_topic glt
+JOIN user_grammar_topic ugt
+  ON ugt.grammar_topic_id = glt.grammar_topic_id AND ugt.user_id = :user_id
+WHERE glt.grammar_topic_list_id = :list_id
+  AND ugt.encounter_count = 0
+ORDER BY ugt.enqueued_at
 LIMIT 1;
 
--- Find max new position (for placing next new item)
-SELECT *
-FROM queue_items
-WHERE user_id = ?
-  AND encounter_count = 0
-ORDER BY queue_bucket DESC, queue_slot DESC
+-- Review topic
+SELECT ugt.*
+FROM grammar_topic_list_grammar_topic glt
+JOIN user_grammar_topic ugt
+  ON ugt.grammar_topic_id = glt.grammar_topic_id AND ugt.user_id = :user_id
+WHERE glt.grammar_topic_list_id = :list_id
+  AND ugt.encounter_count > 0
+  AND ugt.status != 'learned'
+ORDER BY ugt.enqueued_at
 LIMIT 1;
+```
+
+### Progress bar
+
+```sql
+SELECT
+  COUNT(*) FILTER (WHERE uvi.status = 'learned') AS learned,
+  COUNT(*) AS total
+FROM vocabulary_list_vocabulary_item vlvi
+LEFT JOIN user_vocabulary_item uvi
+  ON uvi.vocabulary_item_id = vlvi.vocabulary_item_id AND uvi.user_id = :user_id
+WHERE vlvi.vocabulary_list_id = :list_id;
+```
+
+Same query shape for grammar (swap junction table and `user_grammar_topic`).
+
+### Indexes
+
+```sql
+-- Junction tables: list membership lookup
+CREATE INDEX ON vocabulary_list_vocabulary_item (vocabulary_list_id, vocabulary_item_id);
+CREATE INDEX ON grammar_topic_list_grammar_topic (grammar_topic_list_id, grammar_topic_id);
+
+-- User enrollment lookup
+CREATE UNIQUE INDEX ON user_vocabulary_list (user_id, vocabulary_list_id);
+CREATE UNIQUE INDEX ON user_grammar_topic_list (user_id, grammar_topic_list_id);
+
+-- Session queries: discovery (new items)
+CREATE INDEX ON user_vocabulary_item (user_id, enqueued_at)
+  WHERE encounter_count = 0;
+
+-- Session queries: review (old items)
+CREATE INDEX ON user_vocabulary_item (user_id, enqueued_at)
+  WHERE encounter_count > 0 AND status != 'learned';
+
+-- Same for grammar
+CREATE INDEX ON user_grammar_topic (user_id, enqueued_at)
+  WHERE encounter_count = 0;
+
+CREATE INDEX ON user_grammar_topic (user_id, enqueued_at)
+  WHERE encounter_count > 0 AND status != 'learned';
 ```
 
 ## Grammar tasks\*
