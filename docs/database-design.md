@@ -358,19 +358,23 @@ CREATE UNIQUE INDEX ON user_grammar_topic_list (user_id, grammar_topic_list_id);
 CREATE UNIQUE INDEX ON reading (file_id);
 
 -- Session queries: discovery (new items)
-CREATE INDEX ON user_vocabulary_item (user_id, enqueued_at)
+CREATE INDEX ON user_vocabulary_item (user_id, vocabulary_item_id, enqueued_at)
   WHERE encounter_count = 0;
 
 -- Session queries: review (old items)
-CREATE INDEX ON user_vocabulary_item (user_id, enqueued_at)
+CREATE INDEX ON user_vocabulary_item (user_id, vocabulary_item_id, enqueued_at)
   WHERE encounter_count > 0 AND status != 'learned';
 
 -- Same for grammar
-CREATE INDEX ON user_grammar_topic (user_id, enqueued_at)
+CREATE INDEX ON user_grammar_topic (user_id, grammar_topic_id, enqueued_at)
   WHERE encounter_count = 0;
 
-CREATE INDEX ON user_grammar_topic (user_id, enqueued_at)
+CREATE INDEX ON user_grammar_topic (user_id, grammar_topic_id, enqueued_at)
   WHERE encounter_count > 0 AND status != 'learned';
+
+-- Event table: activity feed and analytics
+CREATE INDEX ON event (user_id, created_at DESC);
+CREATE INDEX ON event (user_id, type, created_at DESC);
 ```
 
 ## Grammar tasks\*
