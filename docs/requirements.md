@@ -1,5 +1,7 @@
 # Requirements
 
+This document describes the target requirements for the next version of Learn Helper. It is not a description of the current implementation.
+
 ## Purpose
 
 Learn Helper is an English learning application for Ukrainian speakers. It supports three learning domains: **vocabulary**, **grammar**, and **reading**. All three are designed to complement each other — vocabulary and grammar build active language knowledge, reading puts that knowledge into passive context.
@@ -23,6 +25,10 @@ A vocabulary item or grammar topic that a user has encountered is tracked global
 ### List-scoped sessions
 
 Despite global state, sessions are scoped to a specific list. A user practices words from "Oxford 5000 A1" separately from "Phrasal Verbs". This gives learners focus and a sense of structured progress per list, while the underlying learning state remains shared.
+
+### New and review items
+
+`new` and `review` describe encounter history, not lifecycle status. A new item has `encounter_count = 0`. A review item has `encounter_count > 0`. For vocabulary and grammar sessions, these labels are used inside the eligible lifecycle statuses rather than replacing them.
 
 ---
 
@@ -54,23 +60,27 @@ Each word per user moves through these statuses:
 
 ### Status transitions
 
-Transitions between statuses are **user-driven**: the app presents the word and the user decides whether they recalled it correctly. The app never advances a word automatically.
+Transitions between statuses are **user-driven**: after each word encounter, the app asks the user to decide whether to keep practicing the word or move it forward in the learning cycle. The app never advances a word automatically.
 
 - **waiting → learning**: triggered when the user encounters the word for the first time in a Discovery session.
-- **learning → learned**: triggered after the user has successfully confirmed the word **3 times** across Learning sessions. Once the threshold is reached, the next confirmation moves the word to `learned`.
+- **learning → learned**: triggered when the user has chosen to move the word forward **3 times** across Learning sessions. Until then, the word remains in `learning` and can appear again in future Learning sessions.
 - **waiting → known**: triggered when the user explicitly marks a word as already known during a Discovery session, skipping the learning cycle entirely.
+
+After a Learning session, each practiced word gives the user a choice to move it forward in the learning cycle. If the user does not feel comfortable with the word yet, they can leave it at the same step; in that case its `encounter_count` and queue position do not change.
 
 ### Queue mechanics
 
-Words are served in the order they were last reviewed — the longest-untouched word comes first. After each encounter, the word moves to the back of the queue. The queue is always non-empty as long as there are unlearned words in the list.
+Words are served in queue order — the longest-untouched word comes first. When a user moves a word forward after a Learning session, the word moves to the back of the relevant queue. If the user keeps the word at the same step, it preserves its current queue position.
+
+Discovery sessions are available while the list has `waiting` words. Learning sessions are available while the list has `learning` words. If the selected session type has no items, the app shows an empty-state message for that session.
 
 ### Progress bar
 
-Each list shows a progress bar: learned vs. total words in that list for the current user.
+Each list shows a progress bar for the current user. `learned` and `known` are both complete states for progress purposes, but they remain distinct statuses: `known` means the user marked the word as already known, while `learned` means the word passed through the learning process.
 
 ### Task types
 
-Each vocabulary session generates a sequence of tasks per word:
+Each vocabulary session generates a sequence of tasks per word. Showcase is counted as a task, but it is a read-only task rather than a recall task.
 
 - **Showcase** — display full word metadata (definition, translation, pronunciation) before recall begins
 - **Word to Definition** — match the word to its meaning
@@ -89,15 +99,24 @@ Each vocabulary session generates a sequence of tasks per word:
 
 Grammar topics are also organised into lists (e.g. "A1 Grammar", "B2 Grammar"). A user enrolls in a grammar list and works through its topics one per session.
 
+Each grammar topic per user follows the same status model as vocabulary:
+
+- waiting — enrolled but not yet discovered
+- learning — discovered, actively in review rotation
+- learned — completed the learning cycle; no longer appears in Learning sessions
+- known — user marked as already known before discovery
+
 ### Session rhythm
 
-Grammar sessions follow a repeating **new → review → review** pattern. New content is introduced regularly but not every session, giving review sessions space to reinforce recent topics.
+Grammar sessions follow a repeating **new → review → review** pattern. New content is introduced regularly but not every session, giving review sessions space to reinforce recent topics. The pattern defines the preferred item type for each session: `new, review, review, new, review, review...`.
 
-If no topic of the preferred type is available (e.g. all new topics are exhausted), the system falls back to the other type. If neither has topics, the list is complete.
+The **new** phase prefers a topic with `encounter_count = 0`. Review phases prefer a topic with `encounter_count > 0`. After each topic encounter, the user manually decides whether to keep practicing the topic or move it forward in the learning cycle. A `learning` topic becomes `learned` when the user has chosen to move it forward **3 times** across review sessions. The app never advances a grammar topic automatically.
+
+If no topic of the preferred type is available (e.g. all new topics are exhausted), the system falls back to the other type. The repeating rhythm still advances after the session. If neither type has topics, the list shows an empty-state message.
 
 ### Task types
 
-Each grammar session generates 4 tasks for the selected topic:
+Each grammar session generates 5 tasks for the selected topic. Showcase is counted as a task, but it is a read-only task rather than an exercise task.
 
 - **Showcase** — read the grammar topic markdown article
 - **Make Sentence** — arrange shuffled word tiles into a correct sentence
@@ -105,7 +124,7 @@ Each grammar session generates 4 tasks for the selected topic:
 - **Fill in the Blank** — pick correct words from a word bank to fill blanks in a sentence
 - **Find Mistake** — tap the word containing a grammar error in a sentence
 
-All grammar tasks are AI-generated at session start.
+Grammar exercise tasks are AI-generated at session start. Showcase uses the selected topic's markdown article.
 
 ---
 
@@ -123,8 +142,8 @@ Users upload PDF files and read them via an in-app reader. Reading builds passiv
 ### Upload and storage
 
 - Users upload a PDF through the app.
-- The server validates the file type and size before accepting it.
-- File metadata and reading progress are stored in the database; the file itself lives on the server.
+- The server validates the file type and size before accepting it. PDF uploads are limited to 20 MB.
+- File metadata and reading progress are stored in the database; the file itself is stored in a directory on the server.
 
 ### Progress tracking
 
@@ -134,9 +153,9 @@ The app periodically saves the user's current page and accumulated reading time 
 
 ## Events
 
-All significant user actions are recorded as events. Events serve two purposes:
+Useful user actions are recorded as events. Events serve two purposes:
 
 - **Activity feed** — a chronological log of what the user has done
-- **Analytics** — aggregate data for understanding learning patterns (task completion rates, time spent, AI cost per user)
+- **Statistics** — aggregate data for the user-facing `/statistics` page, such as task completion rates and time spent
 
-Events are append-only. They reference the user, the relevant entity (vocabulary item, grammar topic, reading), and optional metadata (task type, status, duration, AI token cost).
+Events are append-only. They reference the user, the relevant entity (vocabulary item, grammar topic, reading), and optional metadata (task type, status, duration, AI token cost when available).
