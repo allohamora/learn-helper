@@ -53,7 +53,7 @@ Sessions are list-scoped: only words belonging to that list appear.
 
 Each word per user moves through these statuses:
 
-- waiting — enrolled but not yet discovered
+- waiting-to-discovery — enrolled but not yet discovered
 - learning — discovered, actively in review rotation
 - learned — completed the learning cycle; no longer appears in Learning sessions
 - known — user marked as already known before discovery
@@ -62,9 +62,9 @@ Each word per user moves through these statuses:
 
 Transitions between statuses are **user-driven**: after each word encounter, the app asks the user to decide whether to keep practicing the word or move it forward in the learning cycle. The app never advances a word automatically.
 
-- **waiting → learning**: triggered when the user encounters the word for the first time in a Discovery session.
+- **waiting-to-discovery → learning**: triggered when the user encounters the word for the first time in a Discovery session.
 - **learning → learned**: triggered when the user has chosen to move the word forward **3 times** across Learning sessions. Until then, the word remains in `learning` and can appear again in future Learning sessions.
-- **waiting → known**: triggered when the user explicitly marks a word as already known during a Discovery session, skipping the learning cycle entirely.
+- **waiting-to-discovery → known**: triggered when the user explicitly marks a word as already known during a Discovery session, skipping the learning cycle entirely.
 
 After a Learning session, each practiced word gives the user a choice to move it forward in the learning cycle. If the user does not feel comfortable with the word yet, they can leave it at the same step; in that case its `encounter_count` and queue position do not change.
 
@@ -72,7 +72,7 @@ After a Learning session, each practiced word gives the user a choice to move it
 
 Words are served in queue order — the longest-untouched word comes first. When a user moves a word forward after a Learning session, the word moves to the back of the relevant queue. If the user keeps the word at the same step, it preserves its current queue position.
 
-Discovery sessions are available while the list has `waiting` words. Learning sessions are available while the list has `learning` words. If the selected session type has no items, the app shows an empty-state message for that session.
+Discovery sessions are available while the list has `waiting-to-discovery` words. Learning sessions are available while the list has `learning` words. If the selected session type has no items, the app shows an empty-state message for that session.
 
 ### Progress bar
 
@@ -101,7 +101,7 @@ Grammar topics are also organised into lists (e.g. "A1 Grammar", "B2 Grammar"). 
 
 Each grammar topic per user follows the same status model as vocabulary:
 
-- waiting — enrolled but not yet discovered
+- waiting-to-discovery — enrolled but not yet discovered
 - learning — discovered, actively in review rotation
 - learned — completed the learning cycle; no longer appears in Learning sessions
 - known — user marked as already known before discovery
