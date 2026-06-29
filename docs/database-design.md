@@ -244,6 +244,11 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 
 Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
 
+### Grammar queue open notes
+
+- End-of-list review state: when there are no new grammar topics left, the learning queue should still work while at least one topic has `status = 'learning'`. Avoid bugs where "no new topics" disables learning, or where `lastTopicId === currentTopicId` blocks progress when only one eligible review topic exists.
+- Start-of-learning rhythm: starting with `new, new, new, ...` can make the next session fetch the first grammar topic as review, which may look like a bug to the user. Consider interleaving with odds like `new, new, review, review, new, review, review, ...`.
+
 ## Event table notes
 
 ### `user_vocabulary_item_ids`
