@@ -45,32 +45,6 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
-    vocabulary_list_vocabulary_item {
-        vocabulary_list_id uuid FK PK
-        vocabulary_item_id uuid FK PK
-        created_at timestamptz "default NOW"
-    }
-
-    grammar_topic_list_grammar_topic {
-        grammar_topic_list_id uuid FK PK
-        grammar_topic_id uuid FK PK
-        created_at timestamptz "default NOW"
-    }
-
-    user_vocabulary_list {
-        user_id uuid FK PK
-        vocabulary_list_id uuid FK PK
-        created_at timestamptz "default NOW"
-    }
-
-    user_grammar_topic_list {
-        user_id uuid FK PK
-        grammar_topic_list_id uuid FK PK
-        session_counter integer "default 0"
-        created_at timestamptz "default NOW"
-        updated_at timestamptz "default NOW"
-    }
-
     user_vocabulary_item {
         id uuid PK
         user_id uuid FK "unique with vocabulary_item_id"
@@ -130,25 +104,24 @@ erDiagram
         status varchar(16) "optional, enum: learning_status"
         user_vocabulary_item_task_type varchar(48) "optional, enum: user_vocabulary_item_task_type"
         user_grammar_topic_task_type varchar(48) "optional, enum: user_grammar_topic_task_type"
+        vocabulary_list_id uuid FK "optional"
+        grammar_topic_list_id uuid FK "optional"
         field_name text "optional"
         duration_ms integer "optional"
+        encounter_count integer "optional"
         cost_in_nano_dollars integer "optional"
         input_tokens integer "optional"
         output_tokens integer "optional"
         created_at timestamptz "default NOW"
     }
 
-    user ||--o{ user_vocabulary_list : "one-to-many"
-    vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
-    user ||--o{ user_grammar_topic_list : "one-to-many"
-    grammar_topic_list ||--o{ user_grammar_topic_list : "one-to-many"
     user ||--o{ user_vocabulary_item : "one-to-many"
     user ||--o{ user_grammar_topic : "one-to-many"
     user ||--o{ event : "one-to-many"
-    vocabulary_list ||--o{ vocabulary_list_vocabulary_item : "one-to-many"
-    vocabulary_item ||--o{ vocabulary_list_vocabulary_item : "one-to-many"
-    grammar_topic_list ||--o{ grammar_topic_list_grammar_topic : "one-to-many"
-    grammar_topic ||--o{ grammar_topic_list_grammar_topic : "one-to-many"
+    vocabulary_list }o--o{ vocabulary_item : "many-to-many"
+    grammar_topic_list }o--o{ grammar_topic : "many-to-many"
+    vocabulary_list ||--o{ event : "one-to-many"
+    grammar_topic_list ||--o{ event : "one-to-many"
     vocabulary_item ||--o{ user_vocabulary_item : "one-to-many"
     grammar_topic ||--o{ user_grammar_topic : "one-to-many"
     user_vocabulary_item ||--o{ event : "one-to-many"
@@ -244,10 +217,18 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 
 Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
 
-### Grammar queue open notes
+### Grammar session rhythm — event-based algorithm
 
-- End-of-list review state: when there are no new grammar topics left, the learning queue should still work while at least one topic has `status = 'learning'`. Avoid bugs where "no new topics" disables learning, or where `lastTopicId === currentTopicId` blocks progress when only one eligible review topic exists.
-- Start-of-learning rhythm: starting with `new, new, new, ...` can make the next session fetch the first grammar topic as review, which may look like a bug to the user. Consider interleaving with odds like `new, new, review, review, new, review, review, ...`.
+Next-session type (new vs review) is derived by reading the last 3 grammar session events (`event.encounter_count`) for the user+list. A session is classified as **new** if `encounter_count === 1`, or **review** if `encounter_count > 1`.
+
+| Last events (oldest → newest)    | Next session                                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `[1 event, encounter_count = 1]` | **new** — edge case: only one discovery so far; prevents scheduling a review with a pool of one |
+| `[new]`                          | **review**                                                                                      |
+| `[new, review]`                  | **review**                                                                                      |
+| `[new, review, review]`          | **new**                                                                                         |
+
+This implements the `[new, review, review, …]` cycle via observation rather than a stored counter. It also resolves the end-of-list edge case: when no new topics remain, the algorithm naturally stays in the review branch without a special code path, and a single remaining review topic is never blocked by a "last topic" check.
 
 ## Event table notes
 
@@ -277,15 +258,7 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
 
 ### Grammar sessions
 
-Grammar has one topic per session. The app picks whether the session is **new** or **review** by following the **[new, old, old]** rhythm tracked in `user_grammar_topic_list.session_counter`:
-
-| `session_counter % 3` | Session type |
-| --------------------- | ------------ |
-| 0                     | new topic    |
-| 1                     | review       |
-| 2                     | review       |
-
-`session_counter` increments after each completed session.
+Grammar has one topic per session. The app picks whether the session is **new** or **review** by examining the last 3 grammar session events for the user (see [Grammar session rhythm](#grammar-session-rhythm--event-based-algorithm) in Field notes).
 
 ## Grammar tasks\*
 
