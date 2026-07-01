@@ -325,7 +325,7 @@ Client uploads PDF via multipart form → Server validates (mime type, size limi
 
 ### Download / serve flow
 
-Server sets `ETag: {hash}` and `Cache-Control: public, max-age=31536000, immutable`. On file replacement the hash changes, so the browser fetches the new version automatically.
+Server sets `ETag: {hash}` and `Cache-Control: private, no-cache`. On each request the browser revalidates with `If-None-Match: {hash}`; the server returns `304 Not Modified` if unchanged, or `200` with the new file after a replacement.
 
 ### File replacement
 
