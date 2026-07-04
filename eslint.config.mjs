@@ -5,19 +5,27 @@ import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import beautifulSort from 'eslint-plugin-beautiful-sort';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import eslintPluginTailwindcss from 'eslint-plugin-tailwindcss';
 import { defineConfig } from 'eslint/config';
+import { join } from 'node:path';
 
 export default defineConfig(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   // TODO: add eslint-plugin-react and eslint-plugin-jsx-a11y once (if) they support eslint 10
   reactHooks.configs.flat.recommended,
+  ...eslintPluginTailwindcss.configs['flat/recommended'],
   beautifulSort.configs.recommended,
   eslintPluginPrettierRecommended,
   { ignores: ['node_modules', 'dist', '**/routeTree.gen.ts'] },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser }, parserOptions: { project: true } },
+    settings: {
+      tailwindcss: {
+        config: join(import.meta.dirname, 'src', 'styles.css'),
+      },
+    },
     rules: {
       'no-use-before-define': ['error', { functions: false }],
       'object-shorthand': 'warn',
