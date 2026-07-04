@@ -1,7 +1,9 @@
+import stylesCssUrl from '@/styles.css?url';
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
-import '@/styles.css';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 
 export const Route = createRootRoute({
   head: () => ({
@@ -23,6 +25,10 @@ export const Route = createRootRoute({
         type: 'image/svg+xml',
         href: '/favicon.svg',
       },
+      {
+        rel: 'stylesheet',
+        href: stylesCssUrl,
+      },
     ],
   }),
   shellComponent: RootDocument,
@@ -35,8 +41,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
 
-      <body suppressHydrationWarning>
-        {children}
+      <body className="flex min-h-screen min-w-full flex-col" suppressHydrationWarning>
+        <Header />
+
+        <main className="container mt-4 mb-4">{children}</main>
+
+        <Footer />
+
         <TanStackDevtools
           config={{
             position: 'bottom-right',
