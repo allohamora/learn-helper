@@ -14,7 +14,7 @@ export default defineConfig(
   reactHooks.configs.flat.recommended,
   beautifulSort.configs.recommended,
   eslintPluginPrettierRecommended,
-  { ignores: ['node_modules', 'dist'] },
+  { ignores: ['node_modules', 'dist', '**/routeTree.gen.ts'] },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser }, parserOptions: { project: true } },

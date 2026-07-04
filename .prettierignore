@@ -4,4 +4,4 @@ public
 .husky
 package-lock.json
 coverage
-src/routeTree.gen.ts
+**/routeTree.gen.ts
