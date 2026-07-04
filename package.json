@@ -7,11 +7,14 @@
     "#/*": "./src/*"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "vite dev",
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node .output/server/index.mjs"
+    "start": "node .output/server/index.mjs",
+    "format": "prettier . --check",
+    "format:fix": "prettier --write ."
   },
   "dependencies": {
     "@tanstack/react-devtools": "^0.10.8",
@@ -25,12 +28,17 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.0",
+    "@commitlint/config-conventional": "^21.2.0",
     "@tanstack/devtools-vite": "^0.8.1",
     "@tanstack/router-cli": "^1.132.0",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.4",
     "typescript": "^6.0.2",
     "vite": "^8.0.0"
   },
@@ -38,5 +46,8 @@
     "node": ">=v24.13.0",
     "npm": ">=11.8.0"
   },
-  "packageManager": "npm@11.8.0"
+  "packageManager": "npm@11.8.0",
+  "lint-staged": {
+    "*.{js,cjs,mjs,json,yml,md}": "prettier --write"
+  }
 }
