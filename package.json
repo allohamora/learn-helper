@@ -16,7 +16,9 @@
     "format": "prettier . --check",
     "format:fix": "prettier --write .",
     "lint": "eslint \"**/*.{ts,tsx}\"",
-    "lint:fix": "eslint \"**/*.{ts,tsx}\" --fix"
+    "lint:fix": "eslint \"**/*.{ts,tsx}\" --fix",
+    "csslint": "stylelint \"src/**/*.css\"",
+    "csslint:fix": "stylelint \"src/**/*.css\" --fix"
   },
   "dependencies": {
     "@tanstack/react-devtools": "^0.10.8",
@@ -48,6 +50,10 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "prettier": "^3.9.4",
+    "stylelint": "^17.14.0",
+    "stylelint-config-clean-order": "^10.0.0",
+    "stylelint-config-standard": "^40.0.0",
+    "stylelint-prettier": "^5.0.3",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.62.1",
     "vite": "^8.0.0"
