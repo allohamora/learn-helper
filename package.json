@@ -86,6 +86,8 @@
   },
   "packageManager": "npm@11.8.0",
   "lint-staged": {
+    "*.css": "stylelint --fix",
+    "*.{ts,tsx}": "eslint --fix",
     "*.{js,cjs,mjs,json,yml,md}": "prettier --write"
   }
 }
