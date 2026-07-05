@@ -1,8 +1,11 @@
 {
-  "jestrunner.changeDirectoryToWorkspaceRoot": true,
-  "jestrunner.jestCommand": "sh scripts/jest.sh",
-  "jestrunner.debugOptions": {
-    "runtimeExecutable": "sh",
-    "runtimeArgs": ["scripts/jest-debug.sh"]
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
   }
 }
