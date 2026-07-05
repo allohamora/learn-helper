@@ -3,13 +3,10 @@ import stylesCssUrl from '@/styles.css?url';
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
+import { NotFound } from '@/components/not-found';
 
 export const Route = createRootRoute({
-  // https://github.com/unjs/nf3/issues/52
-  // https://github.com/nitrojs/nitro/pull/4391
-  // notFoundComponent: NotFound,
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       {
@@ -46,11 +43,7 @@ function RootDocument({ children }: PropsWithChildren) {
       </head>
 
       <body className="flex min-h-screen min-w-full flex-col" suppressHydrationWarning>
-        <Header />
-
-        <main className="container mt-4 mb-4">{children}</main>
-
-        <Footer />
+        {children}
 
         <TanStackDevtools
           config={{

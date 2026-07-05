@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VocabularyRouteImport } from './routes/vocabulary'
 import { Route as StatisticsRouteImport } from './routes/statistics'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ErrorRouteImport } from './routes/error'
 import { Route as IndexRouteImport } from './routes/index'
 
 const VocabularyRoute = VocabularyRouteImport.update({
@@ -23,6 +25,16 @@ const StatisticsRoute = StatisticsRouteImport.update({
   path: '/statistics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ErrorRoute = ErrorRouteImport.update({
+  id: '/error',
+  path: '/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +43,38 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/error': typeof ErrorRoute
+  '/login': typeof LoginRoute
   '/statistics': typeof StatisticsRoute
   '/vocabulary': typeof VocabularyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/error': typeof ErrorRoute
+  '/login': typeof LoginRoute
   '/statistics': typeof StatisticsRoute
   '/vocabulary': typeof VocabularyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/error': typeof ErrorRoute
+  '/login': typeof LoginRoute
   '/statistics': typeof StatisticsRoute
   '/vocabulary': typeof VocabularyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/statistics' | '/vocabulary'
+  fullPaths: '/' | '/error' | '/login' | '/statistics' | '/vocabulary'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/statistics' | '/vocabulary'
-  id: '__root__' | '/' | '/statistics' | '/vocabulary'
+  to: '/' | '/error' | '/login' | '/statistics' | '/vocabulary'
+  id: '__root__' | '/' | '/error' | '/login' | '/statistics' | '/vocabulary'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ErrorRoute: typeof ErrorRoute
+  LoginRoute: typeof LoginRoute
   StatisticsRoute: typeof StatisticsRoute
   VocabularyRoute: typeof VocabularyRoute
 }
@@ -75,6 +95,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatisticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/error': {
+      id: '/error'
+      path: '/error'
+      fullPath: '/error'
+      preLoaderRoute: typeof ErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +121,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ErrorRoute: ErrorRoute,
+  LoginRoute: LoginRoute,
   StatisticsRoute: StatisticsRoute,
   VocabularyRoute: VocabularyRoute,
 }
