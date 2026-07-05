@@ -1,8 +1,8 @@
-import * as schema from '../db/schema';
+import * as schema from '../db/db.schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
-import { db } from '../db/client';
+import { db } from '../db/db.service';
 import {
   BETTER_AUTH_GOOGLE_CLIENT_ID,
   BETTER_AUTH_GOOGLE_CLIENT_SECRET,
@@ -10,6 +10,9 @@ import {
   BETTER_AUTH_URL,
   BETTER_AUTH_ALLOWED_USERS,
 } from '../config';
+import { createLogger } from '../utils/logger.utils';
+
+const logger = createLogger('auth.service');
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -27,7 +30,7 @@ export const auth = betterAuth({
       create: {
         before: async (user) => {
           if (!BETTER_AUTH_ALLOWED_USERS.includes(user.email)) {
-            console.error('Unauthorized registration attempt', { user });
+            logger.error({ err: new Error('Unauthorized registration attempt'), user });
 
             throw new APIError('FORBIDDEN', { message: `User is not allowed to register` });
           }
@@ -42,7 +45,7 @@ export const auth = betterAuth({
           const user = await ctx.context.internalAdapter.findUserById(session.userId);
 
           if (!user || !BETTER_AUTH_ALLOWED_USERS.includes(user.email)) {
-            console.error('Unauthorized sign-in attempt', { userId: session.userId });
+            logger.error({ err: new Error('Unauthorized sign-in attempt'), userId: session.userId });
 
             throw new APIError('FORBIDDEN', { message: `User is not allowed to sign in` });
           }

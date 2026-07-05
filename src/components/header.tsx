@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 import { BarChart, Book, User } from 'lucide-react';
 import { Link, useRouter } from '@tanstack/react-router';
-import { authClient } from '@/services/auth';
+import { authClient } from '@/client/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,

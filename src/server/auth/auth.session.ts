@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { redirect } from '@tanstack/react-router';
-import { auth } from './client';
+import { auth } from './auth.service';
 
 async function getSessionFromHeaders(headers: Headers) {
   return auth.api.getSession({ headers });
