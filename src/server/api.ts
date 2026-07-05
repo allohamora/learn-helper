@@ -5,6 +5,9 @@ import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
 import { toErrorResponse } from './utils/response.utils';
 import { healthRouter } from './health/health.router';
+import { createLogger } from './utils/logger.utils';
+import type { Context } from 'hono';
+import { MimeType } from './utils/mime-type.utils';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -13,7 +16,48 @@ declare module 'hono' {
   }
 }
 
+const logger = createLogger('api');
+
 const api = new OpenAPIHono().basePath('/api');
+
+const getBody = async (c: Context) => {
+  if (c.req.header('Content-Type') !== MimeType.Json) {
+    return;
+  }
+
+  try {
+    return await c.req.json();
+  } catch (err) {
+    logger.error({ msg: 'error while parsing the body as a json', err });
+  }
+
+  try {
+    return await c.req.text();
+  } catch (err) {
+    logger.error({ msg: 'error while parsing the body as a text', err });
+  }
+};
+
+// onError only catches thrown errors, so responses returned directly with an error status
+// (e.g. zod-openapi validation failures, better-auth's handler) would otherwise go unlogged
+api.use(async (c, next) => {
+  await next();
+
+  if (c.res.status >= 400) {
+    const msg = await c.res.clone().text();
+    const body = await getBody(c);
+
+    logger.error({
+      method: c.req.method,
+      path: c.req.path,
+      url: c.req.url,
+      query: c.req.query(),
+      body,
+      status: c.res.status,
+      err: c.error ?? new Error(msg),
+    });
+  }
+});
 
 api.onError((err, c) => {
   if (err instanceof Exception) {
