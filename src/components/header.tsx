@@ -1,8 +1,26 @@
 import { type FC } from 'react';
 import { BarChart, Book, User } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useRouter } from '@tanstack/react-router';
+import { authClient } from '@/services/auth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const Header: FC = () => {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    await router.navigate({ to: '/' });
+  };
+
   return (
     <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container flex h-14 justify-between md:justify-start">
@@ -30,13 +48,33 @@ export const Header: FC = () => {
         </div>
 
         <div className="flex items-center md:ml-auto">
-          <button
-            type="button"
-            className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:text-primary"
-            aria-label="Profile"
-          >
-            <User className="size-4" aria-hidden="true" />
-          </button>
+          {session ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="flex size-7 items-center justify-center rounded-full text-foreground transition-colors outline-none hover:text-primary"
+                aria-label="Profile menu"
+              >
+                <Avatar size="sm">
+                  <AvatarImage src={session.user.image ?? undefined} alt={session.user.name} />
+                  <AvatarFallback>{session.user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="w-34">
+                <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => void handleLogout()}>Log out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link
+              to="/login"
+              className="flex size-7 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:text-primary"
+              aria-label="Log in"
+            >
+              <User className="size-4" aria-hidden="true" />
+            </Link>
+          )}
         </div>
       </div>
     </nav>

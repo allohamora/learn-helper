@@ -1,3 +1,4 @@
+import * as schema from './schema';
 import path from 'node:path';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -6,7 +7,7 @@ import { sql } from 'drizzle-orm';
 import { DRIZZLE_DEBUG, POSTGRES_URL } from '../config';
 
 export const client = postgres(POSTGRES_URL);
-export const db = drizzle(client, { logger: DRIZZLE_DEBUG, casing: 'snake_case' });
+export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snake_case' });
 
 const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');
 
