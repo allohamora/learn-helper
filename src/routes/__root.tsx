@@ -3,11 +3,10 @@ import stylesCssUrl from '@/styles.css?url';
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
+import { NotFound } from '@/components/not-found';
 
 export const Route = createRootRoute({
-  // https://github.com/unjs/nf3/issues/52
-  // https://github.com/nitrojs/nitro/pull/4391
-  // notFoundComponent: NotFound,
+  notFoundComponent: NotFound,
   head: () => ({
     meta: [
       {
