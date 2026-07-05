@@ -18,7 +18,8 @@
     "lint": "eslint \"**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"**/*.{ts,tsx}\" --fix",
     "csslint": "stylelint \"src/**/*.css\"",
-    "csslint:fix": "stylelint \"src/**/*.css\" --fix"
+    "csslint:fix": "stylelint \"src/**/*.css\" --fix",
+    "test": "vitest run --project unit"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.6.1",
@@ -78,7 +79,8 @@
     "stylelint-prettier": "^5.0.3",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.62.1",
-    "vite": "^8.0.0"
+    "vite": "^8.0.0",
+    "vitest": "^4.1.9"
   },
   "overrides": {
     "drizzle-kit": {

@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
+import { getHealth } from './health.service';
 
 export const healthRouter = new OpenAPIHono().openapi(
   createRoute({
@@ -13,5 +14,5 @@ export const healthRouter = new OpenAPIHono().openapi(
     security: [{ cookieAuth: [] }],
     middleware: [authMiddleware],
   }),
-  async (c) => c.json(...toSuccessResponse({ status: 200, data: { ok: true } })),
+  async (c) => c.json(...toSuccessResponse({ status: 200, data: getHealth() })),
 );
