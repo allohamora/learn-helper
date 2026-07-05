@@ -7,6 +7,9 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
 export const Route = createRootRoute({
+  // https://github.com/unjs/nf3/issues/52
+  // https://github.com/nitrojs/nitro/pull/4391
+  // notFoundComponent: NotFound,
   head: () => ({
     meta: [
       {
