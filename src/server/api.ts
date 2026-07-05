@@ -1,10 +1,10 @@
 import { swaggerUI } from '@hono/swagger-ui';
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { OpenAPIHono } from '@hono/zod-openapi';
 import { auth } from './auth/client';
 import { Exception } from './utils/exception';
 import { HTTPException } from 'hono/http-exception';
-import { successOkResponse, toErrorResponse, toSuccessResponse } from './utils/response';
-import { authMiddleware } from './auth/middleware';
+import { toErrorResponse } from './utils/response';
+import { healthRouter } from './routers/health';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -50,19 +50,9 @@ api.on(['POST', 'GET'], '/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
 
-const app = api.openapi(
-  createRoute({
-    method: 'get',
-    path: '/health',
-    tags: ['Health'],
-    responses: {
-      ...successOkResponse({ description: 'Health check', schema: z.object({ ok: z.boolean() }) }),
-    },
-    security: [{ cookieAuth: [] }],
-    middleware: [authMiddleware],
-  }),
-  async (c) => c.json(...toSuccessResponse({ status: 200, data: { ok: true } })),
-);
+const v1Router = new OpenAPIHono().route('/health', healthRouter);
+
+const app = api.route('/v1', v1Router);
 
 app.openAPIRegistry.registerComponent('securitySchemes', 'cookieAuth', {
   type: 'apiKey',
