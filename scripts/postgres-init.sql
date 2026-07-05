@@ -1,2 +1,6 @@
 /* we need it for e2e tests */
-CREATE DATABASE test;
+CREATE DATABASE test_0;
+CREATE DATABASE test_1;
+CREATE DATABASE test_2;
+CREATE DATABASE test_3;
+CREATE DATABASE test_4;

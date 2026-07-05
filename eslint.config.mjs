@@ -36,6 +36,14 @@ export default defineConfig(
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',
       '@typescript-eslint/no-deprecated': 'error',
+
+      'beautiful-sort/import': [
+        'error',
+        {
+          special: ['./mocks', 'react'],
+          order: ['special', 'namespace', 'default', 'defaultObj', 'obj', 'none'],
+        },
+      ],
     },
   },
 );

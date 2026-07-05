@@ -5,8 +5,13 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { sql } from 'drizzle-orm';
 import { DRIZZLE_DEBUG, POSTGRES_URL } from '../config';
+import { createLogger } from '../utils/logger.utils';
 
-export const client = postgres(POSTGRES_URL);
+const logger = createLogger('db.client');
+
+export const client = postgres(POSTGRES_URL, {
+  onnotice: ({ message, ...notice }) => logger.info({ msg: message, ...notice }),
+});
 export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snake_case' });
 
 const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');

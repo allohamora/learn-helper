@@ -13,6 +13,17 @@ export default defineConfig({
           setupFiles: ['./__tests__/setup-unit-context.ts'],
         },
       },
+      {
+        resolve: {
+          tsconfigPaths: true,
+        },
+        test: {
+          name: 'e2e',
+          include: ['**/__tests__/e2e/**/*.spec.ts'],
+          setupFiles: ['./__tests__/setup-e2e-context.ts'],
+          maxWorkers: 5,
+        },
+      },
     ],
   },
 });
