@@ -2,7 +2,7 @@ import * as schema from '../db/db.schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
-import { db } from '../db/db.client';
+import { db } from '../db/db.service';
 import {
   BETTER_AUTH_GOOGLE_CLIENT_ID,
   BETTER_AUTH_GOOGLE_CLIENT_SECRET,
@@ -12,7 +12,7 @@ import {
 } from '../config';
 import { createLogger } from '../utils/logger.utils';
 
-const logger = createLogger('auth.client');
+const logger = createLogger('auth.service');
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

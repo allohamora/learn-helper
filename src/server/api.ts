@@ -1,6 +1,6 @@
 import { swaggerUI } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { auth } from './auth/auth.client';
+import { auth } from './auth/auth.service';
 import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
 import { toErrorResponse } from './utils/response.utils';

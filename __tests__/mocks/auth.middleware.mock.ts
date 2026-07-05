@@ -1,5 +1,5 @@
 import { vitest } from 'vitest';
-import type { auth as betterAuth } from '@/server/auth/auth.client';
+import type { auth as betterAuth } from '@/server/auth/auth.service';
 import { afterEach, beforeEach } from 'vitest';
 import { Exception } from '@/server/utils/exception.utils';
 

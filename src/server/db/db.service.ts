@@ -7,7 +7,7 @@ import { sql } from 'drizzle-orm';
 import { DRIZZLE_DEBUG, POSTGRES_URL } from '../config';
 import { createLogger } from '../utils/logger.utils';
 
-const logger = createLogger('db.client');
+const logger = createLogger('db.service');
 
 export const client = postgres(POSTGRES_URL, {
   onnotice: ({ message, ...notice }) => logger.info({ msg: message, ...notice }),
