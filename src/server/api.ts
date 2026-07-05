@@ -1,6 +1,9 @@
 import { swaggerUI } from '@hono/swagger-ui';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { auth } from './auth/client';
+import { Exception } from './utils/exception';
+import { HTTPException } from 'hono/http-exception';
+import { successOkResponse, toErrorResponse, toSuccessResponse } from './utils/response';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -10,6 +13,23 @@ declare module 'hono' {
 }
 
 const api = new OpenAPIHono().basePath('/api');
+
+api.onError((err, c) => {
+  if (err instanceof Exception) {
+    return c.json(...err.toHttpResponse());
+  }
+
+  const statusText = err instanceof HTTPException ? err.message : 'internal server error';
+  const statusCode = err instanceof HTTPException ? err.status : 500;
+
+  return c.json(
+    ...toErrorResponse({
+      status: statusCode,
+      messages: [statusText],
+      code: 'HTTP_EXCEPTION',
+    }),
+  );
+});
 
 api.use('*', async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
@@ -35,17 +55,10 @@ const app = api.openapi(
     path: '/health',
     tags: ['Health'],
     responses: {
-      200: {
-        description: 'Health check',
-        content: {
-          'application/json': {
-            schema: z.object({ ok: z.boolean() }),
-          },
-        },
-      },
+      ...successOkResponse({ description: 'Health check', schema: z.object({ ok: z.boolean() }) }),
     },
   }),
-  async (c) => c.json({ ok: true }, 200),
+  async (c) => c.json(...toSuccessResponse({ status: 200, data: { ok: true } })),
 );
 
 app.doc('/swagger.json', {
