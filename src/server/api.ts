@@ -58,10 +58,17 @@ const app = api.openapi(
     responses: {
       ...successOkResponse({ description: 'Health check', schema: z.object({ ok: z.boolean() }) }),
     },
+    security: [{ cookieAuth: [] }],
     middleware: [authMiddleware],
   }),
   async (c) => c.json(...toSuccessResponse({ status: 200, data: { ok: true } })),
 );
+
+app.openAPIRegistry.registerComponent('securitySchemes', 'cookieAuth', {
+  type: 'apiKey',
+  in: 'cookie',
+  name: 'better-auth.session_token',
+});
 
 app.doc('/swagger.json', {
   openapi: '3.1.0',
