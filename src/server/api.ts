@@ -4,6 +4,7 @@ import { auth } from './auth/client';
 import { Exception } from './utils/exception';
 import { HTTPException } from 'hono/http-exception';
 import { successOkResponse, toErrorResponse, toSuccessResponse } from './utils/response';
+import { authMiddleware } from './auth/middleware';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -57,6 +58,7 @@ const app = api.openapi(
     responses: {
       ...successOkResponse({ description: 'Health check', schema: z.object({ ok: z.boolean() }) }),
     },
+    middleware: [authMiddleware],
   }),
   async (c) => c.json(...toSuccessResponse({ status: 200, data: { ok: true } })),
 );
