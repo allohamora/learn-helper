@@ -67,6 +67,8 @@ export class Exception extends Error {
         return 422;
       case ExceptionCode.INTERNAL_SERVER_ERROR:
         return 500;
+      default:
+        return 500;
     }
   }
 
