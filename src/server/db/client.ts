@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 import { DRIZZLE_DEBUG, POSTGRES_URL } from '../config';
 
 export const client = postgres(POSTGRES_URL);
-export const db = drizzle({ client, logger: DRIZZLE_DEBUG });
+export const db = drizzle(client, { logger: DRIZZLE_DEBUG, casing: 'snake_case' });
 
 const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');
 
