@@ -11,6 +11,9 @@ export default defineConfig({
           name: 'unit',
           include: ['**/__tests__/unit/**/*.spec.ts'],
           setupFiles: ['./__tests__/setup-unit-context.ts'],
+          sequence: {
+            groupOrder: 0,
+          },
         },
       },
       {
@@ -22,6 +25,9 @@ export default defineConfig({
           include: ['**/__tests__/e2e/**/*.spec.ts'],
           setupFiles: ['./__tests__/setup-e2e-context.ts'],
           maxWorkers: 5,
+          sequence: {
+            groupOrder: 1,
+          },
         },
       },
     ],
