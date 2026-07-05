@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { requireAuth } from '@/server/auth/session';
+import { requireAuth } from '@/server/auth/auth.session';
 import { PageLayout } from '@/components/page-layout';
 
 export const Route = createFileRoute('/statistics')({ beforeLoad: requireAuth, component: StatisticsPage });

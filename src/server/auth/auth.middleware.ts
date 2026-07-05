@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import { Context } from 'hono';
-import { Exception } from '../utils/exception';
+import { Exception } from '../utils/exception.utils';
 
 export const getAuthContext = (c: Context) => {
   const user = c.get('user');

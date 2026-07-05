@@ -1,6 +1,6 @@
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
-import { toErrorResponse } from './response';
+import { toErrorResponse } from './response.utils';
 
 export const enum ExceptionCode {
   VALIDATION_ERROR = 'VALIDATION_ERROR',

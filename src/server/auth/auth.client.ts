@@ -1,8 +1,8 @@
-import * as schema from '../db/schema';
+import * as schema from '../db/db.schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
-import { db } from '../db/client';
+import { db } from '../db/db.client';
 import {
   BETTER_AUTH_GOOGLE_CLIENT_ID,
   BETTER_AUTH_GOOGLE_CLIENT_SECRET,
@@ -10,7 +10,7 @@ import {
   BETTER_AUTH_URL,
   BETTER_AUTH_ALLOWED_USERS,
 } from '../config';
-import { createLogger } from '../utils/logger';
+import { createLogger } from '../utils/logger.utils';
 
 const logger = createLogger('auth.client');
 

@@ -1,10 +1,10 @@
 import { swaggerUI } from '@hono/swagger-ui';
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { auth } from './auth/client';
-import { Exception } from './utils/exception';
+import { auth } from './auth/auth.client';
+import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
-import { toErrorResponse } from './utils/response';
-import { healthRouter } from './routers/health';
+import { toErrorResponse } from './utils/response.utils';
+import { healthRouter } from './health/health.router';
 
 declare module 'hono' {
   interface ContextVariableMap {

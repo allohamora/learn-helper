@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
-import { successOkResponse, toSuccessResponse } from '../utils/response';
-import { authMiddleware } from '../auth/middleware';
+import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
+import { authMiddleware } from '../auth/auth.middleware';
 
 export const healthRouter = new OpenAPIHono().openapi(
   createRoute({
