@@ -19,7 +19,8 @@
     "lint:fix": "eslint \"**/*.{ts,tsx}\" --fix",
     "csslint": "stylelint \"src/**/*.css\"",
     "csslint:fix": "stylelint \"src/**/*.css\" --fix",
-    "test": "vitest run --project unit",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
     "test:e2e": "vitest run --project e2e"
   },
   "dependencies": {
