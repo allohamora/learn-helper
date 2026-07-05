@@ -20,7 +20,7 @@ export const disconnectFromDb = async () => {
 };
 
 export const clearDb = async () => {
-  const query = sql<string>`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';`;
+  const query = sql<{ table_name: string }>`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';`;
   const tables = await db.execute(query);
 
   for (const table of tables) {
