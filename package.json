@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "start": "node .output/server/index.mjs",
     "migrations:generate": "drizzle-kit generate",
-    "migrations:up": "drizzle-kit up",
+    "migrations:up": "drizzle-kit migrate",
+    "vocabulary:seed": "tsx src/server/vocabulary/vocabulary.seed.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier . --check",
     "format:fix": "prettier --write .",
@@ -21,6 +22,7 @@
     "csslint:fix": "stylelint \"src/**/*.css\" --fix",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
     "test:e2e": "vitest run --project e2e"
   },
   "dependencies": {
@@ -79,6 +81,7 @@
     "stylelint-config-clean-order": "^10.0.0",
     "stylelint-config-standard": "^40.0.0",
     "stylelint-prettier": "^5.0.3",
+    "tsx": "^4.22.5",
     "typescript": "^6.0.2",
     "typescript-eslint": "^8.62.1",
     "vite": "^8.0.0",

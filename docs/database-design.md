@@ -10,13 +10,13 @@ erDiagram
 
     vocabulary_item {
         id uuid PK
-        value text
-        definition text
-        ua_translation text
+        value varchar(255)
+        definition varchar(512)
+        ua_translation varchar(255)
         part_of_speech varchar(32) "optional, enum: part_of_speech"
-        spelling text
-        pronunciation text "optional"
-        link text "optional"
+        spelling varchar(255)
+        pronunciation varchar(512) "optional"
+        link varchar(512) "optional"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -45,9 +45,16 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
+    vocabulary_list_item {
+        id uuid PK
+        vocabulary_list_id uuid FK "unique with vocabulary_item_id"
+        vocabulary_item_id uuid FK
+        created_at timestamptz "default NOW"
+    }
+
     user_vocabulary_item {
         id uuid PK
-        user_id uuid FK "unique with vocabulary_item_id"
+        user_id uuid FK "unique with vocabulary_item_id (text in practice, matching better-auth's user.id)"
         vocabulary_item_id uuid FK
         encounter_count integer
         status varchar(16) "enum: learning_status"
@@ -118,7 +125,8 @@ erDiagram
     user ||--o{ user_vocabulary_item : "one-to-many"
     user ||--o{ user_grammar_topic : "one-to-many"
     user ||--o{ event : "one-to-many"
-    vocabulary_list }o--o{ vocabulary_item : "many-to-many"
+    vocabulary_list ||--o{ vocabulary_list_item : "one-to-many"
+    vocabulary_item ||--o{ vocabulary_list_item : "one-to-many"
     grammar_topic_list }o--o{ grammar_topic : "many-to-many"
     vocabulary_list ||--o{ event : "one-to-many"
     grammar_topic_list ||--o{ event : "one-to-many"
@@ -216,6 +224,18 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 ### `user_vocabulary_item.encounter_count`
 
 Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
+
+### `vocabulary_list_item`
+
+The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-many relationship (not spelled out elsewhere in this doc). Has its own surrogate `id` PK for consistency with every other table here, plus a unique constraint on `(vocabulary_list_id, vocabulary_item_id)` to prevent duplicate links. Both FKs cascade on delete — a link row has no meaning without both sides. No `updated_at`: rows are only ever inserted/deleted, never mutated in place.
+
+### `part_of_speech` / `learning_status` are app-level enums, not native Postgres enum types
+
+Both columns are plain `varchar` (see column lengths above) validated as enums at the application/TypeScript layer, not `CREATE TYPE ... AS ENUM`. This keeps adding new values a plain data migration instead of a schema migration.
+
+### `user_vocabulary_item` FK delete behavior
+
+`user_id` cascades on delete (consistent with `session`/`account`: removing a user removes their derived data). `vocabulary_item_id` uses `ON DELETE RESTRICT` instead — vocabulary items are near-static reference/seed data, so deleting one while users have progress against it should fail loudly rather than silently erase that progress.
 
 ### Grammar session rhythm — event-based algorithm
 
