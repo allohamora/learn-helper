@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "start": "node .output/server/index.mjs",
     "migrations:generate": "drizzle-kit generate",
-    "migrations:up": "drizzle-kit up",
+    "migrations:up": "drizzle-kit migrate",
     "typecheck": "tsc --noEmit",
     "format": "prettier . --check",
     "format:fix": "prettier --write .",
