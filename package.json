@@ -21,6 +21,7 @@
     "csslint:fix": "stylelint \"src/**/*.css\" --fix",
     "test": "vitest run",
     "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
     "test:e2e": "vitest run --project e2e"
   },
   "dependencies": {
