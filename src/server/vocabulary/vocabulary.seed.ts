@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { PartOfSpeech } from '../db/db.schema';
-import { disconnectFromDb } from '../db/db.service';
+import { disconnectFromDb, runMigrations } from '../db/db.service';
 import { toChunks } from '../utils/array.utils';
 import { createLogger } from '../utils/logger.utils';
 import { createMissingVocabularyItems } from './vocabulary-item.repository';
@@ -91,6 +91,7 @@ export const vocabularySeed = async () => {
 };
 
 if (import.meta.main) {
+  await runMigrations();
   await vocabularySeed();
   await disconnectFromDb();
 }
