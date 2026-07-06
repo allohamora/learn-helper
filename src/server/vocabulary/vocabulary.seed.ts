@@ -91,7 +91,10 @@ export const vocabularySeed = async () => {
 };
 
 if (import.meta.main) {
-  await runMigrations();
-  await vocabularySeed();
-  await disconnectFromDb();
+  try {
+    await runMigrations();
+    await vocabularySeed();
+  } finally {
+    await disconnectFromDb();
+  }
 }
