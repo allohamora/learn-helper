@@ -54,6 +54,8 @@ api.use(async (c, next) => {
       url: c.req.url,
       query: c.req.query(),
       body,
+      userId: c.get('user')?.id,
+      sessionId: c.get('session')?.id,
       status: c.res.status,
       err: c.error ?? new Error(msg),
     });
