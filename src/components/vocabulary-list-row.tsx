@@ -3,7 +3,7 @@ import { BookOpen, Compass, Plus } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { appClient } from '@/client/api';
+import { appClient } from '@/services/api';
 
 type Props = {
   id: string;

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { getIsomorphicAppClient } from '@/client/api';
+import { getIsomorphicAppClient } from '@/services/api';
 import { VocabularyListRow } from '@/components/vocabulary-list-row';
 
 export const Route = createFileRoute('/_auth/vocabulary')({

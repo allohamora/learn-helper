@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { authClient, getIsomorphicSession } from '@/client/auth';
+import { authClient, getIsomorphicSession } from '@/services/auth';
 
 export const Route = createFileRoute('/login')({
   beforeLoad: async () => {
