@@ -56,7 +56,9 @@ describe('user-vocabulary-list.router', () => {
       const list = await seedList();
       await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
 
-      await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      expect(postRes.status).toBe(200);
+
       const res = await client.api.v1.users.me['vocabulary-lists'].available.$get();
 
       const body = await res.json();
