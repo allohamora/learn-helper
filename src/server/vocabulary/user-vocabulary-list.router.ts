@@ -4,7 +4,7 @@ import { authMiddleware, getAuthContext } from '../auth/auth.middleware';
 import { userVocabularyListSchema } from './dto/user-vocabulary-list.dto';
 import { vocabularyListSchema } from './dto/vocabulary-list.dto';
 import { getVocabularyListsForUser } from './vocabulary-list.repository';
-import { addVocabularyListToUser } from './vocabulary.service';
+import { addVocabularyListToUser } from './vocabulary-list.service';
 
 export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(

@@ -7,7 +7,7 @@ import {
   findOrCreateVocabularyListByTitle,
   getVocabularyListsForUser,
 } from '@/server/vocabulary/vocabulary-list.repository';
-import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary.service';
+import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary-list.service';
 
 const createTestUser = async (id: string) => {
   const [row] = await db

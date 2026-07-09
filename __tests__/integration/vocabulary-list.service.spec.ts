@@ -7,7 +7,7 @@ import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
-import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary.service';
+import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary-list.service';
 
 const createTestUser = async (id: string) => {
   const [row] = await db
@@ -38,7 +38,7 @@ const createTestList = async (values: string[]) => {
   return { list, items };
 };
 
-describe('vocabularyService', () => {
+describe('vocabularyListService', () => {
   describe('addVocabularyListToUser', () => {
     it('creates a waiting progress row for every item in the list', async () => {
       const { id: userId } = await createTestUser('user-1');
