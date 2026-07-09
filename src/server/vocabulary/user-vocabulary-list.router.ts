@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
-import { authMiddleware, getAuthContext } from '../auth/auth.middleware';
+import { authMiddleware } from '../auth/auth.middleware';
 import { userVocabularyListSchema } from './dto/user-vocabulary-list.dto';
 import { vocabularyListSchema } from './dto/vocabulary-list.dto';
 import { getAvailableVocabularyLists } from './vocabulary-list.repository';
@@ -16,10 +16,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...successOkResponse({ description: 'List of vocabulary lists', schema: z.array(vocabularyListSchema) }),
       },
       security: [{ cookieAuth: [] }],
-      middleware: [authMiddleware],
+      middleware: [authMiddleware] as const,
     }),
     async (c) => {
-      const { user } = getAuthContext(c);
+      const user = c.get('user');
 
       return c.json(...toSuccessResponse({ status: 200, data: await getAvailableVocabularyLists(user.id) }));
     },
@@ -42,10 +42,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...successOkResponse({ description: 'List added to the user', schema: userVocabularyListSchema }),
       },
       security: [{ cookieAuth: [] }],
-      middleware: [authMiddleware],
+      middleware: [authMiddleware] as const,
     }),
     async (c) => {
-      const { user } = getAuthContext(c);
+      const user = c.get('user');
       const { id } = c.req.valid('json');
 
       return c.json(...toSuccessResponse({ status: 200, data: await addVocabularyListToUser(user.id, id) }));

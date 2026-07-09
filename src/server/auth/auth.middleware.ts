@@ -1,8 +1,9 @@
 import { createMiddleware } from 'hono/factory';
 import type { Context } from 'hono';
+import type { auth } from './auth.service';
 import { Exception } from '../utils/exception.utils';
 
-export const getAuthContext = (c: Context) => {
+const getAuthContext = (c: Context) => {
   const user = c.get('user');
   const session = c.get('session');
 
@@ -13,7 +14,12 @@ export const getAuthContext = (c: Context) => {
   return { user, session };
 };
 
-export const authMiddleware = createMiddleware(async (c, next) => {
+export const authMiddleware = createMiddleware<{
+  Variables: {
+    user: typeof auth.$Infer.Session.user;
+    session: typeof auth.$Infer.Session.session;
+  };
+}>(async (c, next) => {
   // it throws an unauthorized exception if the auth is not found
   getAuthContext(c);
 

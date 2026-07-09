@@ -28,14 +28,10 @@ const testUser: { user: User; session: Session } = {
   },
 };
 
-const getAuthContext = vitest.fn();
 const authMiddleware = vitest.fn();
 
 export const auth = {
   unauthorized: () => {
-    getAuthContext.mockImplementation(() => {
-      throw Exception.unauthorized('No active session');
-    });
     authMiddleware.mockImplementation(() => {
       throw Exception.unauthorized('No active session');
     });
@@ -46,7 +42,6 @@ export const auth = {
       session: { ...testUser.session, ...overrides.session },
     };
 
-    getAuthContext.mockImplementation(() => data);
     authMiddleware.mockImplementation((c, next) => {
       c.set('user', data.user);
       c.set('session', data.session);
@@ -61,11 +56,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  getAuthContext.mockRestore();
   authMiddleware.mockRestore();
 });
 
 vitest.mock('@/server/auth/auth.middleware', () => ({
-  getAuthContext,
   authMiddleware,
 }));
