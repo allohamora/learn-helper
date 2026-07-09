@@ -22,6 +22,17 @@ const logger = createLogger('api');
 
 const api = new OpenAPIHono().basePath('/api');
 
+const isSsrUrl = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+
+    // by default hc setups 'http://localhost' without a port for app.request() calls
+    return parsedUrl.origin === 'http://localhost';
+  } catch {
+    return false;
+  }
+};
+
 const getBody = async (c: Context) => {
   if (c.req.header('Content-Type') !== MimeType.Json) {
     return;
@@ -53,6 +64,7 @@ api.use(async (c, next) => {
       method: c.req.method,
       path: c.req.path,
       url: c.req.url,
+      isSsr: isSsrUrl(c.req.url),
       query: c.req.query(),
       body,
       userId: c.get('user')?.id,

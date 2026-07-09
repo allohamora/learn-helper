@@ -8,7 +8,7 @@ import { appClient } from '@/client/api';
 type Props = {
   id: string;
   title: string;
-  addedAt: Date | null;
+  addedAt: string | null;
 };
 
 export const VocabularyListRow: FC<Props> = ({ id, title, addedAt }) => {

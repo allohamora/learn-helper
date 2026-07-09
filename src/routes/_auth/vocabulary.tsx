@@ -1,17 +1,16 @@
-import { createServerFn } from '@tanstack/react-start';
 import { createFileRoute } from '@tanstack/react-router';
-import { requireSession } from '@/server/auth/auth.session';
-import { getAvailableVocabularyLists } from '@/server/vocabulary/vocabulary-list.repository';
+import { getIsomorphicAppClient } from '@/client/api';
 import { VocabularyListRow } from '@/components/vocabulary-list-row';
 
-const getVocabularyListsForCurrentUser = createServerFn({ method: 'GET' }).handler(async () => {
-  const { user } = await requireSession();
-
-  return getAvailableVocabularyLists(user.id);
-});
-
 export const Route = createFileRoute('/_auth/vocabulary')({
-  loader: () => getVocabularyListsForCurrentUser(),
+  loader: async () => {
+    const app = await getIsomorphicAppClient();
+    const res = await app.api.v1.users.me['vocabulary-lists'].available.$get();
+    if (!res.ok) throw new Error('Failed to load vocabulary lists');
+
+    const body = await res.json();
+    return body.data;
+  },
   component: VocabularyPage,
 });
 
