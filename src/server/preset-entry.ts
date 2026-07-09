@@ -4,12 +4,13 @@ import { serve } from 'srvx/node';
 import { createLogger } from './utils/logger.utils';
 import { onApplicationStop } from './utils/hook.utils';
 import { disconnectFromDb } from './db/db.service';
+import { PORT } from './config';
 
 // https://github.com/nitrojs/nitro/blob/eee0abd9fc4f729445f5b1a4da06fa78daf7a3da/src/presets/node/runtime/node-server.ts
 const nitroApp = getNitroApp();
 
 const server = serve({
-  port: 3000,
+  port: PORT,
   // Nitro's default node-server entry uses graceful shutdown, but it does not
   // shut this app down correctly, so we use our custom preset to make graceful shutdown work as we need
   // https://github.com/nitrojs/nitro/pull/4017
