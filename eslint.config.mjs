@@ -37,6 +37,18 @@ export default defineConfig(
       '@typescript-eslint/no-misused-promises': 'warn',
       '@typescript-eslint/no-deprecated': 'error',
 
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExpressionStatement[directive="use client"]',
+          message: 'Remove unnecessary "use client" directive.',
+        },
+        {
+          selector: 'ExpressionStatement[directive="use server"]',
+          message: 'Remove unnecessary "use server" directive.',
+        },
+      ],
+
       'beautiful-sort/import': [
         'error',
         {
