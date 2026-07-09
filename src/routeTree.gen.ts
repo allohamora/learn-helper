@@ -9,23 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VocabularyRouteImport } from './routes/vocabulary'
-import { Route as StatisticsRouteImport } from './routes/statistics'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ErrorRouteImport } from './routes/error'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/_auth'
+import { Route as AuthIndexRouteImport } from './routes/_auth/index'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AuthVocabularyRouteImport } from './routes/_auth/vocabulary'
+import { Route as AuthStatisticsRouteImport } from './routes/_auth/statistics'
 
-const VocabularyRoute = VocabularyRouteImport.update({
-  id: '/vocabulary',
-  path: '/vocabulary',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StatisticsRoute = StatisticsRouteImport.update({
-  id: '/statistics',
-  path: '/statistics',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -36,83 +27,83 @@ const ErrorRoute = ErrorRouteImport.update({
   path: '/error',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AuthRoute = AuthRouteImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthRoute,
 } as any)
 const ApiSplatRoute = ApiSplatRouteImport.update({
   id: '/api/$',
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthVocabularyRoute = AuthVocabularyRouteImport.update({
+  id: '/vocabulary',
+  path: '/vocabulary',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthStatisticsRoute = AuthStatisticsRouteImport.update({
+  id: '/statistics',
+  path: '/statistics',
+  getParentRoute: () => AuthRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthIndexRoute
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
-  '/statistics': typeof StatisticsRoute
-  '/vocabulary': typeof VocabularyRoute
+  '/statistics': typeof AuthStatisticsRoute
+  '/vocabulary': typeof AuthVocabularyRoute
   '/api/$': typeof ApiSplatRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
-  '/statistics': typeof StatisticsRoute
-  '/vocabulary': typeof VocabularyRoute
+  '/statistics': typeof AuthStatisticsRoute
+  '/vocabulary': typeof AuthVocabularyRoute
   '/api/$': typeof ApiSplatRoute
+  '/': typeof AuthIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_auth': typeof AuthRouteWithChildren
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
-  '/statistics': typeof StatisticsRoute
-  '/vocabulary': typeof VocabularyRoute
+  '/_auth/statistics': typeof AuthStatisticsRoute
+  '/_auth/vocabulary': typeof AuthVocabularyRoute
   '/api/$': typeof ApiSplatRoute
+  '/_auth/': typeof AuthIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     '/' | '/error' | '/login' | '/statistics' | '/vocabulary' | '/api/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/error' | '/login' | '/statistics' | '/vocabulary' | '/api/$'
+  to: '/error' | '/login' | '/statistics' | '/vocabulary' | '/api/$' | '/'
   id:
     | '__root__'
-    | '/'
+    | '/_auth'
     | '/error'
     | '/login'
-    | '/statistics'
-    | '/vocabulary'
+    | '/_auth/statistics'
+    | '/_auth/vocabulary'
     | '/api/$'
+    | '/_auth/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ErrorRoute: typeof ErrorRoute
   LoginRoute: typeof LoginRoute
-  StatisticsRoute: typeof StatisticsRoute
-  VocabularyRoute: typeof VocabularyRoute
   ApiSplatRoute: typeof ApiSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/vocabulary': {
-      id: '/vocabulary'
-      path: '/vocabulary'
-      fullPath: '/vocabulary'
-      preLoaderRoute: typeof VocabularyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/statistics': {
-      id: '/statistics'
-      path: '/statistics'
-      fullPath: '/statistics'
-      preLoaderRoute: typeof StatisticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -127,12 +118,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/': {
+      id: '/_auth/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/api/$': {
       id: '/api/$'
@@ -141,15 +139,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/vocabulary': {
+      id: '/_auth/vocabulary'
+      path: '/vocabulary'
+      fullPath: '/vocabulary'
+      preLoaderRoute: typeof AuthVocabularyRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/statistics': {
+      id: '/_auth/statistics'
+      path: '/statistics'
+      fullPath: '/statistics'
+      preLoaderRoute: typeof AuthStatisticsRouteImport
+      parentRoute: typeof AuthRoute
+    }
   }
 }
 
+interface AuthRouteChildren {
+  AuthStatisticsRoute: typeof AuthStatisticsRoute
+  AuthVocabularyRoute: typeof AuthVocabularyRoute
+  AuthIndexRoute: typeof AuthIndexRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthStatisticsRoute: AuthStatisticsRoute,
+  AuthVocabularyRoute: AuthVocabularyRoute,
+  AuthIndexRoute: AuthIndexRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthRoute: AuthRouteWithChildren,
   ErrorRoute: ErrorRoute,
   LoginRoute: LoginRoute,
-  StatisticsRoute: StatisticsRoute,
-  VocabularyRoute: VocabularyRoute,
   ApiSplatRoute: ApiSplatRoute,
 }
 export const routeTree = rootRouteImport
