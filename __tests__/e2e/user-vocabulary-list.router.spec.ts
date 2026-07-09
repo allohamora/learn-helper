@@ -31,6 +31,7 @@ const seedList = async () => {
 describe('user-vocabulary-list.router', () => {
   describe('GET /api/v1/users/me/vocabulary-lists/available', () => {
     it('returns 200 with lists', async () => {
+      auth.authorized();
       await seedList();
 
       const res = await client.api.v1.users.me['vocabulary-lists'].available.$get();
