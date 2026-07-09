@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { and, eq } from 'drizzle-orm';
 import { userVocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';

@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';

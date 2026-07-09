@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { count } from 'drizzle-orm';
 import type { AnyPgTable } from 'drizzle-orm/pg-core';
 import { db } from './db.service';

@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { PartOfSpeech } from '../db/db.schema';

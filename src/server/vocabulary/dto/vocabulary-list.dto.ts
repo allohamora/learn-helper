@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { z } from '@hono/zod-openapi';
 
 export const vocabularyListSchema = z.object({

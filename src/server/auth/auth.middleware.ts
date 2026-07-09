@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { createMiddleware } from 'hono/factory';
 import type { Context } from 'hono';
 import type { auth } from './auth.service';

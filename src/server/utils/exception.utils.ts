@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { z } from 'zod';
 import { toErrorResponse } from './response.utils';

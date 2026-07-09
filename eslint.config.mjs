@@ -40,7 +40,7 @@ export default defineConfig(
       'beautiful-sort/import': [
         'error',
         {
-          special: ['./mocks', 'react'],
+          special: ['./mocks', '@tanstack/react-start/server-only', 'react'],
           order: ['special', 'namespace', 'default', 'defaultObj', 'obj', 'none'],
         },
       ],

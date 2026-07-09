@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import pino, { type Logger } from 'pino';
 import { PINO_LEVEL } from '../config';
 

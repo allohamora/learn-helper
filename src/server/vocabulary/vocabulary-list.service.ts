@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { db } from '../db/db.service';
 import { Exception } from '../utils/exception.utils';
 import { createUserVocabularyItemsFromList } from './user-vocabulary-item.repository';
