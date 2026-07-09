@@ -3,7 +3,7 @@ import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
 import { authMiddleware, getAuthContext } from '../auth/auth.middleware';
 import { userVocabularyListSchema } from './dto/user-vocabulary-list.dto';
 import { vocabularyListSchema } from './dto/vocabulary-list.dto';
-import { getVocabularyListsForUser } from './vocabulary-list.repository';
+import { getAvailableVocabularyLists } from './vocabulary-list.repository';
 import { addVocabularyListToUser } from './vocabulary-list.service';
 
 export const userVocabularyListRouter = new OpenAPIHono()
@@ -21,7 +21,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
     async (c) => {
       const { user } = getAuthContext(c);
 
-      return c.json(...toSuccessResponse({ status: 200, data: await getVocabularyListsForUser(user.id) }));
+      return c.json(...toSuccessResponse({ status: 200, data: await getAvailableVocabularyLists(user.id) }));
     },
   )
   .openapi(

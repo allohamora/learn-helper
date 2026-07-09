@@ -5,7 +5,7 @@ import { user, vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
 import {
   findOrCreateVocabularyListByTitle,
-  getVocabularyListsForUser,
+  getAvailableVocabularyLists,
 } from '@/server/vocabulary/vocabulary-list.repository';
 import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary-list.service';
 
@@ -38,12 +38,12 @@ describe('vocabularyListRepository', () => {
     });
   });
 
-  describe('getVocabularyListsForUser', () => {
+  describe('getAvailableVocabularyLists', () => {
     it('returns a list with a null addedAt when the user has not added it', async () => {
       const { id: userId } = await createTestUser('user-1');
       await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
 
-      const lists = await getVocabularyListsForUser(userId);
+      const lists = await getAvailableVocabularyLists(userId);
 
       expect(lists).toMatchObject([{ title: 'Oxford 5000 A1', addedAt: null }]);
     });
@@ -55,7 +55,7 @@ describe('vocabularyListRepository', () => {
 
       await addVocabularyListToUser(userId, list.id);
 
-      const lists = await getVocabularyListsForUser(userId);
+      const lists = await getAvailableVocabularyLists(userId);
 
       expect(lists).toMatchObject([
         { title: 'Oxford 5000 A1', addedAt: expect.any(Date) },

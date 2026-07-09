@@ -22,7 +22,7 @@ export const getVocabularyListById = async (id: string, tx: Transaction = db) =>
   return tx.query.vocabularyList.findFirst({ where: eq(vocabularyList.id, id) });
 };
 
-export const getVocabularyListsForUser = async (userId: string) => {
+export const getAvailableVocabularyLists = async (userId: string) => {
   return db
     .select({
       id: vocabularyList.id,

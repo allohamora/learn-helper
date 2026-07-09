@@ -1,14 +1,14 @@
 import { createServerFn } from '@tanstack/react-start';
 import { createFileRoute } from '@tanstack/react-router';
 import { requireAuth, requireSession } from '@/server/auth/auth.session';
-import { getVocabularyListsForUser } from '@/server/vocabulary/vocabulary-list.repository';
+import { getAvailableVocabularyLists } from '@/server/vocabulary/vocabulary-list.repository';
 import { PageLayout } from '@/components/page-layout';
 import { VocabularyListRow } from '@/components/vocabulary-list-row';
 
 const getVocabularyListsForCurrentUser = createServerFn({ method: 'GET' }).handler(async () => {
   const { user } = await requireSession();
 
-  return getVocabularyListsForUser(user.id);
+  return getAvailableVocabularyLists(user.id);
 });
 
 export const Route = createFileRoute('/vocabulary')({
