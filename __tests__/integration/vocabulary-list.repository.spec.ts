@@ -19,6 +19,13 @@ const createTestUser = async (id: string) => {
   return row;
 };
 
+const createVocabularyList = async (title: string, createdAt: Date) => {
+  const [row] = await db.insert(vocabularyList).values({ title, createdAt }).returning();
+  if (!row) throw new Error('expected vocabulary list to be created');
+
+  return row;
+};
+
 describe('vocabularyListRepository', () => {
   describe('findOrCreateVocabularyListByTitle', () => {
     it('creates a new list on first call', async () => {
@@ -61,6 +68,21 @@ describe('vocabularyListRepository', () => {
         { title: 'Oxford 5000 A1', addedAt: expect.any(Date) },
         { title: 'Oxford 5000 A2', addedAt: null },
       ]);
+    });
+
+    it('sorts by enrollment first and then by vocabulary list creation date', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const unaddedOld = await createVocabularyList('Unadded Old', new Date('2024-01-01T00:00:00Z'));
+      const addedNew = await createVocabularyList('Added New', new Date('2024-01-04T00:00:00Z'));
+      const addedOld = await createVocabularyList('Added Old', new Date('2024-01-02T00:00:00Z'));
+      const unaddedNew = await createVocabularyList('Unadded New', new Date('2024-01-03T00:00:00Z'));
+
+      await addVocabularyListToUser(userId, addedNew.id);
+      await addVocabularyListToUser(userId, addedOld.id);
+
+      const lists = await getAvailableVocabularyLists(userId);
+
+      expect(lists.map((list) => list.id)).toEqual([addedOld.id, addedNew.id, unaddedOld.id, unaddedNew.id]);
     });
   });
 });
