@@ -1,14 +1,37 @@
+import { createServerFn } from '@tanstack/react-start';
 import { createFileRoute } from '@tanstack/react-router';
-import { requireAuth } from '@/server/auth/auth.session';
+import { requireAuth, requireSession } from '@/server/auth/auth.session';
+import { getVocabularyListsForUser } from '@/server/vocabulary/vocabulary-list.repository';
 import { PageLayout } from '@/components/page-layout';
+import { VocabularyListRow } from '@/components/vocabulary-list-row';
 
-export const Route = createFileRoute('/vocabulary')({ beforeLoad: requireAuth, component: VocabularyPage });
+const getVocabularyListsForCurrentUser = createServerFn({ method: 'GET' }).handler(async () => {
+  const { user } = await requireSession();
+
+  return getVocabularyListsForUser(user.id);
+});
+
+export const Route = createFileRoute('/vocabulary')({
+  beforeLoad: requireAuth,
+  loader: () => getVocabularyListsForCurrentUser(),
+  component: VocabularyPage,
+});
 
 function VocabularyPage() {
+  const lists = Route.useLoaderData();
+
   return (
     <PageLayout>
-      <div className="flex flex-col items-center justify-center px-4 pt-4 text-center md:pt-8">
+      <div className="flex flex-col items-center px-4 pt-4 text-center md:pt-8">
         <h1 className="text-2xl font-bold tracking-tight md:text-4xl">Vocabulary</h1>
+      </div>
+
+      <div className="px-4 pt-6">
+        <div className="mx-auto max-w-2xl divide-y overflow-hidden rounded-lg border text-left">
+          {lists.map((list) => (
+            <VocabularyListRow key={list.id} {...list} />
+          ))}
+        </div>
       </div>
     </PageLayout>
   );

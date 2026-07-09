@@ -1,0 +1,54 @@
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
+import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
+import { authMiddleware, getAuthContext } from '../auth/auth.middleware';
+import { vocabularyListSchema } from './dto/vocabulary-list.dto';
+import { getVocabularyListsForUser } from './vocabulary-list.repository';
+import { addVocabularyListToUser } from './vocabulary.service';
+
+export const userVocabularyListRouter = new OpenAPIHono()
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/available',
+      tags: ['Vocabulary'],
+      responses: {
+        ...successOkResponse({ description: 'List of vocabulary lists', schema: z.array(vocabularyListSchema) }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware],
+    }),
+    async (c) => {
+      const { user } = getAuthContext(c);
+
+      return c.json(...toSuccessResponse({ status: 200, data: await getVocabularyListsForUser(user.id) }));
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/',
+      tags: ['Vocabulary'],
+      request: {
+        body: {
+          content: {
+            'application/json': {
+              schema: z.object({ id: z.uuid() }),
+            },
+          },
+        },
+      },
+      responses: {
+        ...successOkResponse({ description: 'List added to the user', schema: z.object({ added: z.boolean() }) }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware],
+    }),
+    async (c) => {
+      const { user } = getAuthContext(c);
+      const { id } = c.req.valid('json');
+
+      await addVocabularyListToUser(user.id, id);
+
+      return c.json(...toSuccessResponse({ status: 200, data: { added: true } }));
+    },
+  );

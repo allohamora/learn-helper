@@ -1,9 +1,23 @@
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
-import { vocabularyList } from '@/server/db/db.schema';
+import { user, vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import {
+  findOrCreateVocabularyListByTitle,
+  getVocabularyListsForUser,
+} from '@/server/vocabulary/vocabulary-list.repository';
+import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary.service';
+
+const createTestUser = async (id: string) => {
+  const [row] = await db
+    .insert(user)
+    .values({ id, name: 'Test User', email: `${id}@example.com` })
+    .returning();
+  if (!row) throw new Error('expected user to be created');
+
+  return row;
+};
 
 describe('vocabularyListRepository', () => {
   describe('findOrCreateVocabularyListByTitle', () => {
@@ -21,6 +35,32 @@ describe('vocabularyListRepository', () => {
 
       expect(second.id).toBe(first.id);
       expect(await countItems(vocabularyList)).toBe(1);
+    });
+  });
+
+  describe('getVocabularyListsForUser', () => {
+    it('returns a list with a null addedAt when the user has not added it', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+
+      const lists = await getVocabularyListsForUser(userId);
+
+      expect(lists).toMatchObject([{ title: 'Oxford 5000 A1', addedAt: null }]);
+    });
+
+    it('marks an enrolled list as added and sorts it first', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
+
+      await addVocabularyListToUser(userId, list.id);
+
+      const lists = await getVocabularyListsForUser(userId);
+
+      expect(lists).toMatchObject([
+        { title: 'Oxford 5000 A1', addedAt: expect.any(Date) },
+        { title: 'Oxford 5000 A2', addedAt: null },
+      ]);
     });
   });
 });

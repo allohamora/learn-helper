@@ -5,6 +5,7 @@ import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
 import { toErrorResponse } from './utils/response.utils';
 import { healthRouter } from './health/health.router';
+import { userVocabularyListRouter } from './vocabulary/user-vocabulary-list.router';
 import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
 import { MimeType } from './utils/mime-type.utils';
@@ -94,7 +95,9 @@ api.on(['POST', 'GET'], '/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
 
-const v1Router = new OpenAPIHono().route('/health', healthRouter);
+const v1Router = new OpenAPIHono()
+  .route('/health', healthRouter)
+  .route('/users/me/vocabulary-lists', userVocabularyListRouter);
 
 const app = api.route('/v1', v1Router);
 
