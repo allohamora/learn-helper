@@ -7,5 +7,14 @@ import { nitro } from 'nitro/vite';
 
 export default defineConfig({
   resolve: { tsconfigPaths: true },
-  plugins: [devtools(), nitro({ serverDir: 'src/server' }), tanstackStart(), viteReact(), tailwindcss()],
+  plugins: [
+    devtools(),
+    tanstackStart(),
+    nitro({
+      // https://github.com/nitrojs/nitro/issues/2973
+      preset: './src/server/preset.ts',
+    }),
+    viteReact(),
+    tailwindcss(),
+  ],
 });

@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import * as schema from './db.schema';
 import path from 'node:path';
 import postgres from 'postgres';

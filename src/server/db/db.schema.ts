@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { relations } from 'drizzle-orm';
 import {
   pgTable,
@@ -89,6 +90,7 @@ export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   userVocabularyItems: many(userVocabularyItem),
+  userVocabularyLists: many(userVocabularyList),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -216,8 +218,29 @@ export const userVocabularyItem = pgTable(
   ],
 );
 
+export const userVocabularyList = pgTable(
+  'user_vocabulary_list',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    vocabularyListId: uuid('vocabulary_list_id')
+      .notNull()
+      .references(() => vocabularyList.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    // data integrity: prevents adding the same list to the same user twice
+    uniqueIndex('user_vocabulary_list_user_id_vocabulary_list_id_idx').on(table.userId, table.vocabularyListId),
+    // join performance: speeds up "which users added this list" lookups
+    index('user_vocabulary_list_vocabulary_list_id_idx').on(table.vocabularyListId),
+  ],
+);
+
 export const vocabularyListRelations = relations(vocabularyList, ({ many }) => ({
   vocabularyListItems: many(vocabularyListItem),
+  userVocabularyLists: many(userVocabularyList),
 }));
 
 export const vocabularyItemRelations = relations(vocabularyItem, ({ many }) => ({
@@ -244,5 +267,16 @@ export const userVocabularyItemRelations = relations(userVocabularyItem, ({ one 
   vocabularyItem: one(vocabularyItem, {
     fields: [userVocabularyItem.vocabularyItemId],
     references: [vocabularyItem.id],
+  }),
+}));
+
+export const userVocabularyListRelations = relations(userVocabularyList, ({ one }) => ({
+  user: one(user, {
+    fields: [userVocabularyList.userId],
+    references: [user.id],
+  }),
+  vocabularyList: one(vocabularyList, {
+    fields: [userVocabularyList.vocabularyListId],
+    references: [vocabularyList.id],
   }),
 }));

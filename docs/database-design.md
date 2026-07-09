@@ -63,6 +63,13 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
+    user_vocabulary_list {
+        id uuid PK
+        user_id uuid FK "unique with vocabulary_list_id (text in practice, matching better-auth's user.id)"
+        vocabulary_list_id uuid FK
+        created_at timestamptz "default NOW"
+    }
+
     user_grammar_topic {
         id uuid PK
         user_id uuid FK "unique with grammar_topic_id"
@@ -123,9 +130,11 @@ erDiagram
     }
 
     user ||--o{ user_vocabulary_item : "one-to-many"
+    user ||--o{ user_vocabulary_list : "one-to-many"
     user ||--o{ user_grammar_topic : "one-to-many"
     user ||--o{ event : "one-to-many"
     vocabulary_list ||--o{ vocabulary_list_item : "one-to-many"
+    vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
     vocabulary_item ||--o{ vocabulary_list_item : "one-to-many"
     grammar_topic_list }o--o{ grammar_topic : "many-to-many"
     vocabulary_list ||--o{ event : "one-to-many"
@@ -228,6 +237,10 @@ Tracks the number of successful confirmations in Learning sessions. Required to 
 ### `vocabulary_list_item`
 
 The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-many relationship (not spelled out elsewhere in this doc). Has its own surrogate `id` PK for consistency with every other table here, plus a unique constraint on `(vocabulary_list_id, vocabulary_item_id)` to prevent duplicate links. Both FKs cascade on delete — a link row has no meaning without both sides. No `updated_at`: rows are only ever inserted/deleted, never mutated in place.
+
+### `user_vocabulary_list`
+
+Tracks which lists a user has explicitly added, as its own fact rather than something inferred from `user_vocabulary_item` rows. A list is added atomically — `vocabulary_list_id` cascades on delete along with `user_id`, consistent with `vocabulary_list_item`'s two-cascade FKs, since a "list added" record has no meaning without both sides existing. Unique on `(user_id, vocabulary_list_id)` to prevent duplicate adds.
 
 ### `part_of_speech` / `learning_status` are app-level enums, not native Postgres enum types
 

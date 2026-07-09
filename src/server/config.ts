@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import { z } from 'zod';
 import 'dotenv/config';
 
@@ -9,6 +10,8 @@ const json = <T extends z.ZodType>(schema: T) =>
 
 export const {
   NODE_ENV,
+
+  PORT,
 
   PINO_LEVEL,
 
@@ -23,6 +26,8 @@ export const {
 } = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+
+    PORT: z.coerce.number().default(3000),
 
     PINO_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']).default('info'),
 
