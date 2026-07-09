@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
 import { authMiddleware, getAuthContext } from '../auth/auth.middleware';
+import { userVocabularyListSchema } from './dto/user-vocabulary-list.dto';
 import { vocabularyListSchema } from './dto/vocabulary-list.dto';
 import { getVocabularyListsForUser } from './vocabulary-list.repository';
 import { addVocabularyListToUser } from './vocabulary.service';
@@ -38,7 +39,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
         },
       },
       responses: {
-        ...successOkResponse({ description: 'List added to the user', schema: z.object({ added: z.boolean() }) }),
+        ...successOkResponse({ description: 'List added to the user', schema: userVocabularyListSchema }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware],
@@ -47,8 +48,6 @@ export const userVocabularyListRouter = new OpenAPIHono()
       const { user } = getAuthContext(c);
       const { id } = c.req.valid('json');
 
-      await addVocabularyListToUser(user.id, id);
-
-      return c.json(...toSuccessResponse({ status: 200, data: { added: true } }));
+      return c.json(...toSuccessResponse({ status: 200, data: await addVocabularyListToUser(user.id, id) }));
     },
   );

@@ -5,7 +5,7 @@ import { createUserVocabularyList, getUserVocabularyList } from './user-vocabula
 import { getVocabularyListById } from './vocabulary-list.repository';
 
 export const addVocabularyListToUser = async (userId: string, vocabularyListId: string) => {
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
     const list = await getVocabularyListById(vocabularyListId, tx);
     if (!list) throw Exception.notFound(`vocabulary list "${vocabularyListId}" not found`);
 
@@ -13,6 +13,6 @@ export const addVocabularyListToUser = async (userId: string, vocabularyListId: 
     if (userList) throw Exception.conflict(`vocabulary list "${vocabularyListId}" already added`);
 
     await createUserVocabularyItemsFromList(userId, vocabularyListId, tx);
-    await createUserVocabularyList(userId, vocabularyListId, tx);
+    return await createUserVocabularyList(userId, vocabularyListId, tx);
   });
 };

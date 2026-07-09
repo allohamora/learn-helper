@@ -10,5 +10,7 @@ export const getUserVocabularyList = async (userId: string, vocabularyListId: st
 };
 
 export const createUserVocabularyList = async (userId: string, vocabularyListId: string, tx: Transaction = db) => {
-  await tx.insert(userVocabularyList).values({ userId, vocabularyListId });
+  const [created] = await tx.insert(userVocabularyList).values({ userId, vocabularyListId }).returning();
+
+  return created;
 };
