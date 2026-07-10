@@ -160,13 +160,11 @@ export const vocabularyListItem = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
-    // data integrity: prevents adding the same item to the same list twice
+    // data integrity: prevents adding the same item to the same list twice, also improves join performance
     uniqueIndex('vocabulary_list_item_vocabulary_list_id_vocabulary_item_id_idx').on(
       table.vocabularyListId,
       table.vocabularyItemId,
     ),
-    // join performance: speeds up "which lists contain this item" lookups
-    index('vocabulary_list_item_vocabulary_item_id_idx').on(table.vocabularyItemId),
   ],
 );
 
@@ -192,10 +190,8 @@ export const userVocabularyItem = pgTable(
       .notNull(),
   },
   (table) => [
-    // data integrity: prevents duplicate progress rows for the same user + item
+    // data integrity: prevents duplicate progress rows for the same user + item, also improves join performance
     uniqueIndex('user_vocabulary_item_user_id_vocabulary_item_id_idx').on(table.userId, table.vocabularyItemId),
-    // join performance: speeds up "which users have progress on this item" lookups
-    index('user_vocabulary_item_vocabulary_item_id_idx').on(table.vocabularyItemId),
   ],
 );
 
@@ -214,10 +210,8 @@ export const userVocabularyList = pgTable(
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
-    // data integrity: prevents adding the same list to the same user twice
+    // data integrity: prevents adding the same list to the same user twice, also improves join performance
     uniqueIndex('user_vocabulary_list_user_id_vocabulary_list_id_idx').on(table.userId, table.vocabularyListId),
-    // join performance: speeds up "which users added this list" lookups
-    index('user_vocabulary_list_vocabulary_list_id_idx').on(table.vocabularyListId),
   ],
 );
 
