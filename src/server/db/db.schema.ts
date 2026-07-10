@@ -20,8 +20,8 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -31,10 +31,10 @@ export const session = pgTable(
   'session',
   {
     id: text('id').primaryKey(),
-    expiresAt: timestamp('expires_at').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     token: text('token').notNull().unique(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text('ip_address'),
@@ -58,12 +58,12 @@ export const account = pgTable(
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     idToken: text('id_token'),
-    accessTokenExpiresAt: timestamp('access_token_expires_at'),
-    refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }),
     scope: text('scope'),
     password: text('password'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -76,9 +76,9 @@ export const verification = pgTable(
     id: text('id').primaryKey(),
     identifier: text('identifier').notNull(),
     value: text('value').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -121,8 +121,8 @@ export const vocabularyItem = pgTable(
     spelling: varchar('spelling', { length: 255 }).notNull(),
     pronunciation: varchar('pronunciation', { length: 512 }),
     link: varchar('link', { length: 512 }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -138,8 +138,8 @@ export const vocabularyList = pgTable('vocabulary_list', {
     .default(sql`uuidv7()`)
     .primaryKey(),
   title: varchar('title', { length: 255 }).notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -157,7 +157,7 @@ export const vocabularyListItem = pgTable(
     vocabularyItemId: uuid('vocabulary_item_id')
       .notNull()
       .references(() => vocabularyItem.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     // data integrity: prevents adding the same item to the same list twice, also improves join performance
@@ -182,9 +182,9 @@ export const userVocabularyItem = pgTable(
       .references(() => vocabularyItem.id, { onDelete: 'restrict' }),
     encounterCount: integer('encounter_count').default(0).notNull(),
     status: varchar('status', { length: 16 }).$type<LearningStatus>().default(LearningStatus.Waiting).notNull(),
-    enqueuedAt: timestamp('enqueued_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    enqueuedAt: timestamp('enqueued_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -207,7 +207,7 @@ export const userVocabularyList = pgTable(
     vocabularyListId: uuid('vocabulary_list_id')
       .notNull()
       .references(() => vocabularyList.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     // data integrity: prevents adding the same list to the same user twice, also improves join performance
