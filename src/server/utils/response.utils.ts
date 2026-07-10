@@ -160,12 +160,14 @@ export const toErrorResponse = <S extends ContentfulStatusCode>({
 
 export const toPaginatedResponse = <T, S extends ContentfulStatusCode>({
   status,
-  data,
-  pageInfo,
+  data: { items, total, nextCursor },
 }: {
   status: S;
-  data: T[];
-  pageInfo: PageInfo;
+  data: {
+    items: T[];
+    total: number;
+    nextCursor?: string;
+  };
 }): [PaginatedResponse<T>, S] => {
-  return [{ success: true, data, pageInfo }, status];
+  return [{ success: true, data: items, pageInfo: { total, count: items.length, nextCursor } }, status];
 };

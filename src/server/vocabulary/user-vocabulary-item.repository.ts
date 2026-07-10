@@ -10,11 +10,11 @@ export const createUserVocabularyItemsFromList = async (
   tx: Transaction = db,
 ) => {
   await tx.execute(sql`
-    INSERT INTO ${userVocabularyItem} (${sql.raw(userVocabularyItem.userId.name)}, ${sql.raw(userVocabularyItem.vocabularyItemId.name)}, ${sql.raw(userVocabularyItem.createdAt.name)}, ${sql.raw(userVocabularyItem.updatedAt.name)})
-    SELECT ${userId}, ${vocabularyListItem.vocabularyItemId}, clock_timestamp(), clock_timestamp()
+    INSERT INTO ${userVocabularyItem} (${sql.raw(userVocabularyItem.userId.name)}, ${sql.raw(userVocabularyItem.vocabularyItemId.name)})
+    SELECT ${userId}, ${vocabularyListItem.vocabularyItemId}
     FROM ${vocabularyListItem}
     WHERE ${vocabularyListItem.vocabularyListId} = ${vocabularyListId}
-    ORDER BY ${vocabularyListItem.createdAt} ASC
+    ORDER BY ${vocabularyListItem.id} ASC
     ON CONFLICT (${sql.raw(userVocabularyItem.userId.name)}, ${sql.raw(userVocabularyItem.vocabularyItemId.name)}) DO NOTHING
   `);
 };

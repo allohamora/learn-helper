@@ -1,5 +1,4 @@
-import '@tanstack/react-start/server-only';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -12,6 +11,7 @@ import {
   uniqueIndex,
   unique,
 } from 'drizzle-orm/pg-core';
+import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 /* start of better-auth */
 export const user = pgTable('user', {
@@ -108,37 +108,12 @@ export const accountRelations = relations(account, ({ one }) => ({
 }));
 /* end of better-auth */
 
-export enum PartOfSpeech {
-  Adjective = 'adjective',
-  Adverb = 'adverb',
-  AuxiliaryVerb = 'auxiliary-verb',
-  Conjunction = 'conjunction',
-  DefiniteArticle = 'definite-article',
-  Determiner = 'determiner',
-  Exclamation = 'exclamation',
-  IndefiniteArticle = 'indefinite-article',
-  InfinitiveMarker = 'infinitive-marker',
-  LinkingVerb = 'linking-verb',
-  ModalVerb = 'modal-verb',
-  Noun = 'noun',
-  Number = 'number',
-  OrdinalNumber = 'ordinal-number',
-  Preposition = 'preposition',
-  Pronoun = 'pronoun',
-  Verb = 'verb',
-}
-
-export enum LearningStatus {
-  Waiting = 'waiting',
-  Learning = 'learning',
-  Learned = 'learned',
-  Known = 'known',
-}
-
 export const vocabularyItem = pgTable(
   'vocabulary_item',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     value: varchar('value', { length: 255 }).notNull(),
     definition: varchar('definition', { length: 512 }).notNull(),
     uaTranslation: varchar('ua_translation', { length: 255 }).notNull(),
@@ -159,7 +134,9 @@ export const vocabularyItem = pgTable(
 );
 
 export const vocabularyList = pgTable('vocabulary_list', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id')
+    .default(sql`uuidv7()`)
+    .primaryKey(),
   title: varchar('title', { length: 255 }).notNull().unique(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
@@ -171,7 +148,9 @@ export const vocabularyList = pgTable('vocabulary_list', {
 export const vocabularyListItem = pgTable(
   'vocabulary_list_item',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     vocabularyListId: uuid('vocabulary_list_id')
       .notNull()
       .references(() => vocabularyList.id, { onDelete: 'cascade' }),
@@ -194,7 +173,9 @@ export const vocabularyListItem = pgTable(
 export const userVocabularyItem = pgTable(
   'user_vocabulary_item',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -221,7 +202,9 @@ export const userVocabularyItem = pgTable(
 export const userVocabularyList = pgTable(
   'user_vocabulary_list',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),

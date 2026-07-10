@@ -2,12 +2,13 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { db } from '@/server/db/db.service';
-import { LearningStatus, PartOfSpeech, user, userVocabularyItem } from '@/server/db/db.schema';
+import { user, userVocabularyItem } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
-import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary-list.service';
+import { addVocabularyListToUser, getUserVocabularyListOrThrow } from '@/server/vocabulary/vocabulary-list.service';
+import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const createTestUser = async (id: string) => {
   const [row] = await db
@@ -85,6 +86,32 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
 
       await expect(addVocabularyListToUser(userId, '00000000-0000-0000-0000-000000000000')).rejects.toThrow(Exception);
+    });
+  });
+
+  describe('getUserVocabularyListOrThrow', () => {
+    it('resolves with the list when the user has added it', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list } = await createTestList(['run']);
+
+      await addVocabularyListToUser(userId, list.id);
+
+      await expect(getUserVocabularyListOrThrow(userId, list.id)).resolves.toMatchObject({ vocabularyListId: list.id });
+    });
+
+    it('throws not found for a non-existent list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      await expect(getUserVocabularyListOrThrow(userId, '00000000-0000-0000-0000-000000000000')).rejects.toThrow(
+        Exception,
+      );
+    });
+
+    it('throws not found when the list exists but the user has not added it', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list } = await createTestList(['run']);
+
+      await expect(getUserVocabularyListOrThrow(userId, list.id)).rejects.toThrow(Exception);
     });
   });
 });
