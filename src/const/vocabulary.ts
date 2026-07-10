@@ -24,3 +24,24 @@ export enum LearningStatus {
   Learned = 'learned',
   Known = 'known',
 }
+
+export const LEARNING_STATUS_ORDER: LearningStatus[] = [
+  LearningStatus.Waiting,
+  LearningStatus.Learning,
+  LearningStatus.Learned,
+  LearningStatus.Known,
+];
+
+export const LEARNING_STATUS_LABEL: Record<LearningStatus, string> = {
+  [LearningStatus.Waiting]: 'Waiting',
+  [LearningStatus.Learning]: 'Learning',
+  [LearningStatus.Learned]: 'Learned',
+  [LearningStatus.Known]: 'Known',
+};
+
+export const LEARNING_STATUS_BG_CLASS: Record<LearningStatus, string> = {
+  [LearningStatus.Waiting]: 'bg-status-waiting',
+  [LearningStatus.Learning]: 'bg-status-learning',
+  [LearningStatus.Learned]: 'bg-status-learned',
+  [LearningStatus.Known]: 'bg-status-known',
+};

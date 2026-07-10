@@ -1,7 +1,7 @@
 import type { FC } from 'react';
-import { BookOpen, Compass, Plus } from 'lucide-react';
+import { BookOpen, Compass, List, Plus } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from '@tanstack/react-router';
+import { Link, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { appClient } from '@/services/api';
 
@@ -31,6 +31,19 @@ export const VocabularyListRow: FC<Props> = ({ id, title, addedAt }) => {
 
       {isAdded ? (
         <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="size-8 px-0 sm:w-auto sm:px-2.5"
+            asChild
+            title="View items"
+            aria-label="View items"
+          >
+            <Link to="/vocabulary/$id" params={{ id }}>
+              <List />
+              <span className="hidden sm:inline">Items</span>
+            </Link>
+          </Button>
           <Button
             size="sm"
             variant="outline"

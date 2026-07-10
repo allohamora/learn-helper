@@ -1,0 +1,71 @@
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
+import { z } from 'zod';
+import { appClient } from '@/services/api';
+import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
+import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
+import { LearningStatus } from '@/const/vocabulary';
+
+const vocabularyListSearchSchema = z.object({
+  status: z.enum(LearningStatus).optional(),
+  search: z.string().trim().min(1).max(255).optional(),
+});
+
+export const Route = createFileRoute('/_auth/vocabulary_/$id')({
+  validateSearch: vocabularyListSearchSchema,
+  component: VocabularyListDetailPage,
+});
+
+function VocabularyListDetailPage() {
+  const { id } = Route.useParams();
+  const { status, search } = Route.useSearch();
+
+  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
+    queryKey: ['vocabulary-list-items', id, status, search],
+    queryFn: async ({ pageParam }) => {
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
+        param: { id },
+        query: { status, search, cursor: pageParam },
+      });
+      if (!res.ok) throw new Error('Failed to load vocabulary list items');
+
+      return res.json();
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor,
+  });
+
+  const items = data?.pages.flatMap((page) => page.data) ?? [];
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <Link
+        to="/vocabulary"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Back to lists
+      </Link>
+
+      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Vocabulary List</h1>
+
+      <div className="mt-6">
+        <VocabularyListFilters />
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-lg border">
+        {isPending ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          <VocabularyItemsTable
+            items={items}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={() => void fetchNextPage()}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
