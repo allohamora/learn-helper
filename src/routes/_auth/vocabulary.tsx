@@ -24,11 +24,15 @@ function VocabularyPage() {
       </div>
 
       <div className="px-4 pt-6">
-        <div className="mx-auto max-w-2xl divide-y overflow-hidden rounded-lg border text-left">
-          {lists.map((list) => (
-            <VocabularyListRow key={list.id} {...list} />
-          ))}
-        </div>
+        {lists.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">No vocabulary lists available.</p>
+        ) : (
+          <div className="mx-auto max-w-2xl divide-y overflow-hidden rounded-lg border text-left">
+            {lists.map((list) => (
+              <VocabularyListRow key={list.id} {...list} />
+            ))}
+          </div>
+        )}
       </div>
     </>
   );
