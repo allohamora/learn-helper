@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
@@ -213,6 +214,73 @@ describe('user-vocabulary-list.router', () => {
 
       expect(collected).toEqual(words);
       expect(new Set(collected).size).toBe(words.length);
+    });
+  });
+
+  describe('GET /api/v1/users/me/vocabulary-lists/:id/progress', () => {
+    it('returns 200 with the title and all items waiting right after adding a list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump'];
+      const { list } = await seedList(words);
+      await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id: list.id } });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: { title: 'Oxford 5000 A1', total: 3, waiting: 3, learning: 0, learned: 0, known: 0 },
+      });
+    });
+
+    it('returns 200 with counts split across statuses', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump', 'swim'];
+      const { list, items } = await seedList(words);
+      await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+
+      const [, walk, jump, swim] = items;
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learning })
+        .where(eq(userVocabularyItem.vocabularyItemId, walk.id));
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learned })
+        .where(eq(userVocabularyItem.vocabularyItemId, jump.id));
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Known })
+        .where(eq(userVocabularyItem.vocabularyItemId, swim.id));
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id: list.id } });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: { title: 'Oxford 5000 A1', total: 4, waiting: 1, learning: 1, learned: 1, known: 1 },
+      });
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id: list.id } });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 when the user has not added the list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id: list.id } });
+      expect(res.status).toBe(404);
     });
   });
 });

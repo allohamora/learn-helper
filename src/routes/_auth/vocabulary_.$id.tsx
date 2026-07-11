@@ -2,9 +2,10 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
-import { appClient } from '@/services/api';
+import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
+import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
 import { LearningStatus } from '@/const/vocabulary';
 
 const vocabularyListSearchSchema = z.object({
@@ -14,12 +15,21 @@ const vocabularyListSearchSchema = z.object({
 
 export const Route = createFileRoute('/_auth/vocabulary_/$id')({
   validateSearch: vocabularyListSearchSchema,
+  loader: async ({ params: { id } }) => {
+    const app = await getIsomorphicAppClient();
+    const res = await app.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id } });
+    if (!res.ok) throw new Error('Failed to load vocabulary list progress');
+
+    const body = await res.json();
+    return body.data;
+  },
   component: VocabularyListDetailPage,
 });
 
 function VocabularyListDetailPage() {
   const { id } = Route.useParams();
   const { status, search } = Route.useSearch();
+  const progress = Route.useLoaderData();
 
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['vocabulary-list-items', id, status, search],
@@ -48,7 +58,11 @@ function VocabularyListDetailPage() {
         Back to lists
       </Link>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Vocabulary List</h1>
+      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{progress.title}</h1>
+
+      <div className="mt-4">
+        <VocabularyListProgress total={progress.total} learned={progress.learned} known={progress.known} />
+      </div>
 
       <div className="mt-6">
         <VocabularyListFilters />

@@ -74,3 +74,18 @@ export const getVocabularyListItems = async ({
     nextCursor,
   };
 };
+
+export const getVocabularyListItemStatusCounts = async ({
+  userId,
+  vocabularyListId,
+}: {
+  userId: string;
+  vocabularyListId: string;
+}) => {
+  return db
+    .select({ status: userVocabularyItem.status, count: count() })
+    .from(vocabularyListItem)
+    .innerJoin(userVocabularyItem, eq(vocabularyListItem.vocabularyItemId, userVocabularyItem.vocabularyItemId))
+    .where(and(eq(vocabularyListItem.vocabularyListId, vocabularyListId), eq(userVocabularyItem.userId, userId)))
+    .groupBy(userVocabularyItem.status);
+};

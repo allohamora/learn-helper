@@ -8,9 +8,10 @@ import {
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
 import { vocabularyListItemSchema, vocabularyListItemsQuerySchema } from './dto/vocabulary-list-item.dto';
+import { vocabularyListProgressSchema } from './dto/vocabulary-list-progress.dto';
 import { userVocabularyListSchema } from './dto/user-vocabulary-list.dto';
 import { vocabularyListSchema } from './dto/vocabulary-list.dto';
-import { getVocabularyListItems } from './vocabulary-list-item.service';
+import { getVocabularyListItems, getVocabularyListProgress } from './vocabulary-list-item.service';
 import { getAvailableVocabularyLists } from './vocabulary-list.repository';
 import { addVocabularyListToUser } from './vocabulary-list.service';
 
@@ -86,6 +87,35 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...toPaginatedResponse({
           status: 200,
           data: await getVocabularyListItems({ userId: user.id, userVocabularyListId: id, ...query }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{id}/progress',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ id: z.uuid() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "List's title and the user's progress",
+          schema: vocabularyListProgressSchema,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { id } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await getVocabularyListProgress({ userId: user.id, userVocabularyListId: id }),
         }),
       );
     },
