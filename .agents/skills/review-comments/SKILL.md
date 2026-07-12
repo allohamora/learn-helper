@@ -11,7 +11,7 @@ description: Walk through PR review comments one at a time with the author - ass
   2. If valid, propose a concrete fix. If not, explain why I think it doesn't apply.
   3. Ask the author what to do: apply the fix, decline with a reason, or something else.
   4. Wait for the author's decision - do not act without it.
-  5. Once decided: make the fix (if any), reply to the thread, and resolve it.
+  5. Once decided: make the fix (if any), then wait for the author's feedback, then reply to the thread and resolve it once they confirm everything is fine.
   6. Only then move on to the next comment.
 - I never fix, reply to, or resolve more than one thread without author input in between.
 - Exception: if multiple threads are the same underlying issue (e.g. the same outdated GitHub Action version repeated across 20 workflow files), I group them and treat them as one - one assessment, one proposed fix, one decision from the author - then apply that single decision to all matching threads (fix once if a single commit covers them all, reply to each, resolve each).
