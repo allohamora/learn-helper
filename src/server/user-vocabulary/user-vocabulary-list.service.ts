@@ -4,14 +4,14 @@ import { Exception } from '../utils/exception.utils';
 import { createUserVocabularyItemsFromList } from './user-vocabulary-item.repository';
 import {
   createUserVocabularyList,
-  getAvailableVocabularyLists as getAvailableVocabularyListsFromRepository,
+  getUserAvailableVocabularyLists as getUserAvailableVocabularyListsFromRepository,
   getUserVocabularyListById,
   getUserVocabularyListByVocabularyListId,
 } from './user-vocabulary-list.repository';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 
-export const getAvailableVocabularyLists = async (userId: string) => {
-  return getAvailableVocabularyListsFromRepository(userId);
+export const getUserAvailableVocabularyLists = async (userId: string) => {
+  return getUserAvailableVocabularyListsFromRepository(userId);
 };
 
 export const addVocabularyListToUser = async ({

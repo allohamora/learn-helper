@@ -1,23 +1,23 @@
 import '@tanstack/react-start/server-only';
 import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
 import {
-  getVocabularyListItems as getVocabularyListItemsFromRepository,
-  getVocabularyListItemStatusCounts,
+  getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
+  getUserVocabularyListItemStatusCounts,
 } from './user-vocabulary-list-item.repository';
 import { getUserVocabularyListOrThrow } from './user-vocabulary-list.service';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 
-export const getVocabularyListItems = async ({
+export const getUserVocabularyListItems = async ({
   userId,
   userVocabularyListId,
   ...filter
 }: UserVocabularyListItemsFilterDto & { userId: string; userVocabularyListId: string }) => {
   const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
-  return getVocabularyListItemsFromRepository({ userId, vocabularyListId: userList.vocabularyListId, ...filter });
+  return getUserVocabularyListItemsFromRepository({ userId, vocabularyListId: userList.vocabularyListId, ...filter });
 };
 
-export const getVocabularyListProgress = async ({
+export const getUserVocabularyListProgress = async ({
   userId,
   userVocabularyListId,
 }: {
@@ -28,7 +28,7 @@ export const getVocabularyListProgress = async ({
 
   const [list, statusCounts] = await Promise.all([
     getVocabularyListByIdOrThrow(userList.vocabularyListId),
-    getVocabularyListItemStatusCounts({ userId, vocabularyListId: userList.vocabularyListId }),
+    getUserVocabularyListItemStatusCounts({ userId, vocabularyListId: userList.vocabularyListId }),
   ]);
 
   const counts = statusCounts.reduce(

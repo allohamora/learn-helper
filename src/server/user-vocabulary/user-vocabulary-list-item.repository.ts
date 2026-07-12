@@ -5,7 +5,7 @@ import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db
 import { db } from '../db/db.service';
 import { RequestType } from '@/const/request';
 
-export const getVocabularyListItems = async ({
+export const getUserVocabularyListItems = async ({
   userId,
   vocabularyListId,
   status,
@@ -66,7 +66,7 @@ export const getVocabularyListItems = async ({
   };
 };
 
-export const getVocabularyListItemStatusCounts = async ({
+export const getUserVocabularyListItemStatusCounts = async ({
   userId,
   vocabularyListId,
 }: {

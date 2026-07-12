@@ -3,7 +3,7 @@ import { user, vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
 import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
-import { getAvailableVocabularyLists } from '@/server/user-vocabulary/user-vocabulary-list.repository';
+import { getUserAvailableVocabularyLists } from '@/server/user-vocabulary/user-vocabulary-list.repository';
 
 const createTestUser = async (id: string) => {
   const [row] = await db
@@ -23,12 +23,12 @@ const createVocabularyList = async (title: string, createdAt: Date) => {
 };
 
 describe('userVocabularyListRepository', () => {
-  describe('getAvailableVocabularyLists', () => {
+  describe('getUserAvailableVocabularyLists', () => {
     it('returns a list with a null addedAt when the user has not added it', async () => {
       const { id: userId } = await createTestUser('user-1');
       await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
 
-      const lists = await getAvailableVocabularyLists(userId);
+      const lists = await getUserAvailableVocabularyLists(userId);
 
       expect(lists).toMatchObject([{ title: 'Oxford 5000 A1', addedAt: null }]);
     });
@@ -40,7 +40,7 @@ describe('userVocabularyListRepository', () => {
 
       await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      const lists = await getAvailableVocabularyLists(userId);
+      const lists = await getUserAvailableVocabularyLists(userId);
 
       expect(lists).toMatchObject([
         { title: 'Oxford 5000 A1', addedAt: expect.any(Date) },
@@ -58,7 +58,7 @@ describe('userVocabularyListRepository', () => {
       await addVocabularyListToUser({ userId, vocabularyListId: addedNew.id });
       await addVocabularyListToUser({ userId, vocabularyListId: addedOld.id });
 
-      const lists = await getAvailableVocabularyLists(userId);
+      const lists = await getUserAvailableVocabularyLists(userId);
 
       expect(lists.map((list) => list.vocabularyListId)).toEqual([
         addedOld.id,

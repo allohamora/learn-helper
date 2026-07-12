@@ -13,8 +13,8 @@ import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-ite
 import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
 import { userVocabularyListDto } from './dto/user-vocabulary-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
-import { getVocabularyListItems, getVocabularyListProgress } from './user-vocabulary-list-item.service';
-import { addVocabularyListToUser, getAvailableVocabularyLists } from './user-vocabulary-list.service';
+import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
+import { addVocabularyListToUser, getUserAvailableVocabularyLists } from './user-vocabulary-list.service';
 
 export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(
@@ -34,7 +34,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
     async (c) => {
       const user = c.get('user');
 
-      return c.json(...toSuccessResponse({ status: 200, data: await getAvailableVocabularyLists(user.id) }));
+      return c.json(...toSuccessResponse({ status: 200, data: await getUserAvailableVocabularyLists(user.id) }));
     },
   )
   .openapi(
@@ -95,7 +95,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       return c.json(
         ...toPaginatedResponse({
           status: 200,
-          data: await getVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
+          data: await getUserVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
         }),
       );
     },
@@ -124,7 +124,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await getVocabularyListProgress({ userId: user.id, userVocabularyListId }),
+          data: await getUserVocabularyListProgress({ userId: user.id, userVocabularyListId }),
         }),
       );
     },

@@ -34,7 +34,7 @@ export const createUserVocabularyList = async (
   return created;
 };
 
-export const getAvailableVocabularyLists = async (userId: string) => {
+export const getUserAvailableVocabularyLists = async (userId: string) => {
   return db
     .select({
       id: userVocabularyList.id,
