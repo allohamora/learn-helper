@@ -103,7 +103,7 @@ describe('user-vocabulary-list.router', () => {
     });
   });
 
-  describe('GET /api/v1/users/me/vocabulary-lists/:id/items', () => {
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items', () => {
     it('returns 200 with the words the user has added to the list', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
@@ -111,8 +111,8 @@ describe('user-vocabulary-list.router', () => {
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id: userList.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId: userList.id },
         query: {},
       });
       expect(res.status).toBe(200);
@@ -129,8 +129,8 @@ describe('user-vocabulary-list.router', () => {
       auth.unauthorized();
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id: list.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId: list.id },
         query: {},
       });
       expect(res.status).toBe(401);
@@ -141,8 +141,8 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id: list.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId: list.id },
         query: {},
       });
       expect(res.status).toBe(404);
@@ -156,8 +156,8 @@ describe('user-vocabulary-list.router', () => {
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
-      const firstRes = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id: userList.id },
+      const firstRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId: userList.id },
         query: { limit: '2' },
       });
       expect(firstRes.status).toBe(200);
@@ -166,8 +166,8 @@ describe('user-vocabulary-list.router', () => {
       expect(firstBody.pageInfo).toMatchObject({ total: 5, count: 2 });
       expect(firstBody.pageInfo.nextCursor).toEqual(expect.any(String));
 
-      const secondRes = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id: userList.id },
+      const secondRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId: userList.id },
         query: { limit: '2', cursor: firstBody.pageInfo.nextCursor },
       });
       expect(secondRes.status).toBe(200);
@@ -176,8 +176,8 @@ describe('user-vocabulary-list.router', () => {
       expect(secondBody.pageInfo).toMatchObject({ total: 5, count: 2 });
       expect(secondBody.pageInfo.nextCursor).toEqual(expect.any(String));
 
-      const thirdRes = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id: userList.id },
+      const thirdRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId: userList.id },
         query: { limit: '2', cursor: secondBody.pageInfo.nextCursor },
       });
       expect(thirdRes.status).toBe(200);
@@ -203,8 +203,8 @@ describe('user-vocabulary-list.router', () => {
       let cursor: string | undefined;
 
       do {
-        const res = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-          param: { id: userList.id },
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+          param: { userVocabularyListId: userList.id },
           query: { limit: '3', ...(cursor ? { cursor } : {}) },
         });
         expect(res.status).toBe(200);
@@ -220,7 +220,7 @@ describe('user-vocabulary-list.router', () => {
     });
   });
 
-  describe('GET /api/v1/users/me/vocabulary-lists/:id/progress', () => {
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/progress', () => {
     it('returns 200 with the title and all items waiting right after adding a list', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
@@ -229,8 +229,8 @@ describe('user-vocabulary-list.router', () => {
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({
-        param: { id: userList.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+        param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
 
@@ -263,8 +263,8 @@ describe('user-vocabulary-list.router', () => {
         .set({ status: LearningStatus.Known })
         .where(eq(userVocabularyItem.vocabularyItemId, swim.id));
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({
-        param: { id: userList.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+        param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
 
@@ -279,7 +279,9 @@ describe('user-vocabulary-list.router', () => {
       auth.unauthorized();
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id: list.id } });
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+        param: { userVocabularyListId: list.id },
+      });
       expect(res.status).toBe(401);
     });
 
@@ -288,7 +290,9 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id: list.id } });
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+        param: { userVocabularyListId: list.id },
+      });
       expect(res.status).toBe(404);
     });
   });

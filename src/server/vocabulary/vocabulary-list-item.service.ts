@@ -11,7 +11,7 @@ export const getVocabularyListItems = async ({
   userVocabularyListId,
   ...filter
 }: UserVocabularyListItemsFilterDto & { userId: string; userVocabularyListId: string }) => {
-  const userList = await getUserVocabularyListOrThrow({ userId, id: userVocabularyListId });
+  const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
   return getVocabularyListItemsFromRepository({ userId, vocabularyListId: userList.vocabularyListId, ...filter });
 };
@@ -23,7 +23,7 @@ export const getVocabularyListProgress = async ({
   userId: string;
   userVocabularyListId: string;
 }) => {
-  const userList = await getUserVocabularyListOrThrow({ userId, id: userVocabularyListId });
+  const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
   const [list, statusCounts] = await Promise.all([
     getVocabularyListByIdOrThrow(userList.vocabularyListId),

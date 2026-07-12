@@ -13,11 +13,13 @@ const vocabularyListSearchSchema = z.object({
   search: z.string().trim().min(1).max(255).optional(),
 });
 
-export const Route = createFileRoute('/_auth/vocabulary_/$id')({
+export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')({
   validateSearch: vocabularyListSearchSchema,
-  loader: async ({ params: { id } }) => {
+  loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({ param: { id } });
+    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+      param: { userVocabularyListId },
+    });
     if (!res.ok) throw new Error('Failed to load vocabulary list progress');
 
     const body = await res.json();
@@ -27,15 +29,15 @@ export const Route = createFileRoute('/_auth/vocabulary_/$id')({
 });
 
 function VocabularyListDetailPage() {
-  const { id } = Route.useParams();
+  const { userVocabularyListId } = Route.useParams();
   const { status, search } = Route.useSearch();
   const progress = Route.useLoaderData();
 
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey: ['vocabulary-list-items', id, status, search],
+    queryKey: ['vocabulary-list-items', userVocabularyListId, status, search],
     queryFn: async ({ pageParam }) => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
-        param: { id },
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+        param: { userVocabularyListId },
         query: { status, search, cursor: pageParam },
       });
       if (!res.ok) throw new Error('Failed to load vocabulary list items');

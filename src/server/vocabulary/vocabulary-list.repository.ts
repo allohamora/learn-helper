@@ -19,8 +19,8 @@ export const findOrCreateVocabularyListByTitle = async (title: string) => {
   return existing;
 };
 
-export const getVocabularyListById = async (id: string, tx: Transaction = db) => {
-  return tx.query.vocabularyList.findFirst({ where: eq(vocabularyList.id, id) });
+export const getVocabularyListById = async (vocabularyListId: string, tx: Transaction = db) => {
+  return tx.query.vocabularyList.findFirst({ where: eq(vocabularyList.id, vocabularyListId) });
 };
 
 export const getAvailableVocabularyLists = async (userId: string) => {

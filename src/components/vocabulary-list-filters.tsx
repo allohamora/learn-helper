@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LEARNING_STATUS_LABEL, LEARNING_STATUS_ORDER, LearningStatus } from '@/const/vocabulary';
 
-const routeApi = getRouteApi('/_auth/vocabulary_/$id');
+const routeApi = getRouteApi('/_auth/vocabulary_/$userVocabularyListId');
 
 const ALL_STATUSES = 'all';
 

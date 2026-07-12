@@ -73,10 +73,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
-      path: '/{id}/items',
+      path: '/{userVocabularyListId}/items',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ id: z.uuidv7() }),
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
         query: userVocabularyListItemsFilterDto,
       },
       responses: {
@@ -90,13 +90,13 @@ export const userVocabularyListRouter = new OpenAPIHono()
     }),
     async (c) => {
       const user = c.get('user');
-      const { id } = c.req.valid('param');
+      const { userVocabularyListId } = c.req.valid('param');
       const query = c.req.valid('query');
 
       return c.json(
         ...toPaginatedResponse({
           status: 200,
-          data: await getVocabularyListItems({ userId: user.id, userVocabularyListId: id, ...query }),
+          data: await getVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
         }),
       );
     },
@@ -104,10 +104,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
-      path: '/{id}/progress',
+      path: '/{userVocabularyListId}/progress',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ id: z.uuidv7() }),
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
       },
       responses: {
         ...successOkResponse({
@@ -120,12 +120,12 @@ export const userVocabularyListRouter = new OpenAPIHono()
     }),
     async (c) => {
       const user = c.get('user');
-      const { id } = c.req.valid('param');
+      const { userVocabularyListId } = c.req.valid('param');
 
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await getVocabularyListProgress({ userId: user.id, userVocabularyListId: id }),
+          data: await getVocabularyListProgress({ userId: user.id, userVocabularyListId }),
         }),
       );
     },

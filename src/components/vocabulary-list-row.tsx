@@ -39,7 +39,7 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
             title="View items"
             aria-label="View items"
           >
-            <Link to="/vocabulary/$id" params={{ id }}>
+            <Link to="/vocabulary/$userVocabularyListId" params={{ userVocabularyListId: id }}>
               <List />
               <span className="hidden sm:inline">Items</span>
             </Link>

@@ -13,9 +13,15 @@ export const getUserVocabularyListByVocabularyListId = async (
   });
 };
 
-export const getUserVocabularyListById = async ({ userId, id }: { userId: string; id: string }) => {
+export const getUserVocabularyListById = async ({
+  userId,
+  userVocabularyListId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+}) => {
   return db.query.userVocabularyList.findFirst({
-    where: and(eq(userVocabularyList.userId, userId), eq(userVocabularyList.id, id)),
+    where: and(eq(userVocabularyList.userId, userId), eq(userVocabularyList.id, userVocabularyListId)),
   });
 };
 

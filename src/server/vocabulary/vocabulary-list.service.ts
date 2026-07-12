@@ -28,9 +28,15 @@ export const addVocabularyListToUser = async ({
   });
 };
 
-export const getUserVocabularyListOrThrow = async ({ userId, id }: { userId: string; id: string }) => {
-  const userList = await getUserVocabularyListById({ userId, id });
-  if (!userList) throw Exception.notFound(`vocabulary list "${id}" not found for user`);
+export const getUserVocabularyListOrThrow = async ({
+  userId,
+  userVocabularyListId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+}) => {
+  const userList = await getUserVocabularyListById({ userId, userVocabularyListId });
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
 
   return userList;
 };

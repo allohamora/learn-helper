@@ -98,7 +98,7 @@ describe('vocabularyListService', () => {
 
       const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      await expect(getUserVocabularyListOrThrow({ userId, id: userList.id })).resolves.toMatchObject({
+      await expect(getUserVocabularyListOrThrow({ userId, userVocabularyListId: userList.id })).resolves.toMatchObject({
         vocabularyListId: list.id,
       });
     });
@@ -107,7 +107,7 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
 
       await expect(
-        getUserVocabularyListOrThrow({ userId, id: '00000000-0000-0000-0000-000000000000' }),
+        getUserVocabularyListOrThrow({ userId, userVocabularyListId: '00000000-0000-0000-0000-000000000000' }),
       ).rejects.toThrow(Exception);
     });
 
@@ -115,7 +115,7 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
       const { list } = await createTestList(['run']);
 
-      await expect(getUserVocabularyListOrThrow({ userId, id: list.id })).rejects.toThrow(Exception);
+      await expect(getUserVocabularyListOrThrow({ userId, userVocabularyListId: list.id })).rejects.toThrow(Exception);
     });
   });
 });

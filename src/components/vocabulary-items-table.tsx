@@ -11,7 +11,9 @@ import { LearningStatus } from '@/const/vocabulary';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
 
-type ItemsResponse = InferResponseType<(typeof appClient.api.v1.users.me)['vocabulary-lists'][':id']['items']['$get']>;
+type ItemsResponse = InferResponseType<
+  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']
+>;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
 const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
