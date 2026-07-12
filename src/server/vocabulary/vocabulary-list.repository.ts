@@ -22,3 +22,10 @@ export const findOrCreateVocabularyListByTitle = async (title: string) => {
 export const getVocabularyListById = async (vocabularyListId: string, tx: Transaction = db) => {
   return tx.query.vocabularyList.findFirst({ where: eq(vocabularyList.id, vocabularyListId) });
 };
+
+export const getVocabularyListByIdOrThrow = async (vocabularyListId: string, tx: Transaction = db) => {
+  const list = await getVocabularyListById(vocabularyListId, tx);
+  if (!list) throw Exception.notFound(`vocabulary list "${vocabularyListId}" not found`);
+
+  return list;
+};

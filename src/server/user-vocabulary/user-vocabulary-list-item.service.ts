@@ -4,8 +4,8 @@ import {
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
   getUserVocabularyListItemStatusCounts,
 } from './user-vocabulary-list-item.repository';
-import { getUserVocabularyListOrThrow } from './user-vocabulary-list.service';
-import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
+import { getUserVocabularyListOrThrow } from './user-vocabulary-list.repository';
+import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.repository';
 
 export const getUserVocabularyListItems = async ({
   userId,
