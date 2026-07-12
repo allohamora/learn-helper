@@ -50,10 +50,18 @@ gh api graphql -f query='{
   repository(owner: "<owner>", name: "<repo>") {
     pullRequest(number: <pr>) {
       reviewThreads(first: 10) {
+        pageInfo { hasNextPage endCursor }
         nodes {
           id
           isResolved
-          comments(first: 1) { nodes { body } }
+          path
+          line
+          comments(first: 10) {
+            nodes {
+              body
+              author { login }
+            }
+          }
         }
       }
     }
