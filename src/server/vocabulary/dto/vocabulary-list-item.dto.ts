@@ -11,7 +11,7 @@ export const vocabularyListItemSchema = z.object({
   spelling: z.string(),
   pronunciation: z.string().nullable(),
   link: z.string().nullable(),
-  userVocabularyItemId: z.uuid(),
+  userVocabularyItemId: z.uuidv7(),
   status: z.enum(LearningStatus),
   encounterCount: z.number(),
   createdAt: z.iso.datetime(),
@@ -20,7 +20,7 @@ export const vocabularyListItemSchema = z.object({
 export const vocabularyListItemsQuerySchema = z.object({
   status: z.enum(LearningStatus).optional(),
   search: z.string().trim().min(1).max(255).optional(),
-  cursor: z.string().optional(),
+  cursor: z.uuidv7().optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   type: z.enum(RequestType).optional(),
 });

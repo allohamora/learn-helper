@@ -97,7 +97,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
 
       const res = await client.api.v1.users.me['vocabulary-lists'].$post({
-        json: { id: '00000000-0000-0000-0000-000000000000' },
+        json: { id: '00000000-0000-7000-8000-000000000000' },
       });
       expect(res.status).toBe(404);
     });

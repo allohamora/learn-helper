@@ -42,7 +42,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
         body: {
           content: {
             'application/json': {
-              schema: z.object({ id: z.uuid() }),
+              schema: z.object({ id: z.uuidv7() }),
             },
           },
         },
@@ -66,7 +66,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       path: '/{id}/items',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: z.uuidv7() }),
         query: vocabularyListItemsQuerySchema,
       },
       responses: {
@@ -97,7 +97,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       path: '/{id}/progress',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ id: z.uuid() }),
+        params: z.object({ id: z.uuidv7() }),
       },
       responses: {
         ...successOkResponse({
