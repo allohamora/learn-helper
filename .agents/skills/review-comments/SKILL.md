@@ -43,7 +43,7 @@ gh api repos/<owner>/<repo>/pulls/<pr>/comments/<comment-id>/replies \
   -f body="https://github.com/<owner>/<repo>/commit/<sha>"
 ```
 
-## How to get thread node IDs
+## How to get threads and comments
 
 ```bash
 gh api graphql -f query='{
