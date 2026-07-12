@@ -32,8 +32,8 @@ describe('userVocabularyItemRepository', () => {
         items.map((item) => ({ vocabularyListId: list.id, vocabularyItemId: item.id })),
       );
 
-      await createUserVocabularyItemsFromList(userId, list.id);
-      await createUserVocabularyItemsFromList(userId, list.id);
+      await createUserVocabularyItemsFromList({ userId, vocabularyListId: list.id });
+      await createUserVocabularyItemsFromList({ userId, vocabularyListId: list.id });
 
       expect(await countItems(userVocabularyItem)).toBe(items.length);
     });
@@ -60,7 +60,7 @@ describe('userVocabularyItemRepository', () => {
         words.map((word) => ({ vocabularyListId: list.id, vocabularyItemId: word.id })),
       );
 
-      await createUserVocabularyItemsFromList(userId, list.id);
+      await createUserVocabularyItemsFromList({ userId, vocabularyListId: list.id });
 
       const userWords = await db
         .select({

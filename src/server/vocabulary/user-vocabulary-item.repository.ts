@@ -5,8 +5,7 @@ import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 
 export const createUserVocabularyItemsFromList = async (
-  userId: string,
-  vocabularyListId: string,
+  { userId, vocabularyListId }: { userId: string; vocabularyListId: string },
   tx: Transaction = db,
 ) => {
   await tx.execute(sql`

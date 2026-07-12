@@ -63,7 +63,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
       const { vocabularyListId } = c.req.valid('json');
 
       return c.json(
-        ...toSuccessResponse({ status: 201, data: await addVocabularyListToUser(user.id, vocabularyListId) }),
+        ...toSuccessResponse({
+          status: 201,
+          data: await addVocabularyListToUser({ userId: user.id, vocabularyListId }),
+        }),
       );
     },
   )

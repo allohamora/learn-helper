@@ -45,7 +45,7 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
       const { list, items } = await createTestList(['run', 'walk']);
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       expect(await countItems(userVocabularyItem)).toBe(items.length);
 
@@ -57,9 +57,9 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
       const { list, items } = await createTestList(['run', 'walk']);
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      await expect(addVocabularyListToUser(userId, list.id)).rejects.toThrow(Exception);
+      await expect(addVocabularyListToUser({ userId, vocabularyListId: list.id })).rejects.toThrow(Exception);
       expect(await countItems(userVocabularyItem)).toBe(items.length);
     });
 
@@ -73,7 +73,7 @@ describe('vocabularyListService', () => {
         .insert(userVocabularyItem)
         .values({ userId, vocabularyItemId: learnedItem.id, status: LearningStatus.Learned, encounterCount: 3 });
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       const row = await db.query.userVocabularyItem.findFirst({
         where: eq(userVocabularyItem.vocabularyItemId, learnedItem.id),
@@ -85,7 +85,9 @@ describe('vocabularyListService', () => {
     it('throws not found for a non-existent list', async () => {
       const { id: userId } = await createTestUser('user-1');
 
-      await expect(addVocabularyListToUser(userId, '00000000-0000-0000-0000-000000000000')).rejects.toThrow(Exception);
+      await expect(
+        addVocabularyListToUser({ userId, vocabularyListId: '00000000-0000-0000-0000-000000000000' }),
+      ).rejects.toThrow(Exception);
     });
   });
 
@@ -94,24 +96,26 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
       const { list } = await createTestList(['run']);
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      await expect(getUserVocabularyListOrThrow(userId, list.id)).resolves.toMatchObject({ vocabularyListId: list.id });
+      await expect(getUserVocabularyListOrThrow({ userId, id: list.id })).resolves.toMatchObject({
+        vocabularyListId: list.id,
+      });
     });
 
     it('throws not found for a non-existent list', async () => {
       const { id: userId } = await createTestUser('user-1');
 
-      await expect(getUserVocabularyListOrThrow(userId, '00000000-0000-0000-0000-000000000000')).rejects.toThrow(
-        Exception,
-      );
+      await expect(
+        getUserVocabularyListOrThrow({ userId, id: '00000000-0000-0000-0000-000000000000' }),
+      ).rejects.toThrow(Exception);
     });
 
     it('throws not found when the list exists but the user has not added it', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { list } = await createTestList(['run']);
 
-      await expect(getUserVocabularyListOrThrow(userId, list.id)).rejects.toThrow(Exception);
+      await expect(getUserVocabularyListOrThrow({ userId, id: list.id })).rejects.toThrow(Exception);
     });
   });
 });

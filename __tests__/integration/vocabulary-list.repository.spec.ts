@@ -60,7 +60,7 @@ describe('vocabularyListRepository', () => {
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       const lists = await getAvailableVocabularyLists(userId);
 
@@ -77,8 +77,8 @@ describe('vocabularyListRepository', () => {
       const addedOld = await createVocabularyList('Added Old', new Date('2024-01-02T00:00:00Z'));
       const unaddedNew = await createVocabularyList('Unadded New', new Date('2024-01-03T00:00:00Z'));
 
-      await addVocabularyListToUser(userId, addedNew.id);
-      await addVocabularyListToUser(userId, addedOld.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: addedNew.id });
+      await addVocabularyListToUser({ userId, vocabularyListId: addedOld.id });
 
       const lists = await getAvailableVocabularyLists(userId);
 
