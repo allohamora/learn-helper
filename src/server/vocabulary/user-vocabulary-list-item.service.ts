@@ -3,8 +3,9 @@ import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-lis
 import {
   getVocabularyListItems as getVocabularyListItemsFromRepository,
   getVocabularyListItemStatusCounts,
-} from './vocabulary-list-item.repository';
-import { getUserVocabularyListOrThrow, getVocabularyListByIdOrThrow } from './vocabulary-list.service';
+} from './user-vocabulary-list-item.repository';
+import { getUserVocabularyListOrThrow } from './user-vocabulary-list.service';
+import { getVocabularyListByIdOrThrow } from './vocabulary-list.service';
 
 export const getVocabularyListItems = async ({
   userId,
