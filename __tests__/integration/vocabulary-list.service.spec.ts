@@ -96,9 +96,9 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
       const { list } = await createTestList(['run']);
 
-      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      await expect(getUserVocabularyListOrThrow({ userId, id: list.id })).resolves.toMatchObject({
+      await expect(getUserVocabularyListOrThrow({ userId, id: userList.id })).resolves.toMatchObject({
         vocabularyListId: list.id,
       });
     });

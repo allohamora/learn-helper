@@ -82,7 +82,12 @@ describe('vocabularyListRepository', () => {
 
       const lists = await getAvailableVocabularyLists(userId);
 
-      expect(lists.map((list) => list.id)).toEqual([addedOld.id, addedNew.id, unaddedOld.id, unaddedNew.id]);
+      expect(lists.map((list) => list.vocabularyListId)).toEqual([
+        addedOld.id,
+        addedNew.id,
+        unaddedOld.id,
+        unaddedNew.id,
+      ]);
     });
   });
 });
