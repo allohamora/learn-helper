@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { z } from '@hono/zod-openapi';
 
-export const vocabularyListProgressSchema = z.object({
+export const userVocabularyListProgressSchema = z.object({
   title: z.string(),
   total: z.number(),
   waiting: z.number(),

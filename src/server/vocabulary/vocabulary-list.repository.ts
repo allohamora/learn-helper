@@ -26,7 +26,8 @@ export const getVocabularyListById = async (id: string, tx: Transaction = db) =>
 export const getAvailableVocabularyLists = async (userId: string) => {
   return db
     .select({
-      id: vocabularyList.id,
+      id: userVocabularyList.id,
+      vocabularyListId: vocabularyList.id,
       title: vocabularyList.title,
       addedAt: userVocabularyList.createdAt,
     })

@@ -3,7 +3,7 @@ import { z } from '@hono/zod-openapi';
 import { LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 
-export const vocabularyListItemSchema = z.object({
+export const userVocabularyListItemSchema = z.object({
   value: z.string(),
   definition: z.string(),
   uaTranslation: z.string(),
@@ -17,7 +17,7 @@ export const vocabularyListItemSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 
-export const vocabularyListItemsQuerySchema = z.object({
+export const userVocabularyListItemsQuerySchema = z.object({
   status: z.enum(LearningStatus).optional(),
   search: z.string().trim().min(1).max(255).optional(),
   cursor: z.uuidv7().optional(),
@@ -25,4 +25,4 @@ export const vocabularyListItemsQuerySchema = z.object({
   type: z.enum(RequestType).optional(),
 });
 
-export type VocabularyListItemsQuery = z.infer<typeof vocabularyListItemsQuerySchema>;
+export type UserVocabularyListItemsQuery = z.infer<typeof userVocabularyListItemsQuerySchema>;

@@ -29,7 +29,7 @@ function VocabularyPage() {
         ) : (
           <div className="mx-auto max-w-2xl divide-y overflow-hidden rounded-lg border text-left">
             {lists.map((list) => (
-              <VocabularyListRow key={list.id} {...list} />
+              <VocabularyListRow key={list.vocabularyListId} {...list} />
             ))}
           </div>
         )}

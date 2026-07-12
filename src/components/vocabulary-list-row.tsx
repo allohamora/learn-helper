@@ -6,18 +6,18 @@ import { Button } from '@/components/ui/button';
 import { appClient } from '@/services/api';
 
 type Props = {
-  id: string;
+  id: string | null;
+  vocabularyListId: string;
   title: string;
   addedAt: string | null;
 };
 
-export const VocabularyListRow: FC<Props> = ({ id, title, addedAt }) => {
+export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) => {
   const router = useRouter();
-  const isAdded = addedAt !== null;
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { id } });
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { id: vocabularyListId } });
       if (!res.ok) throw new Error('Failed to add vocabulary list');
     },
     onSuccess: () => router.invalidate(),
@@ -29,7 +29,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, addedAt }) => {
         <h2 className="line-clamp-2 text-sm leading-5 font-medium text-balance sm:text-base">{title}</h2>
       </div>
 
-      {isAdded ? (
+      {id ? (
         <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
           <Button
             size="sm"

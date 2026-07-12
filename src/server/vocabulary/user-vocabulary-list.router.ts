@@ -7,10 +7,10 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
-import { vocabularyListItemSchema, vocabularyListItemsQuerySchema } from './dto/vocabulary-list-item.dto';
-import { vocabularyListProgressSchema } from './dto/vocabulary-list-progress.dto';
+import { userVocabularyListItemSchema, userVocabularyListItemsQuerySchema } from './dto/user-vocabulary-list-item.dto';
+import { userVocabularyListProgressSchema } from './dto/user-vocabulary-list-progress.dto';
 import { userVocabularyListSchema } from './dto/user-vocabulary-list.dto';
-import { vocabularyListSchema } from './dto/vocabulary-list.dto';
+import { userAvailableVocabularyListSchema } from './dto/user-available-vocabulary-list.dto';
 import { getVocabularyListItems, getVocabularyListProgress } from './vocabulary-list-item.service';
 import { getAvailableVocabularyLists } from './vocabulary-list.repository';
 import { addVocabularyListToUser } from './vocabulary-list.service';
@@ -22,7 +22,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
       path: '/available',
       tags: ['Vocabulary'],
       responses: {
-        ...successOkResponse({ description: 'List of vocabulary lists', schema: z.array(vocabularyListSchema) }),
+        ...successOkResponse({
+          description: 'List of vocabulary lists',
+          schema: z.array(userAvailableVocabularyListSchema),
+        }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
@@ -67,12 +70,12 @@ export const userVocabularyListRouter = new OpenAPIHono()
       tags: ['Vocabulary'],
       request: {
         params: z.object({ id: z.uuidv7() }),
-        query: vocabularyListItemsQuerySchema,
+        query: userVocabularyListItemsQuerySchema,
       },
       responses: {
         ...successPaginatedResponse({
           description: "List's words with the user's progress",
-          schema: vocabularyListItemSchema,
+          schema: userVocabularyListItemSchema,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -102,7 +105,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "List's title and the user's progress",
-          schema: vocabularyListProgressSchema,
+          schema: userVocabularyListProgressSchema,
         }),
       },
       security: [{ cookieAuth: [] }],
