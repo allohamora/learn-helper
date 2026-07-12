@@ -18,16 +18,17 @@ type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
 const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
+  const pronunciation = item.pronunciation;
 
   return (
     <div className="flex items-center gap-1">
-      {item.pronunciation && (
+      {pronunciation && (
         <Button
           size="sm"
           variant="ghost"
           className="size-8 px-0"
           disabled={isPlaying}
-          onClick={() => void playAudio(item.pronunciation!)}
+          onClick={() => void playAudio(pronunciation)}
           title="Play pronunciation"
           aria-label="Play pronunciation"
         >
