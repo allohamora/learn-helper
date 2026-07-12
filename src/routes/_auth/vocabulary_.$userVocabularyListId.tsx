@@ -7,6 +7,7 @@ import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
 import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
 import { LearningStatus } from '@/const/vocabulary';
+import { RequestType } from '@/const/request';
 
 const vocabularyListSearchSchema = z.object({
   status: z.enum(LearningStatus).optional(),
@@ -38,7 +39,7 @@ function VocabularyListDetailPage() {
     queryFn: async ({ pageParam }) => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
         param: { userVocabularyListId },
-        query: { status, search, cursor: pageParam },
+        query: { status, search, cursor: pageParam, type: RequestType.All },
       });
       if (!res.ok) throw new Error('Failed to load vocabulary list items');
 
