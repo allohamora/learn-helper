@@ -1,12 +1,21 @@
 ---
 name: review-comments
-description: Read all PR review comments and resolve them - fix, reply with the commit link, and close threads.
+description: Walk through PR review comments one at a time with the author - assess each, propose a fix, and wait for a decision before replying and resolving.
 ---
 
 ## What I do
 
 - Read all open review comment threads on the current PR.
-- For each comment: decide whether to fix or decline, reply accordingly, and resolve the thread.
+- Go through the threads **one at a time**, never in bulk:
+  1. Show the comment and my assessment: is this a real/valid issue, or not?
+  2. If valid, propose a concrete fix. If not, explain why I think it doesn't apply.
+  3. Ask the author what to do: apply the fix, decline with a reason, or something else.
+  4. Wait for the author's decision - do not act without it.
+  5. Once decided: make the fix (if any), reply to the thread, and resolve it.
+  6. Only then move on to the next comment.
+- I never fix, reply to, or resolve more than one thread without author input in between.
+- Exception: if multiple threads are the same underlying issue (e.g. the same outdated GitHub Action version repeated across 20 workflow files), I group them and treat them as one - one assessment, one proposed fix, one decision from the author - then apply that single decision to all matching threads (fix once if a single commit covers them all, reply to each, resolve each).
+- This is only for currently open/unresolved threads. Reviewers add new comments after re-reviewing, so this skill is meant to be run again on later review passes - it just picks up whatever is unresolved at that point.
 
 ## Reply formats
 
