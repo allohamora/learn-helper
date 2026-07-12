@@ -1,9 +1,8 @@
 import '@tanstack/react-start/server-only';
 import { z } from '@hono/zod-openapi';
 import { LearningStatus } from '@/const/vocabulary';
-import { RequestType } from '@/const/request';
 
-export const userVocabularyListItemSchema = z.object({
+export const userVocabularyListItemDto = z.object({
   value: z.string(),
   definition: z.string(),
   uaTranslation: z.string(),
@@ -16,13 +15,3 @@ export const userVocabularyListItemSchema = z.object({
   encounterCount: z.number(),
   createdAt: z.iso.datetime(),
 });
-
-export const userVocabularyListItemsQuerySchema = z.object({
-  status: z.enum(LearningStatus).optional(),
-  search: z.string().trim().min(1).max(255).optional(),
-  cursor: z.uuidv7().optional(),
-  limit: z.coerce.number().int().min(1).max(100).optional(),
-  type: z.enum(RequestType).optional(),
-});
-
-export type UserVocabularyListItemsQuery = z.infer<typeof userVocabularyListItemsQuerySchema>;

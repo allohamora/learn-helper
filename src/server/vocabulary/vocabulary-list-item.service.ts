@@ -1,5 +1,5 @@
 import '@tanstack/react-start/server-only';
-import type { UserVocabularyListItemsQuery } from './dto/user-vocabulary-list-item.dto';
+import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
 import {
   getVocabularyListItems as getVocabularyListItemsFromRepository,
   getVocabularyListItemStatusCounts,
@@ -9,11 +9,11 @@ import { getUserVocabularyListOrThrow, getVocabularyListByIdOrThrow } from './vo
 export const getVocabularyListItems = async ({
   userId,
   userVocabularyListId,
-  ...query
-}: UserVocabularyListItemsQuery & { userId: string; userVocabularyListId: string }) => {
+  ...filter
+}: UserVocabularyListItemsFilterDto & { userId: string; userVocabularyListId: string }) => {
   const userList = await getUserVocabularyListOrThrow(userId, userVocabularyListId);
 
-  return getVocabularyListItemsFromRepository({ userId, vocabularyListId: userList.vocabularyListId, ...query });
+  return getVocabularyListItemsFromRepository({ userId, vocabularyListId: userList.vocabularyListId, ...filter });
 };
 
 export const getVocabularyListProgress = async ({

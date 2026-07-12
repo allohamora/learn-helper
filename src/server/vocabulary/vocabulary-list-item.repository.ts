@@ -1,6 +1,6 @@
 import '@tanstack/react-start/server-only';
 import { and, asc, count, eq, gte, ilike } from 'drizzle-orm';
-import type { UserVocabularyListItemsQuery } from './dto/user-vocabulary-list-item.dto';
+import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import { RequestType } from '@/const/request';
@@ -22,7 +22,7 @@ export const getVocabularyListItems = async ({
   cursor,
   limit = 20,
   type = RequestType.All,
-}: UserVocabularyListItemsQuery & { userId: string; vocabularyListId: string }) => {
+}: UserVocabularyListItemsFilterDto & { userId: string; vocabularyListId: string }) => {
   const listFilter = eq(vocabularyListItem.vocabularyListId, vocabularyListId);
   const userFilter = eq(userVocabularyItem.userId, userId);
 

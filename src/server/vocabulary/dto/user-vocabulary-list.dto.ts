@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { z } from '@hono/zod-openapi';
 
-export const userVocabularyListSchema = z.object({
+export const userVocabularyListDto = z.object({
   id: z.uuidv7(),
   userId: z.string(),
   vocabularyListId: z.uuidv7(),
