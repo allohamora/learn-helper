@@ -10,7 +10,7 @@ import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabular
 import {
   addVocabularyListToUser,
   getUserVocabularyListOrThrow,
-} from '@/server/vocabulary/user-vocabulary-list.service';
+} from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const createTestUser = async (id: string) => {

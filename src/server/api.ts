@@ -6,7 +6,7 @@ import { auth } from './auth/auth.service';
 import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
 import { toErrorResponse } from './utils/response.utils';
-import { userVocabularyListRouter } from './vocabulary/user-vocabulary-list.router';
+import { userVocabularyListRouter } from './user-vocabulary/user-vocabulary-list.router';
 import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
 import { MimeType } from './utils/mime-type.utils';
