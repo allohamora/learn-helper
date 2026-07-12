@@ -14,7 +14,8 @@ import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progre
 import { userVocabularyListDto } from './dto/user-vocabulary-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
 import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
-import { addVocabularyListToUser, getUserAvailableVocabularyLists } from './user-vocabulary-list.service';
+import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
+import { addVocabularyListToUser } from './user-vocabulary-list.service';
 
 export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(

@@ -2,16 +2,8 @@ import '@tanstack/react-start/server-only';
 import { db } from '../db/db.service';
 import { Exception } from '../utils/exception.utils';
 import { createUserVocabularyItemsFromList } from './user-vocabulary-item.repository';
-import {
-  createUserVocabularyList,
-  getUserAvailableVocabularyLists as getUserAvailableVocabularyListsFromRepository,
-  getUserVocabularyListByVocabularyListId,
-} from './user-vocabulary-list.repository';
+import { createUserVocabularyList, getUserVocabularyListByVocabularyListId } from './user-vocabulary-list.repository';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.repository';
-
-export const getUserAvailableVocabularyLists = async (userId: string) => {
-  return getUserAvailableVocabularyListsFromRepository(userId);
-};
 
 export const addVocabularyListToUser = async ({
   userId,
