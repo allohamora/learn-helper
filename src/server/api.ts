@@ -1,5 +1,6 @@
 import '@tanstack/react-start/server-only';
 import { swaggerUI } from '@hono/swagger-ui';
+import { Scalar } from '@scalar/hono-api-reference';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { auth } from './auth/auth.service';
 import { Exception } from './utils/exception.utils';
@@ -124,6 +125,7 @@ app.doc('/swagger.json', {
   info: { title: 'Learn Helper API', version: '0.0.1' },
 });
 app.get('/swagger', swaggerUI({ url: '/api/swagger.json' }));
+app.get('/scalar', Scalar({ url: '/api/swagger.json' }));
 
 export type AppType = typeof app;
 export { app };
