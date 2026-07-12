@@ -17,7 +17,7 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { id: vocabularyListId } });
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId } });
       if (!res.ok) throw new Error('Failed to add vocabulary list');
     },
     onSuccess: () => router.invalidate(),

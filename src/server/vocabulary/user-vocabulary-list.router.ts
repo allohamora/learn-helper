@@ -1,6 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
+  successCreatedResponse,
   successOkResponse,
   successPaginatedResponse,
   toPaginatedResponse,
@@ -46,22 +47,24 @@ export const userVocabularyListRouter = new OpenAPIHono()
         body: {
           content: {
             'application/json': {
-              schema: z.object({ id: z.uuidv7() }),
+              schema: z.object({ vocabularyListId: z.uuidv7() }),
             },
           },
         },
       },
       responses: {
-        ...successOkResponse({ description: 'List added to the user', schema: userVocabularyListDto }),
+        ...successCreatedResponse({ description: 'List added to the user', schema: userVocabularyListDto }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
     }),
     async (c) => {
       const user = c.get('user');
-      const { id } = c.req.valid('json');
+      const { vocabularyListId } = c.req.valid('json');
 
-      return c.json(...toSuccessResponse({ status: 200, data: await addVocabularyListToUser(user.id, id) }));
+      return c.json(
+        ...toSuccessResponse({ status: 201, data: await addVocabularyListToUser(user.id, vocabularyListId) }),
+      );
     },
   )
   .openapi(

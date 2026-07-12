@@ -59,8 +59,8 @@ describe('user-vocabulary-list.router', () => {
       const { list } = await seedList();
       await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
 
-      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
-      expect(postRes.status).toBe(200);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      expect(postRes.status).toBe(201);
 
       const res = await client.api.v1.users.me['vocabulary-lists'].available.$get();
 
@@ -73,13 +73,13 @@ describe('user-vocabulary-list.router', () => {
   });
 
   describe('POST /api/v1/users/me/vocabulary-lists', () => {
-    it('returns 200 and enqueues the list for the authenticated user', async () => {
+    it('returns 201 and enqueues the list for the authenticated user', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
-      expect(res.status).toBe(200);
+      const res = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      expect(res.status).toBe(201);
 
       expect(await countItems(userVocabularyItem)).toBe(1);
     });
@@ -88,7 +88,7 @@ describe('user-vocabulary-list.router', () => {
       auth.unauthorized();
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const res = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       expect(res.status).toBe(401);
     });
 
@@ -97,7 +97,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
 
       const res = await client.api.v1.users.me['vocabulary-lists'].$post({
-        json: { id: '00000000-0000-7000-8000-000000000000' },
+        json: { vocabularyListId: '00000000-0000-7000-8000-000000000000' },
       });
       expect(res.status).toBe(404);
     });
@@ -108,7 +108,7 @@ describe('user-vocabulary-list.router', () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList(['run']);
-      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
@@ -153,7 +153,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump', 'swim', 'fly'];
       const { list } = await seedList(words);
-      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
       const firstRes = await client.api.v1.users.me['vocabulary-lists'][':id'].items.$get({
@@ -196,7 +196,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write'];
       const { list } = await seedList(words);
-      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
       const collected: string[] = [];
@@ -226,7 +226,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump'];
       const { list } = await seedList(words);
-      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':id'].progress.$get({
@@ -246,7 +246,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump', 'swim'];
       const { list, items } = await seedList(words);
-      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { id: list.id } });
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
       const [, walk, jump, swim] = items;
