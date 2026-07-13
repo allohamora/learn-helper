@@ -58,7 +58,7 @@ function VocabularyListDetailPage() {
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Back to lists
+        Back to vocabulary
       </Link>
 
       <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{progress.title}</h1>

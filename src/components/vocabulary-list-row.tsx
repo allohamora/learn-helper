@@ -59,12 +59,14 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
             size="sm"
             variant="outline"
             className="size-8 px-0 sm:w-auto sm:px-2.5"
-            disabled
-            title="Discovery (coming soon)"
+            asChild
+            title="Discovery"
             aria-label="Discovery"
           >
-            <Compass />
-            <span className="hidden sm:inline">Discovery</span>
+            <Link to="/vocabulary/$userVocabularyListId/discovery" params={{ userVocabularyListId: id }}>
+              <Compass />
+              <span className="hidden sm:inline">Discovery</span>
+            </Link>
           </Button>
         </div>
       ) : (

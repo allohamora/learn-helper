@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
-import { user, userVocabularyItem } from '@/server/db/db.schema';
+import { event, user, userVocabularyItem, vocabularyItem } from '@/server/db/db.schema';
 import { countItems } from '@/server/db/db.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { EventType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const USER_ID = 'e2e-test-user';
 
-const seedList = async (values: string[] = ['run']) => {
-  const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+const seedList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
+  const list = await findOrCreateVocabularyListByTitle(title);
   const items = await createMissingVocabularyItems(
     values.map((value) => ({
       value,
@@ -98,6 +99,45 @@ describe('user-vocabulary-list.router', () => {
 
       const res = await client.api.v1.users.me['vocabulary-lists'].$post({
         json: { vocabularyListId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/title', () => {
+    it("returns 200 with the list's id and title", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ success: true, data: { id: list.id, title: 'Oxford 5000 A1' } });
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+        param: { userVocabularyListId: list.id },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 when the user has not added the list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+        param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(404);
     });
@@ -292,6 +332,147 @@ describe('user-vocabulary-list.router', () => {
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
         param: { userVocabularyListId: list.id },
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('PATCH /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/:userVocabularyItemId/status', () => {
+    const addList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
+      const { list, items } = await seedList(values, title);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const userItems = await db.query.userVocabularyItem.findMany({
+        where: eq(userVocabularyItem.userId, USER_ID),
+      });
+
+      return { list, items, userList, userItems };
+    };
+
+    it.each([LearningStatus.Known, LearningStatus.Learning] as const)(
+      'returns 200, records a discovered event, and flips status to %s',
+      async (status) => {
+        auth.authorized({ user: { id: USER_ID } });
+        await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+        const { userList, userItems } = await addList();
+        const [userItem] = userItems;
+        if (!userItem) throw new Error('expected a user item to be created');
+
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+          ':userVocabularyItemId'
+        ].status.$patch({
+          param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+          json: { status, durationMs: 1234 },
+        });
+        expect(res.status).toBe(200);
+
+        const body = await res.json();
+        expect(body).toMatchObject({ success: true, data: { userVocabularyItemId: userItem.id, status } });
+
+        const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+        expect(updated?.status).toBe(status);
+
+        const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+        expect(events).toMatchObject([
+          {
+            type: EventType.UserVocabularyItemDiscovered,
+            userId: USER_ID,
+            userVocabularyItemId: userItem.id,
+            userVocabularyListId: userList.id,
+            status,
+            durationMs: 1234,
+          },
+        ]);
+      },
+    );
+
+    it('reverts to waiting and deletes the discovered event on undo', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].status.$patch({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+        json: { status: LearningStatus.Known, durationMs: 1234 },
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].status.$patch({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+        json: { status: LearningStatus.Waiting },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: { userVocabularyItemId: userItem.id, status: LearningStatus.Waiting },
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.status).toBe(LearningStatus.Waiting);
+
+      const events = await db.query.event.findMany({
+        where: and(eq(event.userVocabularyItemId, userItem.id), eq(event.type, EventType.UserVocabularyItemDiscovered)),
+      });
+      expect(events).toHaveLength(0);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { list, items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].status.$patch({
+        param: { userVocabularyListId: list.id, userVocabularyItemId: item.id },
+        json: { status: LearningStatus.Known, durationMs: 1234 },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 when the user has not added the list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list, items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].status.$patch({
+        param: { userVocabularyListId: list.id, userVocabularyItemId: item.id },
+        json: { status: LearningStatus.Known, durationMs: 1234 },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 when the item is not a member of the given list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList: runUserList } = await addList(['run'], 'Oxford 5000 A1');
+      await addList(['walk'], 'Oxford 5000 A2');
+
+      const [walkUserItem] = await db
+        .select({ id: userVocabularyItem.id })
+        .from(userVocabularyItem)
+        .innerJoin(vocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
+        .where(and(eq(userVocabularyItem.userId, USER_ID), eq(vocabularyItem.value, 'walk')));
+      if (!walkUserItem) throw new Error('expected a user item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].status.$patch({
+        param: { userVocabularyListId: runUserList.id, userVocabularyItemId: walkUserItem.id },
+        json: { status: LearningStatus.Known, durationMs: 1234 },
       });
       expect(res.status).toBe(404);
     });
