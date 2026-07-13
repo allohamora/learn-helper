@@ -11,7 +11,6 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { userVocabularyListItemDto } from './dto/user-vocabulary-list-item.dto';
 import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
 import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
-import { userVocabularyListDto } from './dto/user-vocabulary-list.dto';
 import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
 import { setUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
@@ -60,7 +59,10 @@ export const userVocabularyListRouter = new OpenAPIHono()
         },
       },
       responses: {
-        ...successCreatedResponse({ description: 'List added to the user', schema: userVocabularyListDto }),
+        ...successCreatedResponse({
+          description: 'List added to the user, with the vocabulary list it points to',
+          schema: userVocabularyListWithListDto,
+        }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
