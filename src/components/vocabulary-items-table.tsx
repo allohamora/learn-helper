@@ -1,9 +1,11 @@
 import type { FC, UIEvent } from 'react';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import type { InferResponseType } from 'hono/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ExternalLink, RotateCcw, Volume2 } from 'lucide-react';
+import { ExternalLink, Loader2, RotateCcw, Volume2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
@@ -16,9 +18,33 @@ type ItemsResponse = InferResponseType<
 >;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
-const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
+const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
   const pronunciation = item.pronunciation;
+
+  const queryClient = useQueryClient();
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].status.$patch({
+        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItemId },
+        json: { status: LearningStatus.Waiting },
+      });
+      if (!res.ok) throw new Error('Failed to reset word');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress', userVocabularyListId] });
+      toast.success('Word has been reset to waiting');
+    },
+    onError: () => toast.error('Failed to reset word'),
+  });
+
+  const canReset =
+    (item.status === LearningStatus.Learning && item.encounterCount === 0) || item.status === LearningStatus.Known;
 
   return (
     <div className="flex items-center gap-1">
@@ -53,11 +79,12 @@ const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
         size="sm"
         variant="ghost"
         className="size-8 px-0"
-        disabled
-        title="Reset to waiting (coming soon)"
+        disabled={!canReset || resetMutation.isPending}
+        onClick={() => resetMutation.mutate()}
+        title="Reset to waiting"
         aria-label="Reset to waiting"
       >
-        <RotateCcw />
+        {resetMutation.isPending ? <Loader2 className="animate-spin" /> : <RotateCcw />}
       </Button>
     </div>
   );
@@ -65,7 +92,7 @@ const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
 
 const columnHelper = createColumnHelper<VocabularyItem>();
 
-const columns = [
+const buildColumns = (userVocabularyListId: string) => [
   columnHelper.accessor('value', {
     header: 'Word',
     cell: (info) => <div className="truncate font-medium">{info.getValue()}</div>,
@@ -85,7 +112,7 @@ const columns = [
   columnHelper.display({
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => <ActionsCell item={row.original} />,
+    cell: ({ row }) => <ActionsCell item={row.original} userVocabularyListId={userVocabularyListId} />,
   }),
 ];
 
@@ -105,10 +132,18 @@ type Props = {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
+  userVocabularyListId: string;
 };
 
-export const VocabularyItemsTable: FC<Props> = ({ items, hasNextPage, isFetchingNextPage, onLoadMore }) => {
+export const VocabularyItemsTable: FC<Props> = ({
+  items,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+  userVocabularyListId,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const columns = useMemo(() => buildColumns(userVocabularyListId), [userVocabularyListId]);
 
   const table = useReactTable({
     data: items,

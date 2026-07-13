@@ -80,6 +80,7 @@ function VocabularyListDetailPage() {
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             onLoadMore={() => void fetchNextPage()}
+            userVocabularyListId={userVocabularyListId}
           />
         )}
       </div>

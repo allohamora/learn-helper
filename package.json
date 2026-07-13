@@ -56,6 +56,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "shadcn": "^4.12.0",
+    "sonner": "^2.0.7",
     "srvx": "^0.11.21",
     "stylelint-config-tailwindcss": "^1.0.1",
     "tailwind-merge": "^3.6.0",

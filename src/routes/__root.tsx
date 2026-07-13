@@ -4,6 +4,7 @@ import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { NotFound } from '@/components/not-found';
+import { Toaster } from '@/components/ui/sonner';
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
@@ -44,6 +45,8 @@ function RootDocument({ children }: PropsWithChildren) {
 
       <body className="flex min-h-screen min-w-full flex-col" suppressHydrationWarning>
         {children}
+
+        <Toaster />
 
         <TanStackDevtools
           config={{
