@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
-import { PartOfSpeech, vocabularyItem } from '@/server/db/db.schema';
+import { vocabularyItem } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
+import { PartOfSpeech } from '@/const/vocabulary';
 
 const buildItem = (overrides: Partial<typeof vocabularyItem.$inferInsert> = {}) => ({
   value: 'run',

@@ -1,6 +1,6 @@
 services:
   pg:
-    image: postgres:16.2
+    image: postgres:18.4-alpine
     environment:
       - POSTGRES_HOST=localhost
       - POSTGRES_PORT=5432
@@ -10,7 +10,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - pg-data:/var/lib/postgresql/data
+      - pg-data:/var/lib/postgresql
       - ./scripts/postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql
 
 volumes:

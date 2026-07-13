@@ -1,10 +1,10 @@
 import { count, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
-import type { PartOfSpeech } from '@/server/db/db.schema';
 import { vocabularyItem, vocabularyList, vocabularyListItem } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
 import { groupRowsByLevel, readSourceData, vocabularySeed } from '@/server/vocabulary/vocabulary.seed';
+import type { PartOfSpeech } from '@/const/vocabulary';
 
 const SEED_TIMEOUT = 30_000;
 

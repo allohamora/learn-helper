@@ -1,13 +1,13 @@
 import '@tanstack/react-start/server-only';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { PartOfSpeech } from '../db/db.schema';
 import { disconnectFromDb, runMigrations } from '../db/db.service';
 import { toChunks } from '../utils/array.utils';
 import { createLogger } from '../utils/logger.utils';
 import { createMissingVocabularyItems } from './vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from './vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from './vocabulary-list.repository';
+import { PartOfSpeech } from '@/const/vocabulary';
 
 const logger = createLogger('vocabulary.seed');
 

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
-import { PartOfSpeech, vocabularyListItem } from '@/server/db/db.schema';
+import { vocabularyListItem } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { PartOfSpeech } from '@/const/vocabulary';
 
 describe('vocabularyListItemRepository', () => {
   describe('createVocabularyListItemsIfNotExist', () => {

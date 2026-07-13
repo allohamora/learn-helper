@@ -27,13 +27,17 @@ describe('response.utils', () => {
   });
 
   describe('toPaginatedResponse', () => {
-    it('returns a paginated tuple with data and pageInfo', () => {
-      const pageInfo = { total: 1, count: 1 };
-
-      expect(toPaginatedResponse({ status: 200, data: [{ id: 1 }], pageInfo })).toEqual([
-        { success: true, data: [{ id: 1 }], pageInfo },
+    it('returns a paginated tuple with data and pageInfo derived from items/total', () => {
+      expect(toPaginatedResponse({ status: 200, data: { items: [{ id: 1 }], total: 1 } })).toEqual([
+        { success: true, data: [{ id: 1 }], pageInfo: { total: 1, count: 1, nextCursor: undefined } },
         200,
       ]);
+    });
+
+    it('includes nextCursor in pageInfo when provided', () => {
+      expect(
+        toPaginatedResponse({ status: 200, data: { items: [{ id: 1 }], total: 2, nextCursor: 'cursor-1' } }),
+      ).toEqual([{ success: true, data: [{ id: 1 }], pageInfo: { total: 2, count: 1, nextCursor: 'cursor-1' } }, 200]);
     });
   });
 });

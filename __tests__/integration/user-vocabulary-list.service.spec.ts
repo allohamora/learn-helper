@@ -2,12 +2,13 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { db } from '@/server/db/db.service';
-import { LearningStatus, PartOfSpeech, user, userVocabularyItem } from '@/server/db/db.schema';
+import { user, userVocabularyItem } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
-import { addVocabularyListToUser } from '@/server/vocabulary/vocabulary-list.service';
+import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
+import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const createTestUser = async (id: string) => {
   const [row] = await db
@@ -38,13 +39,13 @@ const createTestList = async (values: string[]) => {
   return { list, items };
 };
 
-describe('vocabularyListService', () => {
+describe('userVocabularyListService', () => {
   describe('addVocabularyListToUser', () => {
     it('creates a waiting progress row for every item in the list', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { list, items } = await createTestList(['run', 'walk']);
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       expect(await countItems(userVocabularyItem)).toBe(items.length);
 
@@ -56,9 +57,9 @@ describe('vocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
       const { list, items } = await createTestList(['run', 'walk']);
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      await expect(addVocabularyListToUser(userId, list.id)).rejects.toThrow(Exception);
+      await expect(addVocabularyListToUser({ userId, vocabularyListId: list.id })).rejects.toThrow(Exception);
       expect(await countItems(userVocabularyItem)).toBe(items.length);
     });
 
@@ -72,7 +73,7 @@ describe('vocabularyListService', () => {
         .insert(userVocabularyItem)
         .values({ userId, vocabularyItemId: learnedItem.id, status: LearningStatus.Learned, encounterCount: 3 });
 
-      await addVocabularyListToUser(userId, list.id);
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       const row = await db.query.userVocabularyItem.findFirst({
         where: eq(userVocabularyItem.vocabularyItemId, learnedItem.id),
@@ -84,7 +85,9 @@ describe('vocabularyListService', () => {
     it('throws not found for a non-existent list', async () => {
       const { id: userId } = await createTestUser('user-1');
 
-      await expect(addVocabularyListToUser(userId, '00000000-0000-0000-0000-000000000000')).rejects.toThrow(Exception);
+      await expect(
+        addVocabularyListToUser({ userId, vocabularyListId: '00000000-0000-0000-0000-000000000000' }),
+      ).rejects.toThrow(Exception);
     });
   });
 });

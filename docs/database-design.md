@@ -236,11 +236,11 @@ Tracks the number of successful confirmations in Learning sessions. Required to 
 
 ### `vocabulary_list_item`
 
-The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-many relationship (not spelled out elsewhere in this doc). Has its own surrogate `id` PK for consistency with every other table here, plus a unique constraint on `(vocabulary_list_id, vocabulary_item_id)` to prevent duplicate links. Both FKs cascade on delete — a link row has no meaning without both sides. No `updated_at`: rows are only ever inserted/deleted, never mutated in place.
+The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-many relationship (not spelled out elsewhere in this doc). Has its own surrogate `id` PK for consistency with every other table here, plus a unique constraint on `(vocabulary_list_id, vocabulary_item_id)` to prevent duplicate links, which also improves join performance. Both FKs cascade on delete — a link row has no meaning without both sides. No `updated_at`: rows are only ever inserted/deleted, never mutated in place.
 
 ### `user_vocabulary_list`
 
-Tracks which lists a user has explicitly added, as its own fact rather than something inferred from `user_vocabulary_item` rows. A list is added atomically — `vocabulary_list_id` cascades on delete along with `user_id`, consistent with `vocabulary_list_item`'s two-cascade FKs, since a "list added" record has no meaning without both sides existing. Unique on `(user_id, vocabulary_list_id)` to prevent duplicate adds.
+Tracks which lists a user has explicitly added, as its own fact rather than something inferred from `user_vocabulary_item` rows. A list is added atomically — `vocabulary_list_id` cascades on delete along with `user_id`, consistent with `vocabulary_list_item`'s two-cascade FKs, since a "list added" record has no meaning without both sides existing. Unique on `(user_id, vocabulary_list_id)` to prevent duplicate adds, which also improves join performance.
 
 ### `part_of_speech` / `learning_status` are app-level enums, not native Postgres enum types
 
@@ -248,7 +248,7 @@ Both columns are plain `varchar` (see column lengths above) validated as enums a
 
 ### `user_vocabulary_item` FK delete behavior
 
-`user_id` cascades on delete (consistent with `session`/`account`: removing a user removes their derived data). `vocabulary_item_id` uses `ON DELETE RESTRICT` instead — vocabulary items are near-static reference/seed data, so deleting one while users have progress against it should fail loudly rather than silently erase that progress.
+`user_id` cascades on delete (consistent with `session`/`account`: removing a user removes their derived data). `vocabulary_item_id` uses `ON DELETE RESTRICT` instead — vocabulary items are near-static reference/seed data, so deleting one while users have progress against it should fail loudly rather than silently erase that progress. The unique index on `(user_id, vocabulary_item_id)` also improves join performance.
 
 ### Grammar session rhythm — event-based algorithm
 

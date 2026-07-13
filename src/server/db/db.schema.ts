@@ -1,5 +1,4 @@
-import '@tanstack/react-start/server-only';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -12,6 +11,7 @@ import {
   uniqueIndex,
   unique,
 } from 'drizzle-orm/pg-core';
+import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 /* start of better-auth */
 export const user = pgTable('user', {
@@ -20,8 +20,8 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -31,10 +31,10 @@ export const session = pgTable(
   'session',
   {
     id: text('id').primaryKey(),
-    expiresAt: timestamp('expires_at').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     token: text('token').notNull().unique(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text('ip_address'),
@@ -58,12 +58,12 @@ export const account = pgTable(
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     idToken: text('id_token'),
-    accessTokenExpiresAt: timestamp('access_token_expires_at'),
-    refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }),
     scope: text('scope'),
     password: text('password'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -76,9 +76,9 @@ export const verification = pgTable(
     id: text('id').primaryKey(),
     identifier: text('identifier').notNull(),
     value: text('value').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -108,37 +108,12 @@ export const accountRelations = relations(account, ({ one }) => ({
 }));
 /* end of better-auth */
 
-export enum PartOfSpeech {
-  Adjective = 'adjective',
-  Adverb = 'adverb',
-  AuxiliaryVerb = 'auxiliary-verb',
-  Conjunction = 'conjunction',
-  DefiniteArticle = 'definite-article',
-  Determiner = 'determiner',
-  Exclamation = 'exclamation',
-  IndefiniteArticle = 'indefinite-article',
-  InfinitiveMarker = 'infinitive-marker',
-  LinkingVerb = 'linking-verb',
-  ModalVerb = 'modal-verb',
-  Noun = 'noun',
-  Number = 'number',
-  OrdinalNumber = 'ordinal-number',
-  Preposition = 'preposition',
-  Pronoun = 'pronoun',
-  Verb = 'verb',
-}
-
-export enum LearningStatus {
-  Waiting = 'waiting',
-  Learning = 'learning',
-  Learned = 'learned',
-  Known = 'known',
-}
-
 export const vocabularyItem = pgTable(
   'vocabulary_item',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     value: varchar('value', { length: 255 }).notNull(),
     definition: varchar('definition', { length: 512 }).notNull(),
     uaTranslation: varchar('ua_translation', { length: 255 }).notNull(),
@@ -146,8 +121,8 @@ export const vocabularyItem = pgTable(
     spelling: varchar('spelling', { length: 255 }).notNull(),
     pronunciation: varchar('pronunciation', { length: 512 }),
     link: varchar('link', { length: 512 }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -159,10 +134,12 @@ export const vocabularyItem = pgTable(
 );
 
 export const vocabularyList = pgTable('vocabulary_list', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id')
+    .default(sql`uuidv7()`)
+    .primaryKey(),
   title: varchar('title', { length: 255 }).notNull().unique(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -171,30 +148,32 @@ export const vocabularyList = pgTable('vocabulary_list', {
 export const vocabularyListItem = pgTable(
   'vocabulary_list_item',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     vocabularyListId: uuid('vocabulary_list_id')
       .notNull()
       .references(() => vocabularyList.id, { onDelete: 'cascade' }),
     vocabularyItemId: uuid('vocabulary_item_id')
       .notNull()
       .references(() => vocabularyItem.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    // data integrity: prevents adding the same item to the same list twice
+    // data integrity: prevents adding the same item to the same list twice, also improves join performance
     uniqueIndex('vocabulary_list_item_vocabulary_list_id_vocabulary_item_id_idx').on(
       table.vocabularyListId,
       table.vocabularyItemId,
     ),
-    // join performance: speeds up "which lists contain this item" lookups
-    index('vocabulary_list_item_vocabulary_item_id_idx').on(table.vocabularyItemId),
   ],
 );
 
 export const userVocabularyItem = pgTable(
   'user_vocabulary_item',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -203,38 +182,36 @@ export const userVocabularyItem = pgTable(
       .references(() => vocabularyItem.id, { onDelete: 'restrict' }),
     encounterCount: integer('encounter_count').default(0).notNull(),
     status: varchar('status', { length: 16 }).$type<LearningStatus>().default(LearningStatus.Waiting).notNull(),
-    enqueuedAt: timestamp('enqueued_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    enqueuedAt: timestamp('enqueued_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
   (table) => [
-    // data integrity: prevents duplicate progress rows for the same user + item
+    // data integrity: prevents duplicate progress rows for the same user + item, also improves join performance
     uniqueIndex('user_vocabulary_item_user_id_vocabulary_item_id_idx').on(table.userId, table.vocabularyItemId),
-    // join performance: speeds up "which users have progress on this item" lookups
-    index('user_vocabulary_item_vocabulary_item_id_idx').on(table.vocabularyItemId),
   ],
 );
 
 export const userVocabularyList = pgTable(
   'user_vocabulary_list',
   {
-    id: uuid('id').defaultRandom().primaryKey(),
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
     userId: text('user_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     vocabularyListId: uuid('vocabulary_list_id')
       .notNull()
       .references(() => vocabularyList.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    // data integrity: prevents adding the same list to the same user twice
+    // data integrity: prevents adding the same list to the same user twice, also improves join performance
     uniqueIndex('user_vocabulary_list_user_id_vocabulary_list_id_idx').on(table.userId, table.vocabularyListId),
-    // join performance: speeds up "which users added this list" lookups
-    index('user_vocabulary_list_vocabulary_list_id_idx').on(table.vocabularyListId),
   ],
 );
 

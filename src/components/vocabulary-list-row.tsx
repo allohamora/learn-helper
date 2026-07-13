@@ -1,23 +1,23 @@
 import type { FC } from 'react';
-import { BookOpen, Compass, Plus } from 'lucide-react';
+import { BookOpen, Compass, List, Plus } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
-import { useRouter } from '@tanstack/react-router';
+import { Link, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { appClient } from '@/services/api';
 
 type Props = {
-  id: string;
+  id: string | null;
+  vocabularyListId: string;
   title: string;
   addedAt: string | null;
 };
 
-export const VocabularyListRow: FC<Props> = ({ id, title, addedAt }) => {
+export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) => {
   const router = useRouter();
-  const isAdded = addedAt !== null;
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { id } });
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId } });
       if (!res.ok) throw new Error('Failed to add vocabulary list');
     },
     onSuccess: () => router.invalidate(),
@@ -29,8 +29,21 @@ export const VocabularyListRow: FC<Props> = ({ id, title, addedAt }) => {
         <h2 className="line-clamp-2 text-sm leading-5 font-medium text-balance sm:text-base">{title}</h2>
       </div>
 
-      {isAdded ? (
+      {id ? (
         <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="size-8 px-0 sm:w-auto sm:px-2.5"
+            asChild
+            title="View items"
+            aria-label="View items"
+          >
+            <Link to="/vocabulary/$userVocabularyListId" params={{ userVocabularyListId: id }}>
+              <List />
+              <span className="hidden sm:inline">Items</span>
+            </Link>
+          </Button>
           <Button
             size="sm"
             variant="outline"

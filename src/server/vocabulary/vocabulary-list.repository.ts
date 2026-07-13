@@ -1,6 +1,6 @@
 import '@tanstack/react-start/server-only';
-import { and, asc, eq, isNull } from 'drizzle-orm';
-import { userVocabularyList, vocabularyList } from '../db/db.schema';
+import { eq } from 'drizzle-orm';
+import { vocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import { Exception } from '../utils/exception.utils';
@@ -19,21 +19,13 @@ export const findOrCreateVocabularyListByTitle = async (title: string) => {
   return existing;
 };
 
-export const getVocabularyListById = async (id: string, tx: Transaction = db) => {
-  return tx.query.vocabularyList.findFirst({ where: eq(vocabularyList.id, id) });
+export const getVocabularyListById = async (vocabularyListId: string, tx: Transaction = db) => {
+  return tx.query.vocabularyList.findFirst({ where: eq(vocabularyList.id, vocabularyListId) });
 };
 
-export const getAvailableVocabularyLists = async (userId: string) => {
-  return db
-    .select({
-      id: vocabularyList.id,
-      title: vocabularyList.title,
-      addedAt: userVocabularyList.createdAt,
-    })
-    .from(vocabularyList)
-    .leftJoin(
-      userVocabularyList,
-      and(eq(userVocabularyList.vocabularyListId, vocabularyList.id), eq(userVocabularyList.userId, userId)),
-    )
-    .orderBy(asc(isNull(userVocabularyList.id)), asc(vocabularyList.createdAt));
+export const getVocabularyListByIdOrThrow = async (vocabularyListId: string, tx: Transaction = db) => {
+  const list = await getVocabularyListById(vocabularyListId, tx);
+  if (!list) throw Exception.notFound(`vocabulary list "${vocabularyListId}" not found`);
+
+  return list;
 };

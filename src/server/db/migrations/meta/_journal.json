@@ -22,6 +22,27 @@
       "when": 1783580601360,
       "tag": "0002_early_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783691344681,
+      "tag": "0003_good_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783694639324,
+      "tag": "0004_needy_human_cannonball",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783696498130,
+      "tag": "0005_melted_aqueduct",
+      "breakpoints": true
     }
   ]
 }
