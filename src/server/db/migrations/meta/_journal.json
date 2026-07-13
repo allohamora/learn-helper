@@ -43,6 +43,13 @@
       "when": 1783696498130,
       "tag": "0005_melted_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783947403798,
+      "tag": "0006_bouncy_green_goblin",
+      "breakpoints": true
     }
   ]
 }

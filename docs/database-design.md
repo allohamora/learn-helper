@@ -118,7 +118,7 @@ erDiagram
         status varchar(16) "optional, enum: learning_status"
         user_vocabulary_item_task_type varchar(48) "optional, enum: user_vocabulary_item_task_type"
         user_grammar_topic_task_type varchar(48) "optional, enum: user_grammar_topic_task_type"
-        vocabulary_list_id uuid FK "optional"
+        user_vocabulary_list_id uuid FK "optional"
         grammar_topic_list_id uuid FK "optional"
         field_name text "optional"
         duration_ms integer "optional"
@@ -137,7 +137,7 @@ erDiagram
     vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
     vocabulary_item ||--o{ vocabulary_list_item : "one-to-many"
     grammar_topic_list }o--o{ grammar_topic : "many-to-many"
-    vocabulary_list ||--o{ event : "one-to-many"
+    user_vocabulary_list ||--o{ event : "one-to-many"
     grammar_topic_list ||--o{ event : "one-to-many"
     vocabulary_item ||--o{ user_vocabulary_item : "one-to-many"
     grammar_topic ||--o{ user_grammar_topic : "one-to-many"
@@ -268,6 +268,14 @@ This implements the `[new, review, review, …]` cycle via observation rather th
 ### `user_vocabulary_item_ids`
 
 Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
+
+### `field_name`
+
+Records which field changed on a `vocabulary-item-updated` event (e.g. `uaTranslation` when the user edits their translation). Powers a per-field "edits per day" breakdown on the statistics page, grouped by `(date, field_name)`.
+
+### `user_vocabulary_list_id`
+
+Records which list a word was being practiced in when a session event fired (e.g. discovered, passed, moved to next step). Since a word can belong to multiple lists, `vocabulary_item_id` alone can't tell you which list the session was scoped to. References `user_vocabulary_list` (the user's list enrollment) rather than `vocabulary_list` directly, since the event is always tied to a specific user's enrollment, matching the same pattern as `user_vocabulary_item_id` referencing `user_vocabulary_item` rather than `vocabulary_item`.
 
 ## List-based learning
 
