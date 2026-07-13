@@ -12,14 +12,17 @@ import { userVocabularyListItemDto } from './dto/user-vocabulary-list-item.dto';
 import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
 import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
 import { userVocabularyListDto } from './dto/user-vocabulary-list.dto';
-import { userVocabularyListTitleDto } from './dto/user-vocabulary-list-title.dto';
+import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
 import { setUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
 import { userVocabularyItemStatusDto } from './dto/user-vocabulary-item-status.dto';
 import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
 import { setUserVocabularyItemStatus } from './user-vocabulary-item.service';
-import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
-import { addVocabularyListToUser, getUserVocabularyListTitle } from './user-vocabulary-list.service';
+import {
+  getUserAvailableVocabularyLists,
+  getUserVocabularyListWithListOrThrow,
+} from './user-vocabulary-list.repository';
+import { addVocabularyListToUser } from './user-vocabulary-list.service';
 
 export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(
@@ -77,13 +80,16 @@ export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
-      path: '/{userVocabularyListId}/title',
+      path: '/{userVocabularyListId}',
       tags: ['Vocabulary'],
       request: {
         params: z.object({ userVocabularyListId: z.uuidv7() }),
       },
       responses: {
-        ...successOkResponse({ description: "The list's id and title", schema: userVocabularyListTitleDto }),
+        ...successOkResponse({
+          description: "The user's list, with the vocabulary list it points to",
+          schema: userVocabularyListWithListDto,
+        }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
@@ -95,7 +101,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await getUserVocabularyListTitle({ userId: user.id, userVocabularyListId }),
+          data: await getUserVocabularyListWithListOrThrow({ userId: user.id, userVocabularyListId }),
         }),
       );
     },
@@ -141,7 +147,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       },
       responses: {
         ...successOkResponse({
-          description: "List's title and the user's progress",
+          description: "The user's progress counts for the list",
           schema: userVocabularyListProgressDto,
         }),
       },

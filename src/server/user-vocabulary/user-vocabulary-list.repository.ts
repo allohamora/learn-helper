@@ -45,6 +45,25 @@ export const getUserVocabularyListOrThrow = async (
   return userList;
 };
 
+export const getUserVocabularyListWithListOrThrow = async (
+  {
+    userId,
+    userVocabularyListId,
+  }: {
+    userId: string;
+    userVocabularyListId: string;
+  },
+  tx: Transaction = db,
+) => {
+  const userList = await tx.query.userVocabularyList.findFirst({
+    where: and(eq(userVocabularyList.userId, userId), eq(userVocabularyList.id, userVocabularyListId)),
+    with: { vocabularyList: true },
+  });
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+
+  return userList;
+};
+
 export const createUserVocabularyList = async (
   { userId, vocabularyListId }: { userId: string; vocabularyListId: string },
   tx: Transaction = db,

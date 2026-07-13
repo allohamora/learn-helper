@@ -104,28 +104,31 @@ describe('user-vocabulary-list.router', () => {
     });
   });
 
-  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/title', () => {
-    it("returns 200 with the list's id and title", async () => {
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId', () => {
+    it("returns 200 with the user's list and the vocabulary list it points to", async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
 
       const body = await res.json();
-      expect(body).toMatchObject({ success: true, data: { id: list.id, title: 'Oxford 5000 A1' } });
+      expect(body).toMatchObject({
+        success: true,
+        data: { id: userList.id, vocabularyListId: list.id, vocabularyList: { id: list.id, title: 'Oxford 5000 A1' } },
+      });
     });
 
     it('returns 401 Unauthorized when not authenticated', async () => {
       auth.unauthorized();
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(401);
@@ -136,7 +139,7 @@ describe('user-vocabulary-list.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(404);
@@ -261,7 +264,7 @@ describe('user-vocabulary-list.router', () => {
   });
 
   describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/progress', () => {
-    it('returns 200 with the title and all items waiting right after adding a list', async () => {
+    it('returns 200 with all items waiting right after adding a list', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump'];
@@ -277,7 +280,7 @@ describe('user-vocabulary-list.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { title: 'Oxford 5000 A1', total: 3, waiting: 3, learning: 0, learned: 0, known: 0 },
+        data: { total: 3, waiting: 3, learning: 0, learned: 0, known: 0 },
       });
     });
 
@@ -311,7 +314,7 @@ describe('user-vocabulary-list.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { title: 'Oxford 5000 A1', total: 4, waiting: 1, learning: 1, learned: 1, known: 1 },
+        data: { total: 4, waiting: 1, learning: 1, learned: 1, known: 1 },
       });
     });
 

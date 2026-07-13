@@ -13,10 +13,10 @@ const HISTORY_LIMIT = 5;
 export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/discovery')({
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].title.$get({
+    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
       param: { userVocabularyListId },
     });
-    if (!res.ok) throw new Error('Failed to load vocabulary list title');
+    if (!res.ok) throw new Error('Failed to load vocabulary list');
 
     const body = await res.json();
     return body.data;
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/
 
 function VocabularyDiscoveryPage() {
   const { userVocabularyListId } = Route.useParams();
-  const list = Route.useLoaderData();
+  const userVocabularyList = Route.useLoaderData();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
@@ -123,7 +123,9 @@ function VocabularyDiscoveryPage() {
         Back to vocabulary
       </Link>
 
-      <h1 className="mt-2 mb-4 text-2xl font-bold tracking-tight md:text-3xl">{list.title}</h1>
+      <h1 className="mt-2 mb-4 text-2xl font-bold tracking-tight md:text-3xl">
+        {userVocabularyList.vocabularyList.title}
+      </h1>
 
       {isLoading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>

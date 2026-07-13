@@ -18,10 +18,10 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')
   validateSearch: vocabularyListSearchSchema,
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
       param: { userVocabularyListId },
     });
-    if (!res.ok) throw new Error('Failed to load vocabulary list progress');
+    if (!res.ok) throw new Error('Failed to load vocabulary list');
 
     const body = await res.json();
     return body.data;
@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')
 function VocabularyListDetailPage() {
   const { userVocabularyListId } = Route.useParams();
   const { status, search } = Route.useSearch();
-  const progress = Route.useLoaderData();
+  const userVocabularyList = Route.useLoaderData();
 
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['vocabulary-list-items', userVocabularyListId, status, search],
@@ -61,10 +61,10 @@ function VocabularyListDetailPage() {
         Back to vocabulary
       </Link>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{progress.title}</h1>
+      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{userVocabularyList.vocabularyList.title}</h1>
 
       <div className="mt-4">
-        <VocabularyListProgress total={progress.total} learned={progress.learned} known={progress.known} />
+        <VocabularyListProgress userVocabularyListId={userVocabularyListId} />
       </div>
 
       <div className="mt-6">

@@ -5,7 +5,6 @@ import {
   getUserVocabularyListItemStatusCounts,
 } from './user-vocabulary-list-item.repository';
 import { getUserVocabularyListOrThrow } from './user-vocabulary-list.repository';
-import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.repository';
 
 export const getUserVocabularyListItems = async ({
   userId,
@@ -26,12 +25,12 @@ export const getUserVocabularyListProgress = async ({
 }) => {
   const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
-  const [list, statusCounts] = await Promise.all([
-    getVocabularyListByIdOrThrow(userList.vocabularyListId),
-    getUserVocabularyListItemStatusCounts({ userId, vocabularyListId: userList.vocabularyListId }),
-  ]);
+  const statusCounts = await getUserVocabularyListItemStatusCounts({
+    userId,
+    vocabularyListId: userList.vocabularyListId,
+  });
 
-  const counts = statusCounts.reduce(
+  return statusCounts.reduce(
     (acc, row) => {
       acc.total += row.count;
       acc[row.status] = row.count;
@@ -39,6 +38,4 @@ export const getUserVocabularyListProgress = async ({
     },
     { total: 0, waiting: 0, learning: 0, learned: 0, known: 0 },
   );
-
-  return { title: list.title, ...counts };
 };
