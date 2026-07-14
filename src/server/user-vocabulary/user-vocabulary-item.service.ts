@@ -77,6 +77,9 @@ export const undoUserVocabularyItemStatus = async ({
   });
 };
 
+// TODO: mutates the shared/global vocabulary_item row, so any user can edit any other user's view of a word's
+// translation (intentional for now, see https://github.com/allohamora/learn-helper/pull/88#discussion_r3576727472).
+// If this becomes an issue (vandalism, spam), restrict edits to an admin role.
 export const updateUserVocabularyItemTranslation = async ({
   userId,
   userVocabularyListId,
