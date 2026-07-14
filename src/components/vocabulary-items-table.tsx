@@ -1,10 +1,13 @@
 import type { FC, UIEvent } from 'react';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import type { InferResponseType } from 'hono/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ExternalLink, RotateCcw, Volume2 } from 'lucide-react';
+import { ExternalLink, Loader2, Pencil, Undo2, Volume2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
 import { LearningStatus } from '@/const/vocabulary';
@@ -16,9 +19,33 @@ type ItemsResponse = InferResponseType<
 >;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
-const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
+const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
+  const { openEdit } = useEditVocabularyItemTranslation();
   const pronunciation = item.pronunciation;
+
+  const queryClient = useQueryClient();
+  const undoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].undo.$post({
+        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItemId },
+      });
+      if (!res.ok) throw new Error('Failed to undo discovery');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress', userVocabularyListId] });
+      toast.success('Discovery undone, word is waiting again');
+    },
+    onError: () => toast.error('Failed to undo discovery'),
+  });
+
+  const canUndo =
+    (item.status === LearningStatus.Learning && item.encounterCount === 0) || item.status === LearningStatus.Known;
 
   return (
     <div className="flex items-center gap-1">
@@ -53,11 +80,29 @@ const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
         size="sm"
         variant="ghost"
         className="size-8 px-0"
-        disabled
-        title="Reset to waiting (coming soon)"
-        aria-label="Reset to waiting"
+        onClick={() =>
+          openEdit({
+            userVocabularyItemId: item.userVocabularyItemId,
+            value: item.value,
+            partOfSpeech: item.partOfSpeech,
+            uaTranslation: item.uaTranslation,
+          })
+        }
+        title="Edit translation"
+        aria-label="Edit translation"
       >
-        <RotateCcw />
+        <Pencil />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="size-8 px-0"
+        disabled={!canUndo || undoMutation.isPending}
+        onClick={() => undoMutation.mutate()}
+        title="Undo discovery"
+        aria-label="Undo discovery"
+      >
+        {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
     </div>
   );
@@ -65,10 +110,20 @@ const ActionsCell: FC<{ item: VocabularyItem }> = ({ item }) => {
 
 const columnHelper = createColumnHelper<VocabularyItem>();
 
-const columns = [
+const buildColumns = (userVocabularyListId: string) => [
   columnHelper.accessor('value', {
     header: 'Word',
-    cell: (info) => <div className="truncate font-medium">{info.getValue()}</div>,
+    cell: (info) => {
+      const item = info.row.original;
+
+      return (
+        <div className="min-w-0">
+          <div className="truncate font-medium">{item.value}</div>
+          <div className="truncate text-xs text-muted-foreground">({item.spelling})</div>
+          <div className="truncate text-xs text-muted-foreground">{item.uaTranslation}</div>
+        </div>
+      );
+    },
   }),
   columnHelper.accessor('definition', {
     header: 'Definition',
@@ -76,7 +131,7 @@ const columns = [
   }),
   columnHelper.accessor('partOfSpeech', {
     header: 'Part of speech',
-    cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '—'}</div>,
+    cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '-'}</div>,
   }),
   columnHelper.accessor('status', {
     header: 'Status',
@@ -85,7 +140,7 @@ const columns = [
   columnHelper.display({
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => <ActionsCell item={row.original} />,
+    cell: ({ row }) => <ActionsCell item={row.original} userVocabularyListId={userVocabularyListId} />,
   }),
 ];
 
@@ -94,10 +149,9 @@ const columns = [
 // proportionally with a fixed-length floor, not to content, or a row's widths would depend on that
 // row's own content instead of matching the header and other rows). Narrow viewports scroll the
 // table horizontally (the container below is overflow-auto) rather than reflowing the columns.
-const GRID_COLS_CLASS =
-  'grid grid-cols-[minmax(6rem,1fr)_minmax(10rem,3fr)_minmax(5rem,1fr)_minmax(6rem,1fr)_minmax(7rem,1fr)]';
+const GRID_COLS_CLASS = 'grid grid-cols-[minmax(9rem,1.3fr)_minmax(10rem,3fr)_minmax(5rem,1fr)_7rem_minmax(7rem,1fr)]';
 
-const ROW_HEIGHT_PX = 56;
+const ROW_HEIGHT_PX = 72;
 const LOAD_MORE_THRESHOLD_PX = 200;
 
 type Props = {
@@ -105,10 +159,18 @@ type Props = {
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
+  userVocabularyListId: string;
 };
 
-export const VocabularyItemsTable: FC<Props> = ({ items, hasNextPage, isFetchingNextPage, onLoadMore }) => {
+export const VocabularyItemsTable: FC<Props> = ({
+  items,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+  userVocabularyListId,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const columns = useMemo(() => buildColumns(userVocabularyListId), [userVocabularyListId]);
 
   const table = useReactTable({
     data: items,

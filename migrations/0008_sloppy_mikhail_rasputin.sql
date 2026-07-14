@@ -1,0 +1,1 @@
+ALTER TABLE "event" ALTER COLUMN "cost_in_nano_dollars" SET DATA TYPE bigint;

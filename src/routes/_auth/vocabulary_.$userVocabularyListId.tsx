@@ -3,6 +3,8 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
+import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
+import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
 import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
@@ -18,10 +20,10 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')
   validateSearch: vocabularyListSearchSchema,
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
       param: { userVocabularyListId },
     });
-    if (!res.ok) throw new Error('Failed to load vocabulary list progress');
+    if (!res.ok) throw new Error('Failed to load vocabulary list');
 
     const body = await res.json();
     return body.data;
@@ -32,7 +34,7 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')
 function VocabularyListDetailPage() {
   const { userVocabularyListId } = Route.useParams();
   const { status, search } = Route.useSearch();
-  const progress = Route.useLoaderData();
+  const userVocabularyList = Route.useLoaderData();
 
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['vocabulary-list-items', userVocabularyListId, status, search],
@@ -52,37 +54,44 @@ function VocabularyListDetailPage() {
   const items = data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <Link
-        to="/vocabulary"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to lists
-      </Link>
+    <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <Link
+          to="/vocabulary"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to vocabulary
+        </Link>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{progress.title}</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">
+          {userVocabularyList.vocabularyList.title}
+        </h1>
 
-      <div className="mt-4">
-        <VocabularyListProgress total={progress.total} learned={progress.learned} known={progress.known} />
+        <div className="mt-4">
+          <VocabularyListProgress userVocabularyListId={userVocabularyListId} />
+        </div>
+
+        <div className="mt-6">
+          <VocabularyListFilters />
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-lg border">
+          {isPending ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : (
+            <VocabularyItemsTable
+              items={items}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadMore={() => void fetchNextPage()}
+              userVocabularyListId={userVocabularyListId}
+            />
+          )}
+        </div>
       </div>
 
-      <div className="mt-6">
-        <VocabularyListFilters />
-      </div>
-
-      <div className="mt-4 overflow-hidden rounded-lg border">
-        {isPending ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
-        ) : (
-          <VocabularyItemsTable
-            items={items}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            onLoadMore={() => void fetchNextPage()}
-          />
-        )}
-      </div>
-    </div>
+      <EditVocabularyItemTranslationDialog />
+    </EditVocabularyItemTranslationProvider>
   );
 }

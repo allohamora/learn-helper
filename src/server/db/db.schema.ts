@@ -8,10 +8,13 @@ import {
   uuid,
   varchar,
   integer,
+  bigint,
   uniqueIndex,
   unique,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
+import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 
 /* start of better-auth */
 export const user = pgTable('user', {
@@ -91,6 +94,7 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   userVocabularyItems: many(userVocabularyItem),
   userVocabularyLists: many(userVocabularyList),
+  events: many(event),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -215,6 +219,40 @@ export const userVocabularyList = pgTable(
   ],
 );
 
+export const event = pgTable('event', {
+  id: uuid('id')
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 48 }).$type<EventType>().notNull(),
+  userVocabularyItemId: uuid('user_vocabulary_item_id').references(() => userVocabularyItem.id, {
+    onDelete: 'restrict',
+  }),
+  // AI-generation-batch cost tracing: array of user_vocabulary_item ids included in a single generation call
+  userVocabularyItemIds: jsonb('user_vocabulary_item_ids').$type<string[]>(),
+  vocabularyItemId: uuid('vocabulary_item_id').references(() => vocabularyItem.id, { onDelete: 'restrict' }),
+  // exists in vocabulary item update and user vocabulary item progression events
+  userVocabularyListId: uuid('user_vocabulary_list_id').references(() => userVocabularyList.id, {
+    onDelete: 'restrict',
+  }),
+  status: varchar('status', { length: 16 }).$type<LearningStatus>(),
+  userVocabularyItemTaskType: varchar('user_vocabulary_item_task_type', {
+    length: 48,
+  }).$type<UserVocabularyItemTaskType>(),
+  // records which vocabulary_item field changed for a vocabulary-item-updated event (e.g. 'uaTranslation')
+  fieldName: text('field_name'),
+  durationMs: integer('duration_ms'),
+  encounterCount: integer('encounter_count'),
+  costInNanoDollars: bigint('cost_in_nano_dollars', { mode: 'number' }),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  // marks a discovered event as later undone; generic across event types, not undo-specific
+  revertedAt: timestamp('reverted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const vocabularyListRelations = relations(vocabularyList, ({ many }) => ({
   vocabularyListItems: many(vocabularyListItem),
   userVocabularyLists: many(userVocabularyList),
@@ -223,6 +261,7 @@ export const vocabularyListRelations = relations(vocabularyList, ({ many }) => (
 export const vocabularyItemRelations = relations(vocabularyItem, ({ many }) => ({
   vocabularyListItems: many(vocabularyListItem),
   userVocabularyItems: many(userVocabularyItem),
+  events: many(event),
 }));
 
 export const vocabularyListItemRelations = relations(vocabularyListItem, ({ one }) => ({
@@ -236,7 +275,7 @@ export const vocabularyListItemRelations = relations(vocabularyListItem, ({ one 
   }),
 }));
 
-export const userVocabularyItemRelations = relations(userVocabularyItem, ({ one }) => ({
+export const userVocabularyItemRelations = relations(userVocabularyItem, ({ one, many }) => ({
   user: one(user, {
     fields: [userVocabularyItem.userId],
     references: [user.id],
@@ -245,9 +284,10 @@ export const userVocabularyItemRelations = relations(userVocabularyItem, ({ one 
     fields: [userVocabularyItem.vocabularyItemId],
     references: [vocabularyItem.id],
   }),
+  events: many(event),
 }));
 
-export const userVocabularyListRelations = relations(userVocabularyList, ({ one }) => ({
+export const userVocabularyListRelations = relations(userVocabularyList, ({ one, many }) => ({
   user: one(user, {
     fields: [userVocabularyList.userId],
     references: [user.id],
@@ -256,4 +296,5 @@ export const userVocabularyListRelations = relations(userVocabularyList, ({ one 
     fields: [userVocabularyList.vocabularyListId],
     references: [vocabularyList.id],
   }),
+  events: many(event),
 }));

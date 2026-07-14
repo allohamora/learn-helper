@@ -118,14 +118,15 @@ erDiagram
         status varchar(16) "optional, enum: learning_status"
         user_vocabulary_item_task_type varchar(48) "optional, enum: user_vocabulary_item_task_type"
         user_grammar_topic_task_type varchar(48) "optional, enum: user_grammar_topic_task_type"
-        vocabulary_list_id uuid FK "optional"
+        user_vocabulary_list_id uuid FK "optional"
         grammar_topic_list_id uuid FK "optional"
         field_name text "optional"
         duration_ms integer "optional"
         encounter_count integer "optional"
-        cost_in_nano_dollars integer "optional"
+        cost_in_nano_dollars bigint "optional"
         input_tokens integer "optional"
         output_tokens integer "optional"
+        reverted_at timestamptz "optional"
         created_at timestamptz "default NOW"
     }
 
@@ -137,7 +138,7 @@ erDiagram
     vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
     vocabulary_item ||--o{ vocabulary_list_item : "one-to-many"
     grammar_topic_list }o--o{ grammar_topic : "many-to-many"
-    vocabulary_list ||--o{ event : "one-to-many"
+    user_vocabulary_list ||--o{ event : "one-to-many"
     grammar_topic_list ||--o{ event : "one-to-many"
     vocabulary_item ||--o{ user_vocabulary_item : "one-to-many"
     grammar_topic ||--o{ user_grammar_topic : "one-to-many"
@@ -156,6 +157,7 @@ erDiagram
 ### event_type
 
 - user-vocabulary-item-discovered
+- user-vocabulary-item-discovery-undone
 - user-vocabulary-item-task-failed
 - user-vocabulary-item-task-showcase-viewed
 - user-vocabulary-item-task-passed
@@ -265,9 +267,31 @@ This implements the `[new, review, review, …]` cycle via observation rather th
 
 ## Event table notes
 
+### Undoing a discovery — `reverted_at` and `user-vocabulary-item-discovery-undone`
+
+The event table is append-only: a discovery is never deleted when the user undoes it. Instead, undo (`POST .../items/{id}/undo`):
+
+1. Sets `reverted_at = NOW()` on the active `user-vocabulary-item-discovered` event (the one for that user + item with `reverted_at IS NULL` — there is at most one at a time). This keeps "is this word currently discovered" a cheap, self-contained lookup on the event table (`reverted_at IS NULL`) without joining or mutating `user_vocabulary_item`.
+2. Inserts a `user-vocabulary-item-discovery-undone` event, copying `duration_ms` from the event it undoes — not a freshly-computed value — so the undone event is a self-sufficient historical record of what was reverted (no join back to the original event needed for analysis).
+3. Sets `user_vocabulary_item.status` back to `waiting`, same as any other status transition.
+
+`reverted_at` is a generic column (not undo-specific) so any future event type that needs a "later undone" marker can reuse it, rather than each undo-able event type growing its own flag.
+
 ### `user_vocabulary_item_ids`
 
 Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
+
+### `cost_in_nano_dollars`
+
+`bigint` with `mode: 'number'`, not `integer` — a 32-bit `integer` overflows above ~$2.14 (2^31 nanodollars), which a large AI-generation batch on a pricier model could plausibly exceed. `mode: 'number'` keeps it a plain JS `number` (safe up to ~$9M) rather than a `BigInt`, since the app never needs values anywhere near that range.
+
+### `field_name`
+
+Records which field changed on a `vocabulary-item-updated` event (e.g. `uaTranslation` when the user edits their translation). Powers a per-field "edits per day" breakdown on the statistics page, grouped by `(date, field_name)`.
+
+### `user_vocabulary_list_id`
+
+Records which list a word was being practiced in when a session event fired (e.g. discovered, passed, moved to next step). Since a word can belong to multiple lists, `vocabulary_item_id` alone can't tell you which list the session was scoped to. References `user_vocabulary_list` (the user's list enrollment) rather than `vocabulary_list` directly, since the event is always tied to a specific user's enrollment, matching the same pattern as `user_vocabulary_item_id` referencing `user_vocabulary_item` rather than `vocabulary_item`.
 
 ## List-based learning
 

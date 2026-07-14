@@ -11,11 +11,11 @@ import { createLogger } from '../utils/logger.utils';
 const logger = createLogger('db.service');
 
 export const client = postgres(POSTGRES_URL, {
-  onnotice: ({ message, ...notice }) => logger.info({ msg: message, ...notice }),
+  onnotice: ({ message, ...notice }) => logger.debug({ msg: message, ...notice }),
 });
 export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snake_case' });
 
-const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');
+const MIGRATIONS_DIR = path.join(process.cwd(), 'migrations');
 
 export const runMigrations = async () => {
   await migrate(db, { migrationsFolder: MIGRATIONS_DIR });

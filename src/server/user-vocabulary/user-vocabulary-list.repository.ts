@@ -14,26 +14,51 @@ export const getUserVocabularyListByVocabularyListId = async (
   });
 };
 
-export const getUserVocabularyListById = async ({
-  userId,
-  userVocabularyListId,
-}: {
-  userId: string;
-  userVocabularyListId: string;
-}) => {
-  return db.query.userVocabularyList.findFirst({
+export const getUserVocabularyListById = async (
+  {
+    userId,
+    userVocabularyListId,
+  }: {
+    userId: string;
+    userVocabularyListId: string;
+  },
+  tx: Transaction = db,
+) => {
+  return tx.query.userVocabularyList.findFirst({
     where: and(eq(userVocabularyList.userId, userId), eq(userVocabularyList.id, userVocabularyListId)),
   });
 };
 
-export const getUserVocabularyListOrThrow = async ({
-  userId,
-  userVocabularyListId,
-}: {
-  userId: string;
-  userVocabularyListId: string;
-}) => {
-  const userList = await getUserVocabularyListById({ userId, userVocabularyListId });
+export const getUserVocabularyListOrThrow = async (
+  {
+    userId,
+    userVocabularyListId,
+  }: {
+    userId: string;
+    userVocabularyListId: string;
+  },
+  tx: Transaction = db,
+) => {
+  const userList = await getUserVocabularyListById({ userId, userVocabularyListId }, tx);
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+
+  return userList;
+};
+
+export const getUserVocabularyListWithListOrThrow = async (
+  {
+    userId,
+    userVocabularyListId,
+  }: {
+    userId: string;
+    userVocabularyListId: string;
+  },
+  tx: Transaction = db,
+) => {
+  const userList = await tx.query.userVocabularyList.findFirst({
+    where: and(eq(userVocabularyList.userId, userId), eq(userVocabularyList.id, userVocabularyListId)),
+    with: { vocabularyList: true },
+  });
   if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
 
   return userList;
