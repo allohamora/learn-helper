@@ -5,6 +5,7 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { auth } from './auth/auth.service';
 import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
+import { secureHeaders } from 'hono/secure-headers';
 import { toErrorResponse } from './utils/response.utils';
 import { userVocabularyListRouter } from './user-vocabulary/user-vocabulary-list.router';
 import { createLogger } from './utils/logger.utils';
@@ -21,6 +22,8 @@ declare module 'hono' {
 const logger = createLogger('api');
 
 const api = new OpenAPIHono().basePath('/api');
+
+api.use(secureHeaders());
 
 const isSsrUrl = (url: string) => {
   try {
