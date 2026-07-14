@@ -4,7 +4,7 @@ import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ExternalLink, Loader2, Pencil, RotateCcw, Volume2 } from 'lucide-react';
+import { ExternalLink, Loader2, Pencil, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
@@ -25,26 +25,26 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
   const pronunciation = item.pronunciation;
 
   const queryClient = useQueryClient();
-  const resetMutation = useMutation({
+  const undoMutation = useMutation({
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
       ].undo.$post({
         param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItemId },
       });
-      if (!res.ok) throw new Error('Failed to reset word');
+      if (!res.ok) throw new Error('Failed to undo discovery');
 
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress', userVocabularyListId] });
-      toast.success('Word has been reset to waiting');
+      toast.success('Discovery undone, word is waiting again');
     },
-    onError: () => toast.error('Failed to reset word'),
+    onError: () => toast.error('Failed to undo discovery'),
   });
 
-  const canReset =
+  const canUndo =
     (item.status === LearningStatus.Learning && item.encounterCount === 0) || item.status === LearningStatus.Known;
 
   return (
@@ -97,12 +97,12 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         size="sm"
         variant="ghost"
         className="size-8 px-0"
-        disabled={!canReset || resetMutation.isPending}
-        onClick={() => resetMutation.mutate()}
-        title="Reset to waiting"
-        aria-label="Reset to waiting"
+        disabled={!canUndo || undoMutation.isPending}
+        onClick={() => undoMutation.mutate()}
+        title="Undo discovery"
+        aria-label="Undo discovery"
       >
-        {resetMutation.isPending ? <Loader2 className="animate-spin" /> : <RotateCcw />}
+        {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
     </div>
   );
