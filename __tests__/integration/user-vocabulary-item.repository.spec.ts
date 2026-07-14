@@ -154,14 +154,18 @@ describe('userVocabularyItemRepository', () => {
     });
 
     it('throws when the item does not belong to the user', async () => {
-      const { userList } = await seedUserItem({ userSuffix: 'wrong-item-owner' });
-      if (!userList) throw new Error('expected user list to be created');
+      const { userItem } = await seedUserItem({ userSuffix: 'wrong-item-owner' });
+      const { userId: otherUserId, userList: otherUserList } = await seedUserItem({
+        userSuffix: 'other-owner',
+        value: 'walk',
+      });
+      if (!otherUserList) throw new Error('expected user list to be created');
 
       await expect(
         getUserVocabularyListItemLinkOrThrow({
-          userId: 'someone-else',
-          userVocabularyListId: userList.id,
-          userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
+          userId: otherUserId,
+          userVocabularyListId: otherUserList.id,
+          userVocabularyItemId: userItem.id,
         }),
       ).rejects.toThrow();
     });
