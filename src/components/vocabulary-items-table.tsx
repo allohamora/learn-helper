@@ -114,7 +114,17 @@ const columnHelper = createColumnHelper<VocabularyItem>();
 const buildColumns = (userVocabularyListId: string) => [
   columnHelper.accessor('value', {
     header: 'Word',
-    cell: (info) => <div className="truncate font-medium">{info.getValue()}</div>,
+    cell: (info) => {
+      const item = info.row.original;
+
+      return (
+        <div className="min-w-0">
+          <div className="truncate font-medium">{item.value}</div>
+          <div className="truncate text-xs text-muted-foreground">({item.spelling})</div>
+          <div className="truncate text-xs text-muted-foreground">{item.uaTranslation}</div>
+        </div>
+      );
+    },
   }),
   columnHelper.accessor('definition', {
     header: 'Definition',
@@ -140,10 +150,9 @@ const buildColumns = (userVocabularyListId: string) => [
 // proportionally with a fixed-length floor, not to content, or a row's widths would depend on that
 // row's own content instead of matching the header and other rows). Narrow viewports scroll the
 // table horizontally (the container below is overflow-auto) rather than reflowing the columns.
-const GRID_COLS_CLASS =
-  'grid grid-cols-[minmax(6rem,1fr)_minmax(10rem,3fr)_minmax(5rem,1fr)_minmax(6rem,1fr)_minmax(7rem,1fr)]';
+const GRID_COLS_CLASS = 'grid grid-cols-[minmax(9rem,1.3fr)_minmax(10rem,3fr)_minmax(5rem,1fr)_7rem_minmax(7rem,1fr)]';
 
-const ROW_HEIGHT_PX = 56;
+const ROW_HEIGHT_PX = 72;
 const LOAD_MORE_THRESHOLD_PX = 200;
 
 type Props = {
