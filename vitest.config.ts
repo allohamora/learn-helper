@@ -36,6 +36,18 @@ export default defineConfig({
           maxWorkers: 5,
         },
       },
+      {
+        resolve: {
+          tsconfigPaths: true,
+        },
+        test: {
+          name: 'evals',
+          include: ['**/__tests__/evals/**/*.spec.ts'],
+          setupFiles: ['./__tests__/setup-evals-context.ts'],
+          testTimeout: 5 * 60 * 1000,
+          maxWorkers: 5,
+        },
+      },
     ],
   },
 });
