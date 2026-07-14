@@ -123,7 +123,7 @@ erDiagram
         field_name text "optional"
         duration_ms integer "optional"
         encounter_count integer "optional"
-        cost_in_nano_dollars integer "optional"
+        cost_in_nano_dollars bigint "optional"
         input_tokens integer "optional"
         output_tokens integer "optional"
         reverted_at timestamptz "optional"
@@ -280,6 +280,10 @@ The event table is append-only: a discovery is never deleted when the user undoe
 ### `user_vocabulary_item_ids`
 
 Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
+
+### `cost_in_nano_dollars`
+
+`bigint` with `mode: 'number'`, not `integer` — a 32-bit `integer` overflows above ~$2.14 (2^31 nanodollars), which a large AI-generation batch on a pricier model could plausibly exceed. `mode: 'number'` keeps it a plain JS `number` (safe up to ~$9M) rather than a `BigInt`, since the app never needs values anywhere near that range.
 
 ### `field_name`
 

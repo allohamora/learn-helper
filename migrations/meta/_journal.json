@@ -57,6 +57,13 @@
       "when": 1784014671768,
       "tag": "0007_square_nighthawk",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784016803497,
+      "tag": "0008_sloppy_mikhail_rasputin",
+      "breakpoints": true
     }
   ]
 }

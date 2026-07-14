@@ -8,6 +8,7 @@ import {
   uuid,
   varchar,
   integer,
+  bigint,
   uniqueIndex,
   unique,
   jsonb,
@@ -244,7 +245,7 @@ export const event = pgTable('event', {
   fieldName: text('field_name'),
   durationMs: integer('duration_ms'),
   encounterCount: integer('encounter_count'),
-  costInNanoDollars: integer('cost_in_nano_dollars'),
+  costInNanoDollars: bigint('cost_in_nano_dollars', { mode: 'number' }),
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),
   // marks a discovered event as later undone; generic across event types, not undo-specific
