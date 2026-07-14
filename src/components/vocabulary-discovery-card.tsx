@@ -1,9 +1,10 @@
 import type { FC, MouseEvent } from 'react';
 import type { InferResponseType } from 'hono/client';
-import { ExternalLink, Volume2 } from 'lucide-react';
+import { ExternalLink, Pencil, Volume2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { appClient } from '@/services/api';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ type Props = {
 
 export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
+  const { openEdit } = useEditVocabularyItemTranslation();
 
   const handlePlayPronunciation = (event: MouseEvent) => {
     event.preventDefault();
@@ -27,6 +29,18 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
     if (item.pronunciation) {
       void playAudio(item.pronunciation);
     }
+  };
+
+  const handleEdit = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    openEdit({
+      userVocabularyItemId: item.userVocabularyItemId,
+      value: item.value,
+      partOfSpeech: item.partOfSpeech,
+      uaTranslation: item.uaTranslation,
+    });
   };
 
   return (
@@ -40,6 +54,16 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleEdit}
+              title="Edit translation"
+              aria-label="Edit translation"
+            >
+              <Pencil />
+            </Button>
+
             {item.pronunciation && (
               <Button
                 variant="ghost"

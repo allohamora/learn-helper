@@ -125,7 +125,7 @@ describe('userVocabularyItemRepository', () => {
 
   describe('getUserVocabularyListItemLinkOrThrow', () => {
     it('resolves when the list and item belong to the user and the item is linked to the list', async () => {
-      const { userId, userItem, userList } = await seedUserItem({ userSuffix: 'linked' });
+      const { userId, item, userItem, userList } = await seedUserItem({ userSuffix: 'linked' });
       if (!userList) throw new Error('expected user list to be created');
 
       await expect(
@@ -134,7 +134,11 @@ describe('userVocabularyItemRepository', () => {
           userVocabularyListId: userList.id,
           userVocabularyItemId: userItem.id,
         }),
-      ).resolves.toBeUndefined();
+      ).resolves.toEqual({
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+      });
     });
 
     it('throws when the list does not belong to the user', async () => {

@@ -14,9 +14,11 @@ import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progre
 import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
 import { setUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
+import { updateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
 import { userVocabularyItemStatusDto } from './dto/user-vocabulary-item-status.dto';
+import { userVocabularyItemTranslationDto } from './dto/user-vocabulary-item-translation.dto';
 import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
-import { setUserVocabularyItemStatus } from './user-vocabulary-item.service';
+import { setUserVocabularyItemStatus, updateUserVocabularyItemTranslation } from './user-vocabulary-item.service';
 import {
   getUserAvailableVocabularyLists,
   getUserVocabularyListWithListOrThrow,
@@ -198,6 +200,48 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await setUserVocabularyItemStatus({
+            userId: user.id,
+            userVocabularyListId,
+            userVocabularyItemId,
+            ...body,
+          }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'patch',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/translation',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: updateUserVocabularyItemTranslationDto,
+            },
+          },
+        },
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The item's updated translation",
+          schema: userVocabularyItemTranslationDto,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await updateUserVocabularyItemTranslation({
             userId: user.id,
             userVocabularyListId,
             userVocabularyItemId,

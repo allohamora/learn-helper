@@ -32,7 +32,11 @@ export const getUserVocabularyListItemLinkOrThrow = async (
   tx: Transaction = db,
 ) => {
   const [link] = await tx
-    .select({ userVocabularyListId: userVocabularyList.id, userVocabularyItemId: userVocabularyItem.id })
+    .select({
+      userVocabularyListId: userVocabularyList.id,
+      userVocabularyItemId: userVocabularyItem.id,
+      vocabularyItemId: userVocabularyItem.vocabularyItemId,
+    })
     .from(userVocabularyList)
     .innerJoin(vocabularyListItem, eq(vocabularyListItem.vocabularyListId, userVocabularyList.vocabularyListId))
     .innerJoin(
@@ -56,6 +60,8 @@ export const getUserVocabularyListItemLinkOrThrow = async (
       `vocabulary list "${userVocabularyListId}" and item "${userVocabularyItemId}" are not linked for user`,
     );
   }
+
+  return link;
 };
 
 export const updateUserVocabularyItemStatus = async (

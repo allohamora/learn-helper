@@ -480,4 +480,103 @@ describe('user-vocabulary-list.router', () => {
       expect(res.status).toBe(404);
     });
   });
+
+  describe('PATCH /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/:userVocabularyItemId/translation', () => {
+    const addList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
+      const { list, items } = await seedList(values, title);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const userItems = await db.query.userVocabularyItem.findMany({
+        where: eq(userVocabularyItem.userId, USER_ID),
+      });
+
+      return { list, items, userList, userItems };
+    };
+
+    it('returns 200, updates the shared vocabulary item, and records an update event', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems, items } = await addList();
+      const [userItem] = userItems;
+      const [item] = items;
+      if (!userItem || !item) throw new Error('expected a user item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].translation.$patch({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+        json: { uaTranslation: 'бігти' },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: { userVocabularyItemId: userItem.id, uaTranslation: 'бігти' },
+      });
+
+      const updated = await db.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, item.id) });
+      expect(updated?.uaTranslation).toBe('бігти');
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toMatchObject([
+        {
+          type: EventType.VocabularyItemUpdated,
+          userId: USER_ID,
+          userVocabularyItemId: userItem.id,
+          vocabularyItemId: item.id,
+          userVocabularyListId: userList.id,
+          fieldName: 'uaTranslation',
+        },
+      ]);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { list, items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].translation.$patch({
+        param: { userVocabularyListId: list.id, userVocabularyItemId: item.id },
+        json: { uaTranslation: 'бігти' },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 when the user has not added the list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list, items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].translation.$patch({
+        param: { userVocabularyListId: list.id, userVocabularyItemId: item.id },
+        json: { uaTranslation: 'бігти' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 400 when uaTranslation is blank', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].translation.$patch({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+        json: { uaTranslation: '  ' },
+      });
+      expect(res.status).toBe(400);
+    });
+  });
 });

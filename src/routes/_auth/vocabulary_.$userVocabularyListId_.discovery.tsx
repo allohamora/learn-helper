@@ -4,6 +4,8 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft, Undo2 } from 'lucide-react';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { Button } from '@/components/ui/button';
+import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
+import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyDiscoveryCard } from '@/components/vocabulary-discovery-card';
 import { LearningStatus } from '@/const/vocabulary';
 
@@ -114,68 +116,72 @@ function VocabularyDiscoveryPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6">
-      <Link
-        to="/vocabulary"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to vocabulary
-      </Link>
+    <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
+      <div className="mx-auto max-w-md px-4 py-6">
+        <Link
+          to="/vocabulary"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to vocabulary
+        </Link>
 
-      <h1 className="mt-2 mb-4 text-2xl font-bold tracking-tight md:text-3xl">
-        {userVocabularyList.vocabularyList.title}
-      </h1>
+        <h1 className="mt-2 mb-4 text-2xl font-bold tracking-tight md:text-3xl">
+          {userVocabularyList.vocabularyList.title}
+        </h1>
 
-      {isLoading ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
-      ) : error ? (
-        <div className="text-center">
-          <p className="mb-4 text-destructive">{error.message}</p>
-          <Button onClick={() => void refetch()}>Try Again</Button>
-        </div>
-      ) : !currentItem ? (
-        <div className="text-center">
-          <h2 className="mb-2 text-xl font-bold">Great job!</h2>
-          <p className="text-muted-foreground">You&apos;ve reviewed all available words.</p>
-        </div>
-      ) : (
-        <div>
-          <div className="mb-3 flex items-center justify-between text-sm md:mb-4">
-            <p className="text-muted-foreground">Remaining words: {remaining}</p>
-            <Button
-              onClick={() => void undo()}
-              variant="outline"
-              size="sm"
-              disabled={history.length === 0 || setStatus.isPending}
-            >
-              <Undo2 />
-              Undo
-            </Button>
+        {isLoading ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+        ) : error ? (
+          <div className="text-center">
+            <p className="mb-4 text-destructive">{error.message}</p>
+            <Button onClick={() => void refetch()}>Try Again</Button>
           </div>
-
-          <VocabularyDiscoveryCard item={currentItem} />
-
-          <div className="mt-3 flex gap-3 md:mt-4 md:gap-4">
-            <Button
-              onClick={() => void handle(LearningStatus.Known)}
-              variant="destructive"
-              className="h-11 flex-1 text-base md:h-12"
-              disabled={setStatus.isPending}
-            >
-              I Know This
-            </Button>
-            <Button
-              onClick={() => void handle(LearningStatus.Learning)}
-              variant="default"
-              className="h-11 flex-1 text-base md:h-12"
-              disabled={setStatus.isPending}
-            >
-              Learn This
-            </Button>
+        ) : !currentItem ? (
+          <div className="text-center">
+            <h2 className="mb-2 text-xl font-bold">Great job!</h2>
+            <p className="text-muted-foreground">You&apos;ve reviewed all available words.</p>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div>
+            <div className="mb-3 flex items-center justify-between text-sm md:mb-4">
+              <p className="text-muted-foreground">Remaining words: {remaining}</p>
+              <Button
+                onClick={() => void undo()}
+                variant="outline"
+                size="sm"
+                disabled={history.length === 0 || setStatus.isPending}
+              >
+                <Undo2 />
+                Undo
+              </Button>
+            </div>
+
+            <VocabularyDiscoveryCard item={currentItem} />
+
+            <div className="mt-3 flex gap-3 md:mt-4 md:gap-4">
+              <Button
+                onClick={() => void handle(LearningStatus.Known)}
+                variant="destructive"
+                className="h-11 flex-1 text-base md:h-12"
+                disabled={setStatus.isPending}
+              >
+                I Know This
+              </Button>
+              <Button
+                onClick={() => void handle(LearningStatus.Learning)}
+                variant="default"
+                className="h-11 flex-1 text-base md:h-12"
+                disabled={setStatus.isPending}
+              >
+                Learn This
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <EditVocabularyItemTranslationDialog />
+    </EditVocabularyItemTranslationProvider>
   );
 }

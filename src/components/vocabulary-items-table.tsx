@@ -4,9 +4,10 @@ import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ExternalLink, Loader2, RotateCcw, Volume2 } from 'lucide-react';
+import { ExternalLink, Loader2, Pencil, RotateCcw, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
 import { LearningStatus } from '@/const/vocabulary';
@@ -20,6 +21,7 @@ type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
 const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
+  const { openEdit } = useEditVocabularyItemTranslation();
   const pronunciation = item.pronunciation;
 
   const queryClient = useQueryClient();
@@ -79,6 +81,23 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         size="sm"
         variant="ghost"
         className="size-8 px-0"
+        onClick={() =>
+          openEdit({
+            userVocabularyItemId: item.userVocabularyItemId,
+            value: item.value,
+            partOfSpeech: item.partOfSpeech,
+            uaTranslation: item.uaTranslation,
+          })
+        }
+        title="Edit translation"
+        aria-label="Edit translation"
+      >
+        <Pencil />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="size-8 px-0"
         disabled={!canReset || resetMutation.isPending}
         onClick={() => resetMutation.mutate()}
         title="Reset to waiting"
@@ -103,7 +122,7 @@ const buildColumns = (userVocabularyListId: string) => [
   }),
   columnHelper.accessor('partOfSpeech', {
     header: 'Part of speech',
-    cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '—'}</div>,
+    cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '-'}</div>,
   }),
   columnHelper.accessor('status', {
     header: 'Status',

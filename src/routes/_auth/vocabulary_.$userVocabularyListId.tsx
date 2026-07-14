@@ -3,6 +3,8 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
+import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
+import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
 import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
@@ -52,38 +54,44 @@ function VocabularyListDetailPage() {
   const items = data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <Link
-        to="/vocabulary"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to vocabulary
-      </Link>
+    <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <Link
+          to="/vocabulary"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to vocabulary
+        </Link>
 
-      <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{userVocabularyList.vocabularyList.title}</h1>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">
+          {userVocabularyList.vocabularyList.title}
+        </h1>
 
-      <div className="mt-4">
-        <VocabularyListProgress userVocabularyListId={userVocabularyListId} />
+        <div className="mt-4">
+          <VocabularyListProgress userVocabularyListId={userVocabularyListId} />
+        </div>
+
+        <div className="mt-6">
+          <VocabularyListFilters />
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-lg border">
+          {isPending ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+          ) : (
+            <VocabularyItemsTable
+              items={items}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadMore={() => void fetchNextPage()}
+              userVocabularyListId={userVocabularyListId}
+            />
+          )}
+        </div>
       </div>
 
-      <div className="mt-6">
-        <VocabularyListFilters />
-      </div>
-
-      <div className="mt-4 overflow-hidden rounded-lg border">
-        {isPending ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
-        ) : (
-          <VocabularyItemsTable
-            items={items}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            onLoadMore={() => void fetchNextPage()}
-            userVocabularyListId={userVocabularyListId}
-          />
-        )}
-      </div>
-    </div>
+      <EditVocabularyItemTranslationDialog />
+    </EditVocabularyItemTranslationProvider>
   );
 }
