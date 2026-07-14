@@ -11,7 +11,7 @@ import { createLogger } from '../utils/logger.utils';
 const logger = createLogger('db.service');
 
 export const client = postgres(POSTGRES_URL, {
-  onnotice: ({ message, ...notice }) => logger.info({ msg: message, ...notice }),
+  onnotice: ({ message, ...notice }) => logger.debug({ msg: message, ...notice }),
 });
 export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snake_case' });
 

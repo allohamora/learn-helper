@@ -1,5 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { app } from '@/server/api';
+import { runMigrations } from '@/server/db/db.service';
+
+await runMigrations();
 
 const serve = ({ request }: { request: Request }) => {
   return app.fetch(request);
