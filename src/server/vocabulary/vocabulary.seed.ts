@@ -30,7 +30,7 @@ const SOURCES: Source[] = [
 ];
 
 const CHUNK_SIZE = 100;
-const DATA_DIR = path.join(import.meta.dirname, 'data');
+const DATA_DIR = path.join(process.cwd(), 'data');
 
 export const readSourceData = async (file: string) => {
   const raw = await readFile(path.join(DATA_DIR, file), 'utf-8');
