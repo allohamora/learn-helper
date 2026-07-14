@@ -1,5 +1,6 @@
 export enum EventType {
   UserVocabularyItemDiscovered = 'user-vocabulary-item-discovered',
+  UserVocabularyItemDiscoveryUndone = 'user-vocabulary-item-discovery-undone',
   UserVocabularyItemTaskFailed = 'user-vocabulary-item-task-failed',
   UserVocabularyItemTaskShowcaseViewed = 'user-vocabulary-item-task-showcase-viewed',
   UserVocabularyItemTaskPassed = 'user-vocabulary-item-task-passed',

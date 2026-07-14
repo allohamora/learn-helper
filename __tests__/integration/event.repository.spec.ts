@@ -7,7 +7,7 @@ import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabul
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
 import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 import { createUserVocabularyList } from '@/server/user-vocabulary/user-vocabulary-list.repository';
-import { deleteUserVocabularyItemDiscoveredEvents, insertEvent } from '@/server/event/event.repository';
+import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '@/server/event/event.repository';
 import { EventType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
@@ -67,8 +67,8 @@ describe('eventRepository', () => {
     });
   });
 
-  describe('deleteUserVocabularyItemDiscoveredEvents', () => {
-    it('deletes only the discovered event for the given user and item', async () => {
+  describe('revertUserVocabularyItemDiscoveredEvent', () => {
+    it('marks the discovered event as reverted, returns it, and leaves other events untouched', async () => {
       const { userList, userItem } = await seed();
 
       await insertEvent({
@@ -85,10 +85,32 @@ describe('eventRepository', () => {
         userVocabularyItemId: userItem.id,
       });
 
-      await deleteUserVocabularyItemDiscoveredEvents({ userId: USER_ID, userVocabularyItemId: userItem.id });
+      const reverted = await revertUserVocabularyItemDiscoveredEvent({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(reverted).toMatchObject({ type: EventType.UserVocabularyItemDiscovered, durationMs: 100 });
+      expect(reverted?.revertedAt).toEqual(expect.any(Date));
 
       const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
-      expect(events).toMatchObject([{ type: EventType.UserVocabularyItemMovedToNextStep }]);
+      expect(events).toContainEqual(
+        expect.objectContaining({ type: EventType.UserVocabularyItemDiscovered, revertedAt: expect.any(Date) }),
+      );
+      expect(events).toContainEqual(
+        expect.objectContaining({ type: EventType.UserVocabularyItemMovedToNextStep, revertedAt: null }),
+      );
+    });
+
+    it('returns undefined when there is no active discovered event', async () => {
+      const { userItem } = await seed();
+
+      const reverted = await revertUserVocabularyItemDiscoveredEvent({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(reverted).toBeUndefined();
     });
   });
 });

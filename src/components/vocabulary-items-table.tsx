@@ -29,9 +29,8 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].undo.$post({
         param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItemId },
-        json: { status: LearningStatus.Waiting },
       });
       if (!res.ok) throw new Error('Failed to reset word');
 

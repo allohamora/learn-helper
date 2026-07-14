@@ -18,7 +18,11 @@ import { updateUserVocabularyItemTranslationDto } from './dto/update-user-vocabu
 import { userVocabularyItemStatusDto } from './dto/user-vocabulary-item-status.dto';
 import { userVocabularyItemTranslationDto } from './dto/user-vocabulary-item-translation.dto';
 import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
-import { setUserVocabularyItemStatus, updateUserVocabularyItemTranslation } from './user-vocabulary-item.service';
+import {
+  setUserVocabularyItemStatus,
+  undoUserVocabularyItemStatus,
+  updateUserVocabularyItemTranslation,
+} from './user-vocabulary-item.service';
 import {
   getUserAvailableVocabularyLists,
   getUserVocabularyListWithListOrThrow,
@@ -205,6 +209,35 @@ export const userVocabularyListRouter = new OpenAPIHono()
             userVocabularyItemId,
             ...body,
           }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/undo',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The item's status reverted to waiting",
+          schema: userVocabularyItemStatusDto,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await undoUserVocabularyItemStatus({ userId: user.id, userVocabularyListId, userVocabularyItemId }),
         }),
       );
     },

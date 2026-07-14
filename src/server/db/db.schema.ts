@@ -247,6 +247,8 @@ export const event = pgTable('event', {
   costInNanoDollars: integer('cost_in_nano_dollars'),
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),
+  // marks a discovered event as later undone; generic across event types, not undo-specific
+  revertedAt: timestamp('reverted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

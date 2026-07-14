@@ -3,7 +3,8 @@ import { EventType } from '@/const/event';
 import { LearningStatus } from '@/const/vocabulary';
 import { updateVocabularyItemTranslation } from '../vocabulary/vocabulary-item.repository';
 import { db } from '../db/db.service';
-import { deleteUserVocabularyItemDiscoveredEvents, insertEvent } from '../event/event.repository';
+import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '../event/event.repository';
+import { Exception } from '../utils/exception.utils';
 import type { SetUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
 import type { UpdateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
 import {
@@ -24,25 +25,55 @@ export const setUserVocabularyItemStatus = async ({
   return db.transaction(async (tx) => {
     await getUserVocabularyListItemLinkOrThrow({ userId, userVocabularyListId, userVocabularyItemId }, tx);
 
-    if (body.status === LearningStatus.Waiting) {
-      await deleteUserVocabularyItemDiscoveredEvents({ userId, userVocabularyItemId }, tx);
-    } else {
-      await insertEvent(
-        {
-          type: EventType.UserVocabularyItemDiscovered,
-          userId,
-          userVocabularyItemId,
-          userVocabularyListId,
-          status: body.status,
-          durationMs: body.durationMs,
-        },
-        tx,
-      );
-    }
+    await insertEvent(
+      {
+        type: EventType.UserVocabularyItemDiscovered,
+        userId,
+        userVocabularyItemId,
+        userVocabularyListId,
+        status: body.status,
+        durationMs: body.durationMs,
+      },
+      tx,
+    );
 
     await updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: body.status }, tx);
 
     return { userVocabularyItemId, status: body.status };
+  });
+};
+
+export const undoUserVocabularyItemStatus = async ({
+  userId,
+  userVocabularyListId,
+  userVocabularyItemId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+  userVocabularyItemId: string;
+}) => {
+  return db.transaction(async (tx) => {
+    await getUserVocabularyListItemLinkOrThrow({ userId, userVocabularyListId, userVocabularyItemId }, tx);
+
+    const revertedEvent = await revertUserVocabularyItemDiscoveredEvent({ userId, userVocabularyItemId }, tx);
+    if (!revertedEvent) {
+      throw Exception.notFound(`no active discovery event for user vocabulary item "${userVocabularyItemId}"`);
+    }
+
+    await insertEvent(
+      {
+        type: EventType.UserVocabularyItemDiscoveryUndone,
+        userId,
+        userVocabularyItemId,
+        userVocabularyListId,
+        durationMs: revertedEvent.durationMs,
+      },
+      tx,
+    );
+
+    await updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: LearningStatus.Waiting }, tx);
+
+    return { userVocabularyItemId, status: LearningStatus.Waiting };
   });
 };
 

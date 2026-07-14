@@ -126,6 +126,7 @@ erDiagram
         cost_in_nano_dollars integer "optional"
         input_tokens integer "optional"
         output_tokens integer "optional"
+        reverted_at timestamptz "optional"
         created_at timestamptz "default NOW"
     }
 
@@ -156,6 +157,7 @@ erDiagram
 ### event_type
 
 - user-vocabulary-item-discovered
+- user-vocabulary-item-discovery-undone
 - user-vocabulary-item-task-failed
 - user-vocabulary-item-task-showcase-viewed
 - user-vocabulary-item-task-passed
@@ -264,6 +266,16 @@ Next-session type (new vs review) is derived by reading the last 3 grammar sessi
 This implements the `[new, review, review, …]` cycle via observation rather than a stored counter. It also resolves the end-of-list edge case: when no new topics remain, the algorithm naturally stays in the review branch without a special code path, and a single remaining review topic is never blocked by a "last topic" check.
 
 ## Event table notes
+
+### Undoing a discovery — `reverted_at` and `user-vocabulary-item-discovery-undone`
+
+The event table is append-only: a discovery is never deleted when the user undoes it. Instead, undo (`POST .../items/{id}/undo`):
+
+1. Sets `reverted_at = NOW()` on the active `user-vocabulary-item-discovered` event (the one for that user + item with `reverted_at IS NULL` — there is at most one at a time). This keeps "is this word currently discovered" a cheap, self-contained lookup on the event table (`reverted_at IS NULL`) without joining or mutating `user_vocabulary_item`.
+2. Inserts a `user-vocabulary-item-discovery-undone` event, copying `duration_ms` from the event it undoes — not a freshly-computed value — so the undone event is a self-sufficient historical record of what was reverted (no join back to the original event needed for analysis).
+3. Sets `user_vocabulary_item.status` back to `waiting`, same as any other status transition.
+
+`reverted_at` is a generic column (not undo-specific) so any future event type that needs a "later undone" marker can reuse it, rather than each undo-able event type growing its own flag.
 
 ### `user_vocabulary_item_ids`
 

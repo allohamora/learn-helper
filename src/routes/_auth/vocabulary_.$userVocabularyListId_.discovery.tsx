@@ -60,18 +60,33 @@ function VocabularyDiscoveryPage() {
   const setStatus = useMutation({
     mutationFn: async ({
       userVocabularyItemId,
-      ...json
-    }: { userVocabularyItemId: string } & (
-      | { status: LearningStatus.Waiting }
-      | { status: LearningStatus.Known | LearningStatus.Learning; durationMs: number }
-    )) => {
+      status,
+      durationMs,
+    }: {
+      userVocabularyItemId: string;
+      status: LearningStatus.Known | LearningStatus.Learning;
+      durationMs: number;
+    }) => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
       ].status.$patch({
         param: { userVocabularyListId, userVocabularyItemId },
-        json,
+        json: { status, durationMs },
       });
       if (!res.ok) throw new Error('Failed to update item status');
+
+      return res.json();
+    },
+  });
+
+  const undoStatus = useMutation({
+    mutationFn: async ({ userVocabularyItemId }: { userVocabularyItemId: string }) => {
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].undo.$post({
+        param: { userVocabularyListId, userVocabularyItemId },
+      });
+      if (!res.ok) throw new Error('Failed to undo item status');
 
       return res.json();
     },
@@ -104,10 +119,7 @@ function VocabularyDiscoveryPage() {
     const [lastUserVocabularyItemId, ...rest] = history;
     if (!lastUserVocabularyItemId) return;
 
-    await setStatus.mutateAsync({
-      userVocabularyItemId: lastUserVocabularyItemId,
-      status: LearningStatus.Waiting,
-    });
+    await undoStatus.mutateAsync({ userVocabularyItemId: lastUserVocabularyItemId });
 
     setHistory(rest);
     await refetch();
@@ -150,7 +162,7 @@ function VocabularyDiscoveryPage() {
                 onClick={() => void undo()}
                 variant="outline"
                 size="sm"
-                disabled={history.length === 0 || setStatus.isPending}
+                disabled={history.length === 0 || setStatus.isPending || undoStatus.isPending}
               >
                 <Undo2 />
                 Undo

@@ -50,6 +50,13 @@
       "when": 1783947403798,
       "tag": "0006_bouncy_green_goblin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784014671768,
+      "tag": "0007_square_nighthawk",
+      "breakpoints": true
     }
   ]
 }

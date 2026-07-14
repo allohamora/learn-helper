@@ -1,0 +1,1 @@
+ALTER TABLE "event" ADD COLUMN "reverted_at" timestamp with time zone;
