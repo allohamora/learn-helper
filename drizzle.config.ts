@@ -3,7 +3,7 @@ import 'dotenv/config';
 
 export default {
   schema: './src/server/db/db.schema.ts',
-  out: './src/server/db/migrations',
+  out: './migrations',
   dialect: 'postgresql',
   casing: 'snake_case',
   dbCredentials: {

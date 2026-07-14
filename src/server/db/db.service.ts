@@ -15,7 +15,7 @@ export const client = postgres(POSTGRES_URL, {
 });
 export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snake_case' });
 
-const MIGRATIONS_DIR = path.join(import.meta.dirname, 'migrations');
+const MIGRATIONS_DIR = path.join(process.cwd(), 'migrations');
 
 export const runMigrations = async () => {
   await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
