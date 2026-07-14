@@ -44,12 +44,7 @@ function VocabularyDiscoveryPage() {
       });
       if (!res.ok) throw new Error('Failed to load waiting items');
 
-      const body = await res.json();
-
-      setHandled(0);
-      setCurrentIndex(0);
-
-      return body;
+      return res.json();
     },
   });
 
@@ -110,6 +105,8 @@ function VocabularyDiscoveryPage() {
       setHandled(handled + 1);
     } else {
       await refetch();
+      setHandled(0);
+      setCurrentIndex(0);
     }
 
     setStartedAt(new Date());
@@ -123,6 +120,8 @@ function VocabularyDiscoveryPage() {
 
     setHistory(rest);
     await refetch();
+    setHandled(0);
+    setCurrentIndex(0);
 
     setStartedAt(new Date());
   };
