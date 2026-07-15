@@ -43,12 +43,9 @@ export const setUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 } & SetUserVocabularyItemStatusDto) => {
   return db.transaction(async (tx) => {
-    const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
-    const userItem = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
-    await getVocabularyListItemOrThrow(
-      { vocabularyListId: userList.vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
-      tx,
-    );
+    const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
+    const { vocabularyItemId } = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
 
     await insertEvent(
       {
@@ -78,12 +75,9 @@ export const undoUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
-    const userItem = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
-    await getVocabularyListItemOrThrow(
-      { vocabularyListId: userList.vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
-      tx,
-    );
+    const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
+    const { vocabularyItemId } = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
 
     const revertedEvent = await revertUserVocabularyItemDiscoveredEvent({ userId, userVocabularyItemId }, tx);
     if (!revertedEvent) {
@@ -121,13 +115,9 @@ export const updateUserVocabularyItemTranslation = async ({
   userVocabularyItemId: string;
 } & UpdateUserVocabularyItemTranslationDto) => {
   return db.transaction(async (tx) => {
-    const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
-    const userItem = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
-    await getVocabularyListItemOrThrow(
-      { vocabularyListId: userList.vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
-      tx,
-    );
-    const { vocabularyItemId } = userItem;
+    const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
+    const { vocabularyItemId } = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
 
     await updateVocabularyItemTranslation({ vocabularyItemId, uaTranslation }, tx);
     await insertEvent(
@@ -151,9 +141,9 @@ export const getUserVocabularyListItems = async ({
   userVocabularyListId,
   ...filter
 }: UserVocabularyListItemsFilterDto & { userId: string; userVocabularyListId: string }) => {
-  const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
+  const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
-  return getUserVocabularyListItemsFromRepository({ userId, vocabularyListId: userList.vocabularyListId, ...filter });
+  return getUserVocabularyListItemsFromRepository({ userId, vocabularyListId, ...filter });
 };
 
 const LEARNING_BATCH_PATTERN = ['new', 'old', 'old', 'new', 'old', 'old'] as const;
@@ -180,11 +170,11 @@ export const getUserVocabularyListLearningItems = async ({
   userId: string;
   userVocabularyListId: string;
 }) => {
-  const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
+  const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
   const [newPool, oldPool] = await Promise.all([
-    getNewItems({ userId, vocabularyListId: userList.vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
-    getReviewItems({ userId, vocabularyListId: userList.vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
+    getNewItems({ userId, vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
+    getReviewItems({ userId, vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
   ]);
 
   return buildLearningBatch(newPool, oldPool);
@@ -197,11 +187,11 @@ export const getUserVocabularyListProgress = async ({
   userId: string;
   userVocabularyListId: string;
 }) => {
-  const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
+  const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
   const statusCounts = await getUserVocabularyListItemStatusCounts({
     userId,
-    vocabularyListId: userList.vocabularyListId,
+    vocabularyListId,
   });
 
   return statusCounts.reduce(
