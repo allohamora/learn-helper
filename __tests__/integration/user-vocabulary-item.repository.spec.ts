@@ -11,9 +11,12 @@ import {
   getNewItems,
   getReviewItems,
   getUserVocabularyListItemLink,
+  getUserVocabularyListItems,
+  getUserVocabularyListItemStatusCounts,
   updateUserVocabularyItemStatus,
 } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 import { createUserVocabularyList } from '@/server/user-vocabulary/user-vocabulary-list.repository';
+import { RequestType } from '@/const/request';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const USER_ID = 'learning-items-user';
@@ -406,6 +409,134 @@ describe('userVocabularyItemRepository', () => {
       const items = await getReviewItems({ userId: USER_ID, vocabularyListId: list.id, limit: 10 });
 
       expect(items).toEqual([]);
+    });
+  });
+
+  describe('getUserVocabularyListItems', () => {
+    it("returns the user's items for the list with a total count", async () => {
+      const { list } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
+          { value: 'banana', encounterCount: 1, offsetSeconds: 1, status: LearningStatus.Known },
+        ],
+      });
+
+      const result = await getUserVocabularyListItems({ userId: USER_ID, vocabularyListId: list.id });
+
+      expect(result.total).toBe(2);
+      expect(result.items.map((item) => item.value).sort()).toEqual(['apple', 'banana']);
+      expect(result.nextCursor).toBeUndefined();
+    });
+
+    it('filters by status', async () => {
+      const { list } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0, status: LearningStatus.Learning },
+          { value: 'banana', encounterCount: 1, offsetSeconds: 1, status: LearningStatus.Known },
+        ],
+      });
+
+      const result = await getUserVocabularyListItems({
+        userId: USER_ID,
+        vocabularyListId: list.id,
+        status: LearningStatus.Known,
+      });
+
+      expect(result.items.map((item) => item.value)).toEqual(['banana']);
+      expect(result.total).toBe(1);
+    });
+
+    it('filters by a case-insensitive partial search on the word value', async () => {
+      const { list } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
+          { value: 'banana', encounterCount: 0, offsetSeconds: 1 },
+        ],
+      });
+
+      const result = await getUserVocabularyListItems({ userId: USER_ID, vocabularyListId: list.id, search: 'PPL' });
+
+      expect(result.items.map((item) => item.value)).toEqual(['apple']);
+    });
+
+    it('paginates with a cursor and returns nextCursor when more items remain', async () => {
+      const { list } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
+          { value: 'banana', encounterCount: 0, offsetSeconds: 1 },
+          { value: 'cherry', encounterCount: 0, offsetSeconds: 2 },
+        ],
+      });
+
+      const firstPage = await getUserVocabularyListItems({ userId: USER_ID, vocabularyListId: list.id, limit: 2 });
+      expect(firstPage.items.map((item) => item.value)).toEqual(['apple', 'banana']);
+      expect(firstPage.nextCursor).toBeDefined();
+
+      const secondPage = await getUserVocabularyListItems({
+        userId: USER_ID,
+        vocabularyListId: list.id,
+        limit: 2,
+        cursor: firstPage.nextCursor,
+      });
+      expect(secondPage.items.map((item) => item.value)).toEqual(['cherry']);
+      expect(secondPage.nextCursor).toBeUndefined();
+    });
+
+    it('skips the total count query and returns total: 0 when type is Data', async () => {
+      const { list } = await seedLearningItems({ values: [{ value: 'apple', encounterCount: 0, offsetSeconds: 0 }] });
+
+      const result = await getUserVocabularyListItems({
+        userId: USER_ID,
+        vocabularyListId: list.id,
+        type: RequestType.Data,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.total).toBe(0);
+    });
+  });
+
+  describe('getUserVocabularyListItemStatusCounts', () => {
+    it('returns counts grouped by status for the user and list', async () => {
+      const { list } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0, status: LearningStatus.Waiting },
+          { value: 'banana', encounterCount: 0, offsetSeconds: 1, status: LearningStatus.Learning },
+          { value: 'cherry', encounterCount: 0, offsetSeconds: 2, status: LearningStatus.Learning },
+          { value: 'date', encounterCount: 0, offsetSeconds: 3, status: LearningStatus.Known },
+        ],
+      });
+
+      const counts = await getUserVocabularyListItemStatusCounts({ userId: USER_ID, vocabularyListId: list.id });
+
+      expect(counts).toEqual(
+        expect.arrayContaining([
+          { status: LearningStatus.Waiting, count: 1 },
+          { status: LearningStatus.Learning, count: 2 },
+          { status: LearningStatus.Known, count: 1 },
+        ]),
+      );
+      expect(counts).toHaveLength(3);
+    });
+
+    it('scopes counts to the given list and user', async () => {
+      const { list: listA } = await seedLearningItems({
+        values: [{ value: 'swim', encounterCount: 0, offsetSeconds: 0, status: LearningStatus.Known }],
+        listTitle: 'Oxford 5000 A1',
+      });
+      await seedLearningItems({
+        values: [{ value: 'fly', encounterCount: 0, offsetSeconds: 0, status: LearningStatus.Known }],
+        listTitle: 'Oxford 5000 A2',
+      });
+      await seedLearningItems({
+        userId: 'other-learning-items-user',
+        values: [{ value: 'read', encounterCount: 0, offsetSeconds: 0, status: LearningStatus.Known }],
+        listTitle: 'Oxford 5000 A1',
+      });
+
+      const counts = await getUserVocabularyListItemStatusCounts({ userId: USER_ID, vocabularyListId: listA.id });
+
+      expect(counts).toEqual([{ status: LearningStatus.Known, count: 1 }]);
     });
   });
 });

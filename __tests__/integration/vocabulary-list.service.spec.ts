@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
+import { Exception } from '@/server/utils/exception.utils';
+import {
+  findOrCreateVocabularyListByTitle,
+  getVocabularyListByIdOrThrow,
+} from '@/server/vocabulary/vocabulary-list.service';
 
 describe('vocabularyListService', () => {
   describe('findOrCreateVocabularyListByTitle', () => {
@@ -21,6 +25,18 @@ describe('vocabularyListService', () => {
 
       expect(second.id).toBe(first.id);
       expect(await countItems(vocabularyList)).toBe(1);
+    });
+  });
+
+  describe('getVocabularyListByIdOrThrow', () => {
+    it('resolves with the list when it exists', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+
+      await expect(getVocabularyListByIdOrThrow(list.id)).resolves.toMatchObject({ id: list.id });
+    });
+
+    it('throws not found for a non-existent list', async () => {
+      await expect(getVocabularyListByIdOrThrow('00000000-0000-7000-8000-000000000000')).rejects.toThrow(Exception);
     });
   });
 });

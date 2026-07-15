@@ -1,7 +1,12 @@
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
+import { db } from '@/server/db/db.service';
 import { vocabularyItem } from '@/server/db/db.schema';
-import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
+import {
+  createMissingVocabularyItems,
+  updateVocabularyItemTranslation,
+} from '@/server/vocabulary/vocabulary-item.repository';
 import { PartOfSpeech } from '@/const/vocabulary';
 
 const buildItem = (overrides: Partial<typeof vocabularyItem.$inferInsert> = {}) => ({
@@ -40,6 +45,18 @@ describe('vocabularyItemRepository', () => {
 
       expect(items).toHaveLength(0);
       expect(await countItems(vocabularyItem)).toBe(1);
+    });
+  });
+
+  describe('updateVocabularyItemTranslation', () => {
+    it("updates the item's translation", async () => {
+      const [item] = await createMissingVocabularyItems([buildItem()]);
+      if (!item) throw new Error('expected item to be created');
+
+      await updateVocabularyItemTranslation({ vocabularyItemId: item.id, uaTranslation: 'бігати' });
+
+      const updated = await db.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, item.id) });
+      expect(updated?.uaTranslation).toBe('бігати');
     });
   });
 });

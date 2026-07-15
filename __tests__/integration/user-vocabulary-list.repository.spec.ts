@@ -3,7 +3,12 @@ import { user, vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
-import { getUserAvailableVocabularyLists } from '@/server/user-vocabulary/user-vocabulary-list.repository';
+import {
+  getUserAvailableVocabularyLists,
+  getUserVocabularyListById,
+  getUserVocabularyListByVocabularyListId,
+  getUserVocabularyListWithList,
+} from '@/server/user-vocabulary/user-vocabulary-list.repository';
 
 const createTestUser = async (id: string) => {
   const [row] = await db
@@ -66,6 +71,73 @@ describe('userVocabularyListRepository', () => {
         unaddedOld.id,
         unaddedNew.id,
       ]);
+    });
+  });
+
+  describe('getUserVocabularyListByVocabularyListId', () => {
+    it('resolves when the user has added the list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(
+        getUserVocabularyListByVocabularyListId({ userId, vocabularyListId: list.id }),
+      ).resolves.toMatchObject({ id: userList.id });
+    });
+
+    it('resolves with undefined when the user has not added the list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+
+      await expect(
+        getUserVocabularyListByVocabularyListId({ userId, vocabularyListId: list.id }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('getUserVocabularyListById', () => {
+    it('resolves when the list belongs to the user', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(getUserVocabularyListById({ userId, userVocabularyListId: userList.id })).resolves.toMatchObject({
+        vocabularyListId: list.id,
+      });
+    });
+
+    it('resolves with undefined when the list belongs to a different user', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(
+        getUserVocabularyListById({ userId: otherUserId, userVocabularyListId: userList.id }),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('getUserVocabularyListWithList', () => {
+    it('resolves with the enrollment and the vocabulary list it points to', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(getUserVocabularyListWithList({ userId, userVocabularyListId: userList.id })).resolves.toMatchObject(
+        {
+          vocabularyListId: list.id,
+          vocabularyList: { id: list.id, title: 'Oxford 5000 A1' },
+        },
+      );
+    });
+
+    it('resolves with undefined when the list does not belong to the user', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      await expect(
+        getUserVocabularyListWithList({ userId, userVocabularyListId: '00000000-0000-7000-8000-000000000000' }),
+      ).resolves.toBeUndefined();
     });
   });
 });
