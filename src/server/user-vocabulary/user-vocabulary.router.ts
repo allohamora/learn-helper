@@ -8,16 +8,16 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
-import { userVocabularyItemDto } from './dto/user-vocabulary-item.dto';
-import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
-import { userVocabularyItemLearningDto } from './dto/user-vocabulary-item-learning.dto';
-import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
-import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
-import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
-import { setUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
-import { updateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
-import { userVocabularyItemStatusDto } from './dto/user-vocabulary-item-status.dto';
-import { userVocabularyItemTranslationDto } from './dto/user-vocabulary-item-translation.dto';
+import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
+import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
+import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
+import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
+import { userVocabularyListWithListDto } from './dtos/user-vocabulary-list-with-list.dto';
+import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
+import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
+import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
+import { userVocabularyItemStatusDto } from './dtos/user-vocabulary-item-status.dto';
+import { userVocabularyItemTranslationDto } from './dtos/user-vocabulary-item-translation.dto';
 import {
   getUserVocabularyListItems,
   getUserVocabularyListLearningItems,

@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { z } from '@hono/zod-openapi';
 import { LearningStatus } from '@/const/vocabulary';
-import { vocabularyItemDto } from '../../vocabulary/dto/vocabulary-item.dto';
+import { vocabularyItemDto } from '../../vocabulary/dtos/vocabulary-item.dto';
 
 export const userVocabularyItemLearningDto = z.object({
   id: z.uuidv7(),

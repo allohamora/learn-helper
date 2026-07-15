@@ -5,7 +5,7 @@ import { RequestType } from '@/const/request';
 import { userVocabularyItem, userVocabularyList, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
-import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
+import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 
 export const createUserVocabularyItemsFromList = async (
   { userId, vocabularyListId }: { userId: string; vocabularyListId: string },

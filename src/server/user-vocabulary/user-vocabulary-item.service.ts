@@ -6,9 +6,9 @@ import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
-import type { SetUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
-import type { UpdateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
-import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
+import type { SetUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
+import type { UpdateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
+import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import {
   getNewItems,
   getReviewItems,
