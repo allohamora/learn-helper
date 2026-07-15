@@ -3,7 +3,7 @@ import { countItems } from '@/server/db/db.utils';
 import { vocabularyListItem } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { PartOfSpeech } from '@/const/vocabulary';
 
 describe('vocabularyListItemRepository', () => {

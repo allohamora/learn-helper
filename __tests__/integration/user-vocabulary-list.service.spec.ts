@@ -6,8 +6,11 @@ import { user, userVocabularyItem } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
-import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
+import {
+  addVocabularyListToUser,
+  getUserVocabularyListOrThrow,
+} from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const createTestUser = async (id: string) => {
@@ -88,6 +91,34 @@ describe('userVocabularyListService', () => {
       await expect(
         addVocabularyListToUser({ userId, vocabularyListId: '00000000-0000-0000-0000-000000000000' }),
       ).rejects.toThrow(Exception);
+    });
+  });
+
+  describe('getUserVocabularyListOrThrow', () => {
+    it('resolves with the list when the user has added it', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list } = await createTestList(['run']);
+
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(getUserVocabularyListOrThrow({ userId, userVocabularyListId: userList.id })).resolves.toMatchObject({
+        vocabularyListId: list.id,
+      });
+    });
+
+    it('throws not found for a non-existent list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      await expect(
+        getUserVocabularyListOrThrow({ userId, userVocabularyListId: '00000000-0000-0000-0000-000000000000' }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found when the list exists but the user has not added it', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list } = await createTestList(['run']);
+
+      await expect(getUserVocabularyListOrThrow({ userId, userVocabularyListId: list.id })).rejects.toThrow(Exception);
     });
   });
 });

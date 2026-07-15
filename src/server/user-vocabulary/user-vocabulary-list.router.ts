@@ -28,11 +28,8 @@ import {
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
-import {
-  getUserAvailableVocabularyLists,
-  getUserVocabularyListWithListOrThrow,
-} from './user-vocabulary-list.repository';
-import { addVocabularyListToUser } from './user-vocabulary-list.service';
+import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
+import { addVocabularyListToUser, getUserVocabularyListWithListOrThrow } from './user-vocabulary-list.service';
 
 export const userVocabularyListRouter = new OpenAPIHono()
   .openapi(

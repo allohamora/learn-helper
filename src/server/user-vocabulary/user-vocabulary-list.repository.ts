@@ -3,7 +3,6 @@ import { and, asc, eq, isNull } from 'drizzle-orm';
 import { userVocabularyList, vocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
-import { Exception } from '../utils/exception.utils';
 
 export const getUserVocabularyListByVocabularyListId = async (
   { userId, vocabularyListId }: { userId: string; vocabularyListId: string },
@@ -29,7 +28,7 @@ export const getUserVocabularyListById = async (
   });
 };
 
-export const getUserVocabularyListOrThrow = async (
+export const getUserVocabularyListWithList = async (
   {
     userId,
     userVocabularyListId,
@@ -39,29 +38,10 @@ export const getUserVocabularyListOrThrow = async (
   },
   tx: Transaction = db,
 ) => {
-  const userList = await getUserVocabularyListById({ userId, userVocabularyListId }, tx);
-  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
-
-  return userList;
-};
-
-export const getUserVocabularyListWithListOrThrow = async (
-  {
-    userId,
-    userVocabularyListId,
-  }: {
-    userId: string;
-    userVocabularyListId: string;
-  },
-  tx: Transaction = db,
-) => {
-  const userList = await tx.query.userVocabularyList.findFirst({
+  return tx.query.userVocabularyList.findFirst({
     where: and(eq(userVocabularyList.userId, userId), eq(userVocabularyList.id, userVocabularyListId)),
     with: { vocabularyList: true },
   });
-  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
-
-  return userList;
 };
 
 export const createUserVocabularyList = async (

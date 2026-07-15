@@ -7,7 +7,7 @@ import { event, user, userVocabularyItem, vocabularyItem } from '@/server/db/db.
 import { countItems } from '@/server/db/db.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { EventType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 

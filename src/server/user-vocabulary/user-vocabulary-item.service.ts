@@ -3,14 +3,30 @@ import { EventType } from '@/const/event';
 import { LearningStatus } from '@/const/vocabulary';
 import { updateVocabularyItemTranslation } from '../vocabulary/vocabulary-item.repository';
 import { db } from '../db/db.service';
+import type { Transaction } from '../db/db.types';
 import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import type { SetUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
 import type { UpdateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
-import {
-  getUserVocabularyListItemLinkOrThrow,
-  updateUserVocabularyItemStatus,
-} from './user-vocabulary-item.repository';
+import { getUserVocabularyListItemLink, updateUserVocabularyItemStatus } from './user-vocabulary-item.repository';
+
+const getUserVocabularyListItemLinkOrThrow = async (
+  {
+    userId,
+    userVocabularyListId,
+    userVocabularyItemId,
+  }: { userId: string; userVocabularyListId: string; userVocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  const link = await getUserVocabularyListItemLink({ userId, userVocabularyListId, userVocabularyItemId }, tx);
+  if (!link) {
+    throw Exception.notFound(
+      `vocabulary list "${userVocabularyListId}" and item "${userVocabularyItemId}" are not linked for user`,
+    );
+  }
+
+  return link;
+};
 
 export const setUserVocabularyItemStatus = async ({
   userId,

@@ -4,7 +4,6 @@ import { LearningStatus } from '@/const/vocabulary';
 import { userVocabularyItem, userVocabularyList, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
-import { Exception } from '../utils/exception.utils';
 
 export const createUserVocabularyItemsFromList = async (
   { userId, vocabularyListId }: { userId: string; vocabularyListId: string },
@@ -23,7 +22,7 @@ export const createUserVocabularyItemsFromList = async (
 // verifies, in one query, that userVocabularyListId belongs to userId, userVocabularyItemId belongs
 // to userId, and the item is actually linked to that list (via vocabularyListItem) — so a status
 // update can't be attributed (through the event's userVocabularyListId) to a list the item isn't in
-export const getUserVocabularyListItemLinkOrThrow = async (
+export const getUserVocabularyListItemLink = async (
   {
     userId,
     userVocabularyListId,
@@ -54,12 +53,6 @@ export const getUserVocabularyListItemLinkOrThrow = async (
       ),
     )
     .limit(1);
-
-  if (!link) {
-    throw Exception.notFound(
-      `vocabulary list "${userVocabularyListId}" and item "${userVocabularyItemId}" are not linked for user`,
-    );
-  }
 
   return link;
 };

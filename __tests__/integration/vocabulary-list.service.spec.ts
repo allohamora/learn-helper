@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 
-describe('vocabularyListRepository', () => {
+describe('vocabularyListService', () => {
   describe('findOrCreateVocabularyListByTitle', () => {
     it('creates a new list on first call', async () => {
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');

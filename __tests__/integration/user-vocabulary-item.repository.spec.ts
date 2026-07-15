@@ -5,10 +5,10 @@ import { db } from '@/server/db/db.service';
 import { user, userVocabularyItem, vocabularyItem } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import {
   createUserVocabularyItemsFromList,
-  getUserVocabularyListItemLinkOrThrow,
+  getUserVocabularyListItemLink,
   updateUserVocabularyItemStatus,
 } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 import { createUserVocabularyList } from '@/server/user-vocabulary/user-vocabulary-list.repository';
@@ -123,13 +123,13 @@ describe('userVocabularyItemRepository', () => {
     });
   });
 
-  describe('getUserVocabularyListItemLinkOrThrow', () => {
+  describe('getUserVocabularyListItemLink', () => {
     it('resolves when the list and item belong to the user and the item is linked to the list', async () => {
       const { userId, item, userItem, userList } = await seedUserItem({ userSuffix: 'linked' });
       if (!userList) throw new Error('expected user list to be created');
 
       await expect(
-        getUserVocabularyListItemLinkOrThrow({
+        getUserVocabularyListItemLink({
           userId,
           userVocabularyListId: userList.id,
           userVocabularyItemId: userItem.id,
@@ -141,19 +141,19 @@ describe('userVocabularyItemRepository', () => {
       });
     });
 
-    it('throws when the list does not belong to the user', async () => {
+    it('resolves with undefined when the list does not belong to the user', async () => {
       const { userId, userItem } = await seedUserItem({ userSuffix: 'no-list', enrollInList: false });
 
       await expect(
-        getUserVocabularyListItemLinkOrThrow({
+        getUserVocabularyListItemLink({
           userId,
           userVocabularyListId: '00000000-0000-7000-8000-000000000000',
           userVocabularyItemId: userItem.id,
         }),
-      ).rejects.toThrow();
+      ).resolves.toBeUndefined();
     });
 
-    it('throws when the item does not belong to the user', async () => {
+    it('resolves with undefined when the item does not belong to the user', async () => {
       const { userItem } = await seedUserItem({ userSuffix: 'wrong-item-owner' });
       const { userId: otherUserId, userList: otherUserList } = await seedUserItem({
         userSuffix: 'other-owner',
@@ -162,15 +162,15 @@ describe('userVocabularyItemRepository', () => {
       if (!otherUserList) throw new Error('expected user list to be created');
 
       await expect(
-        getUserVocabularyListItemLinkOrThrow({
+        getUserVocabularyListItemLink({
           userId: otherUserId,
           userVocabularyListId: otherUserList.id,
           userVocabularyItemId: userItem.id,
         }),
-      ).rejects.toThrow();
+      ).resolves.toBeUndefined();
     });
 
-    it('throws when the item is not linked to the given list', async () => {
+    it('resolves with undefined when the item is not linked to the given list', async () => {
       const userId = 'user-cross-list';
       await db.insert(user).values({ id: userId, name: 'Test User', email: `${userId}@example.com` });
 
@@ -204,12 +204,12 @@ describe('userVocabularyItemRepository', () => {
       if (!walkUserItem) throw new Error('expected user item to be created');
 
       await expect(
-        getUserVocabularyListItemLinkOrThrow({
+        getUserVocabularyListItemLink({
           userId,
           userVocabularyListId: runUserList.id,
           userVocabularyItemId: walkUserItem.id,
         }),
-      ).rejects.toThrow();
+      ).resolves.toBeUndefined();
     });
   });
 

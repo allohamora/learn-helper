@@ -1,9 +1,15 @@
 import '@tanstack/react-start/server-only';
 import { db } from '../db/db.service';
+import type { Transaction } from '../db/db.types';
 import { Exception } from '../utils/exception.utils';
 import { createUserVocabularyItemsFromList } from './user-vocabulary-item.repository';
-import { createUserVocabularyList, getUserVocabularyListByVocabularyListId } from './user-vocabulary-list.repository';
-import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.repository';
+import {
+  createUserVocabularyList,
+  getUserVocabularyListById,
+  getUserVocabularyListByVocabularyListId,
+  getUserVocabularyListWithList,
+} from './user-vocabulary-list.repository';
+import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 
 export const addVocabularyListToUser = async ({
   userId,
@@ -23,4 +29,27 @@ export const addVocabularyListToUser = async ({
 
     return { ...created, vocabularyList };
   });
+};
+
+export const getUserVocabularyListOrThrow = async (
+  { userId, userVocabularyListId }: { userId: string; userVocabularyListId: string },
+  tx: Transaction = db,
+) => {
+  const userList = await getUserVocabularyListById({ userId, userVocabularyListId }, tx);
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+
+  return userList;
+};
+
+export const getUserVocabularyListWithListOrThrow = async ({
+  userId,
+  userVocabularyListId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+}) => {
+  const userList = await getUserVocabularyListWithList({ userId, userVocabularyListId });
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+
+  return userList;
 };
