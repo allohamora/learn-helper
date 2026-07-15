@@ -139,6 +139,66 @@ describe('userVocabularyItemService', () => {
         }),
       ).rejects.toThrow(Exception);
     });
+
+    it('throws not found when the item belongs to a different user than the one who owns the list', async () => {
+      const { userItem } = await seedUserItem({ userSuffix: 'set-status-wrong-owner' });
+      const { userId: otherUserId, userList: otherUserList } = await seedUserItem({
+        userSuffix: 'set-status-other-owner',
+        value: 'walk',
+      });
+
+      await expect(
+        setUserVocabularyItemStatus({
+          userId: otherUserId,
+          userVocabularyListId: otherUserList.id,
+          userVocabularyItemId: userItem.id,
+          status: LearningStatus.Known,
+          durationMs: 0,
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found when the item exists for the user but is not linked to the given list', async () => {
+      const userId = 'user-set-status-cross-list';
+      await seedTestUser(userId);
+
+      const runList = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const [runItem] = await createMissingVocabularyItems([
+        { value: 'run', definition: 'run', uaTranslation: 'бігти', partOfSpeech: PartOfSpeech.Verb, spelling: 'run' },
+      ]);
+      if (!runItem) throw new Error('expected item to be created');
+      await createVocabularyListItemsIfNotExist([{ vocabularyListId: runList.id, vocabularyItemId: runItem.id }]);
+      const runUserList = await addVocabularyListToUser({ userId, vocabularyListId: runList.id });
+
+      const walkList = await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
+      const [walkItem] = await createMissingVocabularyItems([
+        {
+          value: 'walk',
+          definition: 'walk',
+          uaTranslation: 'ходити',
+          partOfSpeech: PartOfSpeech.Verb,
+          spelling: 'walk',
+        },
+      ]);
+      if (!walkItem) throw new Error('expected item to be created');
+      await createVocabularyListItemsIfNotExist([{ vocabularyListId: walkList.id, vocabularyItemId: walkItem.id }]);
+      await addVocabularyListToUser({ userId, vocabularyListId: walkList.id });
+
+      const walkUserItem = await db.query.userVocabularyItem.findFirst({
+        where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.vocabularyItemId, walkItem.id)),
+      });
+      if (!walkUserItem) throw new Error('expected user item to be created');
+
+      await expect(
+        setUserVocabularyItemStatus({
+          userId,
+          userVocabularyListId: runUserList.id,
+          userVocabularyItemId: walkUserItem.id,
+          status: LearningStatus.Known,
+          durationMs: 0,
+        }),
+      ).rejects.toThrow(Exception);
+    });
   });
 
   describe('undoUserVocabularyItemStatus', () => {

@@ -10,7 +10,7 @@ import {
   createUserVocabularyItemsFromList,
   getNewItems,
   getReviewItems,
-  getUserVocabularyListItemLink,
+  getUserVocabularyItemById,
   getUserVocabularyListItems,
   getUserVocabularyListItemStatusCounts,
   updateUserVocabularyItemStatus,
@@ -180,92 +180,21 @@ describe('userVocabularyItemRepository', () => {
     });
   });
 
-  describe('getUserVocabularyListItemLink', () => {
-    it('resolves when the list and item belong to the user and the item is linked to the list', async () => {
-      const { userId, item, userItem, userList } = await seedUserItem({ userSuffix: 'linked' });
-      if (!userList) throw new Error('expected user list to be created');
+  describe('getUserVocabularyItemById', () => {
+    it('resolves the item when it belongs to the user', async () => {
+      const { userId, userItem } = await seedUserItem({ userSuffix: 'item-owner' });
 
-      await expect(
-        getUserVocabularyListItemLink({
-          userId,
-          userVocabularyListId: userList.id,
-          userVocabularyItemId: userItem.id,
-        }),
-      ).resolves.toEqual({
-        userVocabularyListId: userList.id,
-        userVocabularyItemId: userItem.id,
-        vocabularyItemId: item.id,
+      await expect(getUserVocabularyItemById({ userId, userVocabularyItemId: userItem.id })).resolves.toMatchObject({
+        id: userItem.id,
       });
-    });
-
-    it('resolves with undefined when the list does not belong to the user', async () => {
-      const { userId, userItem } = await seedUserItem({ userSuffix: 'no-list', enrollInList: false });
-
-      await expect(
-        getUserVocabularyListItemLink({
-          userId,
-          userVocabularyListId: '00000000-0000-7000-8000-000000000000',
-          userVocabularyItemId: userItem.id,
-        }),
-      ).resolves.toBeUndefined();
     });
 
     it('resolves with undefined when the item does not belong to the user', async () => {
-      const { userItem } = await seedUserItem({ userSuffix: 'wrong-item-owner' });
-      const { userId: otherUserId, userList: otherUserList } = await seedUserItem({
-        userSuffix: 'other-owner',
-        value: 'walk',
-      });
-      if (!otherUserList) throw new Error('expected user list to be created');
+      const { userItem } = await seedUserItem({ userSuffix: 'item-wrong-owner' });
+      const { userId: otherUserId } = await seedUserItem({ userSuffix: 'item-other-owner', value: 'walk' });
 
       await expect(
-        getUserVocabularyListItemLink({
-          userId: otherUserId,
-          userVocabularyListId: otherUserList.id,
-          userVocabularyItemId: userItem.id,
-        }),
-      ).resolves.toBeUndefined();
-    });
-
-    it('resolves with undefined when the item is not linked to the given list', async () => {
-      const userId = 'user-cross-list';
-      await db.insert(user).values({ id: userId, name: 'Test User', email: `${userId}@example.com` });
-
-      const runList = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
-      const [runItem] = await createMissingVocabularyItems([
-        { value: 'run', definition: 'run', uaTranslation: 'бігти', partOfSpeech: PartOfSpeech.Verb, spelling: 'run' },
-      ]);
-      if (!runItem) throw new Error('expected item to be created');
-      await createVocabularyListItemsIfNotExist([{ vocabularyListId: runList.id, vocabularyItemId: runItem.id }]);
-      const runUserList = await createUserVocabularyList({ userId, vocabularyListId: runList.id });
-      if (!runUserList) throw new Error('expected user list to be created');
-      await createUserVocabularyItemsFromList({ userId, vocabularyListId: runList.id });
-
-      const walkList = await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
-      const [walkItem] = await createMissingVocabularyItems([
-        {
-          value: 'walk',
-          definition: 'walk',
-          uaTranslation: 'ходити',
-          partOfSpeech: PartOfSpeech.Verb,
-          spelling: 'walk',
-        },
-      ]);
-      if (!walkItem) throw new Error('expected item to be created');
-      await createVocabularyListItemsIfNotExist([{ vocabularyListId: walkList.id, vocabularyItemId: walkItem.id }]);
-      await createUserVocabularyItemsFromList({ userId, vocabularyListId: walkList.id });
-
-      const walkUserItem = await db.query.userVocabularyItem.findFirst({
-        where: eq(userVocabularyItem.vocabularyItemId, walkItem.id),
-      });
-      if (!walkUserItem) throw new Error('expected user item to be created');
-
-      await expect(
-        getUserVocabularyListItemLink({
-          userId,
-          userVocabularyListId: runUserList.id,
-          userVocabularyItemId: walkUserItem.id,
-        }),
+        getUserVocabularyItemById({ userId: otherUserId, userVocabularyItemId: userItem.id }),
       ).resolves.toBeUndefined();
     });
   });

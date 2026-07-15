@@ -2,7 +2,7 @@ import '@tanstack/react-start/server-only';
 import { and, asc, count, eq, gte, ilike, sql } from 'drizzle-orm';
 import { LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
-import { userVocabularyItem, userVocabularyList, vocabularyItem, vocabularyListItem } from '../db/db.schema';
+import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
@@ -21,42 +21,13 @@ export const createUserVocabularyItemsFromList = async (
   `);
 };
 
-// verifies, in one query, that userVocabularyListId belongs to userId, userVocabularyItemId belongs
-// to userId, and the item is actually linked to that list (via vocabularyListItem) — so a status
-// update can't be attributed (through the event's userVocabularyListId) to a list the item isn't in
-export const getUserVocabularyListItemLink = async (
-  {
-    userId,
-    userVocabularyListId,
-    userVocabularyItemId,
-  }: { userId: string; userVocabularyListId: string; userVocabularyItemId: string },
+export const getUserVocabularyItemById = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,
 ) => {
-  const [link] = await tx
-    .select({
-      userVocabularyListId: userVocabularyList.id,
-      userVocabularyItemId: userVocabularyItem.id,
-      vocabularyItemId: userVocabularyItem.vocabularyItemId,
-    })
-    .from(userVocabularyList)
-    .innerJoin(vocabularyListItem, eq(vocabularyListItem.vocabularyListId, userVocabularyList.vocabularyListId))
-    .innerJoin(
-      userVocabularyItem,
-      and(
-        eq(userVocabularyItem.vocabularyItemId, vocabularyListItem.vocabularyItemId),
-        eq(userVocabularyItem.userId, userId),
-      ),
-    )
-    .where(
-      and(
-        eq(userVocabularyList.id, userVocabularyListId),
-        eq(userVocabularyList.userId, userId),
-        eq(userVocabularyItem.id, userVocabularyItemId),
-      ),
-    )
-    .limit(1);
-
-  return link;
+  return tx.query.userVocabularyItem.findFirst({
+    where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)),
+  });
 };
 
 export const updateUserVocabularyItemStatus = async (

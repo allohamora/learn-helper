@@ -6,35 +6,30 @@ import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
+import { getVocabularyListItemOrThrow } from '../vocabulary/vocabulary-list-item.service';
 import type { SetUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
 import type { UpdateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import {
   getNewItems,
   getReviewItems,
-  getUserVocabularyListItemLink,
+  getUserVocabularyItemById,
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
   getUserVocabularyListItemStatusCounts,
   updateUserVocabularyItemStatus,
 } from './user-vocabulary-item.repository';
 import { getUserVocabularyListOrThrow } from './user-vocabulary-list.service';
 
-const getUserVocabularyListItemLinkOrThrow = async (
-  {
-    userId,
-    userVocabularyListId,
-    userVocabularyItemId,
-  }: { userId: string; userVocabularyListId: string; userVocabularyItemId: string },
+export const getUserVocabularyItemOrThrow = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,
 ) => {
-  const link = await getUserVocabularyListItemLink({ userId, userVocabularyListId, userVocabularyItemId }, tx);
-  if (!link) {
-    throw Exception.notFound(
-      `vocabulary list "${userVocabularyListId}" and item "${userVocabularyItemId}" are not linked for user`,
-    );
+  const userItem = await getUserVocabularyItemById({ userId, userVocabularyItemId }, tx);
+  if (!userItem) {
+    throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
   }
 
-  return link;
+  return userItem;
 };
 
 export const setUserVocabularyItemStatus = async ({
@@ -48,7 +43,12 @@ export const setUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 } & SetUserVocabularyItemStatusDto) => {
   return db.transaction(async (tx) => {
-    await getUserVocabularyListItemLinkOrThrow({ userId, userVocabularyListId, userVocabularyItemId }, tx);
+    const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
+    const userItem = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    await getVocabularyListItemOrThrow(
+      { vocabularyListId: userList.vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
+      tx,
+    );
 
     await insertEvent(
       {
@@ -78,7 +78,12 @@ export const undoUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    await getUserVocabularyListItemLinkOrThrow({ userId, userVocabularyListId, userVocabularyItemId }, tx);
+    const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
+    const userItem = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    await getVocabularyListItemOrThrow(
+      { vocabularyListId: userList.vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
+      tx,
+    );
 
     const revertedEvent = await revertUserVocabularyItemDiscoveredEvent({ userId, userVocabularyItemId }, tx);
     if (!revertedEvent) {
@@ -116,10 +121,13 @@ export const updateUserVocabularyItemTranslation = async ({
   userVocabularyItemId: string;
 } & UpdateUserVocabularyItemTranslationDto) => {
   return db.transaction(async (tx) => {
-    const { vocabularyItemId } = await getUserVocabularyListItemLinkOrThrow(
-      { userId, userVocabularyListId, userVocabularyItemId },
+    const userList = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
+    const userItem = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    await getVocabularyListItemOrThrow(
+      { vocabularyListId: userList.vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
       tx,
     );
+    const { vocabularyItemId } = userItem;
 
     await updateVocabularyItemTranslation({ vocabularyItemId, uaTranslation }, tx);
     await insertEvent(
