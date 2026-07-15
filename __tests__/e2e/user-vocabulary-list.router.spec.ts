@@ -263,6 +263,138 @@ describe('user-vocabulary-list.router', () => {
     });
   });
 
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learning-items', () => {
+    it('returns a batch of learning items following the [new, old, old, new, old, old] pattern', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
+      const { list } = await seedList(words);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const userItems = await db.query.userVocabularyItem.findMany({
+        where: eq(userVocabularyItem.userId, USER_ID),
+        orderBy: (userVocabularyItem, { asc }) => asc(userVocabularyItem.id),
+      });
+
+      // first 4 words become "old" (already reviewed once), the rest stay "new" (never confirmed)
+      for (const [index, userItem] of userItems.entries()) {
+        await db
+          .update(userVocabularyItem)
+          .set({ status: LearningStatus.Learning, encounterCount: index < 4 ? 1 : 0 })
+          .where(eq(userVocabularyItem.id, userItem.id));
+      }
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.data).toHaveLength(6);
+
+      const newWords = words.slice(4);
+      const oldWords = words.slice(0, 4);
+      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'old'));
+      expect(kinds).toEqual(['new', 'old', 'old', 'new', 'old', 'old']);
+      expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
+      for (const item of body.data) {
+        expect([...newWords, ...oldWords]).toContain(item.vocabularyItem.value);
+      }
+    });
+
+    it('fills the batch from the other pool when one type does not have enough items', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
+      const { list } = await seedList(words);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const userItems = await db.query.userVocabularyItem.findMany({
+        where: eq(userVocabularyItem.userId, USER_ID),
+        orderBy: (userVocabularyItem, { asc }) => asc(userVocabularyItem.id),
+      });
+
+      // only 1 word stays "new"; the other 7 are "old" so the new pool runs out and the batch is filled with old items
+      for (const [index, userItem] of userItems.entries()) {
+        await db
+          .update(userVocabularyItem)
+          .set({ status: LearningStatus.Learning, encounterCount: index < 1 ? 0 : 1 })
+          .where(eq(userVocabularyItem.id, userItem.id));
+      }
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.data).toHaveLength(6);
+
+      const newWords = words.slice(0, 1);
+      const oldWords = words.slice(1);
+      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'old'));
+      expect(kinds.filter((kind) => kind === 'new')).toHaveLength(1);
+      expect(kinds.filter((kind) => kind === 'old')).toHaveLength(5);
+      expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
+      for (const item of body.data) {
+        expect([...newWords, ...oldWords]).toContain(item.vocabularyItem.value);
+      }
+    });
+
+    it('returns 6 new items when all items are new', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
+      const { list } = await seedList(words);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learning, encounterCount: 0 })
+        .where(eq(userVocabularyItem.userId, USER_ID));
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.data).toHaveLength(6);
+      expect(body.data.every((item) => item.encounterCount === 0)).toBe(true);
+      expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
+      for (const item of body.data) {
+        expect(words).toContain(item.vocabularyItem.value);
+      }
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+        param: { userVocabularyListId: list.id },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 when the user has not added the list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+        param: { userVocabularyListId: list.id },
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
   describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/progress', () => {
     it('returns 200 with all items waiting right after adding a list', async () => {
       auth.authorized({ user: { id: USER_ID } });

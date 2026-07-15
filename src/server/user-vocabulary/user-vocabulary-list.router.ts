@@ -10,6 +10,7 @@ import {
 import { authMiddleware } from '../auth/auth.middleware';
 import { userVocabularyListItemDto } from './dto/user-vocabulary-list-item.dto';
 import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
+import { userVocabularyListLearningItemDto } from './dto/user-vocabulary-list-learning-item.dto';
 import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
@@ -17,7 +18,11 @@ import { setUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-s
 import { updateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
 import { userVocabularyItemStatusDto } from './dto/user-vocabulary-item-status.dto';
 import { userVocabularyItemTranslationDto } from './dto/user-vocabulary-item-translation.dto';
-import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
+import {
+  getUserVocabularyListItems,
+  getUserVocabularyListLearningItems,
+  getUserVocabularyListProgress,
+} from './user-vocabulary-list-item.service';
 import {
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
@@ -141,6 +146,36 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...toPaginatedResponse({
           status: 200,
           data: await getUserVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{userVocabularyListId}/learning-items',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description:
+            "A batch of the list's words for a Learning session, following the [new, old, old, new, old, old] pattern",
+          schema: z.array(userVocabularyListLearningItemDto),
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await getUserVocabularyListLearningItems({ userId: user.id, userVocabularyListId }),
         }),
       );
     },

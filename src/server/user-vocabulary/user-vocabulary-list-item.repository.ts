@@ -4,6 +4,7 @@ import type { UserVocabularyListItemsFilterDto } from './dto/user-vocabulary-lis
 import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import { RequestType } from '@/const/request';
+import { LearningStatus } from '@/const/vocabulary';
 
 export const getUserVocabularyListItems = async ({
   userId,
@@ -65,6 +66,76 @@ export const getUserVocabularyListItems = async ({
     nextCursor,
   };
 };
+
+export const getNewItems = async ({
+  userId,
+  vocabularyListId,
+  limit,
+}: {
+  userId: string;
+  vocabularyListId: string;
+  limit: number;
+}) =>
+  await db
+    .select({
+      id: userVocabularyItem.id,
+      userId: userVocabularyItem.userId,
+      vocabularyItemId: userVocabularyItem.vocabularyItemId,
+      encounterCount: userVocabularyItem.encounterCount,
+      status: userVocabularyItem.status,
+      enqueuedAt: userVocabularyItem.enqueuedAt,
+      createdAt: userVocabularyItem.createdAt,
+      updatedAt: userVocabularyItem.updatedAt,
+      vocabularyItem,
+    })
+    .from(vocabularyListItem)
+    .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
+    .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
+    .where(
+      and(
+        eq(vocabularyListItem.vocabularyListId, vocabularyListId),
+        eq(userVocabularyItem.userId, userId),
+        eq(userVocabularyItem.status, LearningStatus.Learning),
+        eq(userVocabularyItem.encounterCount, 0),
+      ),
+    )
+    .orderBy(asc(userVocabularyItem.enqueuedAt))
+    .limit(limit);
+
+export const getReviewItems = async ({
+  userId,
+  vocabularyListId,
+  limit,
+}: {
+  userId: string;
+  vocabularyListId: string;
+  limit: number;
+}) =>
+  await db
+    .select({
+      id: userVocabularyItem.id,
+      userId: userVocabularyItem.userId,
+      vocabularyItemId: userVocabularyItem.vocabularyItemId,
+      encounterCount: userVocabularyItem.encounterCount,
+      status: userVocabularyItem.status,
+      enqueuedAt: userVocabularyItem.enqueuedAt,
+      createdAt: userVocabularyItem.createdAt,
+      updatedAt: userVocabularyItem.updatedAt,
+      vocabularyItem,
+    })
+    .from(vocabularyListItem)
+    .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
+    .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
+    .where(
+      and(
+        eq(vocabularyListItem.vocabularyListId, vocabularyListId),
+        eq(userVocabularyItem.userId, userId),
+        eq(userVocabularyItem.status, LearningStatus.Learning),
+        gte(userVocabularyItem.encounterCount, 1),
+      ),
+    )
+    .orderBy(asc(userVocabularyItem.enqueuedAt))
+    .limit(limit);
 
 export const getUserVocabularyListItemStatusCounts = async ({
   userId,
