@@ -3,7 +3,7 @@ import {
   toTranslateEnglishSentence,
   toTranslateUkrainianSentence,
   type VocabularyItemData,
-} from '@/server/vocabulary-task/vocabulary-task.service';
+} from '@/server/user-vocabulary/vocabulary-task.service';
 import { randomInt } from 'node:crypto';
 
 describe.concurrent('vocabulary-task.service', () => {
