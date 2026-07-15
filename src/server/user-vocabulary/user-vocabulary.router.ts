@@ -26,11 +26,8 @@ import {
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
-import {
-  addVocabularyListToUser,
-  getUserAvailableVocabularyLists,
-  getUserVocabularyListWithListOrThrow,
-} from './user-vocabulary-list.service';
+import { addVocabularyListToUser, getUserVocabularyListWithListOrThrow } from './user-vocabulary-list.service';
+import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
 
 export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
