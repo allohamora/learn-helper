@@ -11,6 +11,8 @@ import {
 } from './user-vocabulary-list.repository';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 
+export { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
+
 export const addVocabularyListToUser = async ({
   userId,
   vocabularyListId,

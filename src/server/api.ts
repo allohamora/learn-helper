@@ -7,7 +7,7 @@ import { Exception } from './utils/exception.utils';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
 import { toErrorResponse } from './utils/response.utils';
-import { userVocabularyListRouter } from './user-vocabulary/user-vocabulary-list.router';
+import { userVocabularyRouter } from './user-vocabulary/user-vocabulary.router';
 import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
 import { MimeType } from './utils/mime-type.utils';
@@ -113,7 +113,7 @@ api.on(['POST', 'GET'], '/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
 
-const v1Router = new OpenAPIHono().route('/users/me/vocabulary-lists', userVocabularyListRouter);
+const v1Router = new OpenAPIHono().route('/users/me/vocabulary-lists', userVocabularyRouter);
 
 const app = api.route('/v1', v1Router);
 

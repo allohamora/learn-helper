@@ -31,7 +31,7 @@ const seedList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') =>
   return { list, items };
 };
 
-describe('user-vocabulary-list.router', () => {
+describe('user-vocabulary.router', () => {
   describe('GET /api/v1/users/me/vocabulary-lists/available', () => {
     it('returns 200 with lists', async () => {
       auth.authorized();

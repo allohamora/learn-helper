@@ -3,10 +3,10 @@ import {
   toTranslateEnglishSentence,
   toTranslateUkrainianSentence,
   type VocabularyItemData,
-} from '@/server/user-vocabulary/user-vocabulary-item-task.service';
+} from '@/server/vocabulary-task/vocabulary-task.service';
 import { randomInt } from 'node:crypto';
 
-describe.concurrent('task-generation.service', () => {
+describe.concurrent('vocabulary-task.service', () => {
   const countWordsBySpaces = (value: string) => {
     const trimmedValue = value.trim();
 

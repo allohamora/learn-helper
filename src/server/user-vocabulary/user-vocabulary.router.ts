@@ -8,9 +8,9 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
-import { userVocabularyListItemDto } from './dto/user-vocabulary-list-item.dto';
+import { userVocabularyItemDto } from './dto/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
-import { userVocabularyListLearningItemDto } from './dto/user-vocabulary-list-learning-item.dto';
+import { userVocabularyItemLearningDto } from './dto/user-vocabulary-item-learning.dto';
 import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
 import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
@@ -22,16 +22,17 @@ import {
   getUserVocabularyListItems,
   getUserVocabularyListLearningItems,
   getUserVocabularyListProgress,
-} from './user-vocabulary-list-item.service';
-import {
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
-import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
-import { addVocabularyListToUser, getUserVocabularyListWithListOrThrow } from './user-vocabulary-list.service';
+import {
+  addVocabularyListToUser,
+  getUserAvailableVocabularyLists,
+  getUserVocabularyListWithListOrThrow,
+} from './user-vocabulary-list.service';
 
-export const userVocabularyListRouter = new OpenAPIHono()
+export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
@@ -128,7 +129,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       responses: {
         ...successPaginatedResponse({
           description: "List's words with the user's progress",
-          schema: userVocabularyListItemDto,
+          schema: userVocabularyItemDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -159,7 +160,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...successOkResponse({
           description:
             "A batch of the list's words for a Learning session, following the [new, old, old, new, old, old] pattern",
-          schema: z.array(userVocabularyListLearningItemDto),
+          schema: z.array(userVocabularyItemLearningDto),
         }),
       },
       security: [{ cookieAuth: [] }],

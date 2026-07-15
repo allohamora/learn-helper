@@ -2,7 +2,7 @@ import '@tanstack/react-start/server-only';
 import { z } from '@hono/zod-openapi';
 import { LearningStatus } from '@/const/vocabulary';
 
-export const userVocabularyListItemDto = z.object({
+export const userVocabularyItemDto = z.object({
   value: z.string(),
   definition: z.string(),
   uaTranslation: z.string(),

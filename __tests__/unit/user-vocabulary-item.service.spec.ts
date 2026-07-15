@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildLearningBatch } from '@/server/user-vocabulary/user-vocabulary-list-item.service';
+import { buildLearningBatch } from '@/server/user-vocabulary/user-vocabulary-item.service';
 
 const items = (prefix: string, count: number) => Array.from({ length: count }, (_, i) => `${prefix}-${i}`);
 
-describe('user-vocabulary-list-item.service', () => {
+describe('user-vocabulary-item.service', () => {
   describe('buildLearningBatch', () => {
     it('interleaves [new, old, old, new, old, old] when both pools are plentiful', () => {
       const newPool = items('new', 6);
