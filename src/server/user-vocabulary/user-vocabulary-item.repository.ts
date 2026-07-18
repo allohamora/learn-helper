@@ -45,6 +45,28 @@ export const updateUserVocabularyItemStatus = async (
     .where(and(eq(userVocabularyItem.id, userVocabularyItemId), eq(userVocabularyItem.userId, userId)));
 };
 
+export const updateUserVocabularyItemProgress = async (
+  {
+    userId,
+    userVocabularyItemId,
+    status,
+    encounterCount,
+    enqueuedAt,
+  }: {
+    userId: string;
+    userVocabularyItemId: string;
+    status: LearningStatus;
+    encounterCount: number;
+    enqueuedAt: Date | null;
+  },
+  tx: Transaction = db,
+) => {
+  await tx
+    .update(userVocabularyItem)
+    .set({ status, encounterCount, enqueuedAt, updatedAt: new Date() })
+    .where(and(eq(userVocabularyItem.id, userVocabularyItemId), eq(userVocabularyItem.userId, userId)));
+};
+
 export const getUserVocabularyListItems = async ({
   userId,
   vocabularyListId,

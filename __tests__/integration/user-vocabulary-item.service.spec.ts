@@ -13,6 +13,7 @@ import {
   getUserVocabularyListLearningItems,
   getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
+  moveUserVocabularyItemToNextStep,
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
@@ -297,6 +298,115 @@ describe('userVocabularyItemService', () => {
 
       await expect(
         undoUserVocabularyItemStatus({ userId, userVocabularyListId: userList.id, userVocabularyItemId: userItem.id }),
+      ).rejects.toThrow(Exception);
+    });
+  });
+
+  describe('moveUserVocabularyItemToNextStep', () => {
+    const setupLearningItem = async (userSuffix: string) => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix });
+      await setUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        durationMs: 0,
+      });
+
+      return { userId, userList, userItem };
+    };
+
+    it('increments encounterCount, keeps status learning, and re-enqueues the item', async () => {
+      const { userId, userList, userItem } = await setupLearningItem('move-next-step-review');
+
+      const before = new Date();
+      const result = await moveUserVocabularyItemToNextStep({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+      const after = new Date();
+
+      expect(result).toEqual({
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        encounterCount: 1,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.status).toBe(LearningStatus.Learning);
+      expect(updated?.encounterCount).toBe(1);
+      expect(updated!.enqueuedAt!.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(updated!.enqueuedAt!.getTime()).toBeLessThanOrEqual(after.getTime());
+
+      const events = await db.query.event.findMany({
+        where: and(
+          eq(event.userVocabularyItemId, userItem.id),
+          eq(event.type, EventType.UserVocabularyItemMovedToNextStep),
+        ),
+      });
+      expect(events).toMatchObject([
+        {
+          userId,
+          userVocabularyItemId: userItem.id,
+          userVocabularyListId: userList.id,
+          status: LearningStatus.Learning,
+          encounterCount: 1,
+        },
+      ]);
+    });
+
+    it('graduates the item to learned once it reaches the confirmation threshold', async () => {
+      const { userId, userList, userItem } = await setupLearningItem('move-next-step-learned');
+      const confirmationsToLearn = 3;
+
+      for (let i = 0; i < confirmationsToLearn - 1; i += 1) {
+        await moveUserVocabularyItemToNextStep({
+          userId,
+          userVocabularyListId: userList.id,
+          userVocabularyItemId: userItem.id,
+        });
+      }
+
+      const result = await moveUserVocabularyItemToNextStep({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(result).toEqual({
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learned,
+        encounterCount: confirmationsToLearn,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.status).toBe(LearningStatus.Learned);
+      expect(updated?.encounterCount).toBe(confirmationsToLearn);
+      expect(updated?.enqueuedAt).toBeNull();
+    });
+
+    it('throws conflict when the item is not in learning status', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'move-next-step-not-learning' });
+
+      await expect(
+        moveUserVocabularyItemToNextStep({
+          userId,
+          userVocabularyListId: userList.id,
+          userVocabularyItemId: userItem.id,
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found when the item is not linked to the given list', async () => {
+      const { userId, userItem } = await setupLearningItem('move-next-step-unlinked');
+
+      await expect(
+        moveUserVocabularyItemToNextStep({
+          userId,
+          userVocabularyListId: MISSING_ID,
+          userVocabularyItemId: userItem.id,
+        }),
       ).rejects.toThrow(Exception);
     });
   });

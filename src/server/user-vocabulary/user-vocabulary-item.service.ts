@@ -16,6 +16,7 @@ import {
   getUserVocabularyItemById,
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
   getUserVocabularyListItemStatusCounts,
+  updateUserVocabularyItemProgress,
   updateUserVocabularyItemStatus,
 } from './user-vocabulary-item.repository';
 import { getUserVocabularyListOrThrow } from './user-vocabulary-list.service';
@@ -45,13 +46,13 @@ const validateUserVocabularyItemInList = async (
   }: { userId: string; userVocabularyListId: string; userVocabularyItemId: string },
   tx: Transaction,
 ) => {
-  const [{ vocabularyListId }, { vocabularyItemId }] = await Promise.all([
+  const [{ vocabularyListId }, userItem] = await Promise.all([
     getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx),
     getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx),
   ]);
-  await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
+  await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId: userItem.vocabularyItemId }, tx);
 
-  return { vocabularyListId, vocabularyItemId };
+  return { vocabularyListId, vocabularyItemId: userItem.vocabularyItemId, userItem };
 };
 
 export const setUserVocabularyItemStatus = async ({
@@ -129,6 +130,51 @@ export const undoUserVocabularyItemStatus = async ({
     ]);
 
     return { userVocabularyItemId, status: LearningStatus.Waiting };
+  });
+};
+
+// number of successful confirmations in Learning sessions before a word graduates to `learned`
+const LEARNING_CONFIRMATIONS_TO_LEARN = 3;
+
+export const moveUserVocabularyItemToNextStep = async ({
+  userId,
+  userVocabularyListId,
+  userVocabularyItemId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+  userVocabularyItemId: string;
+}) => {
+  return db.transaction(async (tx) => {
+    const { userItem } = await validateUserVocabularyItemInList(
+      { userId, userVocabularyListId, userVocabularyItemId },
+      tx,
+    );
+
+    if (userItem.status !== LearningStatus.Learning) {
+      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is not in learning status`);
+    }
+
+    const encounterCount = userItem.encounterCount + 1;
+    const status = encounterCount >= LEARNING_CONFIRMATIONS_TO_LEARN ? LearningStatus.Learned : LearningStatus.Learning;
+    const enqueuedAt = status === LearningStatus.Learning ? new Date() : null;
+
+    await Promise.all([
+      insertEvent(
+        {
+          type: EventType.UserVocabularyItemMovedToNextStep,
+          userId,
+          userVocabularyItemId,
+          userVocabularyListId,
+          status,
+          encounterCount,
+        },
+        tx,
+      ),
+      updateUserVocabularyItemProgress({ userId, userVocabularyItemId, status, encounterCount, enqueuedAt }, tx),
+    ]);
+
+    return { userVocabularyItemId, status, encounterCount };
   });
 };
 

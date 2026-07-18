@@ -11,6 +11,7 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
+import { userVocabularyItemProgressDto } from './dtos/user-vocabulary-item-progress.dto';
 import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithListDto } from './dtos/user-vocabulary-list-with-list.dto';
@@ -24,6 +25,7 @@ import {
   getUserVocabularyListLearningItems,
   getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
+  moveUserVocabularyItemToNextStep,
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
@@ -299,6 +301,39 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await undoUserVocabularyItemStatus({ userId: user.id, userVocabularyListId, userVocabularyItemId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/move-to-next-step',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The item's encounter count incremented, and status advanced to learned or re-queued for review",
+          schema: userVocabularyItemProgressDto,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await moveUserVocabularyItemToNextStep({
+            userId: user.id,
+            userVocabularyListId,
+            userVocabularyItemId,
+          }),
         }),
       );
     },
