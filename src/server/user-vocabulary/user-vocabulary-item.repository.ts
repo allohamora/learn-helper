@@ -56,49 +56,53 @@ export const getUserVocabularyListItems = async ({
   const searchFilter = search ? ilike(vocabularyItem.value, `%${search}%`) : undefined;
   const cursorFilter = cursor ? gte(userVocabularyItem.id, cursor) : undefined;
 
-  const items = await db
-    .select({
-      value: vocabularyItem.value,
-      definition: vocabularyItem.definition,
-      uaTranslation: vocabularyItem.uaTranslation,
-      partOfSpeech: vocabularyItem.partOfSpeech,
-      spelling: vocabularyItem.spelling,
-      pronunciation: vocabularyItem.pronunciation,
-      link: vocabularyItem.link,
-      userVocabularyItemId: userVocabularyItem.id,
-      status: userVocabularyItem.status,
-      encounterCount: userVocabularyItem.encounterCount,
-      createdAt: userVocabularyItem.createdAt,
-    })
-    .from(vocabularyListItem)
-    .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
-    .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
-    .where(and(listFilter, userFilter, statusFilter, searchFilter, cursorFilter))
-    .orderBy(asc(userVocabularyItem.id))
-    .limit(limit + 1);
+  const getItems = async () => {
+    const items = await db
+      .select({
+        value: vocabularyItem.value,
+        definition: vocabularyItem.definition,
+        uaTranslation: vocabularyItem.uaTranslation,
+        partOfSpeech: vocabularyItem.partOfSpeech,
+        spelling: vocabularyItem.spelling,
+        pronunciation: vocabularyItem.pronunciation,
+        link: vocabularyItem.link,
+        userVocabularyItemId: userVocabularyItem.id,
+        status: userVocabularyItem.status,
+        encounterCount: userVocabularyItem.encounterCount,
+        createdAt: userVocabularyItem.createdAt,
+      })
+      .from(vocabularyListItem)
+      .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
+      .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
+      .where(and(listFilter, userFilter, statusFilter, searchFilter, cursorFilter))
+      .orderBy(asc(userVocabularyItem.id))
+      .limit(limit + 1);
 
-  const nextCursor = items.length > limit ? items.pop()?.userVocabularyItemId : undefined;
+    const nextCursor = items.length > limit ? items.pop()?.userVocabularyItemId : undefined;
+
+    return { items, nextCursor };
+  };
+
+  const getTotal = async () => {
+    const [total] = await db
+      .select({ total: count() })
+      .from(vocabularyListItem)
+      .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
+      .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
+      .where(and(listFilter, userFilter, statusFilter, searchFilter));
+
+    return total;
+  };
 
   if (type === RequestType.Data) {
-    return {
-      items,
-      total: 0,
-      nextCursor,
-    };
+    const { items, nextCursor } = await getItems();
+
+    return { items, total: 0, nextCursor };
   }
 
-  const [{ total }] = await db
-    .select({ total: count() })
-    .from(vocabularyListItem)
-    .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
-    .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
-    .where(and(listFilter, userFilter, statusFilter, searchFilter));
+  const [items, total] = await Promise.all([getItems(), getTotal()]);
 
-  return {
-    items,
-    total,
-    nextCursor,
-  };
+  return { ...items, ...total };
 };
 
 export const getNewItems = async ({
