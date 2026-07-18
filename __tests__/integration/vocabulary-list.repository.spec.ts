@@ -25,10 +25,11 @@ describe('vocabularyListRepository', () => {
   describe('getVocabularyListByTitle', () => {
     it('returns the list matching the title', async () => {
       const created = await insertVocabularyListIgnoringConflict('Oxford 5000 A1');
+      if (!created) throw new Error('expected list to be created');
 
       const found = await getVocabularyListByTitle('Oxford 5000 A1');
 
-      expect(found?.id).toBe(created?.id);
+      expect(found?.id).toBe(created.id);
     });
 
     it('returns undefined when no list matches the title', async () => {
