@@ -19,6 +19,11 @@ import {
   updateUserVocabularyItemStatus,
 } from './user-vocabulary-item.repository';
 import { getUserVocabularyListOrThrow } from './user-vocabulary-list.service';
+import {
+  toTranslateEnglishSentence,
+  toTranslateUkrainianSentence,
+  type VocabularyItemData,
+} from './vocabulary-task.service';
 
 export const getUserVocabularyItemOrThrow = async (
   { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
@@ -207,6 +212,54 @@ export const getUserVocabularyListLearningItems = async ({
   ]);
 
   return buildLearningBatch(newPool, oldPool);
+};
+
+// TODO: unlike master's rate-limited getLearningTasks action, this endpoint has no rate limiting yet,
+// even though each call triggers real Gemini spend. Add per-user rate limiting before wider rollout.
+export const getUserVocabularyListLearningTasks = async ({
+  userId,
+  userVocabularyListId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+}) => {
+  const items = await getUserVocabularyListLearningItems({ userId, userVocabularyListId });
+  if (items.length === 0) {
+    return { translateEnglishSentenceTasks: [], translateUkrainianSentenceTasks: [] };
+  }
+
+  const data: VocabularyItemData[] = items.map((item) => ({
+    id: item.id,
+    value: item.vocabularyItem.value,
+    partOfSpeech: item.vocabularyItem.partOfSpeech,
+  }));
+
+  const [translateEnglishSentence, translateUkrainianSentence] = await Promise.all([
+    toTranslateEnglishSentence(data),
+    toTranslateUkrainianSentence(data),
+  ]);
+
+  const userVocabularyItemIds = data.map(({ id }) => id);
+
+  await Promise.all(
+    [translateEnglishSentence.cost, translateUkrainianSentence.cost].map((cost) =>
+      insertEvent({
+        type: EventType.UserVocabularyItemTaskGenerated,
+        userId,
+        userVocabularyListId,
+        userVocabularyItemTaskType: cost.taskType,
+        userVocabularyItemIds,
+        costInNanoDollars: cost.costInNanoDollars,
+        inputTokens: cost.inputTokens,
+        outputTokens: cost.outputTokens,
+      }),
+    ),
+  );
+
+  return {
+    translateEnglishSentenceTasks: translateEnglishSentence.tasks,
+    translateUkrainianSentenceTasks: translateUkrainianSentence.tasks,
+  };
 };
 
 export const getUserVocabularyListProgress = async ({

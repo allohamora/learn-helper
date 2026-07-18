@@ -11,6 +11,7 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
+import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithListDto } from './dtos/user-vocabulary-list-with-list.dto';
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
@@ -21,6 +22,7 @@ import { userVocabularyItemTranslationDto } from './dtos/user-vocabulary-item-tr
 import {
   getUserVocabularyListItems,
   getUserVocabularyListLearningItems,
+  getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
@@ -171,6 +173,35 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await getUserVocabularyListLearningItems({ userId: user.id, userVocabularyListId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{userVocabularyListId}/learning-tasks',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: 'AI-generated sentence-arrangement tasks for the current learning batch',
+          schema: userVocabularyListLearningTasksDto,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await getUserVocabularyListLearningTasks({ userId: user.id, userVocabularyListId }),
         }),
       );
     },

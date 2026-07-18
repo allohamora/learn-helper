@@ -4,7 +4,7 @@ import {
   toTranslateUkrainianSentence,
   type VocabularyItemData,
 } from '@/server/user-vocabulary/vocabulary-task.service';
-import { randomInt } from 'node:crypto';
+import { uuidv7 } from 'uuidv7';
 
 describe.concurrent('vocabulary-task.service', () => {
   const countWordsBySpaces = (value: string) => {
@@ -21,7 +21,7 @@ describe.concurrent('vocabulary-task.service', () => {
   const hasForbiddenDash = (value: string) => /[-–—]/gim.test(value);
 
   const item = (data: Omit<VocabularyItemData, 'id'>) => ({
-    id: randomInt(1, 10000),
+    id: uuidv7(),
     ...data,
   });
 

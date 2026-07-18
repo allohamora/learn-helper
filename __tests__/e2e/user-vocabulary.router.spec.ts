@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import * as vocabularyTaskService from '@/server/user-vocabulary/vocabulary-task.service';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
@@ -8,7 +9,7 @@ import { countItems } from '@/server/db/db.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
-import { EventType } from '@/const/event';
+import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const USER_ID = 'e2e-test-user';
@@ -392,6 +393,175 @@ describe('user-vocabulary.router', () => {
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learning-tasks', () => {
+    let englishSpy: MockInstance<typeof vocabularyTaskService.toTranslateEnglishSentence>;
+    let ukrainianSpy: MockInstance<typeof vocabularyTaskService.toTranslateUkrainianSentence>;
+
+    beforeEach(() => {
+      const english = vi
+        .spyOn(vocabularyTaskService, 'toTranslateEnglishSentence')
+        .mockImplementation(async (items) => ({
+          reasoning: [],
+          tasks: items.map(({ id }) => ({ id, sentence: `EN sentence ${id}`, translation: `UA translation ${id}` })),
+          cost: {
+            taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
+            costInNanoDollars: 100,
+            inputTokens: 10,
+            outputTokens: 5,
+          },
+        }));
+
+      const ukrainian = vi
+        .spyOn(vocabularyTaskService, 'toTranslateUkrainianSentence')
+        .mockImplementation(async (items) => ({
+          reasoning: [],
+          tasks: items.map(({ id }) => ({ id, sentence: `UA sentence ${id}`, translation: `EN translation ${id}` })),
+          cost: {
+            taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
+            costInNanoDollars: 200,
+            inputTokens: 20,
+            outputTokens: 10,
+          },
+        }));
+
+      englishSpy = english;
+      ukrainianSpy = ukrainian;
+    });
+
+    afterEach(() => {
+      englishSpy.mockRestore();
+      ukrainianSpy.mockRestore();
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+        param: { userVocabularyListId: list.id },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 when the user has not added the list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+        param: { userVocabularyListId: list.id },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns tasks for the current learning batch and records a task-generated event per generator', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
+      const { list } = await seedList(words);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learning, encounterCount: 0 })
+        .where(eq(userVocabularyItem.userId, USER_ID));
+
+      const itemsRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get(
+        { param: { userVocabularyListId: userList.id } },
+      );
+      const itemsBody = await itemsRes.json();
+      const expectedIds = itemsBody.data.map((item) => item.id);
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.data.translateEnglishSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
+      expect(body.data.translateUkrainianSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
+
+      const events = await db.query.event.findMany({
+        where: and(
+          eq(event.userVocabularyListId, userList.id),
+          eq(event.type, EventType.UserVocabularyItemTaskGenerated),
+        ),
+      });
+      expect(events).toHaveLength(2);
+    });
+
+    it('returns empty task arrays and does not call the AI SDK when the learning queue is empty', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.data).toEqual({ translateEnglishSentenceTasks: [], translateUkrainianSentenceTasks: [] });
+      expect(englishSpy).not.toHaveBeenCalled();
+      expect(ukrainianSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns matching items and tasks across repeated concurrent requests, with no conflicts between calls', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
+      const { list } = await seedList(words);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learning, encounterCount: 0 })
+        .where(eq(userVocabularyItem.userId, USER_ID));
+
+      const [itemsResponses, tasksResponses] = await Promise.all([
+        Promise.all(
+          Array.from({ length: 3 }, () =>
+            client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+              param: { userVocabularyListId: userList.id },
+            }),
+          ),
+        ),
+        Promise.all(
+          Array.from({ length: 3 }, () =>
+            client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+              param: { userVocabularyListId: userList.id },
+            }),
+          ),
+        ),
+      ]);
+
+      for (const res of [...itemsResponses, ...tasksResponses]) {
+        expect(res.status).toBe(200);
+      }
+
+      const itemIdsPerResponse = await Promise.all(
+        itemsResponses.map(async (res) => (await res.json()).data.map((item) => item.id)),
+      );
+      const taskBodies = await Promise.all(tasksResponses.map((res) => res.json()));
+
+      // all 6 concurrent requests (3x /learning-items, 3x /learning-tasks) must agree on the exact same batch,
+      // in the same order, with no cross-request conflicts
+      const [expectedIds] = itemIdsPerResponse;
+      for (const itemIds of itemIdsPerResponse) {
+        expect(itemIds).toEqual(expectedIds);
+      }
+      for (const taskBody of taskBodies) {
+        expect(taskBody.data.translateEnglishSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
+        expect(taskBody.data.translateUkrainianSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
+      }
     });
   });
 

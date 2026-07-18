@@ -22,7 +22,7 @@ const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: Langu
 };
 
 export type VocabularyItemData = {
-  id: number;
+  id: string;
   value: string;
   partOfSpeech: string | null;
 };
@@ -41,7 +41,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
     temperature: 0.7,
     output: Output.array({
       element: z.object({
-        id: z.number(),
+        id: z.uuidv7(),
         sentence: z.string(),
         translation: z.string(),
       }),
@@ -106,7 +106,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
     temperature: 0.7,
     output: Output.array({
       element: z.object({
-        id: z.number(),
+        id: z.uuidv7(),
         sentence: z.string(),
         translation: z.string(),
       }),

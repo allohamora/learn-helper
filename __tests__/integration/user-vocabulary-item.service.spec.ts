@@ -1,5 +1,6 @@
+import * as vocabularyTaskService from '@/server/user-vocabulary/vocabulary-task.service';
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { db } from '@/server/db/db.service';
 import { event, user, userVocabularyItem, vocabularyItem } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
@@ -10,12 +11,13 @@ import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabular
 import {
   getUserVocabularyListItems,
   getUserVocabularyListLearningItems,
+  getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from '@/server/user-vocabulary/user-vocabulary-item.service';
-import { EventType } from '@/const/event';
+import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const MISSING_ID = '00000000-0000-7000-8000-000000000000';
@@ -376,6 +378,122 @@ describe('userVocabularyItemService', () => {
       await expect(getUserVocabularyListLearningItems({ userId, userVocabularyListId: MISSING_ID })).rejects.toThrow(
         Exception,
       );
+    });
+  });
+
+  describe('getUserVocabularyListLearningTasks', () => {
+    let englishSpy: MockInstance<typeof vocabularyTaskService.toTranslateEnglishSentence>;
+    let ukrainianSpy: MockInstance<typeof vocabularyTaskService.toTranslateUkrainianSentence>;
+
+    beforeEach(() => {
+      const english = vi
+        .spyOn(vocabularyTaskService, 'toTranslateEnglishSentence')
+        .mockImplementation(async (items) => ({
+          reasoning: [],
+          tasks: items.map(({ id }) => ({ id, sentence: `EN sentence ${id}`, translation: `UA translation ${id}` })),
+          cost: {
+            taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
+            costInNanoDollars: 100,
+            inputTokens: 10,
+            outputTokens: 5,
+          },
+        }));
+
+      const ukrainian = vi
+        .spyOn(vocabularyTaskService, 'toTranslateUkrainianSentence')
+        .mockImplementation(async (items) => ({
+          reasoning: [],
+          tasks: items.map(({ id }) => ({ id, sentence: `UA sentence ${id}`, translation: `EN translation ${id}` })),
+          cost: {
+            taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
+            costInNanoDollars: 200,
+            inputTokens: 20,
+            outputTokens: 10,
+          },
+        }));
+
+      englishSpy = english;
+      ukrainianSpy = ukrainian;
+    });
+
+    afterEach(() => {
+      englishSpy.mockRestore();
+      ukrainianSpy.mockRestore();
+    });
+
+    it('throws not found for a non-existent user list', async () => {
+      const userId = 'user-learning-tasks-missing';
+      await seedTestUser(userId);
+
+      await expect(getUserVocabularyListLearningTasks({ userId, userVocabularyListId: MISSING_ID })).rejects.toThrow(
+        Exception,
+      );
+    });
+
+    it('generates tasks for the current learning batch and records a task-generated event per generator', async () => {
+      const { userId, userList } = await seedLearningUser({
+        userSuffix: 'learning-tasks',
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
+          { value: 'banana', encounterCount: 0, offsetSeconds: 1 },
+        ],
+      });
+
+      const batch = await getUserVocabularyListLearningItems({ userId, userVocabularyListId: userList.id });
+      const expectedIds = batch.map((item) => item.id);
+
+      const result = await getUserVocabularyListLearningTasks({ userId, userVocabularyListId: userList.id });
+
+      expect(englishSpy).toHaveBeenCalledTimes(1);
+      expect(englishSpy.mock.calls[0]?.[0].map((item) => item.id)).toEqual(expectedIds);
+      expect(ukrainianSpy).toHaveBeenCalledTimes(1);
+      expect(ukrainianSpy.mock.calls[0]?.[0].map((item) => item.id)).toEqual(expectedIds);
+
+      expect(result.translateEnglishSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
+      expect(result.translateUkrainianSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
+
+      const events = await db.query.event.findMany({
+        where: and(
+          eq(event.userVocabularyListId, userList.id),
+          eq(event.type, EventType.UserVocabularyItemTaskGenerated),
+        ),
+      });
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            userId,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
+            userVocabularyItemIds: expectedIds,
+            costInNanoDollars: 100,
+            inputTokens: 10,
+            outputTokens: 5,
+          }),
+          expect.objectContaining({
+            userId,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
+            userVocabularyItemIds: expectedIds,
+            costInNanoDollars: 200,
+            inputTokens: 20,
+            outputTokens: 10,
+          }),
+        ]),
+      );
+    });
+
+    it('returns empty task arrays and never calls the AI SDK when there are no learning items', async () => {
+      const userId = 'user-learning-tasks-empty';
+      await seedTestUser(userId);
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      const result = await getUserVocabularyListLearningTasks({ userId, userVocabularyListId: userList.id });
+
+      expect(result).toEqual({ translateEnglishSentenceTasks: [], translateUkrainianSentenceTasks: [] });
+      expect(englishSpy).not.toHaveBeenCalled();
+      expect(ukrainianSpy).not.toHaveBeenCalled();
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyListId, userList.id) });
+      expect(events).toHaveLength(0);
     });
   });
 
