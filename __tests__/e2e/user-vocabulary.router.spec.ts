@@ -476,6 +476,7 @@ describe('user-vocabulary.router', () => {
       );
       const itemsBody = await itemsRes.json();
       const expectedIds = itemsBody.data.map((item) => item.id);
+      expect(expectedIds).toHaveLength(6);
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
         param: { userVocabularyListId: userList.id },
@@ -556,6 +557,7 @@ describe('user-vocabulary.router', () => {
       // all 6 concurrent requests (3x /learning-items, 3x /learning-tasks) must agree on the exact same batch,
       // in the same order, with no cross-request conflicts
       const [expectedIds] = itemIdsPerResponse;
+      expect(expectedIds).toHaveLength(6);
       for (const itemIds of itemIdsPerResponse) {
         expect(itemIds).toEqual(expectedIds);
       }
