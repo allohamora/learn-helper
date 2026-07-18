@@ -32,6 +32,23 @@ export const getUserVocabularyItemOrThrow = async (
   return userItem;
 };
 
+const validateUserVocabularyItemInList = async (
+  {
+    userId,
+    userVocabularyListId,
+    userVocabularyItemId,
+  }: { userId: string; userVocabularyListId: string; userVocabularyItemId: string },
+  tx: Transaction,
+) => {
+  const [{ vocabularyListId }, { vocabularyItemId }] = await Promise.all([
+    getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx),
+    getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx),
+  ]);
+  await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
+
+  return { vocabularyListId, vocabularyItemId };
+};
+
 export const setUserVocabularyItemStatus = async ({
   userId,
   userVocabularyListId,
@@ -43,23 +60,22 @@ export const setUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 } & SetUserVocabularyItemStatusDto) => {
   return db.transaction(async (tx) => {
-    const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
-    const { vocabularyItemId } = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
-    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
+    await validateUserVocabularyItemInList({ userId, userVocabularyListId, userVocabularyItemId }, tx);
 
-    await insertEvent(
-      {
-        type: EventType.UserVocabularyItemDiscovered,
-        userId,
-        userVocabularyItemId,
-        userVocabularyListId,
-        status: body.status,
-        durationMs: body.durationMs,
-      },
-      tx,
-    );
-
-    await updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: body.status }, tx);
+    await Promise.all([
+      insertEvent(
+        {
+          type: EventType.UserVocabularyItemDiscovered,
+          userId,
+          userVocabularyItemId,
+          userVocabularyListId,
+          status: body.status,
+          durationMs: body.durationMs,
+        },
+        tx,
+      ),
+      updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: body.status }, tx),
+    ]);
 
     return { userVocabularyItemId, status: body.status };
   });
@@ -75,27 +91,26 @@ export const undoUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
-    const { vocabularyItemId } = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
-    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
+    await validateUserVocabularyItemInList({ userId, userVocabularyListId, userVocabularyItemId }, tx);
 
     const revertedEvent = await revertUserVocabularyItemDiscoveredEvent({ userId, userVocabularyItemId }, tx);
     if (!revertedEvent) {
       throw Exception.notFound(`no active discovery event for user vocabulary item "${userVocabularyItemId}"`);
     }
 
-    await insertEvent(
-      {
-        type: EventType.UserVocabularyItemDiscoveryUndone,
-        userId,
-        userVocabularyItemId,
-        userVocabularyListId,
-        durationMs: revertedEvent.durationMs,
-      },
-      tx,
-    );
-
-    await updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: LearningStatus.Waiting }, tx);
+    await Promise.all([
+      insertEvent(
+        {
+          type: EventType.UserVocabularyItemDiscoveryUndone,
+          userId,
+          userVocabularyItemId,
+          userVocabularyListId,
+          durationMs: revertedEvent.durationMs,
+        },
+        tx,
+      ),
+      updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: LearningStatus.Waiting }, tx),
+    ]);
 
     return { userVocabularyItemId, status: LearningStatus.Waiting };
   });
@@ -115,22 +130,25 @@ export const updateUserVocabularyItemTranslation = async ({
   userVocabularyItemId: string;
 } & UpdateUserVocabularyItemTranslationDto) => {
   return db.transaction(async (tx) => {
-    const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx);
-    const { vocabularyItemId } = await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
-    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId }, tx);
-
-    await updateVocabularyItemTranslation({ vocabularyItemId, uaTranslation }, tx);
-    await insertEvent(
-      {
-        type: EventType.VocabularyItemUpdated,
-        userId,
-        userVocabularyItemId,
-        vocabularyItemId,
-        userVocabularyListId,
-        fieldName: 'uaTranslation',
-      },
+    const { vocabularyItemId } = await validateUserVocabularyItemInList(
+      { userId, userVocabularyListId, userVocabularyItemId },
       tx,
     );
+
+    await Promise.all([
+      updateVocabularyItemTranslation({ vocabularyItemId, uaTranslation }, tx),
+      insertEvent(
+        {
+          type: EventType.VocabularyItemUpdated,
+          userId,
+          userVocabularyItemId,
+          vocabularyItemId,
+          userVocabularyListId,
+          fieldName: 'uaTranslation',
+        },
+        tx,
+      ),
+    ]);
 
     return { userVocabularyItemId, uaTranslation };
   });

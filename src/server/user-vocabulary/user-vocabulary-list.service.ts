@@ -19,13 +19,16 @@ export const addVocabularyListToUser = async ({
   vocabularyListId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const vocabularyList = await getVocabularyListByIdOrThrow(vocabularyListId, tx);
-
-    const userList = await getUserVocabularyListByVocabularyListId({ userId, vocabularyListId }, tx);
+    const [vocabularyList, userList] = await Promise.all([
+      getVocabularyListByIdOrThrow(vocabularyListId, tx),
+      getUserVocabularyListByVocabularyListId({ userId, vocabularyListId }, tx),
+    ]);
     if (userList) throw Exception.conflict(`vocabulary list "${vocabularyListId}" already added`);
 
-    await createUserVocabularyItemsFromList({ userId, vocabularyListId }, tx);
-    const created = await createUserVocabularyList({ userId, vocabularyListId }, tx);
+    const [, created] = await Promise.all([
+      createUserVocabularyItemsFromList({ userId, vocabularyListId }, tx),
+      createUserVocabularyList({ userId, vocabularyListId }, tx),
+    ]);
 
     return { ...created, vocabularyList };
   });
