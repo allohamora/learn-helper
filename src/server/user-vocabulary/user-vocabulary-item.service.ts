@@ -14,6 +14,7 @@ import {
   getNewItems,
   getReviewItems,
   getUserVocabularyItemById,
+  getUserVocabularyItemByIdForUpdate,
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
   getUserVocabularyListItemStatusCounts,
   updateUserVocabularyItemProgress,
@@ -31,6 +32,20 @@ export const getUserVocabularyItemOrThrow = async (
   tx: Transaction = db,
 ) => {
   const userItem = await getUserVocabularyItemById({ userId, userVocabularyItemId }, tx);
+  if (!userItem) {
+    throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+  }
+
+  return userItem;
+};
+
+// locks the row for the duration of the transaction so a concurrent read-modify-write call can't
+// race this one to the same encounterCount
+const getUserVocabularyItemByIdForUpdateOrThrow = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
+  tx: Transaction,
+) => {
+  const userItem = await getUserVocabularyItemByIdForUpdate({ userId, userVocabularyItemId }, tx);
   if (!userItem) {
     throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
   }
@@ -146,10 +161,11 @@ export const moveUserVocabularyItemToNextStep = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const { userItem } = await validateUserVocabularyItemInList(
-      { userId, userVocabularyListId, userVocabularyItemId },
-      tx,
-    );
+    const [{ vocabularyListId }, userItem] = await Promise.all([
+      getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx),
+      getUserVocabularyItemByIdForUpdateOrThrow({ userId, userVocabularyItemId }, tx),
+    ]);
+    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId: userItem.vocabularyItemId }, tx);
 
     if (userItem.status !== LearningStatus.Learning) {
       throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is not in learning status`);

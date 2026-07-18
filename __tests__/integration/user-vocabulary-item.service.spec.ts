@@ -409,6 +409,38 @@ describe('userVocabularyItemService', () => {
         }),
       ).rejects.toThrow(Exception);
     });
+
+    it('serializes concurrent calls so each confirmation advances encounterCount by exactly one', async () => {
+      const { userId, userList, userItem } = await setupLearningItem('move-next-step-concurrent');
+      const concurrentCalls = 3;
+
+      const results = await Promise.all(
+        Array.from({ length: concurrentCalls }, () =>
+          moveUserVocabularyItemToNextStep({
+            userId,
+            userVocabularyListId: userList.id,
+            userVocabularyItemId: userItem.id,
+          }),
+        ),
+      );
+
+      const encounterCounts = results.map((result) => result.encounterCount).sort((a, b) => a - b);
+      expect(encounterCounts).toEqual([1, 2, 3]);
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.encounterCount).toBe(concurrentCalls);
+      expect(updated?.status).toBe(LearningStatus.Learned);
+
+      const events = await db.query.event.findMany({
+        where: and(
+          eq(event.userVocabularyItemId, userItem.id),
+          eq(event.type, EventType.UserVocabularyItemMovedToNextStep),
+        ),
+      });
+      expect(events.map((movedEvent) => movedEvent.encounterCount).sort((a, b) => (a ?? 0) - (b ?? 0))).toEqual([
+        1, 2, 3,
+      ]);
+    });
   });
 
   describe('updateUserVocabularyItemTranslation', () => {

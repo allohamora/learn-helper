@@ -30,6 +30,21 @@ export const getUserVocabularyItemById = async (
   });
 };
 
+// locks the row until the caller's transaction commits/rolls back, so concurrent read-modify-write
+// calls (e.g. moveUserVocabularyItemToNextStep) serialize instead of racing on encounterCount
+export const getUserVocabularyItemByIdForUpdate = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
+  tx: Transaction,
+) => {
+  const [userItem] = await tx
+    .select()
+    .from(userVocabularyItem)
+    .where(and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)))
+    .for('update');
+
+  return userItem;
+};
+
 export const updateUserVocabularyItemStatus = async (
   {
     userId,
