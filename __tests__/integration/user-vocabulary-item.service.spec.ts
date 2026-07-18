@@ -177,9 +177,9 @@ describe('userVocabularyItemService', () => {
       const after = new Date();
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
-      expect(updated?.enqueuedAt).not.toBeNull();
-      expect(updated!.enqueuedAt!.getTime()).toBeGreaterThanOrEqual(before.getTime());
-      expect(updated!.enqueuedAt!.getTime()).toBeLessThanOrEqual(after.getTime());
+      if (!updated?.enqueuedAt) throw new Error('expected item to have an enqueuedAt timestamp');
+      expect(updated.enqueuedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(updated.enqueuedAt.getTime()).toBeLessThanOrEqual(after.getTime());
     });
 
     it('leaves enqueuedAt null when discovering into Known status', async () => {
@@ -336,8 +336,9 @@ describe('userVocabularyItemService', () => {
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
       expect(updated?.status).toBe(LearningStatus.Learning);
       expect(updated?.encounterCount).toBe(1);
-      expect(updated!.enqueuedAt!.getTime()).toBeGreaterThanOrEqual(before.getTime());
-      expect(updated!.enqueuedAt!.getTime()).toBeLessThanOrEqual(after.getTime());
+      if (!updated?.enqueuedAt) throw new Error('expected item to have an enqueuedAt timestamp');
+      expect(updated.enqueuedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(updated.enqueuedAt.getTime()).toBeLessThanOrEqual(after.getTime());
 
       const events = await db.query.event.findMany({
         where: and(
