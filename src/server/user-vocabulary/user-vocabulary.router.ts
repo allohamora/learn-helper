@@ -8,28 +8,33 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
-import { userVocabularyListItemDto } from './dto/user-vocabulary-list-item.dto';
-import { userVocabularyListItemsFilterDto } from './dto/user-vocabulary-list-items-filter.dto';
-import { userVocabularyListProgressDto } from './dto/user-vocabulary-list-progress.dto';
-import { userVocabularyListWithListDto } from './dto/user-vocabulary-list-with-list.dto';
-import { userAvailableVocabularyListDto } from './dto/user-available-vocabulary-list.dto';
-import { setUserVocabularyItemStatusDto } from './dto/set-user-vocabulary-item-status.dto';
-import { updateUserVocabularyItemTranslationDto } from './dto/update-user-vocabulary-item-translation.dto';
-import { userVocabularyItemStatusDto } from './dto/user-vocabulary-item-status.dto';
-import { userVocabularyItemTranslationDto } from './dto/user-vocabulary-item-translation.dto';
-import { getUserVocabularyListItems, getUserVocabularyListProgress } from './user-vocabulary-list-item.service';
+import { rateLimit } from '../utils/rate-limit.middleware';
+import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
+import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
+import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
+import { userVocabularyItemProgressDto } from './dtos/user-vocabulary-item-progress.dto';
+import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
+import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
+import { userVocabularyListWithListDto } from './dtos/user-vocabulary-list-with-list.dto';
+import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
+import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
+import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
+import { userVocabularyItemStatusDto } from './dtos/user-vocabulary-item-status.dto';
+import { userVocabularyItemTranslationDto } from './dtos/user-vocabulary-item-translation.dto';
 import {
+  getUserVocabularyListItems,
+  getUserVocabularyListLearningItems,
+  getUserVocabularyListLearningTasks,
+  getUserVocabularyListProgress,
+  moveUserVocabularyItemToNextStep,
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
-import {
-  getUserAvailableVocabularyLists,
-  getUserVocabularyListWithListOrThrow,
-} from './user-vocabulary-list.repository';
-import { addVocabularyListToUser } from './user-vocabulary-list.service';
+import { addVocabularyListToUser, getUserVocabularyListWithListOrThrow } from './user-vocabulary-list.service';
+import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
 
-export const userVocabularyListRouter = new OpenAPIHono()
+export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
@@ -126,7 +131,7 @@ export const userVocabularyListRouter = new OpenAPIHono()
       responses: {
         ...successPaginatedResponse({
           description: "List's words with the user's progress",
-          schema: userVocabularyListItemDto,
+          schema: userVocabularyItemDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -141,6 +146,64 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...toPaginatedResponse({
           status: 200,
           data: await getUserVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{userVocabularyListId}/learning-items',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "A batch of the list's words for a Learning session",
+          schema: z.array(userVocabularyItemLearningDto),
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await getUserVocabularyListLearningItems({ userId: user.id, userVocabularyListId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{userVocabularyListId}/learning-tasks',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: 'AI-generated sentence-arrangement tasks for the current learning batch',
+          schema: userVocabularyListLearningTasksDto,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware, rateLimit({ count: 10, durationSec: 60 })] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await getUserVocabularyListLearningTasks({ userId: user.id, userVocabularyListId }),
         }),
       );
     },
@@ -238,6 +301,39 @@ export const userVocabularyListRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await undoUserVocabularyItemStatus({ userId: user.id, userVocabularyListId, userVocabularyItemId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/move-to-next-step',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The item's encounter count incremented, and status advanced to learned or re-queued for review",
+          schema: userVocabularyItemProgressDto,
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await moveUserVocabularyItemToNextStep({
+            userId: user.id,
+            userVocabularyListId,
+            userVocabularyItemId,
+          }),
         }),
       );
     },

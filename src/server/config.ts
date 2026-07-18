@@ -23,6 +23,8 @@ export const {
   BETTER_AUTH_GOOGLE_CLIENT_ID,
   BETTER_AUTH_GOOGLE_CLIENT_SECRET,
   BETTER_AUTH_ALLOWED_USERS,
+
+  GEMINI_API_KEY,
 } = z
   .object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -39,5 +41,7 @@ export const {
     BETTER_AUTH_GOOGLE_CLIENT_ID: z.string(),
     BETTER_AUTH_GOOGLE_CLIENT_SECRET: z.string(),
     BETTER_AUTH_ALLOWED_USERS: json(z.array(z.string())),
+
+    GEMINI_API_KEY: z.string(),
   })
   .parse(process.env);

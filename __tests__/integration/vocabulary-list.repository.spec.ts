@@ -1,26 +1,58 @@
-import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
-import { countItems } from '@/server/db/db.utils';
-import { vocabularyList } from '@/server/db/db.schema';
-import { db } from '@/server/db/db.service';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import {
+  getVocabularyListById,
+  getVocabularyListByTitle,
+  insertVocabularyListIgnoringConflict,
+} from '@/server/vocabulary/vocabulary-list.repository';
 
 describe('vocabularyListRepository', () => {
-  describe('findOrCreateVocabularyListByTitle', () => {
-    it('creates a new list on first call', async () => {
-      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
-      expect(list.title).toBe('Oxford 5000 A1');
+  describe('insertVocabularyListIgnoringConflict', () => {
+    it('inserts a new list and returns it', async () => {
+      const inserted = await insertVocabularyListIgnoringConflict('Oxford 5000 A1');
 
-      const found = await db.query.vocabularyList.findFirst({ where: eq(vocabularyList.title, 'Oxford 5000 A1') });
-      expect(found?.id).toBe(list.id);
+      expect(inserted).toMatchObject({ title: 'Oxford 5000 A1' });
     });
 
-    it('returns the existing list on repeated calls without creating a duplicate', async () => {
-      const first = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
-      const second = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+    it('returns undefined when a list with the same title already exists', async () => {
+      await insertVocabularyListIgnoringConflict('Oxford 5000 A1');
 
-      expect(second.id).toBe(first.id);
-      expect(await countItems(vocabularyList)).toBe(1);
+      const inserted = await insertVocabularyListIgnoringConflict('Oxford 5000 A1');
+
+      expect(inserted).toBeUndefined();
+    });
+  });
+
+  describe('getVocabularyListByTitle', () => {
+    it('returns the list matching the title', async () => {
+      const created = await insertVocabularyListIgnoringConflict('Oxford 5000 A1');
+      if (!created) throw new Error('expected list to be created');
+
+      const found = await getVocabularyListByTitle('Oxford 5000 A1');
+
+      expect(found?.id).toBe(created.id);
+    });
+
+    it('returns undefined when no list matches the title', async () => {
+      const found = await getVocabularyListByTitle('Nonexistent List');
+
+      expect(found).toBeUndefined();
+    });
+  });
+
+  describe('getVocabularyListById', () => {
+    it('returns the list matching the id', async () => {
+      const created = await insertVocabularyListIgnoringConflict('Oxford 5000 A1');
+      if (!created) throw new Error('expected list to be created');
+
+      const found = await getVocabularyListById(created.id);
+
+      expect(found?.title).toBe('Oxford 5000 A1');
+    });
+
+    it('returns undefined when no list matches the id', async () => {
+      const found = await getVocabularyListById('00000000-0000-7000-8000-000000000000');
+
+      expect(found).toBeUndefined();
     });
   });
 });

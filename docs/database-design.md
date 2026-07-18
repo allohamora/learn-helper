@@ -58,7 +58,7 @@ erDiagram
         vocabulary_item_id uuid FK
         encounter_count integer
         status varchar(16) "enum: learning_status"
-        enqueued_at timestamptz "default NOW"
+        enqueued_at timestamptz "nullable"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -321,7 +321,7 @@ Grammar has one topic per session. The app picks whether the session is **new** 
 
 All tasks are BE-generated (LLM). When user starts reading the showcase article, the client requests task generation in the background.
 
-Each session generates 4 tasks per grammar topic. Topics follow the [new, old, old] queue pattern.
+Each session generates 4 tasks per grammar topic. Topics follow the [new, review, review] queue pattern.
 
 ### showcase
 

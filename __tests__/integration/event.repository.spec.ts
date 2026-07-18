@@ -4,7 +4,7 @@ import { db } from '@/server/db/db.service';
 import { event, user, userVocabularyItem } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
-import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 import { createUserVocabularyList } from '@/server/user-vocabulary/user-vocabulary-list.repository';
 import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '@/server/event/event.repository';

@@ -6,7 +6,7 @@ import { toChunks } from '../utils/array.utils';
 import { createLogger } from '../utils/logger.utils';
 import { createMissingVocabularyItems } from './vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from './vocabulary-list-item.repository';
-import { findOrCreateVocabularyListByTitle } from './vocabulary-list.repository';
+import { findOrCreateVocabularyListByTitle } from './vocabulary-list.service';
 import { PartOfSpeech } from '@/const/vocabulary';
 
 const logger = createLogger('vocabulary.seed');
