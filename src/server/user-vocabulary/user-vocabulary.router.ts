@@ -160,8 +160,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       },
       responses: {
         ...successOkResponse({
-          description:
-            "A batch of the list's words for a Learning session, following the [new, old, old, new, old, old] pattern",
+          description: "A batch of the list's words for a Learning session",
           schema: z.array(userVocabularyItemLearningDto),
         }),
       },

@@ -242,16 +242,16 @@ export const getUserVocabularyListItems = async ({
   return getUserVocabularyListItemsFromRepository({ userId, vocabularyListId, ...filter });
 };
 
-const LEARNING_BATCH_PATTERN = ['new', 'old', 'old', 'new', 'old', 'old'] as const;
+const LEARNING_BATCH_PATTERN = ['new', 'review', 'review', 'new', 'review', 'review'] as const;
 
-export const buildLearningBatch = <T>(newPool: T[], oldPool: T[]): T[] => {
+export const buildLearningBatch = <T>(newPool: T[], reviewPool: T[]): T[] => {
   const newQueue = [...newPool];
-  const oldQueue = [...oldPool];
+  const reviewQueue = [...reviewPool];
   const result: T[] = [];
 
   for (const kind of LEARNING_BATCH_PATTERN) {
-    const primary = kind === 'new' ? newQueue : oldQueue;
-    const fallback = kind === 'new' ? oldQueue : newQueue;
+    const primary = kind === 'new' ? newQueue : reviewQueue;
+    const fallback = kind === 'new' ? reviewQueue : newQueue;
     const item = primary.shift() ?? fallback.shift();
     if (item) result.push(item);
   }
@@ -268,12 +268,12 @@ export const getUserVocabularyListLearningItems = async ({
 }) => {
   const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
-  const [newPool, oldPool] = await Promise.all([
+  const [newPool, reviewPool] = await Promise.all([
     getNewItems({ userId, vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
     getReviewItems({ userId, vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
   ]);
 
-  return buildLearningBatch(newPool, oldPool);
+  return buildLearningBatch(newPool, reviewPool);
 };
 
 export const getUserVocabularyListLearningTasks = async ({

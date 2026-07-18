@@ -266,7 +266,7 @@ describe('user-vocabulary.router', () => {
   });
 
   describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learning-items', () => {
-    it('returns a batch of learning items following the [new, old, old, new, old, old] pattern', async () => {
+    it('returns a batch of learning items following the [new, review, review, new, review, review] pattern', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
@@ -279,7 +279,7 @@ describe('user-vocabulary.router', () => {
         orderBy: (userVocabularyItem, { asc }) => asc(userVocabularyItem.id),
       });
 
-      // first 4 words become "old" (already reviewed once), the rest stay "new" (never confirmed)
+      // first 4 words become "review" items (already reviewed once), the rest stay "new" (never confirmed)
       for (const [index, userItem] of userItems.entries()) {
         await db
           .update(userVocabularyItem)
@@ -297,12 +297,12 @@ describe('user-vocabulary.router', () => {
       expect(body.data).toHaveLength(6);
 
       const newWords = words.slice(4);
-      const oldWords = words.slice(0, 4);
-      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'old'));
-      expect(kinds).toEqual(['new', 'old', 'old', 'new', 'old', 'old']);
+      const reviewWords = words.slice(0, 4);
+      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'review'));
+      expect(kinds).toEqual(['new', 'review', 'review', 'new', 'review', 'review']);
       expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
       for (const item of body.data) {
-        expect([...newWords, ...oldWords]).toContain(item.vocabularyItem.value);
+        expect([...newWords, ...reviewWords]).toContain(item.vocabularyItem.value);
       }
     });
 
@@ -319,7 +319,7 @@ describe('user-vocabulary.router', () => {
         orderBy: (userVocabularyItem, { asc }) => asc(userVocabularyItem.id),
       });
 
-      // only 1 word stays "new"; the other 7 are "old" so the new pool runs out and the batch is filled with old items
+      // only 1 word stays "new"; the other 7 are review items, so the new pool runs out and review items fill the batch
       for (const [index, userItem] of userItems.entries()) {
         await db
           .update(userVocabularyItem)
@@ -337,13 +337,13 @@ describe('user-vocabulary.router', () => {
       expect(body.data).toHaveLength(6);
 
       const newWords = words.slice(0, 1);
-      const oldWords = words.slice(1);
-      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'old'));
+      const reviewWords = words.slice(1);
+      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'review'));
       expect(kinds.filter((kind) => kind === 'new')).toHaveLength(1);
-      expect(kinds.filter((kind) => kind === 'old')).toHaveLength(5);
+      expect(kinds.filter((kind) => kind === 'review')).toHaveLength(5);
       expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
       for (const item of body.data) {
-        expect([...newWords, ...oldWords]).toContain(item.vocabularyItem.value);
+        expect([...newWords, ...reviewWords]).toContain(item.vocabularyItem.value);
       }
     });
 
