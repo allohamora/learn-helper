@@ -41,11 +41,13 @@ describe('user-vocabulary-item.service', () => {
     it('does not mutate the input pools', () => {
       const newPool = items('new', 6);
       const oldPool = items('old', 6);
+      const originalNewPool = [...newPool];
+      const originalOldPool = [...oldPool];
 
       buildLearningBatch(newPool, oldPool);
 
-      expect(newPool).toHaveLength(6);
-      expect(oldPool).toHaveLength(6);
+      expect(newPool).toEqual(originalNewPool);
+      expect(oldPool).toEqual(originalOldPool);
     });
   });
 });
