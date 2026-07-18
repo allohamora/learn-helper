@@ -59,7 +59,7 @@ const seedLearningItems = async ({
   await createUserVocabularyItemsFromList({ userId, vocabularyListId: list.id });
 
   for (const { value, encounterCount, offsetSeconds, status = LearningStatus.Learning } of values) {
-    const item = items.find((i) => i.value === value);
+    const item = items.find((candidateItem) => candidateItem.value === value);
     if (!item) throw new Error(`expected item ${value} to be created`);
 
     await db

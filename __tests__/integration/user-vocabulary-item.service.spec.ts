@@ -86,7 +86,7 @@ const seedLearningUser = async ({ userSuffix, values }: { userSuffix: string; va
   const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
   for (const { value, encounterCount, offsetSeconds, status = LearningStatus.Learning } of values) {
-    const item = items.find((i) => i.value === value);
+    const item = items.find((candidateItem) => candidateItem.value === value);
     if (!item) throw new Error(`expected item ${value} to be created`);
 
     await db
@@ -360,7 +360,7 @@ describe('userVocabularyItemService', () => {
       const { userId, userList, userItem } = await setupLearningItem('move-next-step-learned');
       const confirmationsToLearn = 3;
 
-      for (let i = 0; i < confirmationsToLearn - 1; i += 1) {
+      for (let confirmationIndex = 0; confirmationIndex < confirmationsToLearn - 1; confirmationIndex += 1) {
         await moveUserVocabularyItemToNextStep({
           userId,
           userVocabularyListId: userList.id,

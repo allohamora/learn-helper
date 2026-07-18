@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { buildLearningBatch } from '@/server/user-vocabulary/user-vocabulary-item.service';
 
-const items = (prefix: string, count: number) => Array.from({ length: count }, (_, i) => `${prefix}-${i}`);
+const items = (prefix: string, count: number) =>
+  Array.from({ length: count }, (_, itemIndex) => `${prefix}-${itemIndex}`);
 
 describe('user-vocabulary-item.service', () => {
   describe('buildLearningBatch', () => {
