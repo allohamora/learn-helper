@@ -134,9 +134,12 @@ describe('userVocabularyListRepository', () => {
 
     it('resolves with undefined when the list does not belong to the user', async () => {
       const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const otherUserList = await addVocabularyListToUser({ userId: otherUserId, vocabularyListId: list.id });
 
       await expect(
-        getUserVocabularyListWithList({ userId, userVocabularyListId: '00000000-0000-7000-8000-000000000000' }),
+        getUserVocabularyListWithList({ userId, userVocabularyListId: otherUserList.id }),
       ).resolves.toBeUndefined();
     });
   });

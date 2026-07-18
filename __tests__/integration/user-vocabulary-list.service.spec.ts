@@ -115,11 +115,15 @@ describe('userVocabularyListService', () => {
       ).rejects.toThrow(Exception);
     });
 
-    it('throws not found when the list exists but the user has not added it', async () => {
+    it('throws not found when the enrollment belongs to a different user', async () => {
       const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
       const { list } = await createTestList(['run']);
+      const otherUserList = await addVocabularyListToUser({ userId: otherUserId, vocabularyListId: list.id });
 
-      await expect(getUserVocabularyListOrThrow({ userId, userVocabularyListId: list.id })).rejects.toThrow(Exception);
+      await expect(getUserVocabularyListOrThrow({ userId, userVocabularyListId: otherUserList.id })).rejects.toThrow(
+        Exception,
+      );
     });
   });
 
@@ -146,13 +150,15 @@ describe('userVocabularyListService', () => {
       ).rejects.toThrow(Exception);
     });
 
-    it('throws not found when the list exists but the user has not added it', async () => {
+    it('throws not found when the enrollment belongs to a different user', async () => {
       const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
       const { list } = await createTestList(['run']);
+      const otherUserList = await addVocabularyListToUser({ userId: otherUserId, vocabularyListId: list.id });
 
-      await expect(getUserVocabularyListWithListOrThrow({ userId, userVocabularyListId: list.id })).rejects.toThrow(
-        Exception,
-      );
+      await expect(
+        getUserVocabularyListWithListOrThrow({ userId, userVocabularyListId: otherUserList.id }),
+      ).rejects.toThrow(Exception);
     });
   });
 });
