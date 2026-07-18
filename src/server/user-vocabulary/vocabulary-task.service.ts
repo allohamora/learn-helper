@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from '@ai-s
 import { z } from 'zod';
 import { GEMINI_API_KEY } from '../config';
 import { UserVocabularyItemTaskType } from '@/const/event';
+import { Exception } from '../utils/exception.utils';
 
 const google = createGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
@@ -25,6 +26,21 @@ export type VocabularyItemData = {
   id: string;
   value: string;
   partOfSpeech: string | null;
+};
+
+type GeneratedTask = { id: string; sentence: string; translation: string };
+
+// the schema only validates each task's shape, not that the batch as a whole maps onto the
+// requested items, so a missing item, a duplicate id, or a fabricated id must be caught here
+export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: VocabularyItemData[]) => {
+  const expectedIds = new Set(items.map((item) => item.id));
+  const taskIds = tasks.map((task) => task.id);
+
+  return (
+    taskIds.length === items.length &&
+    new Set(taskIds).size === items.length &&
+    taskIds.every((id) => expectedIds.has(id))
+  );
 };
 
 export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) => {
@@ -81,6 +97,12 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
       `<words>${JSON.stringify(items)}</words>`,
     ].join('\n'),
   });
+
+  if (!tasksMatchRequestedItems(output, items)) {
+    throw Exception.internalServer(
+      `generated ${UserVocabularyItemTaskType.TranslateEnglishSentence} tasks do not match the requested vocabulary items`,
+    );
+  }
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
@@ -146,6 +168,12 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
       `<words>${JSON.stringify(items)}</words>`,
     ].join('\n'),
   });
+
+  if (!tasksMatchRequestedItems(output, items)) {
+    throw Exception.internalServer(
+      `generated ${UserVocabularyItemTaskType.TranslateUkrainianSentence} tasks do not match the requested vocabulary items`,
+    );
+  }
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
