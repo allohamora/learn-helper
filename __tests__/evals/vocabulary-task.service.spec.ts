@@ -14,7 +14,7 @@ describe.concurrent('vocabulary-task.service', () => {
       return 0;
     }
 
-    return (trimmedValue.match(/ /gim)?.length ?? 0) + 1;
+    return trimmedValue.split(/\s+/u).length;
   };
 
   const hasForbiddenSemicolonOrColon = (value: string) => /[;:]/gim.test(value);
