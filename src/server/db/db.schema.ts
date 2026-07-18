@@ -186,7 +186,7 @@ export const userVocabularyItem = pgTable(
       .references(() => vocabularyItem.id, { onDelete: 'restrict' }),
     encounterCount: integer('encounter_count').default(0).notNull(),
     status: varchar('status', { length: 16 }).$type<LearningStatus>().default(LearningStatus.Waiting).notNull(),
-    enqueuedAt: timestamp('enqueued_at', { withTimezone: true }).defaultNow().notNull(),
+    enqueuedAt: timestamp('enqueued_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true })
       .defaultNow()

@@ -58,7 +58,7 @@ erDiagram
         vocabulary_item_id uuid FK
         encounter_count integer
         status varchar(16) "enum: learning_status"
-        enqueued_at timestamptz "default NOW"
+        enqueued_at timestamptz "nullable"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }

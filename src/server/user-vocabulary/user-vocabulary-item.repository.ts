@@ -31,12 +31,17 @@ export const getUserVocabularyItemById = async (
 };
 
 export const updateUserVocabularyItemStatus = async (
-  { userId, userVocabularyItemId, status }: { userId: string; userVocabularyItemId: string; status: LearningStatus },
+  {
+    userId,
+    userVocabularyItemId,
+    status,
+    enqueuedAt,
+  }: { userId: string; userVocabularyItemId: string; status: LearningStatus; enqueuedAt: Date | null },
   tx: Transaction = db,
 ) => {
   await tx
     .update(userVocabularyItem)
-    .set({ status, updatedAt: new Date() })
+    .set({ status, updatedAt: new Date(), enqueuedAt })
     .where(and(eq(userVocabularyItem.id, userVocabularyItemId), eq(userVocabularyItem.userId, userId)));
 };
 
@@ -137,7 +142,7 @@ export const getNewItems = async ({
         eq(userVocabularyItem.encounterCount, 0),
       ),
     )
-    .orderBy(asc(userVocabularyItem.enqueuedAt))
+    .orderBy(asc(userVocabularyItem.enqueuedAt), asc(userVocabularyItem.id))
     .limit(limit);
 
 export const getReviewItems = async ({
@@ -172,7 +177,7 @@ export const getReviewItems = async ({
         gte(userVocabularyItem.encounterCount, 1),
       ),
     )
-    .orderBy(asc(userVocabularyItem.enqueuedAt))
+    .orderBy(asc(userVocabularyItem.enqueuedAt), asc(userVocabularyItem.id))
     .limit(limit);
 
 export const getUserVocabularyListItemStatusCounts = async ({

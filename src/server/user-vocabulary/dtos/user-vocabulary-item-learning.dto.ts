@@ -9,7 +9,7 @@ export const userVocabularyItemLearningDto = z.object({
   vocabularyItemId: z.uuidv7(),
   encounterCount: z.number(),
   status: z.enum(LearningStatus),
-  enqueuedAt: z.iso.datetime(),
+  enqueuedAt: z.iso.datetime().nullable(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   vocabularyItem: vocabularyItemDto,

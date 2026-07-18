@@ -158,6 +158,42 @@ describe('userVocabularyItemService', () => {
       ).rejects.toThrow(Exception);
     });
 
+    it('sets enqueuedAt when discovering into Learning status', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'set-status-learning-enqueued' });
+
+      const before = new Date();
+
+      await setUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        durationMs: 500,
+      });
+
+      const after = new Date();
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.enqueuedAt).not.toBeNull();
+      expect(updated!.enqueuedAt!.getTime()).toBeGreaterThanOrEqual(before.getTime());
+      expect(updated!.enqueuedAt!.getTime()).toBeLessThanOrEqual(after.getTime());
+    });
+
+    it('leaves enqueuedAt null when discovering into Known status', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'set-status-known-enqueued' });
+
+      await setUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Known,
+        durationMs: 500,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.enqueuedAt).toBeNull();
+    });
+
     it('throws not found when the item exists for the user but is not linked to the given list', async () => {
       const userId = 'user-set-status-cross-list';
       await seedTestUser(userId);
@@ -231,6 +267,27 @@ describe('userVocabularyItemService', () => {
         ),
       });
       expect(undoneEvent).toMatchObject({ durationMs: 1000, userVocabularyListId: userList.id });
+    });
+
+    it('clears enqueuedAt back to null on undo', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-status-enqueued' });
+
+      await setUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        durationMs: 500,
+      });
+
+      await undoUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.enqueuedAt).toBeNull();
     });
 
     it('throws not found when there is no active discovery event to undo', async () => {

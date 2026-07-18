@@ -203,7 +203,12 @@ describe('userVocabularyItemRepository', () => {
     it("updates the item's status for the owning user", async () => {
       const { userId, userItem } = await seedUserItem({ userSuffix: 'update-status' });
 
-      await updateUserVocabularyItemStatus({ userId, userVocabularyItemId: userItem.id, status: LearningStatus.Known });
+      await updateUserVocabularyItemStatus({
+        userId,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Known,
+        enqueuedAt: null,
+      });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
       expect(updated?.status).toBe(LearningStatus.Known);
@@ -216,10 +221,47 @@ describe('userVocabularyItemRepository', () => {
         userId: 'someone-else',
         userVocabularyItemId: userItem.id,
         status: LearningStatus.Known,
+        enqueuedAt: null,
       });
 
       const unchanged = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
       expect(unchanged?.status).toBe(LearningStatus.Waiting);
+    });
+
+    it('persists the given enqueuedAt value', async () => {
+      const { userId, userItem } = await seedUserItem({ userSuffix: 'update-status-enqueued-at' });
+      const enqueuedAt = new Date(BASE_TIME);
+
+      await updateUserVocabularyItemStatus({
+        userId,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        enqueuedAt,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.enqueuedAt).toEqual(enqueuedAt);
+    });
+
+    it('clears enqueuedAt to null when given null', async () => {
+      const { userId, userItem } = await seedUserItem({ userSuffix: 'update-status-clear-enqueued-at' });
+
+      await updateUserVocabularyItemStatus({
+        userId,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        enqueuedAt: new Date(BASE_TIME),
+      });
+
+      await updateUserVocabularyItemStatus({
+        userId,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Waiting,
+        enqueuedAt: null,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.enqueuedAt).toBeNull();
     });
   });
 
@@ -280,6 +322,30 @@ describe('userVocabularyItemRepository', () => {
 
       expect(items).toEqual([]);
     });
+
+    it('breaks enqueuedAt ties by ordering on id ascending', async () => {
+      const { list, items } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
+          { value: 'banana', encounterCount: 0, offsetSeconds: 0 },
+          { value: 'cherry', encounterCount: 0, offsetSeconds: 0 },
+        ],
+      });
+
+      const userItemsByIdAsc = await db
+        .select({ vocabularyItemId: userVocabularyItem.vocabularyItemId })
+        .from(userVocabularyItem)
+        .where(eq(userVocabularyItem.userId, USER_ID))
+        .orderBy(asc(userVocabularyItem.id));
+
+      const expectedOrder = userItemsByIdAsc.map(
+        (userItem) => items.find((item) => item.id === userItem.vocabularyItemId)?.value,
+      );
+
+      const result = await getNewItems({ userId: USER_ID, vocabularyListId: list.id, limit: 10 });
+
+      expect(result.map((item) => item.vocabularyItem.value)).toEqual(expectedOrder);
+    });
   });
 
   describe('getReviewItems', () => {
@@ -338,6 +404,30 @@ describe('userVocabularyItemRepository', () => {
       const items = await getReviewItems({ userId: USER_ID, vocabularyListId: list.id, limit: 10 });
 
       expect(items).toEqual([]);
+    });
+
+    it('breaks enqueuedAt ties by ordering on id ascending', async () => {
+      const { list, items } = await seedLearningItems({
+        values: [
+          { value: 'apple', encounterCount: 1, offsetSeconds: 0 },
+          { value: 'banana', encounterCount: 1, offsetSeconds: 0 },
+          { value: 'cherry', encounterCount: 1, offsetSeconds: 0 },
+        ],
+      });
+
+      const userItemsByIdAsc = await db
+        .select({ vocabularyItemId: userVocabularyItem.vocabularyItemId })
+        .from(userVocabularyItem)
+        .where(eq(userVocabularyItem.userId, USER_ID))
+        .orderBy(asc(userVocabularyItem.id));
+
+      const expectedOrder = userItemsByIdAsc.map(
+        (userItem) => items.find((item) => item.id === userItem.vocabularyItemId)?.value,
+      );
+
+      const result = await getReviewItems({ userId: USER_ID, vocabularyListId: list.id, limit: 10 });
+
+      expect(result.map((item) => item.vocabularyItem.value)).toEqual(expectedOrder);
     });
   });
 

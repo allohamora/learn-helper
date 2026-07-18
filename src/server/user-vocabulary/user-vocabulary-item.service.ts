@@ -74,7 +74,15 @@ export const setUserVocabularyItemStatus = async ({
         },
         tx,
       ),
-      updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: body.status }, tx),
+      updateUserVocabularyItemStatus(
+        {
+          userId,
+          userVocabularyItemId,
+          status: body.status,
+          enqueuedAt: body.status === LearningStatus.Learning ? new Date() : null,
+        },
+        tx,
+      ),
     ]);
 
     return { userVocabularyItemId, status: body.status };
@@ -109,7 +117,10 @@ export const undoUserVocabularyItemStatus = async ({
         },
         tx,
       ),
-      updateUserVocabularyItemStatus({ userId, userVocabularyItemId, status: LearningStatus.Waiting }, tx),
+      updateUserVocabularyItemStatus(
+        { userId, userVocabularyItemId, status: LearningStatus.Waiting, enqueuedAt: null },
+        tx,
+      ),
     ]);
 
     return { userVocabularyItemId, status: LearningStatus.Waiting };
