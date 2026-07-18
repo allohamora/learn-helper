@@ -260,8 +260,6 @@ export const getUserVocabularyListLearningItems = async ({
   return buildLearningBatch(newPool, oldPool);
 };
 
-// TODO: unlike master's rate-limited getLearningTasks action, this endpoint has no rate limiting yet,
-// even though each call triggers real Gemini spend. Add per-user rate limiting before wider rollout.
 export const getUserVocabularyListLearningTasks = async ({
   userId,
   userVocabularyListId,

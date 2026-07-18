@@ -11,6 +11,7 @@ export const enum ExceptionCode {
   FORBIDDEN = 'FORBIDDEN',
   CONFLICT = 'CONFLICT',
   BAD_REQUEST = 'BAD_REQUEST',
+  TOO_MANY_REQUESTS = 'TOO_MANY_REQUESTS',
 }
 
 export class Exception extends Error {
@@ -52,6 +53,13 @@ export class Exception extends Error {
     return new Exception(ExceptionCode.BAD_REQUEST, message, payload);
   }
 
+  public static tooManyRequests(
+    message = 'Too many requests, please try again later.',
+    payload?: Record<string, unknown>,
+  ) {
+    return new Exception(ExceptionCode.TOO_MANY_REQUESTS, message, payload);
+  }
+
   private toHttpCode(): ContentfulStatusCode {
     switch (this.code) {
       case ExceptionCode.BAD_REQUEST:
@@ -66,6 +74,8 @@ export class Exception extends Error {
         return 409;
       case ExceptionCode.VALIDATION_ERROR:
         return 422;
+      case ExceptionCode.TOO_MANY_REQUESTS:
+        return 429;
       case ExceptionCode.INTERNAL_SERVER_ERROR:
         return 500;
       default:

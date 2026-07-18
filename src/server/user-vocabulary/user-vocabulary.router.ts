@@ -8,6 +8,7 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
+import { rateLimit } from '../utils/rate-limit.middleware';
 import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
@@ -194,7 +195,7 @@ export const userVocabularyRouter = new OpenAPIHono()
         }),
       },
       security: [{ cookieAuth: [] }],
-      middleware: [authMiddleware] as const,
+      middleware: [authMiddleware, rateLimit({ count: 10, durationSec: 60 })] as const,
     }),
     async (c) => {
       const user = c.get('user');

@@ -10,6 +10,7 @@ import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-ite
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
+import type { ErrorResponse } from '@/server/utils/response.utils';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const USER_ID = 'e2e-test-user';
@@ -562,6 +563,32 @@ describe('user-vocabulary.router', () => {
         expect(taskBody.data.translateEnglishSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
         expect(taskBody.data.translateUkrainianSentenceTasks.map((task) => task.id)).toEqual(expectedIds);
       }
+    });
+
+    it('returns 429 Too Many Requests after 10 requests within the rate-limit window', async () => {
+      const rateLimitedUserId = 'user-learning-tasks-rate-limit';
+      auth.authorized({ user: { id: rateLimitedUserId } });
+      await db
+        .insert(user)
+        .values({ id: rateLimitedUserId, name: 'E2E User', email: `${rateLimitedUserId}@example.com` });
+      const { list } = await seedList();
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      for (let i = 0; i < 10; i++) {
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+          param: { userVocabularyListId: userList.id },
+        });
+        expect(res.status).toBe(200);
+      }
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+        param: { userVocabularyListId: userList.id },
+      });
+      expect(res.status).toBe(429);
+
+      const body = (await res.json()) as unknown as ErrorResponse;
+      expect(body.error.code).toBe('TOO_MANY_REQUESTS');
     });
   });
 
