@@ -9,6 +9,7 @@ import {
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../utils/rate-limit.middleware';
+import { eventDto } from '../event/dtos/event.dto';
 import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
@@ -21,11 +22,13 @@ import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import { userVocabularyItemStatusDto } from './dtos/user-vocabulary-item-status.dto';
 import { userVocabularyItemTranslationDto } from './dtos/user-vocabulary-item-translation.dto';
+import { createEventsDto } from './dtos/create-events.dto';
 import {
   getUserVocabularyListItems,
   getUserVocabularyListLearningItems,
   getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
+  createEvents,
   moveUserVocabularyItemToNextStep,
   setUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
@@ -233,6 +236,43 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await getUserVocabularyListProgress({ userId: user.id, userVocabularyListId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/events',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: createEventsDto,
+            },
+          },
+        },
+      },
+      responses: {
+        ...successCreatedResponse({
+          description: 'Learning events created',
+          schema: z.array(eventDto),
+        }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 201,
+          data: await createEvents({ ...body, userId: user.id, userVocabularyListId }),
         }),
       );
     },

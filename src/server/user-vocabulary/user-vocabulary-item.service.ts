@@ -4,10 +4,13 @@ import { LearningStatus } from '@/const/vocabulary';
 import { updateVocabularyItemTranslation } from '../vocabulary/vocabulary-item.repository';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
-import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '../event/event.repository';
+import { insertEvent, insertEvents, revertUserVocabularyItemDiscoveredEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
+import { unique } from '../utils/array.utils';
+import { getVocabularyListItemsByVocabularyItemIds } from '../vocabulary/vocabulary-list-item.repository';
 import { getVocabularyListItemOrThrow } from '../vocabulary/vocabulary-list-item.service';
 import type { SetUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
+import type { CreateEventsDto } from './dtos/create-events.dto';
 import type { UpdateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import {
@@ -15,6 +18,7 @@ import {
   getReviewItems,
   getUserVocabularyItemById,
   getUserVocabularyItemByIdForUpdate,
+  getUserVocabularyItemsByIds,
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
   getUserVocabularyListItemStatusCounts,
   updateUserVocabularyItemProgress,
@@ -68,6 +72,34 @@ const validateUserVocabularyItemInList = async (
   await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId: userItem.vocabularyItemId }, tx);
 
   return { vocabularyListId, vocabularyItemId: userItem.vocabularyItemId, userItem };
+};
+
+export const createEvents = async ({
+  userId,
+  userVocabularyListId,
+  events,
+}: CreateEventsDto & { userId: string; userVocabularyListId: string }) => {
+  return db.transaction(async (tx) => {
+    const userVocabularyItemIds = unique(events.map(({ userVocabularyItemId }) => userVocabularyItemId));
+    const [{ vocabularyListId }, userItems] = await Promise.all([
+      getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx),
+      getUserVocabularyItemsByIds({ userId, userVocabularyItemIds }, tx),
+    ]);
+    if (userItems.length !== userVocabularyItemIds.length) {
+      throw Exception.notFound('one or more vocabulary items were not found for user');
+    }
+
+    const vocabularyItemIds = userItems.map(({ vocabularyItemId }) => vocabularyItemId);
+    const listItems = await getVocabularyListItemsByVocabularyItemIds({ vocabularyListId, vocabularyItemIds }, tx);
+    if (listItems.length !== vocabularyItemIds.length) {
+      throw Exception.notFound('one or more vocabulary items were not found in the user vocabulary list');
+    }
+
+    return await insertEvents(
+      events.map((event) => ({ ...event, userId, userVocabularyListId })),
+      tx,
+    );
+  });
 };
 
 export const setUserVocabularyItemStatus = async ({

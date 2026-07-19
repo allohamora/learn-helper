@@ -1010,6 +1010,242 @@ describe('user-vocabulary.router', () => {
     });
   });
 
+  describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/events', () => {
+    const addList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
+      const { list, items } = await seedList(values, title);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const userItems = await db.query.userVocabularyItem.findMany({
+        where: eq(userVocabularyItem.userId, USER_ID),
+      });
+
+      return { items, userList, userItems };
+    };
+
+    it('returns 201 and creates every supported client learning event', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+        param: { userVocabularyListId: userList.id },
+        json: {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskFailed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+            },
+            {
+              type: EventType.UserVocabularyItemTaskPassed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.DefinitionToVocabularyItem,
+              durationMs: 100,
+            },
+            {
+              type: EventType.UserVocabularyItemTaskRetryPassed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToTranslation,
+              durationMs: 200,
+            },
+            {
+              type: EventType.UserVocabularyItemTaskShowcaseViewed,
+              userVocabularyItemId: userItem.id,
+              durationMs: 300,
+            },
+            {
+              type: EventType.UserVocabularyItemTaskHintUsed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.TranslationToVocabularyItem,
+            },
+          ],
+        },
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.success).toBe(true);
+      expect(body.data).toHaveLength(5);
+      expect(body.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: EventType.UserVocabularyItemTaskFailed,
+            userId: USER_ID,
+            userVocabularyItemId: userItem.id,
+            userVocabularyListId: userList.id,
+          }),
+        ]),
+      );
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toHaveLength(5);
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: EventType.UserVocabularyItemTaskFailed,
+            userId: USER_ID,
+            userVocabularyListId: userList.id,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+          }),
+          expect.objectContaining({
+            type: EventType.UserVocabularyItemTaskPassed,
+            durationMs: 100,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.DefinitionToVocabularyItem,
+          }),
+          expect.objectContaining({
+            type: EventType.UserVocabularyItemTaskRetryPassed,
+            durationMs: 200,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToTranslation,
+          }),
+          expect.objectContaining({
+            type: EventType.UserVocabularyItemTaskShowcaseViewed,
+            durationMs: 300,
+            userVocabularyItemTaskType: null,
+          }),
+          expect.objectContaining({
+            type: EventType.UserVocabularyItemTaskHintUsed,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.TranslationToVocabularyItem,
+          }),
+        ]),
+      );
+    });
+
+    it('returns 401 when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        json: {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskFailed,
+              userVocabularyItemId: '00000000-0000-7000-8000-000000000001',
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+            },
+          ],
+        },
+      });
+
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects the complete batch when an item does not belong to the route list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const first = await addList(['run'], 'Oxford 5000 A1');
+      const second = await addList(['walk'], 'Oxford 5000 A2');
+      const firstVocabularyItemId = first.items[0]?.id;
+      const secondVocabularyItemId = second.items[0]?.id;
+      const firstUserItem = second.userItems.find((item) => item.vocabularyItemId === firstVocabularyItemId);
+      const secondUserItem = second.userItems.find((item) => item.vocabularyItemId === secondVocabularyItemId);
+      if (!firstUserItem || !secondUserItem) throw new Error('expected user items to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+        param: { userVocabularyListId: first.userList.id },
+        json: {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskFailed,
+              userVocabularyItemId: firstUserItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+            },
+            {
+              type: EventType.UserVocabularyItemTaskHintUsed,
+              userVocabularyItemId: secondUserItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+            },
+          ],
+        },
+      });
+
+      expect(res.status).toBe(404);
+      expect(await countItems(event)).toBe(0);
+    });
+
+    it('rejects server-owned event types', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      for (const type of [EventType.UserVocabularyItemDiscovered, EventType.UserVocabularyItemMovedToNextStep]) {
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+          param: { userVocabularyListId: userList.id },
+          json: { events: [{ type, userVocabularyItemId: userItem.id }] } as never,
+        });
+
+        expect(res.status).toBe(400);
+      }
+
+      expect(await countItems(event)).toBe(0);
+    });
+
+    it('rejects invalid client event batches', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      const invalidBodies = [
+        { events: [] },
+        {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskFailed,
+              userVocabularyItemId: 'not-a-uuid',
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+            },
+          ],
+        },
+        {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskPassed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+              durationMs: -1,
+            },
+          ],
+        },
+        {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskPassed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+              durationMs: 1.5,
+            },
+          ],
+        },
+        {
+          events: [
+            {
+              type: EventType.UserVocabularyItemTaskHintUsed,
+              userVocabularyItemId: userItem.id,
+              userVocabularyItemTaskType: 'invalid-task-type',
+            },
+          ],
+        },
+      ];
+
+      for (const json of invalidBodies) {
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+          param: { userVocabularyListId: userList.id },
+          json: json as never,
+        });
+
+        expect(res.status).toBe(400);
+      }
+
+      expect(await countItems(event)).toBe(0);
+    });
+  });
+
   describe('PATCH /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/:userVocabularyItemId/translation', () => {
     const addList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
       const { list, items } = await seedList(values, title);

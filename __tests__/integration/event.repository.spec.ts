@@ -7,8 +7,8 @@ import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabul
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 import { createUserVocabularyList } from '@/server/user-vocabulary/user-vocabulary-list.repository';
-import { insertEvent, revertUserVocabularyItemDiscoveredEvent } from '@/server/event/event.repository';
-import { EventType } from '@/const/event';
+import { insertEvent, insertEvents, revertUserVocabularyItemDiscoveredEvent } from '@/server/event/event.repository';
+import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const USER_ID = 'user-1';
@@ -64,6 +64,39 @@ describe('eventRepository', () => {
           durationMs: 4321,
         },
       ]);
+    });
+  });
+
+  describe('insertEvents', () => {
+    it('inserts a batch of learning events', async () => {
+      const { userList, userItem } = await seed();
+
+      await insertEvents([
+        {
+          type: EventType.UserVocabularyItemTaskFailed,
+          userId: USER_ID,
+          userVocabularyItemId: userItem.id,
+          userVocabularyListId: userList.id,
+          userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+        },
+        {
+          type: EventType.UserVocabularyItemTaskPassed,
+          userId: USER_ID,
+          userVocabularyItemId: userItem.id,
+          userVocabularyListId: userList.id,
+          userVocabularyItemTaskType: UserVocabularyItemTaskType.DefinitionToVocabularyItem,
+          durationMs: 1234,
+        },
+      ]);
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toHaveLength(2);
+      expect(events).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ type: EventType.UserVocabularyItemTaskFailed }),
+          expect.objectContaining({ type: EventType.UserVocabularyItemTaskPassed, durationMs: 1234 }),
+        ]),
+      );
     });
   });
 
