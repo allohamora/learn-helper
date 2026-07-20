@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
-import { rateLimit } from '@/server/utils/rate-limit.middleware';
+import { rateLimit } from '@/server/auth/rate-limit.middleware';
 import { Exception } from '@/server/utils/exception.utils';
 
 type Variables = { user: { id: string } };

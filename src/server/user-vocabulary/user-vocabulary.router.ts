@@ -9,7 +9,7 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { authMiddleware } from '../auth/auth.middleware';
-import { rateLimit } from '../utils/rate-limit.middleware';
+import { rateLimit } from '../auth/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemWithRelationsDto } from './dtos/user-vocabulary-item-with-relations.dto';
