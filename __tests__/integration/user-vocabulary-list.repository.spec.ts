@@ -7,7 +7,7 @@ import {
   getUserAvailableVocabularyLists,
   getUserVocabularyListById,
   getUserVocabularyListByVocabularyListId,
-  getUserVocabularyListWithList,
+  getUserVocabularyListWithRelations,
 } from '@/server/user-vocabulary/user-vocabulary-list.repository';
 
 const createTestUser = async (id: string) => {
@@ -118,18 +118,18 @@ describe('userVocabularyListRepository', () => {
     });
   });
 
-  describe('getUserVocabularyListWithList', () => {
+  describe('getUserVocabularyListWithRelations', () => {
     it('resolves with the enrollment and the vocabulary list it points to', async () => {
       const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      await expect(getUserVocabularyListWithList({ userId, userVocabularyListId: userList.id })).resolves.toMatchObject(
-        {
-          vocabularyListId: list.id,
-          vocabularyList: { id: list.id, title: 'Oxford 5000 A1' },
-        },
-      );
+      await expect(
+        getUserVocabularyListWithRelations({ userId, userVocabularyListId: userList.id }),
+      ).resolves.toMatchObject({
+        vocabularyListId: list.id,
+        vocabularyList: { id: list.id, title: 'Oxford 5000 A1' },
+      });
     });
 
     it('resolves with undefined when the list does not belong to the user', async () => {
@@ -139,7 +139,7 @@ describe('userVocabularyListRepository', () => {
       const otherUserList = await addVocabularyListToUser({ userId: otherUserId, vocabularyListId: list.id });
 
       await expect(
-        getUserVocabularyListWithList({ userId, userVocabularyListId: otherUserList.id }),
+        getUserVocabularyListWithRelations({ userId, userVocabularyListId: otherUserList.id }),
       ).resolves.toBeUndefined();
     });
   });

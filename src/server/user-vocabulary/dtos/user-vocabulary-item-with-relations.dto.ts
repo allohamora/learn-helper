@@ -3,7 +3,7 @@ import { z } from '@hono/zod-openapi';
 import { LearningStatus } from '@/const/vocabulary';
 import { vocabularyItemDto } from '../../vocabulary/dtos/vocabulary-item.dto';
 
-export const userVocabularyItemWithVocabularyItemDto = z.object({
+export const userVocabularyItemWithRelationsDto = z.object({
   id: z.uuidv7(),
   userId: z.string(),
   vocabularyItemId: z.uuidv7(),

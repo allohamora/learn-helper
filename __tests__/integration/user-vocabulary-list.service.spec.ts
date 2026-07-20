@@ -10,7 +10,7 @@ import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabular
 import {
   addVocabularyListToUser,
   getUserVocabularyListOrThrow,
-  getUserVocabularyListWithListOrThrow,
+  getUserVocabularyListWithRelationsOrThrow,
 } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
@@ -127,7 +127,7 @@ describe('userVocabularyListService', () => {
     });
   });
 
-  describe('getUserVocabularyListWithListOrThrow', () => {
+  describe('getUserVocabularyListWithRelationsOrThrow', () => {
     it('resolves with the enrollment and the vocabulary list it points to', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { list } = await createTestList(['run']);
@@ -135,7 +135,7 @@ describe('userVocabularyListService', () => {
       const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       await expect(
-        getUserVocabularyListWithListOrThrow({ userId, userVocabularyListId: userList.id }),
+        getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId: userList.id }),
       ).resolves.toMatchObject({
         vocabularyListId: list.id,
         vocabularyList: { id: list.id, title: 'Oxford 5000 A1' },
@@ -146,7 +146,7 @@ describe('userVocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
 
       await expect(
-        getUserVocabularyListWithListOrThrow({
+        getUserVocabularyListWithRelationsOrThrow({
           userId,
           userVocabularyListId: '00000000-0000-0000-0000-000000000000',
         }),
@@ -160,7 +160,7 @@ describe('userVocabularyListService', () => {
       const otherUserList = await addVocabularyListToUser({ userId: otherUserId, vocabularyListId: list.id });
 
       await expect(
-        getUserVocabularyListWithListOrThrow({ userId, userVocabularyListId: otherUserList.id }),
+        getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId: otherUserList.id }),
       ).rejects.toThrow(Exception);
     });
   });

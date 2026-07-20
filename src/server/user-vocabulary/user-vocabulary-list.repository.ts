@@ -28,7 +28,7 @@ export const getUserVocabularyListById = async (
   });
 };
 
-export const getUserVocabularyListWithList = async (
+export const getUserVocabularyListWithRelations = async (
   {
     userId,
     userVocabularyListId,

@@ -7,7 +7,7 @@ import {
   createUserVocabularyList,
   getUserVocabularyListById,
   getUserVocabularyListByVocabularyListId,
-  getUserVocabularyListWithList,
+  getUserVocabularyListWithRelations,
 } from './user-vocabulary-list.repository';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 
@@ -44,14 +44,14 @@ export const getUserVocabularyListOrThrow = async (
   return userList;
 };
 
-export const getUserVocabularyListWithListOrThrow = async ({
+export const getUserVocabularyListWithRelationsOrThrow = async ({
   userId,
   userVocabularyListId,
 }: {
   userId: string;
   userVocabularyListId: string;
 }) => {
-  const userList = await getUserVocabularyListWithList({ userId, userVocabularyListId });
+  const userList = await getUserVocabularyListWithRelations({ userId, userVocabularyListId });
   if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
 
   return userList;

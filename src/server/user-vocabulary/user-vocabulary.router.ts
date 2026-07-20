@@ -12,11 +12,11 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../utils/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
-import { userVocabularyItemWithVocabularyItemDto } from './dtos/user-vocabulary-item-with-vocabulary-item.dto';
+import { userVocabularyItemWithRelationsDto } from './dtos/user-vocabulary-item-with-relations.dto';
 import { userVocabularyItemProgressDto } from './dtos/user-vocabulary-item-progress.dto';
 import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
-import { userVocabularyListWithVocabularyListDto } from './dtos/user-vocabulary-list-with-vocabulary-list.dto';
+import { userVocabularyListWithRelationsDto } from './dtos/user-vocabulary-list-with-relations.dto';
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
 import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
@@ -34,7 +34,7 @@ import {
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
-import { addVocabularyListToUser, getUserVocabularyListWithListOrThrow } from './user-vocabulary-list.service';
+import { addVocabularyListToUser, getUserVocabularyListWithRelationsOrThrow } from './user-vocabulary-list.service';
 import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
 
 export const userVocabularyRouter = new OpenAPIHono()
@@ -75,7 +75,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successCreatedResponse({
           description: 'List added to the user, with the vocabulary list it points to',
-          schema: userVocabularyListWithVocabularyListDto,
+          schema: userVocabularyListWithRelationsDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -104,7 +104,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "The user's list, with the vocabulary list it points to",
-          schema: userVocabularyListWithVocabularyListDto,
+          schema: userVocabularyListWithRelationsDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -117,7 +117,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await getUserVocabularyListWithListOrThrow({ userId: user.id, userVocabularyListId }),
+          data: await getUserVocabularyListWithRelationsOrThrow({ userId: user.id, userVocabularyListId }),
         }),
       );
     },
@@ -134,7 +134,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successPaginatedResponse({
           description: "List's words with the user's progress",
-          schema: userVocabularyItemWithVocabularyItemDto,
+          schema: userVocabularyItemWithRelationsDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -164,7 +164,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "A batch of the list's words for a Learning session",
-          schema: z.array(userVocabularyItemWithVocabularyItemDto),
+          schema: z.array(userVocabularyItemWithRelationsDto),
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -327,7 +327,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "The item's progress reset to waiting",
-          schema: userVocabularyItemWithVocabularyItemDto,
+          schema: userVocabularyItemWithRelationsDto,
         }),
         ...errorConflictResponse({ description: 'The item is already waiting' }),
       },
