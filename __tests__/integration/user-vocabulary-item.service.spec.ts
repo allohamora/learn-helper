@@ -14,7 +14,7 @@ import {
   getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
   moveUserVocabularyItemToNextStep,
-  setUserVocabularyItemStatus,
+  discoverUserVocabularyItem,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from '@/server/user-vocabulary/user-vocabulary-item.service';
@@ -99,11 +99,11 @@ const seedLearningUser = async ({ userSuffix, values }: { userSuffix: string; va
 };
 
 describe('userVocabularyItemService', () => {
-  describe('setUserVocabularyItemStatus', () => {
+  describe('discoverUserVocabularyItem', () => {
     it('sets the status and records a discovered event', async () => {
-      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'set-status' });
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'discover' });
 
-      const result = await setUserVocabularyItemStatus({
+      const result = await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
@@ -136,10 +136,10 @@ describe('userVocabularyItemService', () => {
     });
 
     it('throws not found when the item is not linked to the given list', async () => {
-      const { userId, userItem } = await seedUserItem({ userSuffix: 'set-status-unlinked' });
+      const { userId, userItem } = await seedUserItem({ userSuffix: 'discover-unlinked' });
 
       await expect(
-        setUserVocabularyItemStatus({
+        discoverUserVocabularyItem({
           userId,
           userVocabularyListId: MISSING_ID,
           userVocabularyItemId: userItem.id,
@@ -150,14 +150,14 @@ describe('userVocabularyItemService', () => {
     });
 
     it('throws not found when the item belongs to a different user than the one who owns the list', async () => {
-      const { userItem } = await seedUserItem({ userSuffix: 'set-status-wrong-owner' });
+      const { userItem } = await seedUserItem({ userSuffix: 'discover-wrong-owner' });
       const { userId: otherUserId, userList: otherUserList } = await seedUserItem({
-        userSuffix: 'set-status-other-owner',
+        userSuffix: 'discover-other-owner',
         value: 'walk',
       });
 
       await expect(
-        setUserVocabularyItemStatus({
+        discoverUserVocabularyItem({
           userId: otherUserId,
           userVocabularyListId: otherUserList.id,
           userVocabularyItemId: userItem.id,
@@ -168,11 +168,11 @@ describe('userVocabularyItemService', () => {
     });
 
     it('sets enqueuedAt when discovering into Learning status', async () => {
-      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'set-status-learning-enqueued' });
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'discover-learning-enqueued' });
 
       const before = new Date();
 
-      await setUserVocabularyItemStatus({
+      await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
@@ -189,9 +189,9 @@ describe('userVocabularyItemService', () => {
     });
 
     it('leaves enqueuedAt null when discovering into Known status', async () => {
-      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'set-status-known-enqueued' });
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'discover-known-enqueued' });
 
-      await setUserVocabularyItemStatus({
+      await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
@@ -203,8 +203,46 @@ describe('userVocabularyItemService', () => {
       expect(updated?.enqueuedAt).toBeNull();
     });
 
+    it('throws conflict without recording another event when the item has already been discovered', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'discover-conflict' });
+      const input = {
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Known,
+        durationMs: 500,
+      } as const;
+
+      await discoverUserVocabularyItem(input);
+
+      await expect(discoverUserVocabularyItem(input)).rejects.toMatchObject({ code: 'CONFLICT' });
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toHaveLength(1);
+    });
+
+    it('serializes concurrent discoveries so only one succeeds and records an event', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'discover-concurrent' });
+      const input = {
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        durationMs: 500,
+      } as const;
+
+      const results = await Promise.allSettled([discoverUserVocabularyItem(input), discoverUserVocabularyItem(input)]);
+
+      expect(results.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter(({ status }) => status === 'rejected')).toHaveLength(1);
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ type: EventType.UserVocabularyItemDiscovered });
+    });
+
     it('throws not found when the item exists for the user but is not linked to the given list', async () => {
-      const userId = 'user-set-status-cross-list';
+      const userId = 'user-discover-cross-list';
       await seedTestUser(userId);
 
       const runList = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
@@ -235,7 +273,7 @@ describe('userVocabularyItemService', () => {
       if (!walkUserItem) throw new Error('expected user item to be created');
 
       await expect(
-        setUserVocabularyItemStatus({
+        discoverUserVocabularyItem({
           userId,
           userVocabularyListId: runUserList.id,
           userVocabularyItemId: walkUserItem.id,
@@ -250,7 +288,7 @@ describe('userVocabularyItemService', () => {
     it('reverts the status to waiting, clears progress, and records the previous state', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-status' });
 
-      await setUserVocabularyItemStatus({
+      await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
@@ -294,7 +332,7 @@ describe('userVocabularyItemService', () => {
     it('clears accumulated learning progress and preserves learning events as history', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-status-enqueued' });
 
-      await setUserVocabularyItemStatus({
+      await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
@@ -346,7 +384,7 @@ describe('userVocabularyItemService', () => {
 
     it('serializes with a concurrent learning advancement and leaves progress reset', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-concurrent' });
-      await setUserVocabularyItemStatus({
+      await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
@@ -383,7 +421,7 @@ describe('userVocabularyItemService', () => {
   describe('moveUserVocabularyItemToNextStep', () => {
     const setupLearningItem = async (userSuffix: string) => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix });
-      await setUserVocabularyItemStatus({
+      await discoverUserVocabularyItem({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,

@@ -52,7 +52,7 @@ function VocabularyDiscoveryPage() {
   const total = data?.pageInfo.total ?? 0;
   const remaining = total - handled;
 
-  const setStatus = useMutation({
+  const discoverItem = useMutation({
     mutationFn: async ({
       userVocabularyItemId,
       status,
@@ -64,11 +64,11 @@ function VocabularyDiscoveryPage() {
     }) => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId, userVocabularyItemId },
         json: { status, durationMs },
       });
-      if (!res.ok) throw new Error('Failed to update item status');
+      if (!res.ok) throw new Error('Failed to discover item');
 
       return res.json();
     },
@@ -92,7 +92,7 @@ function VocabularyDiscoveryPage() {
   const handle = async (status: LearningStatus.Known | LearningStatus.Learning) => {
     if (!currentItem) return;
 
-    await setStatus.mutateAsync({
+    await discoverItem.mutateAsync({
       userVocabularyItemId: currentItem.id,
       status,
       durationMs: Date.now() - startedAt.getTime(),
@@ -153,7 +153,7 @@ function VocabularyDiscoveryPage() {
                 onClick={() => void undo()}
                 variant="outline"
                 size="sm"
-                disabled={history.length === 0 || setStatus.isPending || undoStatus.isPending}
+                disabled={history.length === 0 || discoverItem.isPending || undoStatus.isPending}
               >
                 <Undo2 />
                 Undo
@@ -167,7 +167,7 @@ function VocabularyDiscoveryPage() {
                 onClick={() => void handle(LearningStatus.Known)}
                 variant="destructive"
                 className="h-11 flex-1 text-base md:h-12"
-                disabled={setStatus.isPending}
+                disabled={discoverItem.isPending}
               >
                 I Know This
               </Button>
@@ -175,7 +175,7 @@ function VocabularyDiscoveryPage() {
                 onClick={() => void handle(LearningStatus.Learning)}
                 variant="default"
                 className="h-11 flex-1 text-base md:h-12"
-                disabled={setStatus.isPending}
+                disabled={discoverItem.isPending}
               >
                 Learn This
               </Button>

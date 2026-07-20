@@ -9,8 +9,8 @@ import { Exception } from '../utils/exception.utils';
 import { unique } from '../utils/array.utils';
 import { getVocabularyListItemsByVocabularyItemIds } from '../vocabulary/vocabulary-list-item.repository';
 import { getVocabularyListItemOrThrow } from '../vocabulary/vocabulary-list-item.service';
-import type { SetUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
 import type { CreateEventsDto } from './dtos/create-events.dto';
+import type { DiscoverUserVocabularyItemDto } from './dtos/discover-user-vocabulary-item.dto';
 import type { UpdateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import {
@@ -70,6 +70,23 @@ const getUserVocabularyItemByIdForUpdateOrThrow = async (
   return userItem;
 };
 
+const getUserVocabularyItemInListForUpdateOrThrow = async (
+  {
+    userId,
+    userVocabularyListId,
+    userVocabularyItemId,
+  }: { userId: string; userVocabularyListId: string; userVocabularyItemId: string },
+  tx: Transaction,
+) => {
+  const [{ vocabularyListId }, userItem] = await Promise.all([
+    getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx),
+    getUserVocabularyItemByIdForUpdateOrThrow({ userId, userVocabularyItemId }, tx),
+  ]);
+  await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId: userItem.vocabularyItemId }, tx);
+
+  return { userItem };
+};
+
 const validateUserVocabularyItemInList = async (
   {
     userId,
@@ -115,7 +132,7 @@ export const createEvents = async ({
   });
 };
 
-export const setUserVocabularyItemStatus = async ({
+export const discoverUserVocabularyItem = async ({
   userId,
   userVocabularyListId,
   userVocabularyItemId,
@@ -124,9 +141,16 @@ export const setUserVocabularyItemStatus = async ({
   userId: string;
   userVocabularyListId: string;
   userVocabularyItemId: string;
-} & SetUserVocabularyItemStatusDto) => {
+} & DiscoverUserVocabularyItemDto) => {
   return db.transaction(async (tx) => {
-    await validateUserVocabularyItemInList({ userId, userVocabularyListId, userVocabularyItemId }, tx);
+    const { userItem } = await getUserVocabularyItemInListForUpdateOrThrow(
+      { userId, userVocabularyListId, userVocabularyItemId },
+      tx,
+    );
+
+    if (userItem.status !== LearningStatus.Waiting) {
+      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" has already been discovered`);
+    }
 
     await Promise.all([
       insertEvent(
@@ -220,11 +244,10 @@ export const moveUserVocabularyItemToNextStep = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const [{ vocabularyListId }, userItem] = await Promise.all([
-      getUserVocabularyListOrThrow({ userId, userVocabularyListId }, tx),
-      getUserVocabularyItemByIdForUpdateOrThrow({ userId, userVocabularyItemId }, tx),
-    ]);
-    await getVocabularyListItemOrThrow({ vocabularyListId, vocabularyItemId: userItem.vocabularyItemId }, tx);
+    const { userItem } = await getUserVocabularyItemInListForUpdateOrThrow(
+      { userId, userVocabularyListId, userVocabularyItemId },
+      tx,
+    );
 
     if (userItem.status !== LearningStatus.Learning) {
       throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is not in learning status`);

@@ -17,7 +17,7 @@ import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithRelationsDto } from './dtos/user-vocabulary-list-with-relations.dto';
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
-import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
+import { discoverUserVocabularyItemDto } from './dtos/discover-user-vocabulary-item.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import { createEventsDto } from './dtos/create-events.dto';
 import {
@@ -27,7 +27,7 @@ import {
   getUserVocabularyListProgress,
   createEvents,
   moveUserVocabularyItemToNextStep,
-  setUserVocabularyItemStatus,
+  discoverUserVocabularyItem,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
@@ -276,24 +276,25 @@ export const userVocabularyRouter = new OpenAPIHono()
   )
   .openapi(
     createRoute({
-      method: 'patch',
-      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/status',
+      method: 'post',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/discover',
       tags: ['Vocabulary'],
       request: {
         params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
         body: {
           content: {
             'application/json': {
-              schema: setUserVocabularyItemStatusDto,
+              schema: discoverUserVocabularyItemDto,
             },
           },
         },
       },
       responses: {
         ...successOkResponse({
-          description: 'The item with its updated status and related vocabulary item',
+          description: 'The discovered item with its resulting status and related vocabulary item',
           schema: userVocabularyItemWithRelationsDto,
         }),
+        ...errorConflictResponse({ description: 'The item has already been discovered' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
@@ -306,7 +307,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await setUserVocabularyItemStatus({
+          data: await discoverUserVocabularyItem({
             userId: user.id,
             userVocabularyListId,
             userVocabularyItemId,

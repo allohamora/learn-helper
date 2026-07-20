@@ -690,7 +690,7 @@ describe('user-vocabulary.router', () => {
     });
   });
 
-  describe('PATCH /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/:userVocabularyItemId/status', () => {
+  describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/:userVocabularyItemId/discover', () => {
     const addList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
       const { list, items } = await seedList(values, title);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
@@ -714,7 +714,7 @@ describe('user-vocabulary.router', () => {
 
         const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
           ':userVocabularyItemId'
-        ].status.$patch({
+        ].discover.$post({
           param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
           json: { status, durationMs: 1234 },
         });
@@ -757,11 +757,28 @@ describe('user-vocabulary.router', () => {
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId: list.id, userVocabularyItemId: item.id },
         json: { status: LearningStatus.Known, durationMs: 1234 },
       });
       expect(res.status).toBe(401);
+    });
+
+    it('returns 400 for an invalid duration', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].discover.$post({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+        json: { status: LearningStatus.Known, durationMs: -1 },
+      });
+
+      expect(res.status).toBe(400);
     });
 
     it('returns 404 when the user has not added the list', async () => {
@@ -773,7 +790,7 @@ describe('user-vocabulary.router', () => {
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId: list.id, userVocabularyItemId: item.id },
         json: { status: LearningStatus.Known, durationMs: 1234 },
       });
@@ -795,11 +812,33 @@ describe('user-vocabulary.router', () => {
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId: runUserList.id, userVocabularyItemId: walkUserItem.id },
         json: { status: LearningStatus.Known, durationMs: 1234 },
       });
       expect(res.status).toBe(404);
+    });
+
+    it('returns 409 without recording another event when the item has already been discovered', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { userList, userItems } = await addList();
+      const [userItem] = userItems;
+      if (!userItem) throw new Error('expected a user item to be created');
+
+      const discover = () =>
+        client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+          ':userVocabularyItemId'
+        ].discover.$post({
+          param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
+          json: { status: LearningStatus.Known, durationMs: 1234 },
+        });
+
+      expect((await discover()).status).toBe(200);
+      expect((await discover()).status).toBe(409);
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toHaveLength(1);
     });
   });
 
@@ -825,7 +864,7 @@ describe('user-vocabulary.router', () => {
 
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
         json: { status: LearningStatus.Known, durationMs: 1234 },
       });
@@ -876,7 +915,7 @@ describe('user-vocabulary.router', () => {
 
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
         json: { status: LearningStatus.Learning, durationMs: 1234 },
       });
@@ -963,7 +1002,7 @@ describe('user-vocabulary.router', () => {
 
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].status.$patch({
+      ].discover.$post({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: userItem.id },
         json: { status: LearningStatus.Learning, durationMs: 0 },
       });
