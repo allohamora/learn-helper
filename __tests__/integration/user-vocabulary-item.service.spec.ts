@@ -111,7 +111,13 @@ describe('userVocabularyItemService', () => {
         durationMs: 1500,
       });
 
-      expect(result).toEqual({ userVocabularyItemId: userItem.id, status: LearningStatus.Known });
+      expect(result).toMatchObject({
+        id: userItem.id,
+        userId,
+        vocabularyItemId: userItem.vocabularyItemId,
+        status: LearningStatus.Known,
+        vocabularyItem: { id: userItem.vocabularyItemId },
+      });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
       expect(updated?.status).toBe(LearningStatus.Known);
@@ -399,10 +405,13 @@ describe('userVocabularyItemService', () => {
       });
       const after = new Date();
 
-      expect(result).toEqual({
-        userVocabularyItemId: userItem.id,
+      expect(result).toMatchObject({
+        id: userItem.id,
+        userId,
+        vocabularyItemId: userItem.vocabularyItemId,
         status: LearningStatus.Learning,
         encounterCount: 1,
+        vocabularyItem: { id: userItem.vocabularyItemId },
       });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
@@ -447,10 +456,13 @@ describe('userVocabularyItemService', () => {
         userVocabularyItemId: userItem.id,
       });
 
-      expect(result).toEqual({
-        userVocabularyItemId: userItem.id,
+      expect(result).toMatchObject({
+        id: userItem.id,
+        userId,
+        vocabularyItemId: userItem.vocabularyItemId,
         status: LearningStatus.Learned,
         encounterCount: confirmationsToLearn,
+        vocabularyItem: { id: userItem.vocabularyItemId },
       });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
@@ -527,7 +539,12 @@ describe('userVocabularyItemService', () => {
         uaTranslation: 'бігати',
       });
 
-      expect(result).toEqual({ userVocabularyItemId: userItem.id, uaTranslation: 'бігати' });
+      expect(result).toMatchObject({
+        id: userItem.id,
+        userId,
+        vocabularyItemId: userItem.vocabularyItemId,
+        vocabularyItem: { id: item.id, uaTranslation: 'бігати' },
+      });
 
       const updatedItem = await db.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, item.id) });
       expect(updatedItem?.uaTranslation).toBe('бігати');

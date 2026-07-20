@@ -13,15 +13,12 @@ import { rateLimit } from '../utils/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemWithRelationsDto } from './dtos/user-vocabulary-item-with-relations.dto';
-import { userVocabularyItemProgressDto } from './dtos/user-vocabulary-item-progress.dto';
 import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithRelationsDto } from './dtos/user-vocabulary-list-with-relations.dto';
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
 import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
-import { userVocabularyItemStatusDto } from './dtos/user-vocabulary-item-status.dto';
-import { userVocabularyItemTranslationDto } from './dtos/user-vocabulary-item-translation.dto';
 import { createEventsDto } from './dtos/create-events.dto';
 import {
   getUserVocabularyListItems,
@@ -293,7 +290,10 @@ export const userVocabularyRouter = new OpenAPIHono()
         },
       },
       responses: {
-        ...successOkResponse({ description: "The item's updated status", schema: userVocabularyItemStatusDto }),
+        ...successOkResponse({
+          description: 'The item with its updated status and related vocabulary item',
+          schema: userVocabularyItemWithRelationsDto,
+        }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
@@ -357,7 +357,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "The item's encounter count incremented, and status advanced to learned or re-queued for review",
-          schema: userVocabularyItemProgressDto,
+          schema: userVocabularyItemWithRelationsDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -396,8 +396,8 @@ export const userVocabularyRouter = new OpenAPIHono()
       },
       responses: {
         ...successOkResponse({
-          description: "The item's updated translation",
-          schema: userVocabularyItemTranslationDto,
+          description: 'The item with its updated related vocabulary item',
+          schema: userVocabularyItemWithRelationsDto,
         }),
       },
       security: [{ cookieAuth: [] }],

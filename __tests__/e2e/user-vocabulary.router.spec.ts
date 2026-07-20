@@ -711,7 +711,16 @@ describe('user-vocabulary.router', () => {
         expect(res.status).toBe(200);
 
         const body = await res.json();
-        expect(body).toMatchObject({ success: true, data: { userVocabularyItemId: userItem.id, status } });
+        expect(body).toMatchObject({
+          success: true,
+          data: {
+            id: userItem.id,
+            userId: USER_ID,
+            vocabularyItemId: userItem.vocabularyItemId,
+            status,
+            vocabularyItem: { id: userItem.vocabularyItemId },
+          },
+        });
 
         const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
         expect(updated?.status).toBe(status);
@@ -969,7 +978,14 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { userVocabularyItemId: userItem.id, status: LearningStatus.Learning, encounterCount: 1 },
+        data: {
+          id: userItem.id,
+          userId: USER_ID,
+          vocabularyItemId: userItem.vocabularyItemId,
+          status: LearningStatus.Learning,
+          encounterCount: 1,
+          vocabularyItem: { id: userItem.vocabularyItemId },
+        },
       });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
@@ -1008,7 +1024,14 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { userVocabularyItemId: userItem.id, status: LearningStatus.Learned, encounterCount: 3 },
+        data: {
+          id: userItem.id,
+          userId: USER_ID,
+          vocabularyItemId: userItem.vocabularyItemId,
+          status: LearningStatus.Learned,
+          encounterCount: 3,
+          vocabularyItem: { id: userItem.vocabularyItemId },
+        },
       });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
@@ -1335,7 +1358,12 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { userVocabularyItemId: userItem.id, uaTranslation: 'бігти' },
+        data: {
+          id: userItem.id,
+          userId: USER_ID,
+          vocabularyItemId: userItem.vocabularyItemId,
+          vocabularyItem: { id: item.id, uaTranslation: 'бігти' },
+        },
       });
 
       const updated = await db.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, item.id) });

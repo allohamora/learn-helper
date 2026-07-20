@@ -138,7 +138,7 @@ export const setUserVocabularyItemStatus = async ({
       ),
     ]);
 
-    return { userVocabularyItemId, status: body.status };
+    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 
@@ -236,7 +236,7 @@ export const moveUserVocabularyItemToNextStep = async ({
       updateUserVocabularyItemProgress({ userId, userVocabularyItemId, status, encounterCount, enqueuedAt }, tx),
     ]);
 
-    return { userVocabularyItemId, status, encounterCount };
+    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 
@@ -274,7 +274,7 @@ export const updateUserVocabularyItemTranslation = async ({
       ),
     ]);
 
-    return { userVocabularyItemId, uaTranslation };
+    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 
