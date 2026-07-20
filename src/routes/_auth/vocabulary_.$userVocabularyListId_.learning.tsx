@@ -3,6 +3,7 @@ import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabular
 import { Learning } from '@/components/learning';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { getIsomorphicAppClient } from '@/services/api';
+import { pageHead } from '@/utils/page';
 
 export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/learning')({
   loader: async ({ params: { userVocabularyListId } }) => {
@@ -13,6 +14,7 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/
     if (!response.ok) throw new Error('Failed to load vocabulary list');
     return (await response.json()).data;
   },
+  head: ({ loaderData }) => pageHead(loaderData ? `Learn: ${loaderData.vocabularyList.title}` : 'Learning'),
   component: VocabularyLearningPage,
 });
 

@@ -8,6 +8,7 @@ import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabular
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyDiscoveryCard } from '@/components/vocabulary-discovery-card';
 import { LearningStatus } from '@/const/vocabulary';
+import { pageHead } from '@/utils/page';
 
 const BATCH_LIMIT = 10;
 const HISTORY_LIMIT = 5;
@@ -23,6 +24,7 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/
     const body = await res.json();
     return body.data;
   },
+  head: ({ loaderData }) => pageHead(loaderData ? `Discover: ${loaderData.vocabularyList.title}` : 'Discovery'),
   component: VocabularyDiscoveryPage,
 });
 

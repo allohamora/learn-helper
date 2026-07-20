@@ -1,8 +1,10 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { authClient, getIsomorphicSession } from '@/services/auth';
+import { pageHead } from '@/utils/page';
 
 export const Route = createFileRoute('/login')({
+  head: () => pageHead('Log in'),
   beforeLoad: async () => {
     const session = await getIsomorphicSession();
 

@@ -9,6 +9,7 @@ import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
 import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
 import { LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
+import { pageHead } from '@/utils/page';
 
 const vocabularyListSearchSchema = z.object({
   status: z.enum(LearningStatus).optional(),
@@ -27,6 +28,7 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')
     const body = await res.json();
     return body.data;
   },
+  head: ({ loaderData }) => pageHead(loaderData?.vocabularyList.title ?? 'Vocabulary'),
   component: VocabularyListDetailPage,
 });
 
