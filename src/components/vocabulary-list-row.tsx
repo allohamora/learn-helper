@@ -44,32 +44,34 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
               <span className="hidden sm:inline">Items</span>
             </Link>
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="size-8 px-0 sm:w-auto sm:px-2.5"
-            asChild
-            title="Learn"
-            aria-label="Learn"
-          >
-            <Link to="/vocabulary/$userVocabularyListId/learning" params={{ userVocabularyListId: id }}>
-              <BookOpen />
-              <span className="hidden sm:inline">Learn</span>
-            </Link>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="size-8 px-0 sm:w-auto sm:px-2.5"
-            asChild
-            title="Discovery"
-            aria-label="Discovery"
-          >
-            <Link to="/vocabulary/$userVocabularyListId/discovery" params={{ userVocabularyListId: id }}>
-              <Compass />
-              <span className="hidden sm:inline">Discovery</span>
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="size-8 px-0 sm:w-24 sm:px-2.5"
+              asChild
+              title="Learning"
+              aria-label="Learning"
+            >
+              <Link to="/vocabulary/$userVocabularyListId/learning" params={{ userVocabularyListId: id }}>
+                <BookOpen />
+                <span className="hidden sm:inline">Learning</span>
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="size-8 px-0 sm:w-24 sm:px-2.5"
+              asChild
+              title="Discovery"
+              aria-label="Discovery"
+            >
+              <Link to="/vocabulary/$userVocabularyListId/discovery" params={{ userVocabularyListId: id }}>
+                <Compass />
+                <span className="hidden sm:inline">Discovery</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       ) : (
         <Button

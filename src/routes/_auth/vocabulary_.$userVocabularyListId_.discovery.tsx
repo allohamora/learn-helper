@@ -143,7 +143,7 @@ function VocabularyDiscoveryPage() {
         ) : !currentItem ? (
           <div className="text-center">
             <h2 className="mb-2 text-xl font-bold">Great job!</h2>
-            <p className="text-muted-foreground">You&apos;ve reviewed all available words.</p>
+            <p className="text-muted-foreground">You&apos;ve discovered all available words.</p>
           </div>
         ) : (
           <div>

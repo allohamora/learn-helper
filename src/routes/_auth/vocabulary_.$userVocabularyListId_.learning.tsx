@@ -24,7 +24,7 @@ function VocabularyLearningPage() {
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       <div className="mx-auto max-w-6xl px-4 py-6">
         <h1 className="mb-6 text-2xl font-bold tracking-tight md:text-3xl">
-          Learn {userVocabularyList.vocabularyList.title}
+          {userVocabularyList.vocabularyList.title}
         </h1>
 
         <Learning userVocabularyListId={userVocabularyListId} />
