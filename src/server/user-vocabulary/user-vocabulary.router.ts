@@ -1,6 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
+  errorConflictResponse,
   successCreatedResponse,
   successOkResponse,
   successPaginatedResponse,
@@ -14,6 +15,7 @@ import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
 import { userVocabularyItemProgressDto } from './dtos/user-vocabulary-item-progress.dto';
+import { userVocabularyItemRecordDto } from './dtos/user-vocabulary-item-record.dto';
 import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithListDto } from './dtos/user-vocabulary-list-with-list.dto';
@@ -326,9 +328,10 @@ export const userVocabularyRouter = new OpenAPIHono()
       },
       responses: {
         ...successOkResponse({
-          description: "The item's status reverted to waiting",
-          schema: userVocabularyItemStatusDto,
+          description: "The item's progress reset to waiting",
+          schema: userVocabularyItemRecordDto,
         }),
+        ...errorConflictResponse({ description: 'The item is already waiting' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,

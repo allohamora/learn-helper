@@ -152,7 +152,13 @@ export const undoUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    await validateUserVocabularyItemInList({ userId, userVocabularyListId, userVocabularyItemId }, tx);
+    const { userItem } = await validateUserVocabularyItemInList(
+      { userId, userVocabularyListId, userVocabularyItemId },
+      tx,
+    );
+    if (userItem.status === LearningStatus.Waiting) {
+      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is already waiting`);
+    }
 
     const revertedEvent = await revertUserVocabularyItemDiscoveredEvent({ userId, userVocabularyItemId }, tx);
     if (!revertedEvent) {
@@ -166,17 +172,25 @@ export const undoUserVocabularyItemStatus = async ({
           userId,
           userVocabularyItemId,
           userVocabularyListId,
-          durationMs: revertedEvent.durationMs,
+          status: userItem.status,
+          encounterCount: userItem.encounterCount,
+          durationMs: revertedEvent?.durationMs,
         },
         tx,
       ),
-      updateUserVocabularyItemStatus(
-        { userId, userVocabularyItemId, status: LearningStatus.Waiting, enqueuedAt: null },
+      updateUserVocabularyItemProgress(
+        {
+          userId,
+          userVocabularyItemId,
+          status: LearningStatus.Waiting,
+          encounterCount: 0,
+          enqueuedAt: null,
+        },
         tx,
       ),
     ]);
 
-    return { userVocabularyItemId, status: LearningStatus.Waiting };
+    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 

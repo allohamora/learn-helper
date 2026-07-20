@@ -1,5 +1,5 @@
 import type { FC, UIEvent } from 'react';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -7,6 +7,14 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ExternalLink, Loader2, Pencil, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
@@ -19,7 +27,11 @@ type ItemsResponse = InferResponseType<
 >;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
+export const requiresUndoConfirmation = (status: LearningStatus, encounterCount: number) =>
+  encounterCount > 0 || status === LearningStatus.Learned;
+
 const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
+  const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const pronunciation = item.pronunciation;
@@ -37,15 +49,26 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress', userVocabularyListId] });
-      toast.success('Discovery undone, word is waiting again');
+      setIsUndoConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learning-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learning-tasks'] });
+      toast.success('Word progress reset to waiting in all lists');
     },
-    onError: () => toast.error('Failed to undo discovery'),
+    onError: () => toast.error('Failed to reset word progress'),
   });
 
-  const canUndo =
-    (item.status === LearningStatus.Learning && item.encounterCount === 0) || item.status === LearningStatus.Known;
+  const canUndo = item.status !== LearningStatus.Waiting;
+  const needsConfirmation = requiresUndoConfirmation(item.status, item.encounterCount);
+  const undo = () => {
+    if (needsConfirmation) {
+      setIsUndoConfirmationOpen(true);
+      return;
+    }
+
+    undoMutation.mutate();
+  };
 
   return (
     <div className="flex items-center gap-1">
@@ -98,12 +121,41 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         variant="ghost"
         className="size-8 px-0"
         disabled={!canUndo || undoMutation.isPending}
-        onClick={() => undoMutation.mutate()}
-        title="Undo discovery"
-        aria-label="Undo discovery"
+        onClick={undo}
+        title="Reset word progress"
+        aria-label="Reset word progress"
       >
         {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
+
+      <Dialog
+        open={isUndoConfirmationOpen}
+        onOpenChange={(open) => !undoMutation.isPending && setIsUndoConfirmationOpen(open)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset progress for “{item.value}”?</DialogTitle>
+            <DialogDescription>
+              This will erase {item.encounterCount} completed {item.encounterCount === 1 ? 'encounter' : 'encounters'}{' '}
+              and return the word to Discovery. Because word progress is shared, this change applies to every list
+              containing the word.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={undoMutation.isPending}
+              onClick={() => setIsUndoConfirmationOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={undoMutation.isPending} onClick={() => undoMutation.mutate()}>
+              {undoMutation.isPending && <Loader2 className="animate-spin" />}
+              Reset progress
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

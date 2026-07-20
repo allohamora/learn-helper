@@ -241,7 +241,7 @@ describe('userVocabularyItemService', () => {
   });
 
   describe('undoUserVocabularyItemStatus', () => {
-    it('reverts the status to waiting and records an undone event', async () => {
+    it('reverts the status to waiting, clears progress, and records the previous state', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-status' });
 
       await setUserVocabularyItemStatus({
@@ -258,10 +258,18 @@ describe('userVocabularyItemService', () => {
         userVocabularyItemId: userItem.id,
       });
 
-      expect(result).toEqual({ userVocabularyItemId: userItem.id, status: LearningStatus.Waiting });
+      expect(result).toMatchObject({
+        id: userItem.id,
+        userId,
+        vocabularyItemId: userItem.vocabularyItemId,
+        status: LearningStatus.Waiting,
+        encounterCount: 0,
+        enqueuedAt: null,
+      });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
       expect(updated?.status).toBe(LearningStatus.Waiting);
+      expect(updated?.encounterCount).toBe(0);
 
       const undoneEvent = await db.query.event.findFirst({
         where: and(
@@ -269,10 +277,15 @@ describe('userVocabularyItemService', () => {
           eq(event.type, EventType.UserVocabularyItemDiscoveryUndone),
         ),
       });
-      expect(undoneEvent).toMatchObject({ durationMs: 1000, userVocabularyListId: userList.id });
+      expect(undoneEvent).toMatchObject({
+        durationMs: 1000,
+        userVocabularyListId: userList.id,
+        status: LearningStatus.Known,
+        encounterCount: 0,
+      });
     });
 
-    it('clears enqueuedAt back to null on undo', async () => {
+    it('clears accumulated learning progress and preserves learning events as history', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-status-enqueued' });
 
       await setUserVocabularyItemStatus({
@@ -283,22 +296,81 @@ describe('userVocabularyItemService', () => {
         durationMs: 500,
       });
 
-      await undoUserVocabularyItemStatus({
+      await moveUserVocabularyItemToNextStep({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+      await moveUserVocabularyItemToNextStep({
         userId,
         userVocabularyListId: userList.id,
         userVocabularyItemId: userItem.id,
       });
 
+      const result = await undoUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(result.encounterCount).toBe(0);
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.status).toBe(LearningStatus.Waiting);
+      expect(updated?.encounterCount).toBe(0);
       expect(updated?.enqueuedAt).toBeNull();
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events.filter(({ type }) => type === EventType.UserVocabularyItemMovedToNextStep)).toHaveLength(2);
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: EventType.UserVocabularyItemDiscoveryUndone,
+          status: LearningStatus.Learning,
+          encounterCount: 2,
+        }),
+      );
     });
 
-    it('throws not found when there is no active discovery event to undo', async () => {
-      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-no-event' });
+    it('throws conflict when the item is already waiting', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-waiting' });
 
       await expect(
         undoUserVocabularyItemStatus({ userId, userVocabularyListId: userList.id, userVocabularyItemId: userItem.id }),
       ).rejects.toThrow(Exception);
+    });
+
+    it('serializes with a concurrent learning advancement and leaves progress reset', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-concurrent' });
+      await setUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        durationMs: 0,
+      });
+      await moveUserVocabularyItemToNextStep({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      const [moveResult, undoResult] = await Promise.allSettled([
+        moveUserVocabularyItemToNextStep({
+          userId,
+          userVocabularyListId: userList.id,
+          userVocabularyItemId: userItem.id,
+        }),
+        undoUserVocabularyItemStatus({
+          userId,
+          userVocabularyListId: userList.id,
+          userVocabularyItemId: userItem.id,
+        }),
+      ]);
+
+      expect(undoResult.status).toBe('fulfilled');
+      expect(['fulfilled', 'rejected']).toContain(moveResult.status);
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated).toMatchObject({ status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null });
     });
   });
 
