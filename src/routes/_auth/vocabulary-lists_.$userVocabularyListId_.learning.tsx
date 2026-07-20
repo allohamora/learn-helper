@@ -5,7 +5,7 @@ import { EditVocabularyItemTranslationProvider } from '@/components/providers/ed
 import { getIsomorphicAppClient } from '@/services/api';
 import { pageHead } from '@/utils/page';
 
-export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/learning')({
+export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/learning')({
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
     const response = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
@@ -15,10 +15,10 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/
     return (await response.json()).data;
   },
   head: ({ loaderData }) => pageHead(loaderData ? `Learn: ${loaderData.vocabularyList.title}` : 'Learning'),
-  component: VocabularyLearningPage,
+  component: VocabularyListLearningPage,
 });
 
-function VocabularyLearningPage() {
+function VocabularyListLearningPage() {
   const { userVocabularyListId } = Route.useParams();
   const userVocabularyList = Route.useLoaderData();
 

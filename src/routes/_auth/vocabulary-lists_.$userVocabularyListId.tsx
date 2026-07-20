@@ -16,7 +16,7 @@ const vocabularyListSearchSchema = z.object({
   search: z.string().trim().min(1).max(255).optional(),
 });
 
-export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')({
+export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId')({
   validateSearch: vocabularyListSearchSchema,
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
@@ -28,11 +28,11 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId')
     const body = await res.json();
     return body.data;
   },
-  head: ({ loaderData }) => pageHead(loaderData?.vocabularyList.title ?? 'Vocabulary'),
-  component: VocabularyListDetailPage,
+  head: ({ loaderData }) => pageHead(loaderData?.vocabularyList.title ?? 'Vocabulary List'),
+  component: VocabularyListPage,
 });
 
-function VocabularyListDetailPage() {
+function VocabularyListPage() {
   const { userVocabularyListId } = Route.useParams();
   const { status, search } = Route.useSearch();
   const userVocabularyList = Route.useLoaderData();

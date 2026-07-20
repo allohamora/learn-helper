@@ -58,7 +58,11 @@ export const LearningResult: FC<LearningResultProps> = ({ userVocabularyListId, 
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <div className="w-full sm:w-auto">
             <Button asChild className="w-full sm:w-auto">
-              <Link to="/vocabulary/$userVocabularyListId/learning" params={{ userVocabularyListId }} reloadDocument>
+              <Link
+                to="/vocabulary-lists/$userVocabularyListId/learning"
+                params={{ userVocabularyListId }}
+                reloadDocument
+              >
                 Learn More Words
               </Link>
             </Button>
@@ -66,7 +70,7 @@ export const LearningResult: FC<LearningResultProps> = ({ userVocabularyListId, 
 
           <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
             <Button variant="outline" asChild className="w-full sm:w-auto">
-              <Link to="/vocabulary/$userVocabularyListId" params={{ userVocabularyListId }}>
+              <Link to="/vocabulary-lists/$userVocabularyListId" params={{ userVocabularyListId }}>
                 View All Words
               </Link>
             </Button>

@@ -13,7 +13,7 @@ import { pageHead } from '@/utils/page';
 const BATCH_LIMIT = 10;
 const HISTORY_LIMIT = 5;
 
-export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/discovery')({
+export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/discovery')({
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
     const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
@@ -25,10 +25,10 @@ export const Route = createFileRoute('/_auth/vocabulary_/$userVocabularyListId_/
     return body.data;
   },
   head: ({ loaderData }) => pageHead(loaderData ? `Discover: ${loaderData.vocabularyList.title}` : 'Discovery'),
-  component: VocabularyDiscoveryPage,
+  component: VocabularyListDiscoveryPage,
 });
 
-function VocabularyDiscoveryPage() {
+function VocabularyListDiscoveryPage() {
   const { userVocabularyListId } = Route.useParams();
   const userVocabularyList = Route.useLoaderData();
 

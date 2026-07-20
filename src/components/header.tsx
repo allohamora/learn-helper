@@ -31,11 +31,11 @@ export const Header: FC = () => {
           </Link>
 
           <Link
-            to="/vocabulary"
+            to="/vocabulary-lists"
             className="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
           >
             <Book className="size-5 md:size-4" aria-hidden="true" />
-            <span className="sr-only text-xs md:not-sr-only md:inline md:text-sm">Vocabulary</span>
+            <span className="sr-only text-xs md:not-sr-only md:inline md:text-sm">Vocabulary Lists</span>
           </Link>
 
           <Link

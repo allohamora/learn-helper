@@ -297,7 +297,11 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
           <p className="mb-6 text-muted-foreground">Failed to load learning data. Please try again.</p>
           <Button size="lg" asChild>
-            <Link to="/vocabulary/$userVocabularyListId/learning" params={{ userVocabularyListId }} reloadDocument>
+            <Link
+              to="/vocabulary-lists/$userVocabularyListId/learning"
+              params={{ userVocabularyListId }}
+              reloadDocument
+            >
               Try Again
             </Link>
           </Button>

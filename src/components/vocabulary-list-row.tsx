@@ -40,7 +40,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
             title="View items"
             aria-label="View items"
           >
-            <Link to="/vocabulary/$userVocabularyListId" params={{ userVocabularyListId: userVocabularyList.id }}>
+            <Link to="/vocabulary-lists/$userVocabularyListId" params={{ userVocabularyListId: userVocabularyList.id }}>
               <List />
               <span className="hidden sm:inline">Items</span>
             </Link>
@@ -55,7 +55,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
               aria-label="Learning"
             >
               <Link
-                to="/vocabulary/$userVocabularyListId/learning"
+                to="/vocabulary-lists/$userVocabularyListId/learning"
                 params={{ userVocabularyListId: userVocabularyList.id }}
               >
                 <BookOpen />
@@ -71,7 +71,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
               aria-label="Discovery"
             >
               <Link
-                to="/vocabulary/$userVocabularyListId/discovery"
+                to="/vocabulary-lists/$userVocabularyListId/discovery"
                 params={{ userVocabularyListId: userVocabularyList.id }}
               >
                 <Compass />
@@ -85,8 +85,8 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
           size="sm"
           onClick={() => addMutation.mutate()}
           disabled={addMutation.isPending}
-          title="Add to my vocabulary"
-          aria-label="Add to my vocabulary"
+          title="Add vocabulary list"
+          aria-label="Add vocabulary list"
           className="size-8 justify-self-end px-0 sm:w-auto sm:px-2.5"
         >
           <Plus />
