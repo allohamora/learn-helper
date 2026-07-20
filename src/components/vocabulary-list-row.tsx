@@ -48,12 +48,14 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
             size="sm"
             variant="outline"
             className="size-8 px-0 sm:w-auto sm:px-2.5"
-            disabled
-            title="Learn (coming soon)"
+            asChild
+            title="Learn"
             aria-label="Learn"
           >
-            <BookOpen />
-            <span className="hidden sm:inline">Learn</span>
+            <Link to="/vocabulary/$userVocabularyListId/learning" params={{ userVocabularyListId: id }}>
+              <BookOpen />
+              <span className="hidden sm:inline">Learn</span>
+            </Link>
           </Button>
           <Button
             size="sm"

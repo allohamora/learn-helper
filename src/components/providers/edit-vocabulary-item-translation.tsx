@@ -48,6 +48,7 @@ export const EditVocabularyItemTranslationProvider: FC<Props> = ({ userVocabular
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discovery-items', userVocabularyListId] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learning-items', userVocabularyListId] });
       setEditingItem(null);
       toast.success('Translation updated');
     },
