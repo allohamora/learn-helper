@@ -17,6 +17,7 @@ import {
   getNewItems,
   getReviewItems,
   getUserVocabularyItemById,
+  getUserVocabularyItemWithRelationsById,
   getUserVocabularyItemByIdForUpdate,
   getUserVocabularyItemsByIds,
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
@@ -36,6 +37,18 @@ export const getUserVocabularyItemOrThrow = async (
   tx: Transaction = db,
 ) => {
   const userItem = await getUserVocabularyItemById({ userId, userVocabularyItemId }, tx);
+  if (!userItem) {
+    throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+  }
+
+  return userItem;
+};
+
+export const getUserVocabularyItemWithRelationsOrThrow = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  const userItem = await getUserVocabularyItemWithRelationsById({ userId, userVocabularyItemId }, tx);
   if (!userItem) {
     throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
   }
@@ -138,7 +151,7 @@ export const setUserVocabularyItemStatus = async ({
       ),
     ]);
 
-    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    return await getUserVocabularyItemWithRelationsOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 
@@ -190,7 +203,7 @@ export const undoUserVocabularyItemStatus = async ({
       ),
     ]);
 
-    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    return await getUserVocabularyItemWithRelationsOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 
@@ -236,7 +249,7 @@ export const moveUserVocabularyItemToNextStep = async ({
       updateUserVocabularyItemProgress({ userId, userVocabularyItemId, status, encounterCount, enqueuedAt }, tx),
     ]);
 
-    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    return await getUserVocabularyItemWithRelationsOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 
@@ -274,7 +287,7 @@ export const updateUserVocabularyItemTranslation = async ({
       ),
     ]);
 
-    return await getUserVocabularyItemOrThrow({ userId, userVocabularyItemId }, tx);
+    return await getUserVocabularyItemWithRelationsOrThrow({ userId, userVocabularyItemId }, tx);
   });
 };
 

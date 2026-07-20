@@ -27,6 +27,15 @@ export const getUserVocabularyItemById = async (
 ) => {
   return tx.query.userVocabularyItem.findFirst({
     where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)),
+  });
+};
+
+export const getUserVocabularyItemWithRelationsById = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.userVocabularyItem.findFirst({
+    where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)),
     with: { vocabularyItem: true },
   });
 };

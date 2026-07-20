@@ -11,6 +11,7 @@ import {
   getNewItems,
   getReviewItems,
   getUserVocabularyItemById,
+  getUserVocabularyItemWithRelationsById,
   getUserVocabularyListItems,
   getUserVocabularyListItemStatusCounts,
   updateUserVocabularyItemStatus,
@@ -180,11 +181,14 @@ describe('userVocabularyItemRepository', () => {
     });
   });
 
-  describe('getUserVocabularyItemById', () => {
+  describe.each([
+    ['getUserVocabularyItemById', getUserVocabularyItemById],
+    ['getUserVocabularyItemWithRelationsById', getUserVocabularyItemWithRelationsById],
+  ])('%s', (_name, getUserVocabularyItem) => {
     it('resolves the item when it belongs to the user', async () => {
       const { userId, userItem } = await seedUserItem({ userSuffix: 'item-owner' });
 
-      await expect(getUserVocabularyItemById({ userId, userVocabularyItemId: userItem.id })).resolves.toMatchObject({
+      await expect(getUserVocabularyItem({ userId, userVocabularyItemId: userItem.id })).resolves.toMatchObject({
         id: userItem.id,
       });
     });
@@ -194,7 +198,7 @@ describe('userVocabularyItemRepository', () => {
       const { userId: otherUserId } = await seedUserItem({ userSuffix: 'item-other-owner', value: 'walk' });
 
       await expect(
-        getUserVocabularyItemById({ userId: otherUserId, userVocabularyItemId: userItem.id }),
+        getUserVocabularyItem({ userId: otherUserId, userVocabularyItemId: userItem.id }),
       ).resolves.toBeUndefined();
     });
   });
