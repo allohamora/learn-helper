@@ -1,6 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
+import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
@@ -56,17 +55,7 @@ function VocabularyListDetailPage() {
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <Link
-          to="/vocabulary"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to vocabulary
-        </Link>
-
-        <h1 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">
-          {userVocabularyList.vocabularyList.title}
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{userVocabularyList.vocabularyList.title}</h1>
 
         <div className="mt-4">
           <VocabularyListProgress userVocabularyListId={userVocabularyListId} />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { ArrowLeft, Undo2 } from 'lucide-react';
+import { createFileRoute } from '@tanstack/react-router';
+import { Undo2 } from 'lucide-react';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
@@ -129,15 +129,7 @@ function VocabularyDiscoveryPage() {
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       <div className="mx-auto max-w-md px-4 py-6">
-        <Link
-          to="/vocabulary"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to vocabulary
-        </Link>
-
-        <h1 className="mt-2 mb-4 text-2xl font-bold tracking-tight md:text-3xl">
+        <h1 className="mb-4 text-2xl font-bold tracking-tight md:text-3xl">
           {userVocabularyList.vocabularyList.title}
         </h1>
 
