@@ -165,7 +165,14 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: [{ value: 'run', status: LearningStatus.Waiting }],
+        data: [
+          {
+            id: expect.any(String),
+            vocabularyItemId: expect.any(String),
+            status: LearningStatus.Waiting,
+            vocabularyItem: { value: 'run' },
+          },
+        ],
         pageInfo: { total: 1, count: 1 },
       });
     });
@@ -232,7 +239,9 @@ describe('user-vocabulary.router', () => {
       expect(thirdBody.pageInfo.nextCursor).toBeUndefined();
 
       // pages must be disjoint (no item repeated across pages) and together cover every word exactly once
-      const pagedValues = [...firstBody.data, ...secondBody.data, ...thirdBody.data].map((item) => item.value);
+      const pagedValues = [...firstBody.data, ...secondBody.data, ...thirdBody.data].map(
+        (item) => item.vocabularyItem.value,
+      );
       expect(pagedValues).toEqual(words);
     });
 
@@ -256,7 +265,7 @@ describe('user-vocabulary.router', () => {
 
         const body = await res.json();
         expect(body.pageInfo.total).toBe(words.length);
-        collected.push(...body.data.map((item) => item.value));
+        collected.push(...body.data.map((item) => item.vocabularyItem.value));
         cursor = body.pageInfo.nextCursor;
       } while (cursor);
 
@@ -812,7 +821,12 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { id: userItem.id, status: LearningStatus.Waiting, encounterCount: 0 },
+        data: {
+          id: userItem.id,
+          status: LearningStatus.Waiting,
+          encounterCount: 0,
+          vocabularyItem: { value: 'run' },
+        },
       });
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });

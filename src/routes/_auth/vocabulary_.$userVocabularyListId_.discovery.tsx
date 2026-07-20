@@ -93,12 +93,12 @@ function VocabularyDiscoveryPage() {
     if (!currentItem) return;
 
     await setStatus.mutateAsync({
-      userVocabularyItemId: currentItem.userVocabularyItemId,
+      userVocabularyItemId: currentItem.id,
       status,
       durationMs: Date.now() - startedAt.getTime(),
     });
 
-    setHistory((prev) => [currentItem.userVocabularyItemId, ...prev].slice(0, HISTORY_LIMIT));
+    setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
 
     if (currentIndex < items.length - 1) {
       setCurrentIndex(currentIndex + 1);

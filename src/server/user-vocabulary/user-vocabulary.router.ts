@@ -11,14 +11,12 @@ import {
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../utils/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
-import { userVocabularyItemDto } from './dtos/user-vocabulary-item.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
-import { userVocabularyItemLearningDto } from './dtos/user-vocabulary-item-learning.dto';
+import { userVocabularyItemWithVocabularyItemDto } from './dtos/user-vocabulary-item-with-vocabulary-item.dto';
 import { userVocabularyItemProgressDto } from './dtos/user-vocabulary-item-progress.dto';
-import { userVocabularyItemRecordDto } from './dtos/user-vocabulary-item-record.dto';
 import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
-import { userVocabularyListWithListDto } from './dtos/user-vocabulary-list-with-list.dto';
+import { userVocabularyListWithVocabularyListDto } from './dtos/user-vocabulary-list-with-vocabulary-list.dto';
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
 import { setUserVocabularyItemStatusDto } from './dtos/set-user-vocabulary-item-status.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
@@ -77,7 +75,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successCreatedResponse({
           description: 'List added to the user, with the vocabulary list it points to',
-          schema: userVocabularyListWithListDto,
+          schema: userVocabularyListWithVocabularyListDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -106,7 +104,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "The user's list, with the vocabulary list it points to",
-          schema: userVocabularyListWithListDto,
+          schema: userVocabularyListWithVocabularyListDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -136,7 +134,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successPaginatedResponse({
           description: "List's words with the user's progress",
-          schema: userVocabularyItemDto,
+          schema: userVocabularyItemWithVocabularyItemDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -166,7 +164,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "A batch of the list's words for a Learning session",
-          schema: z.array(userVocabularyItemLearningDto),
+          schema: z.array(userVocabularyItemWithVocabularyItemDto),
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -329,7 +327,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       responses: {
         ...successOkResponse({
           description: "The item's progress reset to waiting",
-          schema: userVocabularyItemRecordDto,
+          schema: userVocabularyItemWithVocabularyItemDto,
         }),
         ...errorConflictResponse({ description: 'The item is already waiting' }),
       },

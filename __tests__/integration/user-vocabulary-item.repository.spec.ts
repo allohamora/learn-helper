@@ -443,7 +443,7 @@ describe('userVocabularyItemRepository', () => {
       const result = await getUserVocabularyListItems({ userId: USER_ID, vocabularyListId: list.id });
 
       expect(result.total).toBe(2);
-      expect(result.items.map((item) => item.value).sort()).toEqual(['apple', 'banana']);
+      expect(result.items.map((item) => item.vocabularyItem.value).sort()).toEqual(['apple', 'banana']);
       expect(result.nextCursor).toBeUndefined();
     });
 
@@ -461,7 +461,7 @@ describe('userVocabularyItemRepository', () => {
         status: LearningStatus.Known,
       });
 
-      expect(result.items.map((item) => item.value)).toEqual(['banana']);
+      expect(result.items.map((item) => item.vocabularyItem.value)).toEqual(['banana']);
       expect(result.total).toBe(1);
     });
 
@@ -475,7 +475,7 @@ describe('userVocabularyItemRepository', () => {
 
       const result = await getUserVocabularyListItems({ userId: USER_ID, vocabularyListId: list.id, search: 'PPL' });
 
-      expect(result.items.map((item) => item.value)).toEqual(['apple']);
+      expect(result.items.map((item) => item.vocabularyItem.value)).toEqual(['apple']);
     });
 
     it('paginates with a cursor and returns nextCursor when more items remain', async () => {
@@ -488,7 +488,7 @@ describe('userVocabularyItemRepository', () => {
       });
 
       const firstPage = await getUserVocabularyListItems({ userId: USER_ID, vocabularyListId: list.id, limit: 2 });
-      expect(firstPage.items.map((item) => item.value)).toEqual(['apple', 'banana']);
+      expect(firstPage.items.map((item) => item.vocabularyItem.value)).toEqual(['apple', 'banana']);
       expect(firstPage.nextCursor).toBeDefined();
 
       const secondPage = await getUserVocabularyListItems({
@@ -497,7 +497,7 @@ describe('userVocabularyItemRepository', () => {
         limit: 2,
         cursor: firstPage.nextCursor,
       });
-      expect(secondPage.items.map((item) => item.value)).toEqual(['cherry']);
+      expect(secondPage.items.map((item) => item.vocabularyItem.value)).toEqual(['cherry']);
       expect(secondPage.nextCursor).toBeUndefined();
     });
 

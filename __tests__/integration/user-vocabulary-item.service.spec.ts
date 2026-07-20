@@ -558,7 +558,7 @@ describe('userVocabularyItemService', () => {
 
       const result = await getUserVocabularyListItems({ userId, userVocabularyListId: userList.id });
 
-      expect(result.items.map((item) => item.value)).toEqual(['run']);
+      expect(result.items.map((item) => item.vocabularyItem.value)).toEqual(['run']);
       expect(result.total).toBe(1);
     });
 

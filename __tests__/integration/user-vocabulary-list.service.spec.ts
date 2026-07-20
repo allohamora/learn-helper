@@ -146,7 +146,10 @@ describe('userVocabularyListService', () => {
       const { id: userId } = await createTestUser('user-1');
 
       await expect(
-        getUserVocabularyListWithListOrThrow({ userId, userVocabularyListId: '00000000-0000-0000-0000-000000000000' }),
+        getUserVocabularyListWithListOrThrow({
+          userId,
+          userVocabularyListId: '00000000-0000-0000-0000-000000000000',
+        }),
       ).rejects.toThrow(Exception);
     });
 

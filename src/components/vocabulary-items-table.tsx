@@ -34,7 +34,8 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
   const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
-  const pronunciation = item.pronunciation;
+  const { vocabularyItem } = item;
+  const pronunciation = vocabularyItem.pronunciation;
 
   const queryClient = useQueryClient();
   const undoMutation = useMutation({
@@ -42,7 +43,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
       ].undo.$post({
-        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItemId },
+        param: { userVocabularyListId, userVocabularyItemId: item.id },
       });
       if (!res.ok) throw new Error('Failed to undo discovery');
 
@@ -85,7 +86,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
           <Volume2 className={cn(isPlaying && 'animate-pulse')} />
         </Button>
       )}
-      {item.link && (
+      {vocabularyItem.link && (
         <Button
           size="sm"
           variant="ghost"
@@ -94,7 +95,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
           title="Open dictionary entry"
           aria-label="Open dictionary entry"
         >
-          <a href={item.link} target="_blank" rel="noopener noreferrer">
+          <a href={vocabularyItem.link} target="_blank" rel="noopener noreferrer">
             <ExternalLink />
           </a>
         </Button>
@@ -105,10 +106,10 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         className="size-8 px-0"
         onClick={() =>
           openEdit({
-            userVocabularyItemId: item.userVocabularyItemId,
-            value: item.value,
-            partOfSpeech: item.partOfSpeech,
-            uaTranslation: item.uaTranslation,
+            userVocabularyItemId: item.id,
+            value: vocabularyItem.value,
+            partOfSpeech: vocabularyItem.partOfSpeech,
+            uaTranslation: vocabularyItem.uaTranslation,
           })
         }
         title="Edit translation"
@@ -134,7 +135,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset progress for “{item.value}”?</DialogTitle>
+            <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
             <DialogDescription>
               This will erase {item.encounterCount} completed {item.encounterCount === 1 ? 'encounter' : 'encounters'}{' '}
               and return the word to Discovery. Because word progress is shared, this change applies to every list
@@ -163,25 +164,25 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
 const columnHelper = createColumnHelper<VocabularyItem>();
 
 const buildColumns = (userVocabularyListId: string) => [
-  columnHelper.accessor('value', {
+  columnHelper.accessor('vocabularyItem.value', {
     header: 'Word',
     cell: (info) => {
       const item = info.row.original;
 
       return (
         <div className="min-w-0">
-          <div className="truncate font-medium">{item.value}</div>
-          <div className="truncate text-xs text-muted-foreground">({item.spelling})</div>
-          <div className="truncate text-xs text-muted-foreground">{item.uaTranslation}</div>
+          <div className="truncate font-medium">{item.vocabularyItem.value}</div>
+          <div className="truncate text-xs text-muted-foreground">({item.vocabularyItem.spelling})</div>
+          <div className="truncate text-xs text-muted-foreground">{item.vocabularyItem.uaTranslation}</div>
         </div>
       );
     },
   }),
-  columnHelper.accessor('definition', {
+  columnHelper.accessor('vocabularyItem.definition', {
     header: 'Definition',
     cell: (info) => <div className="text-muted-foreground">{info.getValue()}</div>,
   }),
-  columnHelper.accessor('partOfSpeech', {
+  columnHelper.accessor('vocabularyItem.partOfSpeech', {
     header: 'Part of speech',
     cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '-'}</div>,
   }),
@@ -228,7 +229,7 @@ export const VocabularyItemsTable: FC<Props> = ({
     data: items,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getRowId: (item) => item.userVocabularyItemId,
+    getRowId: (item) => item.id,
   });
 
   const rows = table.getRowModel().rows;

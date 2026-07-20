@@ -21,13 +21,14 @@ type Props = {
 export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
+  const { vocabularyItem } = item;
 
   const handlePlayPronunciation = (event: MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
 
-    if (item.pronunciation) {
-      void playAudio(item.pronunciation);
+    if (vocabularyItem.pronunciation) {
+      void playAudio(vocabularyItem.pronunciation);
     }
   };
 
@@ -36,10 +37,10 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
     event.stopPropagation();
 
     openEdit({
-      userVocabularyItemId: item.userVocabularyItemId,
-      value: item.value,
-      partOfSpeech: item.partOfSpeech,
-      uaTranslation: item.uaTranslation,
+      userVocabularyItemId: item.id,
+      value: vocabularyItem.value,
+      partOfSpeech: vocabularyItem.partOfSpeech,
+      uaTranslation: vocabularyItem.uaTranslation,
     });
   };
 
@@ -48,9 +49,9 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
       <CardHeader className="gap-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-xl md:text-2xl">{item.value}</CardTitle>
-            <div className="text-base font-normal text-muted-foreground md:text-lg">({item.spelling})</div>
-            <div className="text-sm text-muted-foreground">{item.uaTranslation}</div>
+            <CardTitle className="text-xl md:text-2xl">{vocabularyItem.value}</CardTitle>
+            <div className="text-base font-normal text-muted-foreground md:text-lg">({vocabularyItem.spelling})</div>
+            <div className="text-sm text-muted-foreground">{vocabularyItem.uaTranslation}</div>
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
@@ -64,7 +65,7 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
               <Pencil />
             </Button>
 
-            {item.pronunciation && (
+            {vocabularyItem.pronunciation && (
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -77,7 +78,7 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
               </Button>
             )}
 
-            {item.link && (
+            {vocabularyItem.link && (
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -85,7 +86,7 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
                 title="View in Oxford Dictionary"
                 aria-label="View in Oxford Dictionary"
               >
-                <a href={item.link} target="_blank" rel="noopener noreferrer">
+                <a href={vocabularyItem.link} target="_blank" rel="noopener noreferrer">
                   <ExternalLink />
                 </a>
               </Button>
@@ -93,15 +94,15 @@ export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
           </div>
         </div>
 
-        {item.partOfSpeech && (
+        {vocabularyItem.partOfSpeech && (
           <div>
-            <Badge variant="outline">{item.partOfSpeech.replace(/-/g, ' ')}</Badge>
+            <Badge variant="outline">{vocabularyItem.partOfSpeech.replace(/-/g, ' ')}</Badge>
           </div>
         )}
       </CardHeader>
 
       <CardContent>
-        <p className="text-center leading-relaxed text-foreground md:text-lg">{item.definition}</p>
+        <p className="text-center leading-relaxed text-foreground md:text-lg">{vocabularyItem.definition}</p>
       </CardContent>
     </Card>
   );
