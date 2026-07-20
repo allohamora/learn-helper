@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
-import { useCreateVocabularyListEvents } from '@/hooks/use-create-vocabulary-list-events';
+import { useCreateVocabularyListLearningEvents } from '@/hooks/use-create-vocabulary-list-learning-events';
 import { appClient } from '@/services/api';
 import type {
   DefinitionToVocabularyItemTask,
@@ -248,7 +248,7 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
     },
   });
 
-  const { createEvent } = useCreateVocabularyListEvents(userVocabularyListId);
+  const { createVocabularyListLearningEvent } = useCreateVocabularyListLearningEvents(userVocabularyListId);
 
   // to preserve the same task ids between re-renders
   const clientTasks = useMemo(() => {
@@ -328,13 +328,13 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
     const durationMs = Date.now() - startedAt.getTime();
 
     if (currentTask.type === UserVocabularyItemTaskType.Showcase) {
-      createEvent({
+      createVocabularyListLearningEvent({
         type: EventType.UserVocabularyItemTaskShowcaseViewed,
         userVocabularyItemId: currentTask.data.id,
         durationMs,
       });
     } else {
-      createEvent({
+      createVocabularyListLearningEvent({
         type: isRetryId(currentTask.id)
           ? EventType.UserVocabularyItemTaskRetryPassed
           : EventType.UserVocabularyItemTaskPassed,
@@ -375,7 +375,7 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
       throw new Error('Vocabulary item is not found');
     }
 
-    createEvent({
+    createVocabularyListLearningEvent({
       type: EventType.UserVocabularyItemTaskFailed,
       userVocabularyItemId,
       userVocabularyItemTaskType: currentTask.type,

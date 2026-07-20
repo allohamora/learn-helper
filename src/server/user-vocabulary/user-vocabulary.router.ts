@@ -19,13 +19,13 @@ import { userVocabularyListWithRelationsDto } from './dtos/user-vocabulary-list-
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
 import { discoverUserVocabularyItemDto } from './dtos/discover-user-vocabulary-item.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
-import { createEventsDto } from './dtos/create-events.dto';
+import { createVocabularyListLearningEventsDto } from './dtos/create-vocabulary-list-learning-events.dto';
 import {
   getUserVocabularyListItems,
   getUserVocabularyListLearningItems,
   getUserVocabularyListLearningTasks,
   getUserVocabularyListProgress,
-  createEvents,
+  createVocabularyListLearningEvents,
   moveUserVocabularyItemToNextStep,
   discoverUserVocabularyItem,
   undoUserVocabularyItemStatus,
@@ -247,7 +247,7 @@ export const userVocabularyRouter = new OpenAPIHono()
         body: {
           content: {
             'application/json': {
-              schema: createEventsDto,
+              schema: createVocabularyListLearningEventsDto,
             },
           },
         },
@@ -269,7 +269,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 201,
-          data: await createEvents({ ...body, userId: user.id, userVocabularyListId }),
+          data: await createVocabularyListLearningEvents({ ...body, userId: user.id, userVocabularyListId }),
         }),
       );
     },
