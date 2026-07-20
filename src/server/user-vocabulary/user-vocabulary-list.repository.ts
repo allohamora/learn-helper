@@ -1,5 +1,5 @@
 import '@tanstack/react-start/server-only';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { userVocabularyList, vocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
@@ -56,10 +56,8 @@ export const createUserVocabularyList = async (
 export const getUserAvailableVocabularyLists = async (userId: string) => {
   return db
     .select({
-      id: userVocabularyList.id,
-      vocabularyListId: vocabularyList.id,
-      title: vocabularyList.title,
-      addedAt: userVocabularyList.createdAt,
+      ...getTableColumns(vocabularyList),
+      userVocabularyList,
     })
     .from(vocabularyList)
     .leftJoin(

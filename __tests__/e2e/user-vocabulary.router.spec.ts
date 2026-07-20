@@ -45,7 +45,7 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: [{ title: 'Oxford 5000 A1', addedAt: null }],
+        data: [{ title: 'Oxford 5000 A1', userVocabularyList: null }],
       });
     });
 
@@ -70,7 +70,17 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: [{ title: 'Oxford 5000 A1', addedAt: expect.any(String) }, { addedAt: null }],
+        data: [
+          {
+            id: list.id,
+            title: 'Oxford 5000 A1',
+            userVocabularyList: {
+              vocabularyListId: list.id,
+              createdAt: expect.any(String),
+            },
+          },
+          { userVocabularyList: null },
+        ],
       });
     });
   });

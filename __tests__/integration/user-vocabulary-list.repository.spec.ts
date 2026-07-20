@@ -29,13 +29,13 @@ const createVocabularyList = async (title: string, createdAt: Date) => {
 
 describe('userVocabularyListRepository', () => {
   describe('getUserAvailableVocabularyLists', () => {
-    it('returns a list with a null addedAt when the user has not added it', async () => {
+    it('returns a list with a null userVocabularyList when the user has not added it', async () => {
       const { id: userId } = await createTestUser('user-1');
       await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
 
       const lists = await getUserAvailableVocabularyLists(userId);
 
-      expect(lists).toMatchObject([{ title: 'Oxford 5000 A1', addedAt: null }]);
+      expect(lists).toMatchObject([{ title: 'Oxford 5000 A1', userVocabularyList: null }]);
     });
 
     it('marks an enrolled list as added and sorts it first', async () => {
@@ -48,8 +48,15 @@ describe('userVocabularyListRepository', () => {
       const lists = await getUserAvailableVocabularyLists(userId);
 
       expect(lists).toMatchObject([
-        { title: 'Oxford 5000 A1', addedAt: expect.any(Date) },
-        { title: 'Oxford 5000 A2', addedAt: null },
+        {
+          id: list.id,
+          title: 'Oxford 5000 A1',
+          userVocabularyList: {
+            vocabularyListId: list.id,
+            createdAt: expect.any(Date),
+          },
+        },
+        { title: 'Oxford 5000 A2', userVocabularyList: null },
       ]);
     });
 
@@ -65,12 +72,7 @@ describe('userVocabularyListRepository', () => {
 
       const lists = await getUserAvailableVocabularyLists(userId);
 
-      expect(lists.map((list) => list.vocabularyListId)).toEqual([
-        addedOld.id,
-        addedNew.id,
-        unaddedOld.id,
-        unaddedNew.id,
-      ]);
+      expect(lists.map((list) => list.id)).toEqual([addedOld.id, addedNew.id, unaddedOld.id, unaddedNew.id]);
     });
   });
 

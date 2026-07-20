@@ -6,18 +6,19 @@ import { Button } from '@/components/ui/button';
 import { appClient } from '@/services/api';
 
 type Props = {
-  id: string | null;
-  vocabularyListId: string;
+  id: string;
   title: string;
-  addedAt: string | null;
+  userVocabularyList: {
+    id: string;
+  } | null;
 };
 
-export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) => {
+export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) => {
   const router = useRouter();
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId } });
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: id } });
       if (!res.ok) throw new Error('Failed to add vocabulary list');
     },
     onSuccess: () => router.invalidate(),
@@ -29,7 +30,7 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
         <h2 className="line-clamp-2 text-sm leading-5 font-medium text-balance sm:text-base">{title}</h2>
       </div>
 
-      {id ? (
+      {userVocabularyList ? (
         <div className="flex shrink-0 items-center justify-end gap-2 justify-self-end">
           <Button
             size="sm"
@@ -39,7 +40,7 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
             title="View items"
             aria-label="View items"
           >
-            <Link to="/vocabulary/$userVocabularyListId" params={{ userVocabularyListId: id }}>
+            <Link to="/vocabulary/$userVocabularyListId" params={{ userVocabularyListId: userVocabularyList.id }}>
               <List />
               <span className="hidden sm:inline">Items</span>
             </Link>
@@ -53,7 +54,10 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
               title="Learning"
               aria-label="Learning"
             >
-              <Link to="/vocabulary/$userVocabularyListId/learning" params={{ userVocabularyListId: id }}>
+              <Link
+                to="/vocabulary/$userVocabularyListId/learning"
+                params={{ userVocabularyListId: userVocabularyList.id }}
+              >
                 <BookOpen />
                 <span className="hidden sm:inline">Learning</span>
               </Link>
@@ -66,7 +70,10 @@ export const VocabularyListRow: FC<Props> = ({ id, vocabularyListId, title }) =>
               title="Discovery"
               aria-label="Discovery"
             >
-              <Link to="/vocabulary/$userVocabularyListId/discovery" params={{ userVocabularyListId: id }}>
+              <Link
+                to="/vocabulary/$userVocabularyListId/discovery"
+                params={{ userVocabularyListId: userVocabularyList.id }}
+              >
                 <Compass />
                 <span className="hidden sm:inline">Discovery</span>
               </Link>

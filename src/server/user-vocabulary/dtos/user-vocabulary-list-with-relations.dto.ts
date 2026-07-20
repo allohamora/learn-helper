@@ -1,11 +1,7 @@
 import '@tanstack/react-start/server-only';
-import { z } from '@hono/zod-openapi';
 import { vocabularyListDto } from '../../vocabulary/dtos/vocabulary-list.dto';
+import { userVocabularyListDto } from './user-vocabulary-list.dto';
 
-export const userVocabularyListWithRelationsDto = z.object({
-  id: z.uuidv7(),
-  userId: z.string(),
-  vocabularyListId: z.uuidv7(),
-  createdAt: z.iso.datetime(),
+export const userVocabularyListWithRelationsDto = userVocabularyListDto.extend({
   vocabularyList: vocabularyListDto,
 });
