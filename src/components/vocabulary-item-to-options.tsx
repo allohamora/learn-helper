@@ -33,7 +33,7 @@ export const VocabularyItemToOptions: FC<VocabularyItemToOptionsProps> = ({ data
     <ToOptions data={data} {...props}>
       <div className="space-y-2 md:space-y-4">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-xl leading-tight font-bold md:text-3xl">
+          <CardTitle className="text-xl/tight font-bold md:text-3xl">
             {data.value}
             <div className="text-base font-normal text-muted-foreground md:text-lg">({data.spelling})</div>
           </CardTitle>
@@ -45,10 +45,10 @@ export const VocabularyItemToOptions: FC<VocabularyItemToOptionsProps> = ({ data
                 size="sm"
                 onClick={handlePlayPronunciation}
                 disabled={isPlaying}
-                className="h-8 w-8 shrink-0 p-0"
+                className="size-8 shrink-0 p-0"
                 title="Play pronunciation"
               >
-                <Volume2 className={cn('h-4 w-4', { 'animate-pulse': isPlaying })} />
+                <Volume2 className={cn('size-4', { 'animate-pulse': isPlaying })} />
               </Button>
             )}
             {data.link && (
@@ -56,11 +56,11 @@ export const VocabularyItemToOptions: FC<VocabularyItemToOptionsProps> = ({ data
                 variant="ghost"
                 size="sm"
                 asChild
-                className="h-8 w-8 shrink-0 p-0"
+                className="size-8 shrink-0 p-0"
                 title="View in Oxford Dictionary"
               >
                 <a href={data.link} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="size-4" />
                 </a>
               </Button>
             )}

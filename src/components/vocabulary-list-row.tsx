@@ -27,7 +27,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
   return (
     <div className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 sm:gap-4">
       <div className="min-w-0">
-        <h2 className="line-clamp-2 text-sm leading-5 font-medium text-balance sm:text-base">{title}</h2>
+        <h2 className="line-clamp-2 text-sm/5 font-medium text-balance sm:text-base">{title}</h2>
       </div>
 
       {userVocabularyList ? (

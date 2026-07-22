@@ -120,7 +120,7 @@ export const SttButton: FC<SttButtonProps> = ({ onText, disabled = false, classN
       className={cn(className)}
       aria-live="polite"
     >
-      {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+      {isListening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
     </Button>
   );
 };

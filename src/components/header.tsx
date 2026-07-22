@@ -22,7 +22,7 @@ export const Header: FC = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <nav className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container flex h-14 justify-between md:justify-start">
         <div className="flex items-center space-x-2 md:space-x-6">
           <Link to="/" className="flex items-center p-2 md:space-x-2 md:p-0">

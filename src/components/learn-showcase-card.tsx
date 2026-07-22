@@ -36,7 +36,7 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
         <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-xl leading-tight font-bold md:text-3xl">{data.value}</CardTitle>
+              <CardTitle className="text-xl/tight font-bold md:text-3xl">{data.value}</CardTitle>
 
               <div className="text-base font-normal text-muted-foreground md:text-lg">({data.spelling})</div>
               <div className="text-sm text-muted-foreground">{data.uaTranslation}</div>
@@ -57,10 +57,10 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
                       uaTranslation: data.uaTranslation,
                     });
                   }}
-                  className="h-8 w-8 shrink-0 p-0"
+                  className="size-8 shrink-0 p-0"
                   title="Edit translation"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="size-4" />
                 </Button>
               )}
 
@@ -70,10 +70,10 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
                   size="sm"
                   onClick={handlePlayPronunciation}
                   disabled={isPlaying}
-                  className="h-8 w-8 shrink-0 p-0"
+                  className="size-8 shrink-0 p-0"
                   title="Play pronunciation"
                 >
-                  <Volume2 className={cn('h-4 w-4', { 'animate-pulse': isPlaying })} />
+                  <Volume2 className={cn('size-4', { 'animate-pulse': isPlaying })} />
                 </Button>
               )}
 
@@ -82,11 +82,11 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
                   variant="ghost"
                   size="sm"
                   asChild
-                  className="h-8 w-8 shrink-0 p-0"
+                  className="size-8 shrink-0 p-0"
                   title="View in Oxford Dictionary"
                 >
                   <a href={data.link} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="size-4" />
                   </a>
                 </Button>
               )}
@@ -112,7 +112,7 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
       <div className="text-center">
         <Button onClick={onNext} size="lg" className="px-8">
           Next
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="ml-2 size-4" />
         </Button>
       </div>
     </div>

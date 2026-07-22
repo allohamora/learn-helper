@@ -140,7 +140,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
               ) : (
                 <Button onClick={handleNext} size="lg" className="min-w-32">
                   Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 size-4" />
                 </Button>
               )}
             </div>

@@ -128,14 +128,14 @@ export const ToVocabularyItem: FC<PropsWithChildren<ToVocabularyItemProps>> = ({
                 className={cn(
                   'h-12 text-base md:text-lg',
                   isChecked &&
-                    'focus-visible:border focus-visible:ring-0 pointer-events-none cursor-not-allowed opacity-50',
-                  isChecked && isCorrect && 'focus-visible:border-green-500 border-green-500 bg-green-50',
-                  isChecked && !isCorrect && 'focus-visible:border-red-500 border-red-500 bg-red-50',
+                    'pointer-events-none cursor-not-allowed opacity-50 focus-visible:border focus-visible:ring-0',
+                  isChecked && isCorrect && 'border-green-500 bg-green-50 focus-visible:border-green-500',
+                  isChecked && !isCorrect && 'border-red-500 bg-red-50 focus-visible:border-red-500',
                 )}
                 readOnly={isChecked}
               />
               <div className="absolute top-1/2 right-2 -translate-y-1/2">
-                <SttButton onText={setUserInput} disabled={isChecked} className={cn('h-8 w-8')} />
+                <SttButton onText={setUserInput} disabled={isChecked} className={cn('size-8')} />
               </div>
             </div>
 
@@ -163,7 +163,7 @@ export const ToVocabularyItem: FC<PropsWithChildren<ToVocabularyItemProps>> = ({
               ) : (
                 <Button onClick={handleNext} size="lg" className="min-w-32">
                   Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 size-4" />
                 </Button>
               )}
             </div>

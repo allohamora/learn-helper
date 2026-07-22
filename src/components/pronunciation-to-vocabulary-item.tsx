@@ -49,10 +49,10 @@ export const PronunciationToVocabularyItem: FC<PronunciationToVocabularyItemProp
               size="lg"
               onClick={handlePlayPronunciation}
               disabled={isPlaying}
-              className="h-20 w-20 rounded-full md:h-24 md:w-24"
+              className="size-20 rounded-full md:size-24"
               title="Play pronunciation"
             >
-              <Volume2 className={cn('h-6 w-6 md:h-8 md:w-8', { 'animate-pulse': isPlaying })} />
+              <Volume2 className={cn('size-6 md:size-8', { 'animate-pulse': isPlaying })} />
             </Button>
 
             <details className="w-full max-w-xs text-center text-sm text-muted-foreground">

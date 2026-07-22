@@ -16,7 +16,7 @@ type TextToVocabularyItemProps = {
 export const TextToVocabularyItem: FC<TextToVocabularyItemProps> = ({ data: { text, ...data }, ...props }) => {
   return (
     <ToVocabularyItem data={data} {...props}>
-      <p className="w-full text-center text-lg leading-relaxed font-normal md:text-xl">{text}</p>
+      <p className="w-full text-center text-lg/relaxed font-normal md:text-xl">{text}</p>
     </ToVocabularyItem>
   );
 };
