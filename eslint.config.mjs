@@ -37,6 +37,8 @@ export default defineConfig(
       '@typescript-eslint/no-misused-promises': 'warn',
       '@typescript-eslint/no-deprecated': 'error',
       'better-tailwindcss/no-unknown-classes': ['error', { ignore: ['^toaster$'] }],
+      // This rule adds about five seconds to a full-project lint run.
+      'better-tailwindcss/enforce-canonical-classes': 'off',
       'better-tailwindcss/enforce-consistent-line-wrapping': 'off',
 
       'no-restricted-syntax': [
