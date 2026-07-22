@@ -9,7 +9,7 @@ export default defineConfig({
         },
         test: {
           name: 'client-unit',
-          include: ['**/__tests__/client/unit/**/*.spec.ts'],
+          include: ['**/__tests__/client/unit/**/*.spec.{ts,tsx}'],
           environment: 'happy-dom',
           setupFiles: ['./__tests__/client/setup-unit-context.ts'],
           maxWorkers: 5,

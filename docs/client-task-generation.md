@@ -349,7 +349,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ### 6. Pronunciation to Word
 
-**Description**: Students listen to a word's pronunciation and must type the word they hear.
+**Description**: Students listen to a word's pronunciation and type the word they hear. When audio is unavailable, phonetic spelling becomes the primary prompt.
 
 **Schema**:
 
@@ -359,8 +359,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   type: TaskType.PronunciationToWord;
   data: {
     id: number; // User word ID
-    pronunciation: string; // Audio URL for pronunciation
-    spelling: string; // Phonetic spelling (collapsible hint)
+    pronunciation?: string | null; // Optional audio URL for pronunciation
+    spelling: string; // Phonetic spelling (hint with audio, primary prompt without audio)
     word: string; // Correct word to type
   }
 }
@@ -368,9 +368,10 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Audio-first**: Primary input is listening to pronunciation
-- **Large play button**: Prominent circular button to play audio
-- **Collapsible spelling hint**: Students can reveal the phonetic spelling if needed
+- **Audio-first when available**: Primary input is listening to pronunciation
+- **Spelling fallback**: Without audio, phonetic spelling is shown as the primary prompt and the task is still generated
+- **Conditional play button**: A prominent circular audio button is shown only when a pronunciation URL exists
+- **Conditional spelling hint**: With audio, students can reveal phonetic spelling if needed
 - **No Ukrainian hint**: This task focuses purely on listening comprehension
 - **Free text input**: Students type what they hear
 - **Case insensitive**: Answer comparison ignores case
@@ -385,6 +386,11 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Spelling hint (collapsible): "/əˈtʃiːv/"
   - Correct answer: "achieve"
 
+- **Spelling-only word**:
+  - No audio control is shown
+  - Primary prompt: "/əˈtʃiːv/"
+  - Correct answer: "achieve"
+
 - **Similar sounding words**:
   - Audio plays: [their pronunciation]
   - User must distinguish from "there", "they're"
@@ -392,9 +398,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **UI Features**:
 
-- Large circular play button (Volume2 icon)
+- Large circular play button (Volume2 icon) when audio exists
 - Pulsing animation when audio is playing
-- Collapsible `<details>` element for spelling hint
+- Collapsible `<details>` spelling hint with audio; visible spelling prompt without audio
 - Standard text input with STT support
 
 **Ranking**:

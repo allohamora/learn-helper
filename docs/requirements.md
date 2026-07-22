@@ -82,12 +82,12 @@ Each list shows a progress bar for the current user. `learned` and `known` are b
 
 Each vocabulary session generates a sequence of tasks per word. Showcase is counted as a task, but it is a read-only task rather than a recall task.
 
-- **Showcase** — display full word metadata (definition, translation, pronunciation) before recall begins
+- **Showcase** — display word metadata before recall begins, with link and pronunciation controls when available
 - **Word to Definition** — match the word to its meaning
 - **Definition to Word** — type the word from its definition
 - **Word to Translation** — match English word to Ukrainian translation
 - **Translation to Word** — type the English word from Ukrainian
-- **Pronunciation to Word** — type the word from its audio pronunciation
+- **Pronunciation to Word** — type the word from its audio pronunciation, or from phonetic spelling when audio is unavailable
 - **Translate English Sentence** (AI-generated) — arrange shuffled Ukrainian words to translate an English sentence
 - **Translate Ukrainian Sentence** (AI-generated) — arrange shuffled English words to translate a Ukrainian sentence
 

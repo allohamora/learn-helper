@@ -131,21 +131,17 @@ const toTranslationToVocabularyItemTasks = (items: LearnItem[]): TranslationToVo
 };
 
 const toPronunciationToVocabularyItemTasks = (items: LearnItem[]): PronunciationToVocabularyItemTask[] => {
-  return items.flatMap((item) => {
-    if (!item.vocabularyItem.pronunciation) return [];
-
-    return [
-      {
-        id: crypto.randomUUID(),
-        type: UserVocabularyItemTaskType.PronunciationToVocabularyItem,
-        data: {
-          id: item.id,
-          vocabularyItem: item.vocabularyItem.value,
-          pronunciation: item.vocabularyItem.pronunciation,
-          spelling: item.vocabularyItem.spelling,
-        },
+  return items.map((item) => {
+    return {
+      id: crypto.randomUUID(),
+      type: UserVocabularyItemTaskType.PronunciationToVocabularyItem,
+      data: {
+        id: item.id,
+        vocabularyItem: item.vocabularyItem.value,
+        pronunciation: item.vocabularyItem.pronunciation,
+        spelling: item.vocabularyItem.spelling,
       },
-    ];
+    };
   });
 };
 

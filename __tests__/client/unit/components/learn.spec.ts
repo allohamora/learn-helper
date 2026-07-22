@@ -22,7 +22,7 @@ const learnItem = ({ id, value, pronunciation }: { id: string; value: string; pr
 };
 
 describe('Learn task conversion', () => {
-  it('generates every client task family and skips missing pronunciation audio', () => {
+  it('generates every client task family with a spelling fallback for missing pronunciation audio', () => {
     const tasks = toClientTasks([
       learnItem({ id: crypto.randomUUID(), value: 'first', pronunciation: 'https://example.com/first.mp3' }),
       learnItem({ id: crypto.randomUUID(), value: 'second', pronunciation: null }),
@@ -34,7 +34,18 @@ describe('Learn task conversion', () => {
     expect(counts[UserVocabularyItemTaskType.DefinitionToVocabularyItem]).toHaveLength(2);
     expect(counts[UserVocabularyItemTaskType.VocabularyItemToTranslation]).toHaveLength(2);
     expect(counts[UserVocabularyItemTaskType.TranslationToVocabularyItem]).toHaveLength(2);
-    expect(counts[UserVocabularyItemTaskType.PronunciationToVocabularyItem]).toHaveLength(1);
+    const pronunciationTasks = tasks.filter(
+      (task) => task.type === UserVocabularyItemTaskType.PronunciationToVocabularyItem,
+    );
+    expect(pronunciationTasks).toHaveLength(2);
+
+    const spellingTask = pronunciationTasks.find((task) => task.data.vocabularyItem === 'second');
+    expect(spellingTask).toMatchObject({
+      data: {
+        spelling: 'second',
+        pronunciation: null,
+      },
+    });
   });
 
   it('removes sentence-ending periods for server tasks', () => {

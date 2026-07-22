@@ -77,7 +77,7 @@ export type PronunciationToVocabularyItemTask = {
   id: string;
   type: UserVocabularyItemTaskType.PronunciationToVocabularyItem;
   data: ToVocabularyItemData & {
-    pronunciation: string;
+    pronunciation: string | null;
     spelling: string;
   };
 };
