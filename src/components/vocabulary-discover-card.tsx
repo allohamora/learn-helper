@@ -45,11 +45,11 @@ export const VocabularyDiscoverCard: FC<Props> = ({ item }) => {
   };
 
   return (
-    <Card className="shadow-lg [--card-spacing:--spacing(4)] md:[--card-spacing:--spacing(6)]">
-      <CardHeader className="gap-2">
+    <Card className="min-h-64 shadow-lg [--card-spacing:--spacing(4)] md:min-h-72 md:[--card-spacing:--spacing(6)]">
+      <CardHeader className="gap-2 pb-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle className="text-xl md:text-2xl">{vocabularyItem.value}</CardTitle>
+            <CardTitle className="text-xl leading-tight font-bold md:text-2xl">{vocabularyItem.value}</CardTitle>
             <div className="text-base font-normal text-muted-foreground md:text-lg">({vocabularyItem.spelling})</div>
             <div className="text-sm text-muted-foreground">{vocabularyItem.uaTranslation}</div>
           </div>
@@ -95,13 +95,15 @@ export const VocabularyDiscoverCard: FC<Props> = ({ item }) => {
         </div>
 
         {vocabularyItem.partOfSpeech && (
-          <div>
-            <Badge variant="outline">{vocabularyItem.partOfSpeech.replace(/-/g, ' ')}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              {vocabularyItem.partOfSpeech.replace(/-/g, ' ')}
+            </Badge>
           </div>
         )}
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="flex flex-1 items-center justify-center">
         <p className="text-center leading-relaxed text-foreground md:text-lg">{vocabularyItem.definition}</p>
       </CardContent>
     </Card>
