@@ -6,7 +6,7 @@ const userVocabularyItemId = z.uuidv7();
 const durationMs = z.number().int().nonnegative();
 const userVocabularyItemTaskType = z.enum(UserVocabularyItemTaskType);
 
-export const createVocabularyListLearningEventsDto = z.object({
+export const createVocabularyListLearnEventsDto = z.object({
   events: z
     .array(
       z.discriminatedUnion('type', [
@@ -36,4 +36,4 @@ export const createVocabularyListLearningEventsDto = z.object({
     .min(1),
 });
 
-export type CreateVocabularyListLearningEventsDto = z.infer<typeof createVocabularyListLearningEventsDto>;
+export type CreateVocabularyListLearnEventsDto = z.infer<typeof createVocabularyListLearnEventsDto>;

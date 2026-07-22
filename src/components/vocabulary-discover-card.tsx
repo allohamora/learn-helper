@@ -12,13 +12,13 @@ import { cn } from '@/lib/utils';
 type ItemsResponse = InferResponseType<
   (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']
 >;
-export type VocabularyDiscoveryItem = Extract<ItemsResponse, { success: true }>['data'][number];
+export type VocabularyDiscoverItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
 type Props = {
-  item: VocabularyDiscoveryItem;
+  item: VocabularyDiscoverItem;
 };
 
-export const VocabularyDiscoveryCard: FC<Props> = ({ item }) => {
+export const VocabularyDiscoverCard: FC<Props> = ({ item }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const { vocabularyItem } = item;

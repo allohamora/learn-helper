@@ -6,15 +6,15 @@ import { Volume2, ExternalLink, ArrowRight, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import type { LearningItem, ShowcaseTask } from '@/types/learning';
+import type { LearnItem, ShowcaseTask } from '@/types/learn';
 
-type LearningShowcaseCardProps = {
+type LearnShowcaseCardProps = {
   data: ShowcaseTask['data'];
-  item?: LearningItem;
+  item?: LearnItem;
   onNext: () => void;
 };
 
-export const LearningShowcaseCard: FC<LearningShowcaseCardProps> = ({ data, item, onNext }) => {
+export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNext }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
 

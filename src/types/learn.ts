@@ -2,17 +2,17 @@ import type { InferResponseType } from 'hono/client';
 import { UserVocabularyItemTaskType } from '@/const/event';
 import { appClient } from '@/services/api';
 
-type LearningItemsResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learning-items']['$get']
+type LearnItemsResponse = InferResponseType<
+  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learn']['items']['$get']
 >;
 
-export type LearningItem = Extract<LearningItemsResponse, { success: true }>['data'][number];
+export type LearnItem = Extract<LearnItemsResponse, { success: true }>['data'][number];
 
-type LearningTasksResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learning-tasks']['$get']
+type LearnTasksResponse = InferResponseType<
+  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learn']['tasks']['$get']
 >;
 
-export type LearningTasksData = Extract<LearningTasksResponse, { success: true }>['data'];
+export type LearnTasksData = Extract<LearnTasksResponse, { success: true }>['data'];
 
 export type ToVocabularyItemData = {
   id: string;
@@ -34,7 +34,7 @@ export type ToOptionsData = {
   hint?: string;
 };
 
-export type VocabularyItemToOptionsData = ToOptionsData & LearningItem['vocabularyItem'];
+export type VocabularyItemToOptionsData = ToOptionsData & LearnItem['vocabularyItem'];
 
 export type WordArrangementData = {
   id: string;
@@ -46,7 +46,7 @@ export type WordArrangementData = {
 export type ShowcaseTask = {
   id: string;
   type: UserVocabularyItemTaskType.Showcase;
-  data: LearningItem['vocabularyItem'] & { id: string };
+  data: LearnItem['vocabularyItem'] & { id: string };
 };
 
 export type VocabularyItemToDefinitionTask = {
@@ -94,7 +94,7 @@ export type TranslateUkrainianSentenceTask = {
   data: WordArrangementData;
 };
 
-export type LearningTask =
+export type LearnTask =
   | ShowcaseTask
   | VocabularyItemToDefinitionTask
   | DefinitionToVocabularyItemTask

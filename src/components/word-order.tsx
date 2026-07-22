@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { WordArrangementData } from '@/types/learning';
+import type { WordArrangementData } from '@/types/learn';
 
 type WordOrderProps = {
   title: string;

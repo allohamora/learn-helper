@@ -201,10 +201,10 @@ erDiagram
 
 ### learning_status
 
-- waiting — enrolled but not yet discovered; eligible for Discovery sessions only
-- learning — discovered, actively in review rotation; eligible for Learning sessions only
+- waiting — enrolled but not yet discovered; eligible for Discover sessions only
+- learning — discovered, actively in review rotation; eligible for Learn sessions only
 - learned — completed the learning cycle; no longer appears in any session
-- known — user marked as already known before discovery; skips Discovery entirely
+- known — user marked as already known before discovery; skips Discover entirely
 
 ### part_of_speech
 
@@ -234,7 +234,7 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 
 ### `user_vocabulary_item.encounter_count`
 
-Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
+Tracks the number of successful confirmations in Learn sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
 
 ### `vocabulary_list_item`
 
@@ -309,8 +309,8 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
 2. They see all available lists with an **Add** button.
 3. After adding a list they see it in their list with:
    - A **progress bar** — `learned / total` items in that list.
-   - A **Discovery** button — start a session of new, unseen items.
-   - A **Learning** button — start a review session of previously seen items.
+   - A **Discover** button — start a session of new, unseen items.
+   - A **Learn** button — start a review session of previously seen items.
 4. Tapping a button starts a session scoped to that list.
 
 ### Grammar sessions

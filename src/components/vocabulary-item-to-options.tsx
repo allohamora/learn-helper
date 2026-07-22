@@ -6,7 +6,7 @@ import { Volume2, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import type { UserVocabularyItemTaskType } from '@/const/event';
-import type { VocabularyItemToOptionsData } from '@/types/learning';
+import type { VocabularyItemToOptionsData } from '@/types/learn';
 import { ToOptions } from './to-options';
 
 type VocabularyItemToOptionsProps = {

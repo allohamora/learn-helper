@@ -1,23 +1,23 @@
 import { type FC } from 'react';
 import { Link } from '@tanstack/react-router';
-import type { LearningItem } from '@/types/learning';
+import type { LearnItem } from '@/types/learn';
 import { Button } from './ui/button';
 import { NextLearningStep } from './next-learning-step';
 
-export type LearningResultProps = {
+export type LearnResultProps = {
   userVocabularyListId: string;
-  items: LearningItem[];
+  items: LearnItem[];
   mistakes: Record<string, number>;
 };
 
-export const LearningResult: FC<LearningResultProps> = ({ userVocabularyListId, items, mistakes }) => {
+export const LearnResult: FC<LearnResultProps> = ({ userVocabularyListId, items, mistakes }) => {
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="mx-auto max-w-2xl text-center">
-        <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-3xl">Learning Session Complete! 🎉</h1>
+        <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-3xl">Learn Session Complete! 🎉</h1>
 
         <p className="mb-4 text-base text-muted-foreground md:mb-6 md:text-lg">
-          You&apos;ve completed learning {items.length} word{items.length > 1 ? 's' : ''}.
+          You practiced {items.length} word{items.length > 1 ? 's' : ''}.
         </p>
 
         <div className="mb-4 rounded-lg bg-muted/50 p-4 md:mb-6 md:p-6">
@@ -58,11 +58,7 @@ export const LearningResult: FC<LearningResultProps> = ({ userVocabularyListId, 
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
           <div className="w-full sm:w-auto">
             <Button asChild className="w-full sm:w-auto">
-              <Link
-                to="/vocabulary-lists/$userVocabularyListId/learning"
-                params={{ userVocabularyListId }}
-                reloadDocument
-              >
+              <Link to="/vocabulary-lists/$userVocabularyListId/learn" params={{ userVocabularyListId }} reloadDocument>
                 Learn More Words
               </Link>
             </Button>

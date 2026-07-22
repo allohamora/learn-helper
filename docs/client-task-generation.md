@@ -44,13 +44,13 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 **Notes**:
 
 - **No user input required**: This is a recognition-only task with no right/wrong answers
-- **Always first**: Showcase tasks always appear at the beginning of a learning session, before any active recall tasks
+- **Always first**: Showcase tasks always appear at the beginning of a Learn session, before any active recall tasks
 - **Complete information display**: Shows all available word data including value, spelling, pronunciation, translation, definition, level, and part of speech (when available)
 - **Audio playback**: Includes a button to play the word's pronunciation
 - **External link**: Provides a link to the Oxford Dictionary for additional context
 - **Source indication**: Shows whether the word comes from Oxford 5000 Words or Oxford Phrase List
-- **One task per word**: Each learning word gets exactly one showcase task
-- **Order preserved**: Showcase tasks maintain the order of the learning words array (not shuffled)
+- **One task per word**: Each Learn word gets exactly one showcase task
+- **Order preserved**: Showcase tasks maintain the order of the Learn words array (not shuffled)
 
 **UI Features**:
 
@@ -116,8 +116,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Up to 4 options**: 1 correct answer and up to 3 distractors (fewer if the session has fewer than 4 learning words)
-- **Distractors from session**: Wrong options are definitions from other words in the current learning session
+- **Up to 4 options**: 1 correct answer and up to 3 distractors (fewer if the session has fewer than 4 Learn words)
+- **Distractors from session**: Wrong options are definitions from other words in the current Learn session
 - **Shuffled options**: Options are randomly shuffled so the correct answer isn't always in the same position
 - **Shuffled tasks**: Word to Definition tasks are shuffled among themselves (not in showcase order)
 - **Ukrainian hint available**: The hint button reveals the Ukrainian translation to help students
@@ -251,8 +251,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Up to 4 options**: 1 correct Ukrainian translation and up to 3 distractors (fewer if the session has fewer than 4 learning words)
-- **Distractors from session**: Wrong options are Ukrainian translations from other words in the current learning session
+- **Up to 4 options**: 1 correct Ukrainian translation and up to 3 distractors (fewer if the session has fewer than 4 Learn words)
+- **Distractors from session**: Wrong options are Ukrainian translations from other words in the current Learn session
 - **Shuffled options**: Options are randomly shuffled
 - **Shuffled tasks**: Word to Translation tasks are shuffled among themselves
 - **Definition hint**: Unlike Word to Definition which uses translation as hint, this uses the English definition as hint

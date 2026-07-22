@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { SttButton } from './stt-button';
 import { HintButton } from './hint-button';
 import type { UserVocabularyItemTaskType } from '@/const/event';
-import type { ToVocabularyItemData } from '@/types/learning';
+import type { ToVocabularyItemData } from '@/types/learn';
 
 type ToVocabularyItemProps = {
   title: string;

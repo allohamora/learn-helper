@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 import type { UserVocabularyItemTaskType } from '@/const/event';
-import type { TextToVocabularyItemData } from '@/types/learning';
+import type { TextToVocabularyItemData } from '@/types/learn';
 import { ToVocabularyItem } from './to-vocabulary-item';
 
 type TextToVocabularyItemProps = {

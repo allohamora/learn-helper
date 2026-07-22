@@ -10,8 +10,8 @@ import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabular
 import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import {
   getUserVocabularyListItems,
-  getUserVocabularyListLearningItems,
-  getUserVocabularyListLearningTasks,
+  getUserVocabularyListLearnItems,
+  getUserVocabularyListLearnTasks,
   getUserVocabularyListProgress,
   moveUserVocabularyItemToNextStep,
   discoverUserVocabularyItem,
@@ -65,7 +65,7 @@ const seedUserItem = async ({
 
 type SeedValue = { value: string; encounterCount: number; offsetSeconds: number; status?: LearningStatus };
 
-const seedLearningUser = async ({ userSuffix, values }: { userSuffix: string; values: SeedValue[] }) => {
+const seedLearnUser = async ({ userSuffix, values }: { userSuffix: string; values: SeedValue[] }) => {
   const userId = `user-${userSuffix}`;
   await seedTestUser(userId);
 
@@ -624,10 +624,10 @@ describe('userVocabularyItemService', () => {
     });
   });
 
-  describe('getUserVocabularyListLearningItems', () => {
+  describe('getUserVocabularyListLearnItems', () => {
     it('returns an interleaved batch of new and review items', async () => {
-      const { userId, userList } = await seedLearningUser({
-        userSuffix: 'learning-items',
+      const { userId, userList } = await seedLearnUser({
+        userSuffix: 'learn-items',
         values: [
           { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
           { value: 'banana', encounterCount: 0, offsetSeconds: 1 },
@@ -636,22 +636,22 @@ describe('userVocabularyItemService', () => {
         ],
       });
 
-      const batch = await getUserVocabularyListLearningItems({ userId, userVocabularyListId: userList.id });
+      const batch = await getUserVocabularyListLearnItems({ userId, userVocabularyListId: userList.id });
 
       expect(batch.map((item) => item.vocabularyItem.value)).toEqual(['apple', 'cherry', 'date', 'banana']);
     });
 
     it('throws not found for a non-existent user list', async () => {
-      const userId = 'user-learning-items-missing';
+      const userId = 'user-learn-items-missing';
       await seedTestUser(userId);
 
-      await expect(getUserVocabularyListLearningItems({ userId, userVocabularyListId: MISSING_ID })).rejects.toThrow(
+      await expect(getUserVocabularyListLearnItems({ userId, userVocabularyListId: MISSING_ID })).rejects.toThrow(
         Exception,
       );
     });
   });
 
-  describe('getUserVocabularyListLearningTasks', () => {
+  describe('getUserVocabularyListLearnTasks', () => {
     let englishSpy: MockInstance<typeof vocabularyTaskService.toTranslateEnglishSentence>;
     let ukrainianSpy: MockInstance<typeof vocabularyTaskService.toTranslateUkrainianSentence>;
 
@@ -692,27 +692,27 @@ describe('userVocabularyItemService', () => {
     });
 
     it('throws not found for a non-existent user list', async () => {
-      const userId = 'user-learning-tasks-missing';
+      const userId = 'user-learn-tasks-missing';
       await seedTestUser(userId);
 
-      await expect(getUserVocabularyListLearningTasks({ userId, userVocabularyListId: MISSING_ID })).rejects.toThrow(
+      await expect(getUserVocabularyListLearnTasks({ userId, userVocabularyListId: MISSING_ID })).rejects.toThrow(
         Exception,
       );
     });
 
-    it('generates tasks for the current learning batch and records a task-generated event per generator', async () => {
-      const { userId, userList } = await seedLearningUser({
-        userSuffix: 'learning-tasks',
+    it('generates tasks for the current Learn batch and records a task-generated event per generator', async () => {
+      const { userId, userList } = await seedLearnUser({
+        userSuffix: 'learn-tasks',
         values: [
           { value: 'apple', encounterCount: 0, offsetSeconds: 0 },
           { value: 'banana', encounterCount: 0, offsetSeconds: 1 },
         ],
       });
 
-      const batch = await getUserVocabularyListLearningItems({ userId, userVocabularyListId: userList.id });
+      const batch = await getUserVocabularyListLearnItems({ userId, userVocabularyListId: userList.id });
       const expectedIds = batch.map((item) => item.id);
 
-      const result = await getUserVocabularyListLearningTasks({ userId, userVocabularyListId: userList.id });
+      const result = await getUserVocabularyListLearnTasks({ userId, userVocabularyListId: userList.id });
 
       expect(englishSpy).toHaveBeenCalledTimes(1);
       expect(englishSpy.mock.calls[0]?.[0].map((item) => item.id)).toEqual(expectedIds);
@@ -750,13 +750,13 @@ describe('userVocabularyItemService', () => {
       );
     });
 
-    it('returns empty task arrays and never calls the AI SDK when there are no learning items', async () => {
-      const userId = 'user-learning-tasks-empty';
+    it('returns empty task arrays and never calls the AI SDK when there are no Learn items', async () => {
+      const userId = 'user-learn-tasks-empty';
       await seedTestUser(userId);
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       const userList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
-      const result = await getUserVocabularyListLearningTasks({ userId, userVocabularyListId: userList.id });
+      const result = await getUserVocabularyListLearnTasks({ userId, userVocabularyListId: userList.id });
 
       expect(result).toEqual({ translateEnglishSentenceTasks: [], translateUkrainianSentenceTasks: [] });
       expect(englishSpy).not.toHaveBeenCalled();
@@ -769,7 +769,7 @@ describe('userVocabularyItemService', () => {
 
   describe('getUserVocabularyListProgress', () => {
     it('returns totals per status, defaulting missing statuses to zero', async () => {
-      const { userId, userList } = await seedLearningUser({
+      const { userId, userList } = await seedLearnUser({
         userSuffix: 'progress',
         values: [
           { value: 'apple', encounterCount: 0, offsetSeconds: 0, status: LearningStatus.Waiting },

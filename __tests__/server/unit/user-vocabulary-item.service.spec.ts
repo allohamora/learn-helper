@@ -1,16 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { buildLearningBatch } from '@/server/user-vocabulary/user-vocabulary-item.service';
+import { buildLearnBatch } from '@/server/user-vocabulary/user-vocabulary-item.service';
 
 const items = (prefix: string, count: number) =>
   Array.from({ length: count }, (_, itemIndex) => `${prefix}-${itemIndex}`);
 
 describe('user-vocabulary-item.service', () => {
-  describe('buildLearningBatch', () => {
+  describe('buildLearnBatch', () => {
     it('interleaves [new, review, review, new, review, review] when both pools are plentiful', () => {
       const newPool = items('new', 6);
       const reviewPool = items('review', 6);
 
-      expect(buildLearningBatch(newPool, reviewPool)).toEqual([
+      expect(buildLearnBatch(newPool, reviewPool)).toEqual([
         'new-0',
         'review-0',
         'review-1',
@@ -24,7 +24,7 @@ describe('user-vocabulary-item.service', () => {
       const newPool = items('new', 1);
       const reviewPool = items('review', 6);
 
-      expect(buildLearningBatch(newPool, reviewPool)).toEqual([
+      expect(buildLearnBatch(newPool, reviewPool)).toEqual([
         'new-0',
         'review-0',
         'review-1',
@@ -38,25 +38,18 @@ describe('user-vocabulary-item.service', () => {
       const newPool = items('new', 6);
       const reviewPool = items('review', 1);
 
-      expect(buildLearningBatch(newPool, reviewPool)).toEqual([
-        'new-0',
-        'review-0',
-        'new-1',
-        'new-2',
-        'new-3',
-        'new-4',
-      ]);
+      expect(buildLearnBatch(newPool, reviewPool)).toEqual(['new-0', 'review-0', 'new-1', 'new-2', 'new-3', 'new-4']);
     });
 
     it('returns a shorter batch when both pools combined have fewer than 6 items', () => {
       const newPool = items('new', 1);
       const reviewPool = items('review', 1);
 
-      expect(buildLearningBatch(newPool, reviewPool)).toEqual(['new-0', 'review-0']);
+      expect(buildLearnBatch(newPool, reviewPool)).toEqual(['new-0', 'review-0']);
     });
 
     it('returns an empty batch when both pools are empty', () => {
-      expect(buildLearningBatch([], [])).toEqual([]);
+      expect(buildLearnBatch([], [])).toEqual([]);
     });
 
     it('does not mutate the input pools', () => {
@@ -65,7 +58,7 @@ describe('user-vocabulary-item.service', () => {
       const originalNewPool = [...newPool];
       const originalReviewPool = [...reviewPool];
 
-      buildLearningBatch(newPool, reviewPool);
+      buildLearnBatch(newPool, reviewPool);
 
       expect(newPool).toEqual(originalNewPool);
       expect(reviewPool).toEqual(originalReviewPool);

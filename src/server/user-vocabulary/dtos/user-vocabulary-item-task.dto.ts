@@ -7,7 +7,7 @@ export const userVocabularyItemTaskDto = z.object({
   translation: z.string(),
 });
 
-export const userVocabularyListLearningTasksDto = z.object({
+export const userVocabularyListLearnTasksDto = z.object({
   translateEnglishSentenceTasks: z.array(userVocabularyItemTaskDto),
   translateUkrainianSentenceTasks: z.array(userVocabularyItemTaskDto),
 });

@@ -17,8 +17,8 @@ import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as AuthVocabularyListsRouteImport } from './routes/_auth/vocabulary-lists'
 import { Route as AuthStatisticsRouteImport } from './routes/_auth/statistics'
 import { Route as AuthVocabularyListsUserVocabularyListIdRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId'
-import { Route as AuthVocabularyListsUserVocabularyListIdLearningRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId_.learning'
-import { Route as AuthVocabularyListsUserVocabularyListIdDiscoveryRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId_.discovery'
+import { Route as AuthVocabularyListsUserVocabularyListIdLearnRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId_.learn'
+import { Route as AuthVocabularyListsUserVocabularyListIdDiscoverRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId_.discover'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -60,16 +60,16 @@ const AuthVocabularyListsUserVocabularyListIdRoute =
     path: '/vocabulary-lists/$userVocabularyListId',
     getParentRoute: () => AuthRoute,
   } as any)
-const AuthVocabularyListsUserVocabularyListIdLearningRoute =
-  AuthVocabularyListsUserVocabularyListIdLearningRouteImport.update({
-    id: '/vocabulary-lists_/$userVocabularyListId_/learning',
-    path: '/vocabulary-lists/$userVocabularyListId/learning',
+const AuthVocabularyListsUserVocabularyListIdLearnRoute =
+  AuthVocabularyListsUserVocabularyListIdLearnRouteImport.update({
+    id: '/vocabulary-lists_/$userVocabularyListId_/learn',
+    path: '/vocabulary-lists/$userVocabularyListId/learn',
     getParentRoute: () => AuthRoute,
   } as any)
-const AuthVocabularyListsUserVocabularyListIdDiscoveryRoute =
-  AuthVocabularyListsUserVocabularyListIdDiscoveryRouteImport.update({
-    id: '/vocabulary-lists_/$userVocabularyListId_/discovery',
-    path: '/vocabulary-lists/$userVocabularyListId/discovery',
+const AuthVocabularyListsUserVocabularyListIdDiscoverRoute =
+  AuthVocabularyListsUserVocabularyListIdDiscoverRouteImport.update({
+    id: '/vocabulary-lists_/$userVocabularyListId_/discover',
+    path: '/vocabulary-lists/$userVocabularyListId/discover',
     getParentRoute: () => AuthRoute,
   } as any)
 
@@ -81,8 +81,8 @@ export interface FileRoutesByFullPath {
   '/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
   '/vocabulary-lists/$userVocabularyListId': typeof AuthVocabularyListsUserVocabularyListIdRoute
-  '/vocabulary-lists/$userVocabularyListId/discovery': typeof AuthVocabularyListsUserVocabularyListIdDiscoveryRoute
-  '/vocabulary-lists/$userVocabularyListId/learning': typeof AuthVocabularyListsUserVocabularyListIdLearningRoute
+  '/vocabulary-lists/$userVocabularyListId/discover': typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
+  '/vocabulary-lists/$userVocabularyListId/learn': typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
 }
 export interface FileRoutesByTo {
   '/error': typeof ErrorRoute
@@ -92,8 +92,8 @@ export interface FileRoutesByTo {
   '/api/$': typeof ApiSplatRoute
   '/': typeof AuthIndexRoute
   '/vocabulary-lists/$userVocabularyListId': typeof AuthVocabularyListsUserVocabularyListIdRoute
-  '/vocabulary-lists/$userVocabularyListId/discovery': typeof AuthVocabularyListsUserVocabularyListIdDiscoveryRoute
-  '/vocabulary-lists/$userVocabularyListId/learning': typeof AuthVocabularyListsUserVocabularyListIdLearningRoute
+  '/vocabulary-lists/$userVocabularyListId/discover': typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
+  '/vocabulary-lists/$userVocabularyListId/learn': typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,8 +105,8 @@ export interface FileRoutesById {
   '/api/$': typeof ApiSplatRoute
   '/_auth/': typeof AuthIndexRoute
   '/_auth/vocabulary-lists_/$userVocabularyListId': typeof AuthVocabularyListsUserVocabularyListIdRoute
-  '/_auth/vocabulary-lists_/$userVocabularyListId_/discovery': typeof AuthVocabularyListsUserVocabularyListIdDiscoveryRoute
-  '/_auth/vocabulary-lists_/$userVocabularyListId_/learning': typeof AuthVocabularyListsUserVocabularyListIdLearningRoute
+  '/_auth/vocabulary-lists_/$userVocabularyListId_/discover': typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
+  '/_auth/vocabulary-lists_/$userVocabularyListId_/learn': typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,8 +118,8 @@ export interface FileRouteTypes {
     | '/vocabulary-lists'
     | '/api/$'
     | '/vocabulary-lists/$userVocabularyListId'
-    | '/vocabulary-lists/$userVocabularyListId/discovery'
-    | '/vocabulary-lists/$userVocabularyListId/learning'
+    | '/vocabulary-lists/$userVocabularyListId/discover'
+    | '/vocabulary-lists/$userVocabularyListId/learn'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/error'
@@ -129,8 +129,8 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/'
     | '/vocabulary-lists/$userVocabularyListId'
-    | '/vocabulary-lists/$userVocabularyListId/discovery'
-    | '/vocabulary-lists/$userVocabularyListId/learning'
+    | '/vocabulary-lists/$userVocabularyListId/discover'
+    | '/vocabulary-lists/$userVocabularyListId/learn'
   id:
     | '__root__'
     | '/_auth'
@@ -141,8 +141,8 @@ export interface FileRouteTypes {
     | '/api/$'
     | '/_auth/'
     | '/_auth/vocabulary-lists_/$userVocabularyListId'
-    | '/_auth/vocabulary-lists_/$userVocabularyListId_/discovery'
-    | '/_auth/vocabulary-lists_/$userVocabularyListId_/learning'
+    | '/_auth/vocabulary-lists_/$userVocabularyListId_/discover'
+    | '/_auth/vocabulary-lists_/$userVocabularyListId_/learn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,18 +210,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVocabularyListsUserVocabularyListIdRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/vocabulary-lists_/$userVocabularyListId_/learning': {
-      id: '/_auth/vocabulary-lists_/$userVocabularyListId_/learning'
-      path: '/vocabulary-lists/$userVocabularyListId/learning'
-      fullPath: '/vocabulary-lists/$userVocabularyListId/learning'
-      preLoaderRoute: typeof AuthVocabularyListsUserVocabularyListIdLearningRouteImport
+    '/_auth/vocabulary-lists_/$userVocabularyListId_/learn': {
+      id: '/_auth/vocabulary-lists_/$userVocabularyListId_/learn'
+      path: '/vocabulary-lists/$userVocabularyListId/learn'
+      fullPath: '/vocabulary-lists/$userVocabularyListId/learn'
+      preLoaderRoute: typeof AuthVocabularyListsUserVocabularyListIdLearnRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_auth/vocabulary-lists_/$userVocabularyListId_/discovery': {
-      id: '/_auth/vocabulary-lists_/$userVocabularyListId_/discovery'
-      path: '/vocabulary-lists/$userVocabularyListId/discovery'
-      fullPath: '/vocabulary-lists/$userVocabularyListId/discovery'
-      preLoaderRoute: typeof AuthVocabularyListsUserVocabularyListIdDiscoveryRouteImport
+    '/_auth/vocabulary-lists_/$userVocabularyListId_/discover': {
+      id: '/_auth/vocabulary-lists_/$userVocabularyListId_/discover'
+      path: '/vocabulary-lists/$userVocabularyListId/discover'
+      fullPath: '/vocabulary-lists/$userVocabularyListId/discover'
+      preLoaderRoute: typeof AuthVocabularyListsUserVocabularyListIdDiscoverRouteImport
       parentRoute: typeof AuthRoute
     }
   }
@@ -232,8 +232,8 @@ interface AuthRouteChildren {
   AuthVocabularyListsRoute: typeof AuthVocabularyListsRoute
   AuthIndexRoute: typeof AuthIndexRoute
   AuthVocabularyListsUserVocabularyListIdRoute: typeof AuthVocabularyListsUserVocabularyListIdRoute
-  AuthVocabularyListsUserVocabularyListIdDiscoveryRoute: typeof AuthVocabularyListsUserVocabularyListIdDiscoveryRoute
-  AuthVocabularyListsUserVocabularyListIdLearningRoute: typeof AuthVocabularyListsUserVocabularyListIdLearningRoute
+  AuthVocabularyListsUserVocabularyListIdDiscoverRoute: typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
+  AuthVocabularyListsUserVocabularyListIdLearnRoute: typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
@@ -242,10 +242,10 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthIndexRoute: AuthIndexRoute,
   AuthVocabularyListsUserVocabularyListIdRoute:
     AuthVocabularyListsUserVocabularyListIdRoute,
-  AuthVocabularyListsUserVocabularyListIdDiscoveryRoute:
-    AuthVocabularyListsUserVocabularyListIdDiscoveryRoute,
-  AuthVocabularyListsUserVocabularyListIdLearningRoute:
-    AuthVocabularyListsUserVocabularyListIdLearningRoute,
+  AuthVocabularyListsUserVocabularyListIdDiscoverRoute:
+    AuthVocabularyListsUserVocabularyListIdDiscoverRoute,
+  AuthVocabularyListsUserVocabularyListIdLearnRoute:
+    AuthVocabularyListsUserVocabularyListIdLearnRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

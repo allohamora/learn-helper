@@ -3,13 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
-import { useCreateVocabularyListLearningEvents } from '@/hooks/use-create-vocabulary-list-learning-events';
+import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
 import { appClient } from '@/services/api';
 import type {
   DefinitionToVocabularyItemTask,
-  LearningItem,
-  LearningTask,
-  LearningTasksData,
+  LearnItem,
+  LearnTask,
+  LearnTasksData,
   PronunciationToVocabularyItemTask,
   ShowcaseTask,
   TranslateEnglishSentenceTask,
@@ -17,10 +17,10 @@ import type {
   TranslationToVocabularyItemTask,
   VocabularyItemToDefinitionTask,
   VocabularyItemToTranslationTask,
-} from '@/types/learning';
-import { LearningShowcaseCard } from './learning-showcase-card';
+} from '@/types/learn';
+import { LearnShowcaseCard } from './learn-showcase-card';
 import { PronunciationToVocabularyItem } from './pronunciation-to-vocabulary-item';
-import { LearningResult } from './learning-result';
+import { LearnResult } from './learn-result';
 import { TextToVocabularyItem } from './text-to-vocabulary-item';
 import { VocabularyItemToOptions } from './vocabulary-item-to-options';
 import { WordOrder } from './word-order';
@@ -44,7 +44,7 @@ const shuffle = <T,>(array: T[]): T[] => {
 // prompt tricks, disabled reasoning (because with it you will have a 1 minute request for a task) and etc
 const removePeriods = (text: string) => text.replace(/\.$/gm, '');
 
-const toShowcaseTasks = (items: LearningItem[]) => {
+const toShowcaseTasks = (items: LearnItem[]) => {
   return items.map((item): ShowcaseTask => ({
     id: crypto.randomUUID(),
     type: UserVocabularyItemTaskType.Showcase,
@@ -55,7 +55,7 @@ const toShowcaseTasks = (items: LearningItem[]) => {
   }));
 };
 
-const toVocabularyItemToDefinitionTasks = (items: LearningItem[]) => {
+const toVocabularyItemToDefinitionTasks = (items: LearnItem[]) => {
   return items.map((target): VocabularyItemToDefinitionTask => {
     const alternatives = shuffle(items)
       .filter((item) => item.id !== target.id)
@@ -77,7 +77,7 @@ const toVocabularyItemToDefinitionTasks = (items: LearningItem[]) => {
   });
 };
 
-const toDefinitionToVocabularyItemTasks = (items: LearningItem[]) => {
+const toDefinitionToVocabularyItemTasks = (items: LearnItem[]) => {
   return items.map((target): DefinitionToVocabularyItemTask => {
     return {
       id: crypto.randomUUID(),
@@ -92,7 +92,7 @@ const toDefinitionToVocabularyItemTasks = (items: LearningItem[]) => {
   });
 };
 
-const toVocabularyItemToTranslationTasks = (items: LearningItem[]): VocabularyItemToTranslationTask[] => {
+const toVocabularyItemToTranslationTasks = (items: LearnItem[]): VocabularyItemToTranslationTask[] => {
   return items.map((target): VocabularyItemToTranslationTask => {
     const alternatives = shuffle(items)
       .filter((item) => item.id !== target.id)
@@ -115,7 +115,7 @@ const toVocabularyItemToTranslationTasks = (items: LearningItem[]): VocabularyIt
   });
 };
 
-const toTranslationToVocabularyItemTasks = (items: LearningItem[]): TranslationToVocabularyItemTask[] => {
+const toTranslationToVocabularyItemTasks = (items: LearnItem[]): TranslationToVocabularyItemTask[] => {
   return items.map((target): TranslationToVocabularyItemTask => {
     return {
       id: crypto.randomUUID(),
@@ -130,7 +130,7 @@ const toTranslationToVocabularyItemTasks = (items: LearningItem[]): TranslationT
   });
 };
 
-const toPronunciationToVocabularyItemTasks = (items: LearningItem[]): PronunciationToVocabularyItemTask[] => {
+const toPronunciationToVocabularyItemTasks = (items: LearnItem[]): PronunciationToVocabularyItemTask[] => {
   return items.flatMap((item) => {
     if (!item.vocabularyItem.pronunciation) return [];
 
@@ -149,7 +149,7 @@ const toPronunciationToVocabularyItemTasks = (items: LearningItem[]): Pronunciat
   });
 };
 
-export const toClientTasks = (items: LearningItem[]): LearningTask[] => {
+export const toClientTasks = (items: LearnItem[]): LearnTask[] => {
   const showcaseTasks = toShowcaseTasks(items);
   const vocabularyItemToDefinitionTasks = toVocabularyItemToDefinitionTasks(items);
   const definitionToVocabularyItemTasks = toDefinitionToVocabularyItemTasks(items);
@@ -168,7 +168,7 @@ export const toClientTasks = (items: LearningItem[]): LearningTask[] => {
 };
 
 const toTranslateEnglishSentenceTasks = (
-  tasks: LearningTasksData['translateEnglishSentenceTasks'],
+  tasks: LearnTasksData['translateEnglishSentenceTasks'],
 ): TranslateEnglishSentenceTask[] => {
   return tasks.map(({ id, sentence, translation }) => {
     const originalWords = removePeriods(translation)
@@ -189,7 +189,7 @@ const toTranslateEnglishSentenceTasks = (
 };
 
 const toTranslateUkrainianSentenceTasks = (
-  tasks: LearningTasksData['translateUkrainianSentenceTasks'],
+  tasks: LearnTasksData['translateUkrainianSentenceTasks'],
 ): TranslateUkrainianSentenceTask[] => {
   return tasks.map(({ id, sentence, translation }) => {
     const originalWords = removePeriods(translation)
@@ -209,7 +209,7 @@ const toTranslateUkrainianSentenceTasks = (
   });
 };
 
-export const toServerTasks = (_items: LearningItem[], tasks: LearningTasksData): LearningTask[] => {
+export const toServerTasks = (_items: LearnItem[], tasks: LearnTasksData): LearnTask[] => {
   const translateEnglishSentenceTasks = toTranslateEnglishSentenceTasks(tasks.translateEnglishSentenceTasks);
   const translateUkrainianSentenceTasks = toTranslateUkrainianSentenceTasks(tasks.translateUkrainianSentenceTasks);
 
@@ -219,70 +219,70 @@ export const toServerTasks = (_items: LearningItem[], tasks: LearningTasksData):
 const getRetryId = () => `retry-${crypto.randomUUID()}`;
 const isRetryId = (id: string) => id.startsWith('retry-');
 
-export const Learning: FC<Props> = ({ userVocabularyListId }) => {
+export const Learn: FC<Props> = ({ userVocabularyListId }) => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<string, number>>({});
   const [isFinished, setIsFinished] = useState(false);
-  const [retryTasks, setRetryTasks] = useState<(LearningTask & { originalTaskId: string })[]>([]);
+  const [retryTasks, setRetryTasks] = useState<(LearnTask & { originalTaskId: string })[]>([]);
   const [startedAt, setStartedAt] = useState(new Date());
 
-  const learningItemsQuery = useQuery({
-    queryKey: ['vocabulary-list-learning-items', userVocabularyListId],
+  const learnItemsQuery = useQuery({
+    queryKey: ['vocabulary-list-learn-items', userVocabularyListId],
     queryFn: async () => {
-      const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'][
-        'learning-items'
-      ].$get({ param: { userVocabularyListId } });
-      if (!response.ok) throw new Error('Failed to load learning items');
+      const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
+        param: { userVocabularyListId },
+      });
+      if (!response.ok) throw new Error('Failed to load Learn items');
       return (await response.json()).data;
     },
   });
 
-  const learningTasksQuery = useQuery({
-    queryKey: ['vocabulary-list-learning-tasks', userVocabularyListId],
+  const learnTasksQuery = useQuery({
+    queryKey: ['vocabulary-list-learn-tasks', userVocabularyListId],
     queryFn: async () => {
-      const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'][
-        'learning-tasks'
-      ].$get({ param: { userVocabularyListId } });
-      if (!response.ok) throw new Error('Failed to load learning tasks');
+      const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
+        param: { userVocabularyListId },
+      });
+      if (!response.ok) throw new Error('Failed to load Learn tasks');
       return (await response.json()).data;
     },
   });
 
-  const { createVocabularyListLearningEvent } = useCreateVocabularyListLearningEvents(userVocabularyListId);
+  const { createVocabularyListLearnEvent } = useCreateVocabularyListLearnEvents(userVocabularyListId);
 
   // to preserve the same task ids between re-renders
   const clientTasks = useMemo(() => {
-    if (!learningItemsQuery.data) {
+    if (!learnItemsQuery.data) {
       return [];
     }
 
-    return toClientTasks(learningItemsQuery.data);
-  }, [learningItemsQuery.data]);
+    return toClientTasks(learnItemsQuery.data);
+  }, [learnItemsQuery.data]);
 
   // to preserve the same task ids between re-renders
   const serverTasks = useMemo(() => {
-    if (!learningItemsQuery.data || !learningTasksQuery.data) {
+    if (!learnItemsQuery.data || !learnTasksQuery.data) {
       return [];
     }
 
-    return toServerTasks(learningItemsQuery.data, learningTasksQuery.data);
-  }, [learningItemsQuery.data, learningTasksQuery.data]);
+    return toServerTasks(learnItemsQuery.data, learnTasksQuery.data);
+  }, [learnItemsQuery.data, learnTasksQuery.data]);
 
   const tasks = [...clientTasks, ...serverTasks, ...retryTasks];
 
   const state = useMemo(() => {
-    if (!learningItemsQuery.data) {
+    if (!learnItemsQuery.data) {
       return {};
     }
 
-    return learningItemsQuery.data.reduce<Record<string, LearningItem>>((state, item) => {
+    return learnItemsQuery.data.reduce<Record<string, LearnItem>>((state, item) => {
       state[item.id] = item;
 
       return state;
     }, {});
-  }, [learningItemsQuery.data]);
+  }, [learnItemsQuery.data]);
 
-  if (learningItemsQuery.isLoading || !learningItemsQuery.data) {
+  if (learnItemsQuery.isLoading || !learnItemsQuery.data) {
     return (
       <div className="flex items-center justify-center">
         <Loader />
@@ -290,18 +290,14 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
     );
   }
 
-  if (learningItemsQuery.error || learningTasksQuery.error) {
+  if (learnItemsQuery.error || learnTasksQuery.error) {
     return (
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
-          <p className="mb-6 text-muted-foreground">Failed to load learning data. Please try again.</p>
+          <p className="mb-6 text-muted-foreground">Failed to load Learn data. Please try again.</p>
           <Button size="lg" asChild>
-            <Link
-              to="/vocabulary-lists/$userVocabularyListId/learning"
-              params={{ userVocabularyListId }}
-              reloadDocument
-            >
+            <Link to="/vocabulary-lists/$userVocabularyListId/learn" params={{ userVocabularyListId }} reloadDocument>
               Try Again
             </Link>
           </Button>
@@ -332,13 +328,13 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
     const durationMs = Date.now() - startedAt.getTime();
 
     if (currentTask.type === UserVocabularyItemTaskType.Showcase) {
-      createVocabularyListLearningEvent({
+      createVocabularyListLearnEvent({
         type: EventType.UserVocabularyItemTaskShowcaseViewed,
         userVocabularyItemId: currentTask.data.id,
         durationMs,
       });
     } else {
-      createVocabularyListLearningEvent({
+      createVocabularyListLearnEvent({
         type: isRetryId(currentTask.id)
           ? EventType.UserVocabularyItemTaskRetryPassed
           : EventType.UserVocabularyItemTaskPassed,
@@ -355,7 +351,7 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
     createTaskCompletedEvent();
 
     const nextIdx = idx + 1;
-    if (nextIdx < tasks.length || learningTasksQuery.isLoading) {
+    if (nextIdx < tasks.length || learnTasksQuery.isLoading) {
       setIdx(nextIdx);
       return;
     }
@@ -379,7 +375,7 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
       throw new Error('Vocabulary item is not found');
     }
 
-    createVocabularyListLearningEvent({
+    createVocabularyListLearnEvent({
       type: EventType.UserVocabularyItemTaskFailed,
       userVocabularyItemId,
       userVocabularyItemTaskType: currentTask.type,
@@ -392,7 +388,7 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
         {!isFinished ? (
           <>
             {currentTask?.type === UserVocabularyItemTaskType.Showcase && (
-              <LearningShowcaseCard data={currentTask.data} onNext={onNext} item={state[currentTask.data.id]} />
+              <LearnShowcaseCard data={currentTask.data} onNext={onNext} item={state[currentTask.data.id]} />
             )}
 
             {currentTask?.type === UserVocabularyItemTaskType.VocabularyItemToDefinition && (
@@ -480,18 +476,14 @@ export const Learning: FC<Props> = ({ userVocabularyListId }) => {
               />
             )}
 
-            {!currentTask && learningTasksQuery.isLoading && (
+            {!currentTask && learnTasksQuery.isLoading && (
               <div className="flex items-center justify-center">
                 <Loader />
               </div>
             )}
           </>
         ) : (
-          <LearningResult
-            userVocabularyListId={userVocabularyListId}
-            items={learningItemsQuery.data}
-            mistakes={mistakes}
-          />
+          <LearnResult userVocabularyListId={userVocabularyListId} items={learnItemsQuery.data} mistakes={mistakes} />
         )}
       </div>
     </div>

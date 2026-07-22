@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { toClientTasks, toServerTasks } from '@/components/learning';
+import { toClientTasks, toServerTasks } from '@/components/learn';
 import { UserVocabularyItemTaskType } from '@/const/event';
-import type { LearningItem, LearningTasksData } from '@/types/learning';
+import type { LearnItem, LearnTasksData } from '@/types/learn';
 
-const learningItem = ({ id, value, pronunciation }: { id: string; value: string; pronunciation: string | null }) => {
+const learnItem = ({ id, value, pronunciation }: { id: string; value: string; pronunciation: string | null }) => {
   return {
     id,
     vocabularyItem: {
@@ -18,14 +18,14 @@ const learningItem = ({ id, value, pronunciation }: { id: string; value: string;
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
-  } as LearningItem;
+  } as LearnItem;
 };
 
-describe('learning task conversion', () => {
+describe('Learn task conversion', () => {
   it('generates every client task family and skips missing pronunciation audio', () => {
     const tasks = toClientTasks([
-      learningItem({ id: crypto.randomUUID(), value: 'first', pronunciation: 'https://example.com/first.mp3' }),
-      learningItem({ id: crypto.randomUUID(), value: 'second', pronunciation: null }),
+      learnItem({ id: crypto.randomUUID(), value: 'first', pronunciation: 'https://example.com/first.mp3' }),
+      learnItem({ id: crypto.randomUUID(), value: 'second', pronunciation: null }),
     ]);
 
     const counts = Object.groupBy(tasks, (task) => task.type);
@@ -42,7 +42,7 @@ describe('learning task conversion', () => {
     const tasks = toServerTasks([], {
       translateEnglishSentenceTasks: [{ id, sentence: 'English sentence.', translation: 'one two three.' }],
       translateUkrainianSentenceTasks: [],
-    } as LearningTasksData);
+    } as LearnTasksData);
 
     expect(tasks).toHaveLength(1);
     expect(tasks[0]).toMatchObject({

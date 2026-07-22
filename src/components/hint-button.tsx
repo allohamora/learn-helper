@@ -3,7 +3,7 @@ import { CircleQuestionMarkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EventType, type UserVocabularyItemTaskType } from '@/const/event';
-import { useCreateVocabularyListLearningEvents } from '@/hooks/use-create-vocabulary-list-learning-events';
+import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
 import { cn } from '@/lib/utils';
 
 type HintButtonProps = {
@@ -21,11 +21,11 @@ export const HintButton: FC<HintButtonProps> = ({
   taskType,
   className,
 }) => {
-  const { createVocabularyListLearningEvent } = useCreateVocabularyListLearningEvents(userVocabularyListId);
+  const { createVocabularyListLearnEvent } = useCreateVocabularyListLearnEvents(userVocabularyListId);
 
   const handleClick = () => {
     toast.info('Hint', { description: hint });
-    createVocabularyListLearningEvent({
+    createVocabularyListLearnEvent({
       type: EventType.UserVocabularyItemTaskHintUsed,
       userVocabularyItemId,
       userVocabularyItemTaskType: taskType,

@@ -13,19 +13,19 @@ import { rateLimit } from '../auth/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { userVocabularyItemWithRelationsDto } from './dtos/user-vocabulary-item-with-relations.dto';
-import { userVocabularyListLearningTasksDto } from './dtos/user-vocabulary-item-task.dto';
+import { userVocabularyListLearnTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
 import { userVocabularyListWithRelationsDto } from './dtos/user-vocabulary-list-with-relations.dto';
 import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary-list.dto';
 import { discoverUserVocabularyItemDto } from './dtos/discover-user-vocabulary-item.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
-import { createVocabularyListLearningEventsDto } from './dtos/create-vocabulary-list-learning-events.dto';
+import { createVocabularyListLearnEventsDto } from './dtos/create-vocabulary-list-learn-events.dto';
 import {
   getUserVocabularyListItems,
-  getUserVocabularyListLearningItems,
-  getUserVocabularyListLearningTasks,
+  getUserVocabularyListLearnItems,
+  getUserVocabularyListLearnTasks,
   getUserVocabularyListProgress,
-  createVocabularyListLearningEvents,
+  createVocabularyListLearnEvents,
   moveUserVocabularyItemToNextStep,
   discoverUserVocabularyItem,
   undoUserVocabularyItemStatus,
@@ -153,14 +153,14 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
-      path: '/{userVocabularyListId}/learning-items',
+      path: '/{userVocabularyListId}/learn/items',
       tags: ['Vocabulary'],
       request: {
         params: z.object({ userVocabularyListId: z.uuidv7() }),
       },
       responses: {
         ...successOkResponse({
-          description: "A batch of the list's words for a Learning session",
+          description: "A batch of the list's words for a Learn session",
           schema: z.array(userVocabularyItemWithRelationsDto),
         }),
       },
@@ -174,7 +174,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await getUserVocabularyListLearningItems({ userId: user.id, userVocabularyListId }),
+          data: await getUserVocabularyListLearnItems({ userId: user.id, userVocabularyListId }),
         }),
       );
     },
@@ -182,15 +182,15 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
-      path: '/{userVocabularyListId}/learning-tasks',
+      path: '/{userVocabularyListId}/learn/tasks',
       tags: ['Vocabulary'],
       request: {
         params: z.object({ userVocabularyListId: z.uuidv7() }),
       },
       responses: {
         ...successOkResponse({
-          description: 'AI-generated sentence-arrangement tasks for the current learning batch',
-          schema: userVocabularyListLearningTasksDto,
+          description: 'AI-generated sentence-arrangement tasks for the current Learn batch',
+          schema: userVocabularyListLearnTasksDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -203,7 +203,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 200,
-          data: await getUserVocabularyListLearningTasks({ userId: user.id, userVocabularyListId }),
+          data: await getUserVocabularyListLearnTasks({ userId: user.id, userVocabularyListId }),
         }),
       );
     },
@@ -240,21 +240,21 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'post',
-      path: '/{userVocabularyListId}/events',
+      path: '/{userVocabularyListId}/learn/events',
       tags: ['Vocabulary'],
       request: {
         params: z.object({ userVocabularyListId: z.uuidv7() }),
         body: {
           content: {
             'application/json': {
-              schema: createVocabularyListLearningEventsDto,
+              schema: createVocabularyListLearnEventsDto,
             },
           },
         },
       },
       responses: {
         ...successCreatedResponse({
-          description: 'Learning events created',
+          description: 'Learn events created',
           schema: z.array(eventDto),
         }),
       },
@@ -269,7 +269,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       return c.json(
         ...toSuccessResponse({
           status: 201,
-          data: await createVocabularyListLearningEvents({ ...body, userId: user.id, userVocabularyListId }),
+          data: await createVocabularyListLearnEvents({ ...body, userId: user.id, userVocabularyListId }),
         }),
       );
     },

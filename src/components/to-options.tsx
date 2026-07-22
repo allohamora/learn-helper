@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HintButton } from './hint-button';
 import type { UserVocabularyItemTaskType } from '@/const/event';
-import type { ToOptionsData } from '@/types/learning';
+import type { ToOptionsData } from '@/types/learn';
 
 type ToOptionsProps = {
   title: string;

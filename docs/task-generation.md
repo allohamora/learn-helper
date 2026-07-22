@@ -4,7 +4,7 @@ This document summarizes learning task generation across server (AI-generated) a
 
 ## Goal
 
-Task generation aims to build a short learning session (under 30 minutes) that helps learners get acquainted with a focused set of words rather than master them deeply. At the end of the session, learners decide whether to move each word to the next step based on their confidence.
+Task generation aims to build a short Learn session (under 30 minutes) that helps learners get acquainted with a focused set of words rather than master them deeply. At the end of the session, learners decide whether to move each word to the next step based on their confidence.
 
 ## Task sources
 
@@ -67,7 +67,7 @@ These criteria define why a task belongs earlier or later in a sequence.
 
 ## Order scoring (current order)
 
-Scores are 0-10 per criterion. Overall score is the average of all criteria (0-10). Rows follow the task sequence in `src/components/learning.tsx`.
+Scores are 0-10 per criterion. Overall score is the average of all criteria (0-10). Rows follow the task sequence in `src/components/learn.tsx`.
 
 | Task                         | Source | Familiarity | Cues | Load | Modality | Feedback | Interleave | Transfer | Engagement | Overall |
 | ---------------------------- | ------ | ----------- | ---- | ---- | -------- | -------- | ---------- | -------- | ---------- | ------- |

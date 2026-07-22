@@ -4,7 +4,7 @@ import { Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import type { UserVocabularyItemTaskType } from '@/const/event';
-import type { PronunciationToVocabularyItemTask } from '@/types/learning';
+import type { PronunciationToVocabularyItemTask } from '@/types/learn';
 import { ToVocabularyItem } from './to-vocabulary-item';
 
 type PronunciationToVocabularyItemProps = {

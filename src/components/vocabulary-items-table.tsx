@@ -53,8 +53,8 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       setIsUndoConfirmationOpen(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learning-items'] });
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learning-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
       toast.success('Word progress reset to waiting in all lists');
     },
     onError: () => toast.error('Failed to reset word progress'),
@@ -138,7 +138,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
             <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
             <DialogDescription>
               This will erase {item.encounterCount} completed {item.encounterCount === 1 ? 'encounter' : 'encounters'}{' '}
-              and return the word to Discovery. Because word progress is shared, this change applies to every list
+              and return the word to Discover. Because word progress is shared, this change applies to every list
               containing the word.
             </DialogDescription>
           </DialogHeader>

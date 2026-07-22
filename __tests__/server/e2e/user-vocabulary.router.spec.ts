@@ -284,8 +284,8 @@ describe('user-vocabulary.router', () => {
     });
   });
 
-  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learning-items', () => {
-    it('returns a batch of learning items following the [new, review, review, new, review, review] pattern', async () => {
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learn/items', () => {
+    it('returns a batch of Learn items following the [new, review, review, new, review, review] pattern', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
@@ -306,7 +306,7 @@ describe('user-vocabulary.router', () => {
           .where(eq(userVocabularyItem.id, userItem.id));
       }
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
@@ -346,7 +346,7 @@ describe('user-vocabulary.router', () => {
           .where(eq(userVocabularyItem.id, userItem.id));
       }
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
@@ -379,7 +379,7 @@ describe('user-vocabulary.router', () => {
         .set({ status: LearningStatus.Learning, encounterCount: 0 })
         .where(eq(userVocabularyItem.userId, USER_ID));
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
@@ -398,7 +398,7 @@ describe('user-vocabulary.router', () => {
       auth.unauthorized();
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(401);
@@ -409,14 +409,14 @@ describe('user-vocabulary.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(404);
     });
   });
 
-  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learning-tasks', () => {
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learn/tasks', () => {
     let englishSpy: MockInstance<typeof vocabularyTaskService.toTranslateEnglishSentence>;
     let ukrainianSpy: MockInstance<typeof vocabularyTaskService.toTranslateUkrainianSentence>;
 
@@ -460,7 +460,7 @@ describe('user-vocabulary.router', () => {
       auth.unauthorized();
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(401);
@@ -471,13 +471,13 @@ describe('user-vocabulary.router', () => {
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
         param: { userVocabularyListId: list.id },
       });
       expect(res.status).toBe(404);
     });
 
-    it('returns tasks for the current learning batch and records a task-generated event per generator', async () => {
+    it('returns tasks for the current Learn batch and records a task-generated event per generator', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
@@ -490,14 +490,14 @@ describe('user-vocabulary.router', () => {
         .set({ status: LearningStatus.Learning, encounterCount: 0 })
         .where(eq(userVocabularyItem.userId, USER_ID));
 
-      const itemsRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get(
-        { param: { userVocabularyListId: userList.id } },
-      );
+      const itemsRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
+        param: { userVocabularyListId: userList.id },
+      });
       const itemsBody = await itemsRes.json();
       const expectedIds = itemsBody.data.map((item) => item.id);
       expect(expectedIds).toHaveLength(6);
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
@@ -516,14 +516,14 @@ describe('user-vocabulary.router', () => {
       expect(events).toHaveLength(2);
     });
 
-    it('returns empty task arrays and does not call the AI SDK when the learning queue is empty', async () => {
+    it('returns empty task arrays and does not call the AI SDK when the Learn queue is empty', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList();
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(200);
@@ -550,14 +550,14 @@ describe('user-vocabulary.router', () => {
       const [itemsResponses, tasksResponses] = await Promise.all([
         Promise.all(
           Array.from({ length: 3 }, () =>
-            client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-items'].$get({
+            client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
               param: { userVocabularyListId: userList.id },
             }),
           ),
         ),
         Promise.all(
           Array.from({ length: 3 }, () =>
-            client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+            client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
               param: { userVocabularyListId: userList.id },
             }),
           ),
@@ -573,7 +573,7 @@ describe('user-vocabulary.router', () => {
       );
       const taskBodies = await Promise.all(tasksResponses.map((res) => res.json()));
 
-      // all 6 concurrent requests (3x /learning-items, 3x /learning-tasks) must agree on the exact same batch,
+      // all 6 concurrent requests (3x /learn/items, 3x /learn/tasks) must agree on the exact same batch,
       // in the same order, with no cross-request conflicts
       const [expectedIds] = itemIdsPerResponse;
       expect(expectedIds).toHaveLength(6);
@@ -587,7 +587,7 @@ describe('user-vocabulary.router', () => {
     });
 
     it('returns 429 Too Many Requests after 10 requests within the rate-limit window', async () => {
-      const rateLimitedUserId = 'user-learning-tasks-rate-limit';
+      const rateLimitedUserId = 'user-learn-tasks-rate-limit';
       auth.authorized({ user: { id: rateLimitedUserId } });
       await db
         .insert(user)
@@ -597,13 +597,13 @@ describe('user-vocabulary.router', () => {
       const { data: userList } = await postRes.json();
 
       for (let i = 0; i < 10; i++) {
-        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
           param: { userVocabularyListId: userList.id },
         });
         expect(res.status).toBe(200);
       }
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId']['learning-tasks'].$get({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
         param: { userVocabularyListId: userList.id },
       });
       expect(res.status).toBe(429);
@@ -1139,7 +1139,7 @@ describe('user-vocabulary.router', () => {
     });
   });
 
-  describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/events', () => {
+  describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/learn/events', () => {
     const addList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') => {
       const { list, items } = await seedList(values, title);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
@@ -1152,14 +1152,14 @@ describe('user-vocabulary.router', () => {
       return { items, userList, userItems };
     };
 
-    it('returns 201 and creates every supported client learning event', async () => {
+    it('returns 201 and creates every supported client Learn event', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { userList, userItems } = await addList();
       const [userItem] = userItems;
       if (!userItem) throw new Error('expected a user item to be created');
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.events.$post({
         param: { userVocabularyListId: userList.id },
         json: {
           events: [
@@ -1245,7 +1245,7 @@ describe('user-vocabulary.router', () => {
     it('returns 401 when not authenticated', async () => {
       auth.unauthorized();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.events.$post({
         param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
         json: {
           events: [
@@ -1272,7 +1272,7 @@ describe('user-vocabulary.router', () => {
       const secondUserItem = second.userItems.find((item) => item.vocabularyItemId === secondVocabularyItemId);
       if (!firstUserItem || !secondUserItem) throw new Error('expected user items to be created');
 
-      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.events.$post({
         param: { userVocabularyListId: first.userList.id },
         json: {
           events: [
@@ -1302,7 +1302,7 @@ describe('user-vocabulary.router', () => {
       if (!userItem) throw new Error('expected a user item to be created');
 
       for (const type of [EventType.UserVocabularyItemDiscovered, EventType.UserVocabularyItemMovedToNextStep]) {
-        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.events.$post({
           param: { userVocabularyListId: userList.id },
           json: { events: [{ type, userVocabularyItemId: userItem.id }] } as never,
         });
@@ -1363,7 +1363,7 @@ describe('user-vocabulary.router', () => {
       ];
 
       for (const json of invalidBodies) {
-        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].events.$post({
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.events.$post({
           param: { userVocabularyListId: userList.id },
           json: json as never,
         });

@@ -6,14 +6,14 @@ import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
-import { VocabularyDiscoveryCard } from '@/components/vocabulary-discovery-card';
+import { VocabularyDiscoverCard } from '@/components/vocabulary-discover-card';
 import { LearningStatus } from '@/const/vocabulary';
 import { pageHead } from '@/utils/page';
 
 const BATCH_LIMIT = 10;
 const HISTORY_LIMIT = 5;
 
-export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/discovery')({
+export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/discover')({
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
     const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
@@ -24,11 +24,11 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
     const body = await res.json();
     return body.data;
   },
-  head: ({ loaderData }) => pageHead(loaderData ? `Discover: ${loaderData.vocabularyList.title}` : 'Discovery'),
-  component: VocabularyListDiscoveryPage,
+  head: ({ loaderData }) => pageHead(loaderData ? `Discover: ${loaderData.vocabularyList.title}` : 'Discover'),
+  component: VocabularyListDiscoverPage,
 });
 
-function VocabularyListDiscoveryPage() {
+function VocabularyListDiscoverPage() {
   const { userVocabularyListId } = Route.useParams();
   const userVocabularyList = Route.useLoaderData();
 
@@ -38,7 +38,7 @@ function VocabularyListDiscoveryPage() {
   const [startedAt, setStartedAt] = useState(new Date());
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['vocabulary-list-discovery-items', userVocabularyListId],
+    queryKey: ['vocabulary-list-discover-items', userVocabularyListId],
     queryFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
         param: { userVocabularyListId },
@@ -162,7 +162,7 @@ function VocabularyListDiscoveryPage() {
               </Button>
             </div>
 
-            <VocabularyDiscoveryCard item={currentItem} />
+            <VocabularyDiscoverCard item={currentItem} />
 
             <div className="mt-3 flex gap-3 md:mt-4 md:gap-4">
               <Button

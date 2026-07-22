@@ -9,7 +9,7 @@ import { Exception } from '../utils/exception.utils';
 import { unique } from '../utils/array.utils';
 import { getVocabularyListItemsByVocabularyItemIds } from '../vocabulary/vocabulary-list-item.repository';
 import { getVocabularyListItemOrThrow } from '../vocabulary/vocabulary-list-item.service';
-import type { CreateVocabularyListLearningEventsDto } from './dtos/create-vocabulary-list-learning-events.dto';
+import type { CreateVocabularyListLearnEventsDto } from './dtos/create-vocabulary-list-learn-events.dto';
 import type { DiscoverUserVocabularyItemDto } from './dtos/discover-user-vocabulary-item.dto';
 import type { UpdateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
@@ -104,11 +104,11 @@ const validateUserVocabularyItemInList = async (
   return { vocabularyListId, vocabularyItemId: userItem.vocabularyItemId, userItem };
 };
 
-export const createVocabularyListLearningEvents = async ({
+export const createVocabularyListLearnEvents = async ({
   userId,
   userVocabularyListId,
   events,
-}: CreateVocabularyListLearningEventsDto & { userId: string; userVocabularyListId: string }) => {
+}: CreateVocabularyListLearnEventsDto & { userId: string; userVocabularyListId: string }) => {
   return db.transaction(async (tx) => {
     const userVocabularyItemIds = unique(events.map(({ userVocabularyItemId }) => userVocabularyItemId));
     const [{ vocabularyListId }, userItems] = await Promise.all([
@@ -231,7 +231,7 @@ export const undoUserVocabularyItemStatus = async ({
   });
 };
 
-// number of successful confirmations in Learning sessions before a word graduates to `learned`
+// number of successful confirmations in Learn sessions before a word graduates to `learned`
 const LEARNING_CONFIRMATIONS_TO_LEARN = 3;
 
 export const moveUserVocabularyItemToNextStep = async ({
@@ -324,14 +324,14 @@ export const getUserVocabularyListItems = async ({
   return getUserVocabularyListItemsFromRepository({ userId, vocabularyListId, ...filter });
 };
 
-const LEARNING_BATCH_PATTERN = ['new', 'review', 'review', 'new', 'review', 'review'] as const;
+const LEARN_BATCH_PATTERN = ['new', 'review', 'review', 'new', 'review', 'review'] as const;
 
-export const buildLearningBatch = <T>(newPool: T[], reviewPool: T[]): T[] => {
+export const buildLearnBatch = <T>(newPool: T[], reviewPool: T[]): T[] => {
   const newQueue = [...newPool];
   const reviewQueue = [...reviewPool];
   const result: T[] = [];
 
-  for (const kind of LEARNING_BATCH_PATTERN) {
+  for (const kind of LEARN_BATCH_PATTERN) {
     const primary = kind === 'new' ? newQueue : reviewQueue;
     const fallback = kind === 'new' ? reviewQueue : newQueue;
     const item = primary.shift() ?? fallback.shift();
@@ -341,7 +341,7 @@ export const buildLearningBatch = <T>(newPool: T[], reviewPool: T[]): T[] => {
   return result;
 };
 
-export const getUserVocabularyListLearningItems = async ({
+export const getUserVocabularyListLearnItems = async ({
   userId,
   userVocabularyListId,
 }: {
@@ -351,21 +351,21 @@ export const getUserVocabularyListLearningItems = async ({
   const { vocabularyListId } = await getUserVocabularyListOrThrow({ userId, userVocabularyListId });
 
   const [newPool, reviewPool] = await Promise.all([
-    getNewItems({ userId, vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
-    getReviewItems({ userId, vocabularyListId, limit: LEARNING_BATCH_PATTERN.length }),
+    getNewItems({ userId, vocabularyListId, limit: LEARN_BATCH_PATTERN.length }),
+    getReviewItems({ userId, vocabularyListId, limit: LEARN_BATCH_PATTERN.length }),
   ]);
 
-  return buildLearningBatch(newPool, reviewPool);
+  return buildLearnBatch(newPool, reviewPool);
 };
 
-export const getUserVocabularyListLearningTasks = async ({
+export const getUserVocabularyListLearnTasks = async ({
   userId,
   userVocabularyListId,
 }: {
   userId: string;
   userVocabularyListId: string;
 }) => {
-  const items = await getUserVocabularyListLearningItems({ userId, userVocabularyListId });
+  const items = await getUserVocabularyListLearnItems({ userId, userVocabularyListId });
   if (items.length === 0) {
     return { translateEnglishSentenceTasks: [], translateUkrainianSentenceTasks: [] };
   }

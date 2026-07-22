@@ -51,15 +51,15 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
               variant="outline"
               className="size-8 px-0 sm:w-24 sm:px-2.5"
               asChild
-              title="Learning"
-              aria-label="Learning"
+              title="Learn"
+              aria-label="Learn"
             >
               <Link
-                to="/vocabulary-lists/$userVocabularyListId/learning"
+                to="/vocabulary-lists/$userVocabularyListId/learn"
                 params={{ userVocabularyListId: userVocabularyList.id }}
               >
                 <BookOpen />
-                <span className="hidden sm:inline">Learning</span>
+                <span className="hidden sm:inline">Learn</span>
               </Link>
             </Button>
             <Button
@@ -67,15 +67,15 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
               variant="outline"
               className="size-8 px-0 sm:w-24 sm:px-2.5"
               asChild
-              title="Discovery"
-              aria-label="Discovery"
+              title="Discover"
+              aria-label="Discover"
             >
               <Link
-                to="/vocabulary-lists/$userVocabularyListId/discovery"
+                to="/vocabulary-lists/$userVocabularyListId/discover"
                 params={{ userVocabularyListId: userVocabularyList.id }}
               >
                 <Compass />
-                <span className="hidden sm:inline">Discovery</span>
+                <span className="hidden sm:inline">Discover</span>
               </Link>
             </Button>
           </div>
