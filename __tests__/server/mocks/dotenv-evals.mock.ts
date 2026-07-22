@@ -3,9 +3,9 @@ import { config, parse } from 'dotenv';
 import { vitest } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-config({ path: join(__dirname, '..', '..', '.env.example'), quiet: true });
+config({ path: join(__dirname, '..', '..', '..', '.env.example'), quiet: true });
 
-const { GEMINI_API_KEY, OPENAI_API_KEY } = parse(readFileSync(join(__dirname, '..', '..', '.env')));
+const { GEMINI_API_KEY, OPENAI_API_KEY } = parse(readFileSync(join(__dirname, '..', '..', '..', '.env')));
 
 process.env.GEMINI_API_KEY = GEMINI_API_KEY;
 
