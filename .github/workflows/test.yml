@@ -30,7 +30,7 @@ jobs:
         run: npm run test:server-unit
 
       - name: Start services
-        run: docker compose up -d
+        run: docker compose up -d --wait
 
       - name: Run integration tests
         run: npm run test:integration
