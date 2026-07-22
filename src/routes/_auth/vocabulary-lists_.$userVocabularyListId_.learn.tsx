@@ -20,15 +20,10 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
 
 function VocabularyListLearnPage() {
   const { userVocabularyListId } = Route.useParams();
-  const userVocabularyList = Route.useLoaderData();
 
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <h1 className="mb-6 text-2xl font-bold tracking-tight md:text-3xl">
-          {userVocabularyList.vocabularyList.title}
-        </h1>
-
         <Learn userVocabularyListId={userVocabularyListId} />
       </div>
 
