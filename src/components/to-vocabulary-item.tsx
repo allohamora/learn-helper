@@ -111,7 +111,7 @@ export const ToVocabularyItem: FC<PropsWithChildren<ToVocabularyItemProps>> = ({
 
       <Card className="mb-4 gap-4 bg-card py-4 shadow-lg md:mb-6 md:gap-6 md:py-6">
         <CardHeader className="px-4 md:px-6">
-          <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
+          <CardTitle className="flex min-h-25 items-center justify-center text-center md:min-h-30">
             {children}
           </CardTitle>
         </CardHeader>

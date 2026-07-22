@@ -257,7 +257,7 @@ export const VocabularyItemsTable: FC<Props> = ({
   }
 
   return (
-    <div ref={containerRef} onScroll={handleScroll} className="h-[600px] overflow-auto">
+    <div ref={containerRef} onScroll={handleScroll} className="h-150 overflow-auto">
       <div className={cn(GRID_COLS_CLASS, 'sticky top-0 z-10 border-b bg-background')}>
         {table.getHeaderGroups()[0]?.headers.map((header) => (
           <div key={header.id} className="min-w-0 truncate px-3 py-2.5 text-left text-sm font-medium text-foreground">

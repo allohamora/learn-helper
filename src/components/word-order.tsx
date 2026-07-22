@@ -59,7 +59,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
         <CardHeader className="px-4 md:px-6">
           <div className="space-y-3 text-center">
             <p className="px-3 py-2 text-base font-semibold text-foreground md:text-lg">{data.sentence}</p>
-            <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
+            <CardTitle className="flex min-h-25 items-center justify-center text-center md:min-h-30">
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {selectedWords.length === 0 ? (
                   <span className="text-muted-foreground">Select words below to build the sentence</span>

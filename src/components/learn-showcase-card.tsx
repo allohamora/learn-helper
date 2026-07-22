@@ -32,7 +32,7 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
         <p className="text-sm text-muted-foreground">Take a moment to familiarize yourself with each item</p>
       </div>
 
-      <Card className="mb-4 flex min-h-64 flex-col gap-4 bg-card py-4 shadow-lg md:mb-6 md:min-h-[400px] md:gap-6 md:py-6">
+      <Card className="mb-4 flex min-h-64 flex-col gap-4 bg-card py-4 shadow-lg md:mb-6 md:min-h-100 md:gap-6 md:py-6">
         <CardHeader className="space-y-2 px-4 pb-4 md:px-6">
           <div className="flex items-start justify-between">
             <div>
