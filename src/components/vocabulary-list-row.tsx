@@ -49,7 +49,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
             <Button
               size="sm"
               variant="outline"
-              className="size-8 px-0 sm:w-24 sm:px-2.5"
+              className="size-8 px-0 sm:w-auto sm:px-2.5"
               asChild
               title="Learn"
               aria-label="Learn"
@@ -65,7 +65,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
             <Button
               size="sm"
               variant="outline"
-              className="size-8 px-0 sm:w-24 sm:px-2.5"
+              className="size-8 px-0 sm:w-auto sm:px-2.5"
               asChild
               title="Discover"
               aria-label="Discover"
