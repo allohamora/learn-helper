@@ -31,7 +31,7 @@ describe('PronunciationToVocabularyItem', () => {
   it('renders the audio prompt and keeps spelling behind a reveal when pronunciation exists', () => {
     renderTask('https://example.com/achieve.mp3');
 
-    expect(screen.getByText('Which word matches this pronunciation?')).toBeTruthy();
+    expect(screen.getByText('Which item matches this pronunciation?')).toBeTruthy();
     expect(screen.getByTitle('Play pronunciation')).toBeTruthy();
     expect(screen.getByText('Show spelling')).toBeTruthy();
   });
@@ -39,7 +39,7 @@ describe('PronunciationToVocabularyItem', () => {
   it('renders spelling as the prompt when pronunciation is absent', () => {
     renderTask(null);
 
-    expect(screen.getByText('Which word matches this spelling?')).toBeTruthy();
+    expect(screen.getByText('Which item matches this spelling?')).toBeTruthy();
     expect(screen.getByText('/əˈtʃiːv/')).toBeTruthy();
     expect(screen.queryByTitle('Play pronunciation')).toBeNull();
     expect(screen.queryByText('Show spelling')).toBeNull();

@@ -67,7 +67,7 @@ describe('userVocabularyListService', () => {
       expect(await countItems(userVocabularyItem)).toBe(items.length);
     });
 
-    it('does not reset the status of a word already tracked from another list', async () => {
+    it('does not reset the status of an item already tracked from another list', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { list, items } = await createTestList(['run', 'walk']);
       const [learnedItem] = items;

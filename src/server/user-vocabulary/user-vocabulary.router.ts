@@ -130,7 +130,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       },
       responses: {
         ...successPaginatedResponse({
-          description: "List's words with the user's progress",
+          description: "List's items with the user's progress",
           schema: userVocabularyItemWithRelationsDto,
         }),
       },
@@ -160,7 +160,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       },
       responses: {
         ...successOkResponse({
-          description: "A batch of the list's words for a Learn session",
+          description: "A batch of the list's items for a Learn session",
           schema: z.array(userVocabularyItemWithRelationsDto),
         }),
       },

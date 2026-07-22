@@ -58,7 +58,7 @@ describe('vocabulary.seed', () => {
         expect(await countItems(vocabularyListItem)).toEqual(expectedItemCount);
 
         // an item is only ever linked to the first level (in seeding order) where its value+partOfSpeech key
-        // appears; a couple of words share a key across levels (e.g. "lie"/verb in a1 and b1) and only get
+        // appears; a couple of items share a key across levels (e.g. "lie"/verb in a1 and b1) and only get
         // linked once, so this tracks which keys have already been claimed by an earlier level
         const claimedKeys = new Set<string>();
         for (const { listPrefix, rows } of sources) {

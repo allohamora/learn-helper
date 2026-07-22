@@ -145,12 +145,12 @@ function VocabularyListDiscoverPage() {
         ) : !currentItem ? (
           <div className="text-center">
             <h2 className="mb-2 text-xl font-bold">Great job!</h2>
-            <p className="text-muted-foreground">You&apos;ve discovered all available words.</p>
+            <p className="text-muted-foreground">You&apos;ve discovered all available items.</p>
           </div>
         ) : (
           <div>
             <div className="mb-3 flex items-center justify-between text-sm md:mb-4">
-              <p className="text-muted-foreground">Remaining words: {remaining}</p>
+              <p className="text-muted-foreground">Remaining items: {remaining}</p>
               <Button
                 onClick={() => void undo()}
                 variant="outline"

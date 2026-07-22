@@ -159,7 +159,7 @@ describe('user-vocabulary.router', () => {
   });
 
   describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items', () => {
-    it('returns 200 with the words the user has added to the list', async () => {
+    it('returns 200 with the items the user has added to the list', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { list } = await seedList(['run']);
@@ -213,8 +213,8 @@ describe('user-vocabulary.router', () => {
     it('paginates items across pages honoring limit and cursor', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -248,18 +248,18 @@ describe('user-vocabulary.router', () => {
       expect(thirdBody.pageInfo).toMatchObject({ total: 5, count: 1 });
       expect(thirdBody.pageInfo.nextCursor).toBeUndefined();
 
-      // pages must be disjoint (no item repeated across pages) and together cover every word exactly once
+      // pages must be disjoint and together cover every item exactly once
       const pagedValues = [...firstBody.data, ...secondBody.data, ...thirdBody.data].map(
         (item) => item.vocabularyItem.value,
       );
-      expect(pagedValues).toEqual(words);
+      expect(pagedValues).toEqual(itemValues);
     });
 
     it('returns every item in the list exactly once when following nextCursor to the end', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -274,13 +274,13 @@ describe('user-vocabulary.router', () => {
         expect(res.status).toBe(200);
 
         const body = await res.json();
-        expect(body.pageInfo.total).toBe(words.length);
+        expect(body.pageInfo.total).toBe(itemValues.length);
         collected.push(...body.data.map((item) => item.vocabularyItem.value));
         cursor = body.pageInfo.nextCursor;
       } while (cursor);
 
-      expect(collected).toEqual(words);
-      expect(new Set(collected).size).toBe(words.length);
+      expect(collected).toEqual(itemValues);
+      expect(new Set(collected).size).toBe(itemValues.length);
     });
   });
 
@@ -288,8 +288,8 @@ describe('user-vocabulary.router', () => {
     it('returns a batch of Learn items following the [new, review, review, new, review, review] pattern', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -298,7 +298,7 @@ describe('user-vocabulary.router', () => {
         orderBy: (userVocabularyItem, { asc }) => asc(userVocabularyItem.id),
       });
 
-      // first 4 words become "review" items (already reviewed once), the rest stay "new" (never confirmed)
+      // first 4 items become "review" items (already reviewed once), the rest stay "new" (never confirmed)
       for (const [index, userItem] of userItems.entries()) {
         await db
           .update(userVocabularyItem)
@@ -315,21 +315,21 @@ describe('user-vocabulary.router', () => {
       expect(body.success).toBe(true);
       expect(body.data).toHaveLength(6);
 
-      const newWords = words.slice(4);
-      const reviewWords = words.slice(0, 4);
-      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'review'));
+      const newItems = itemValues.slice(4);
+      const reviewItems = itemValues.slice(0, 4);
+      const kinds = body.data.map((item) => (newItems.includes(item.vocabularyItem.value) ? 'new' : 'review'));
       expect(kinds).toEqual(['new', 'review', 'review', 'new', 'review', 'review']);
       expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
       for (const item of body.data) {
-        expect([...newWords, ...reviewWords]).toContain(item.vocabularyItem.value);
+        expect([...newItems, ...reviewItems]).toContain(item.vocabularyItem.value);
       }
     });
 
     it('fills the batch from the other pool when one type does not have enough items', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -338,7 +338,7 @@ describe('user-vocabulary.router', () => {
         orderBy: (userVocabularyItem, { asc }) => asc(userVocabularyItem.id),
       });
 
-      // only 1 word stays "new"; the other 7 are review items, so the new pool runs out and review items fill the batch
+      // only 1 item stays "new"; the other 7 are review items, so the new pool runs out and review items fill the batch
       for (const [index, userItem] of userItems.entries()) {
         await db
           .update(userVocabularyItem)
@@ -355,22 +355,22 @@ describe('user-vocabulary.router', () => {
       expect(body.success).toBe(true);
       expect(body.data).toHaveLength(6);
 
-      const newWords = words.slice(0, 1);
-      const reviewWords = words.slice(1);
-      const kinds = body.data.map((item) => (newWords.includes(item.vocabularyItem.value) ? 'new' : 'review'));
+      const newItems = itemValues.slice(0, 1);
+      const reviewItems = itemValues.slice(1);
+      const kinds = body.data.map((item) => (newItems.includes(item.vocabularyItem.value) ? 'new' : 'review'));
       expect(kinds.filter((kind) => kind === 'new')).toHaveLength(1);
       expect(kinds.filter((kind) => kind === 'review')).toHaveLength(5);
       expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
       for (const item of body.data) {
-        expect([...newWords, ...reviewWords]).toContain(item.vocabularyItem.value);
+        expect([...newItems, ...reviewItems]).toContain(item.vocabularyItem.value);
       }
     });
 
     it('returns 6 new items when all items are new', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly', 'read', 'write', 'sing'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -390,7 +390,7 @@ describe('user-vocabulary.router', () => {
       expect(body.data.every((item) => item.encounterCount === 0)).toBe(true);
       expect(new Set(body.data.map((item) => item.vocabularyItem.value)).size).toBe(6);
       for (const item of body.data) {
-        expect(words).toContain(item.vocabularyItem.value);
+        expect(itemValues).toContain(item.vocabularyItem.value);
       }
     });
 
@@ -480,8 +480,8 @@ describe('user-vocabulary.router', () => {
     it('returns tasks for the current Learn batch and records a task-generated event per generator', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -537,8 +537,8 @@ describe('user-vocabulary.router', () => {
     it('returns matching items and tasks across repeated concurrent requests, with no conflicts between calls', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim', 'fly', 'read'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -617,8 +617,8 @@ describe('user-vocabulary.router', () => {
     it('returns 200 with all items waiting right after adding a list', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump'];
-      const { list } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump'];
+      const { list } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 
@@ -637,8 +637,8 @@ describe('user-vocabulary.router', () => {
     it('returns 200 with counts split across statuses', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
-      const words = ['run', 'walk', 'jump', 'swim'];
-      const { list, items } = await seedList(words);
+      const itemValues = ['run', 'walk', 'jump', 'swim'];
+      const { list, items } = await seedList(itemValues);
       const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
       const { data: userList } = await postRes.json();
 

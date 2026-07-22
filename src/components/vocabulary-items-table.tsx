@@ -55,9 +55,9 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
-      toast.success('Word progress reset to waiting in all lists');
+      toast.success('Item progress reset to waiting in all lists');
     },
-    onError: () => toast.error('Failed to reset word progress'),
+    onError: () => toast.error('Failed to reset item progress'),
   });
 
   const canUndo = item.status !== LearningStatus.Waiting;
@@ -123,8 +123,8 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         className="size-8 px-0"
         disabled={!canUndo || undoMutation.isPending}
         onClick={undo}
-        title="Reset word progress"
-        aria-label="Reset word progress"
+        title="Reset item progress"
+        aria-label="Reset item progress"
       >
         {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
@@ -138,8 +138,8 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
             <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
             <DialogDescription>
               This will erase {item.encounterCount} completed {item.encounterCount === 1 ? 'encounter' : 'encounters'}{' '}
-              and return the word to Discover. Because word progress is shared, this change applies to every list
-              containing the word.
+              and return the item to Discover. Because item progress is shared, this change applies to every list
+              containing the item.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -165,7 +165,7 @@ const columnHelper = createColumnHelper<VocabularyItem>();
 
 const buildColumns = (userVocabularyListId: string) => [
   columnHelper.accessor('vocabularyItem.value', {
-    header: 'Word',
+    header: 'Item',
     cell: (info) => {
       const item = info.row.original;
 

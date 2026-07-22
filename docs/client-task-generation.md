@@ -1,24 +1,24 @@
 # Client Task Generation
 
-This document describes the task types generated at runtime on the client for the Learn Helper learning system. These tasks are generated dynamically from existing word data without requiring AI.
+This document describes the task types generated at runtime on the client for the Learn Helper learning system. These tasks are generated dynamically from existing item data without requiring AI.
 
 ## Ranking
 
 Each task type is scored from 1 to 10 on seven parameters. Maximum total score is 70.
 
-- **Retrieval Effort** - How hard the brain works to pull the word from memory. Passive reading = low effort. Producing word from scratch = high effort. Higher effort leads to stronger memory traces.
+- **Retrieval Effort** - How hard the brain works to pull the item from memory. Passive reading = low effort. Producing an item from scratch = high effort. Higher effort leads to stronger memory traces.
 - **Cognitive Load** - Mental strain during the task. Too much (multiple inputs at once) overwhelms working memory. Too little (just staring) causes no learning. Optimal load = focused challenge.
-- **Association Building** - Does the task connect the word to other knowledge? Isolated word-definition pairs = weak. Words linked to images, synonyms, contexts, personal experiences = strong network.
+- **Association Building** - Does the task connect the item to other knowledge? Isolated item-definition pairs = weak. Items linked to images, synonyms, contexts, and personal experiences form a strong network.
 - **Feedback Quality** - What happens after an answer? No feedback = learner stays confused. "Correct/wrong" = minimal help. Showing correct answer + explanation + examples = strong learning signal.
 - **Spacing Compatibility** - Can the task be repeated over time with growing intervals? One-time tasks fade. Tasks that return days/weeks later at optimal intervals = long-term retention.
 - **Engagement Factor** - Does the learner want to continue? Boring repetition = dropout. Progress tracking, variety, achievable challenges = sustained motivation.
-- **Transfer Potential** - Will the learner recognize this word when reading a real book or article? Drill-only tasks = weak transfer. Varied real-world contexts = strong transfer.
+- **Transfer Potential** - Will the learner recognize this item when reading a real book or article? Drill-only tasks = weak transfer. Varied real-world contexts = strong transfer.
 
 ## Task Types
 
 ### 1. Showcase
 
-**Description**: Students are presented with complete word information for initial recognition and familiarization. This is a passive learning phase that introduces words before active recall tasks.
+**Description**: Students are presented with complete item information for initial recognition and familiarization. This is a passive learning phase that introduces items before active recall tasks.
 
 **Schema**:
 
@@ -27,8 +27,8 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   id: string; // Unique task ID (crypto.randomUUID())
   type: TaskType.Showcase;
   data: {
-    id: number; // User word ID
-    value: string; // The word itself
+    id: number; // User item ID
+    value: string; // The item itself
     spelling: string; // Phonetic spelling (e.g., "/əˈɡriː/")
     pronunciation: string; // Audio URL for pronunciation
     uaTranslation: string; // Ukrainian translation
@@ -45,12 +45,12 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **No user input required**: This is a recognition-only task with no right/wrong answers
 - **Always first**: Showcase tasks always appear at the beginning of a Learn session, before any active recall tasks
-- **Complete information display**: Shows all available word data including value, spelling, pronunciation, translation, definition, level, and part of speech (when available)
-- **Audio playback**: Includes a button to play the word's pronunciation
+- **Complete information display**: Shows all available item data including value, spelling, pronunciation, translation, definition, level, and part of speech (when available)
+- **Audio playback**: Includes a button to play the item's pronunciation
 - **External link**: Provides a link to the Oxford Dictionary for additional context
-- **Source indication**: Shows whether the word comes from Oxford 5000 Words or Oxford Phrase List
-- **One task per word**: Each Learn word gets exactly one showcase task
-- **Order preserved**: Showcase tasks maintain the order of the Learn words array (not shuffled)
+- **Source indication**: Shows whether the item comes from the Oxford 5000 or Oxford Phrase List
+- **One task per item**: Each Learn item gets exactly one showcase task
+- **Order preserved**: Showcase tasks maintain the order of the Learn items array (not shuffled)
 
 **UI Features**:
 
@@ -62,11 +62,11 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 **Examples**:
 
 - **Simple word**:
-  - Word: "achieve"
+  - Item: "achieve"
   - Displays: "achieve", "/əˈtʃiːv/", "досягати", "to succeed in doing or completing something", B1, verb, Oxford 5000
 
 - **Phrase**:
-  - Word: "take care of (sth)"
+  - Item: "take care of (sth)"
   - Displays: "take care of (sth)", phonetic spelling, Ukrainian translation, definition, level, phrase list
 
 **Ranking**:
@@ -75,7 +75,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 | --------------------- | ----- | -------------------------------------------------------------- |
 | Retrieval Effort      | 1     | No retrieval required; purely passive exposure                 |
 | Cognitive Load        | 3     | Minimal load; just reading and processing visual/audio info    |
-| Association Building  | 5     | Links word to translation, definition, pronunciation, spelling |
+| Association Building  | 5     | Links item to translation, definition, pronunciation, spelling |
 | Feedback Quality      | 2     | No feedback needed; informational only                         |
 | Spacing Compatibility | 4     | Can be repeated but limited value without active recall        |
 | Engagement Factor     | 5     | Visually rich; audio adds interest; prepares for challenges    |
@@ -84,19 +84,19 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 2. Word to Definition
+### 2. Item to Definition
 
-**Description**: Students see a word with its spelling and pronunciation, then select the correct definition from multiple-choice options.
+**Description**: Students see an item with its spelling and pronunciation, then select the correct definition from multiple-choice options.
 
 **Schema**:
 
 ```typescript
 {
   id: string; // Unique task ID (crypto.randomUUID())
-  type: TaskType.WordToDefinition;
+  type: TaskType.VocabularyItemToDefinition;
   data: {
-    id: number; // User word ID
-    value: string; // The word itself
+    id: number; // User item ID
+    value: string; // The item itself
     spelling: string; // Phonetic spelling
     pronunciation: string; // Audio URL
     uaTranslation: string; // Ukrainian translation
@@ -116,10 +116,10 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Up to 4 options**: 1 correct answer and up to 3 distractors (fewer if the session has fewer than 4 Learn words)
-- **Distractors from session**: Wrong options are definitions from other words in the current Learn session
+- **Up to 4 options**: 1 correct answer and up to 3 distractors (fewer if the session has fewer than 4 Learn items)
+- **Distractors from session**: Wrong options are definitions from other items in the current Learn session
 - **Shuffled options**: Options are randomly shuffled so the correct answer isn't always in the same position
-- **Shuffled tasks**: Word to Definition tasks are shuffled among themselves (not in showcase order)
+- **Shuffled tasks**: Item to Definition tasks are shuffled among themselves (not in showcase order)
 - **Ukrainian hint available**: The hint button reveals the Ukrainian translation to help students
 - **Audio support**: Pronunciation can be played while selecting the answer
 - **Visual feedback**: Correct answers show green border, wrong answers show red border
@@ -129,7 +129,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 **Examples**:
 
 - **Simple word**:
-  - Word: "achieve" (shown with spelling, pronunciation, level badge)
+  - Item: "achieve" (shown with spelling, pronunciation, level badge)
   - Options:
     - ✓ "to succeed in doing or completing something"
     - ✗ "to make something known to many people" (definition of "announce")
@@ -137,7 +137,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     - ✗ "to accept or start to use something new" (definition of "adopt")
 
 - **With hint used**:
-  - Word: "nervous"
+  - Item: "nervous"
   - Hint (on click): "нервовий"
   - Options show up to 4 definitions, one correct
 
@@ -145,9 +145,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 | Parameter             | Score | Reason                                                            |
 | --------------------- | ----- | ----------------------------------------------------------------- |
-| Retrieval Effort      | 4     | Recognition task; word visible, must recognize correct definition |
+| Retrieval Effort      | 4     | Recognition task; item visible, must recognize correct definition |
 | Cognitive Load        | 5     | Compare 4 definitions; moderate complexity                        |
-| Association Building  | 6     | Links word to definition; sees alternative definitions            |
+| Association Building  | 6     | Links item to definition; sees alternative definitions            |
 | Feedback Quality      | 5     | Shows correct/wrong; no explanation of why                        |
 | Spacing Compatibility | 7     | Repeatable; different distractors each session                    |
 | Engagement Factor     | 6     | Interactive selection; clear progress; hint available             |
@@ -156,20 +156,20 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 3. Definition to Word
+### 3. Definition to Item
 
-**Description**: Students see a definition and must type the corresponding word.
+**Description**: Students see a definition and must type the corresponding item.
 
 **Schema**:
 
 ```typescript
 {
   id: string; // Unique task ID (crypto.randomUUID())
-  type: TaskType.DefinitionToWord;
+  type: TaskType.DefinitionToVocabularyItem;
   data: {
-    id: number; // User word ID
+    id: number; // User item ID
     text: string; // The definition to identify
-    word: string; // Correct answer (the word itself)
+    vocabularyItem: string; // Correct answer (the item itself)
     hint?: string; // Ukrainian translation (optional help)
   }
 }
@@ -208,9 +208,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 | Parameter             | Score | Reason                                                             |
 | --------------------- | ----- | ------------------------------------------------------------------ |
-| Retrieval Effort      | 7     | Must produce word from memory; definition provides context clue    |
+| Retrieval Effort      | 7     | Must produce item from memory; definition provides context clue    |
 | Cognitive Load        | 6     | Single definition focus; typing requires more effort than clicking |
-| Association Building  | 6     | Strengthens definition-to-word link through production             |
+| Association Building  | 6     | Strengthens definition-to-item link through production             |
 | Feedback Quality      | 6     | Shows correct answer when wrong; no additional context             |
 | Spacing Compatibility | 7     | Highly repeatable; same definition can be revisited                |
 | Engagement Factor     | 5     | Text input less engaging than selection; STT adds interest         |
@@ -219,19 +219,19 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 4. Word to Translation
+### 4. Item to Translation
 
-**Description**: Students see a word with its spelling and pronunciation, then select the correct Ukrainian translation from multiple-choice options.
+**Description**: Students see an item with its spelling and pronunciation, then select the correct Ukrainian translation from multiple-choice options.
 
 **Schema**:
 
 ```typescript
 {
   id: string; // Unique task ID (crypto.randomUUID())
-  type: TaskType.WordToTranslation;
+  type: TaskType.VocabularyItemToTranslation;
   data: {
-    id: number; // User word ID
-    value: string; // The word itself
+    id: number; // User item ID
+    value: string; // The item itself
     spelling: string; // Phonetic spelling
     pronunciation: string; // Audio URL
     uaTranslation: string; // Ukrainian translation
@@ -251,19 +251,19 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Up to 4 options**: 1 correct Ukrainian translation and up to 3 distractors (fewer if the session has fewer than 4 Learn words)
-- **Distractors from session**: Wrong options are Ukrainian translations from other words in the current Learn session
+- **Up to 4 options**: 1 correct Ukrainian translation and up to 3 distractors (fewer if the session has fewer than 4 Learn items)
+- **Distractors from session**: Wrong options are Ukrainian translations from other items in the current Learn session
 - **Shuffled options**: Options are randomly shuffled
-- **Shuffled tasks**: Word to Translation tasks are shuffled among themselves
-- **Definition hint**: Unlike Word to Definition which uses translation as hint, this uses the English definition as hint
+- **Shuffled tasks**: Item to Translation tasks are shuffled among themselves
+- **Definition hint**: Unlike Item to Definition which uses translation as hint, this uses the English definition as hint
 - **Audio support**: Pronunciation can be played while selecting
-- **Same UI as Word to Definition**: Uses the same WordToOptions component
+- **Same UI as Item to Definition**: Uses the same VocabularyItemToOptions component
 - **Multiple attempts allowed**: Can try wrong options until finding correct one
 
 **Examples**:
 
 - **Simple word**:
-  - Word: "beautiful" (shown with spelling, pronunciation)
+  - Item: "beautiful" (shown with spelling, pronunciation)
   - Options:
     - ✓ "красивий"
     - ✗ "швидкий" (translation of "fast")
@@ -272,7 +272,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Hint: "pleasing to the senses or mind"
 
 - **Phrase**:
-  - Word: "look forward to"
+  - Item: "look forward to"
   - Options show up to 4 Ukrainian translations
   - Hint: "to feel excited about something that is going to happen"
 
@@ -280,9 +280,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 | Parameter             | Score | Reason                                                 |
 | --------------------- | ----- | ------------------------------------------------------ |
-| Retrieval Effort      | 4     | Recognition task; must match word to Ukrainian         |
+| Retrieval Effort      | 4     | Recognition task; must match item to Ukrainian         |
 | Cognitive Load        | 5     | Compare 4 Ukrainian translations; bilingual processing |
-| Association Building  | 6     | Links English word directly to Ukrainian meaning       |
+| Association Building  | 6     | Links English item directly to Ukrainian meaning       |
 | Feedback Quality      | 5     | Shows correct/wrong; no explanation                    |
 | Spacing Compatibility | 7     | Repeatable; distractors vary by session                |
 | Engagement Factor     | 6     | Interactive; definition hint provides learning moment  |
@@ -291,20 +291,20 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 5. Translation to Word
+### 5. Translation to Item
 
-**Description**: Students see a Ukrainian translation and must type the corresponding English word.
+**Description**: Students see a Ukrainian translation and must type the corresponding English item.
 
 **Schema**:
 
 ```typescript
 {
   id: string; // Unique task ID (crypto.randomUUID())
-  type: TaskType.TranslationToWord;
+  type: TaskType.TranslationToVocabularyItem;
   data: {
-    id: number; // User word ID
+    id: number; // User item ID
     text: string; // Ukrainian translation shown as prompt
-    word: string; // Correct English word to type
+    vocabularyItem: string; // Correct English item to type
     hint?: string; // English definition (optional help)
   }
 }
@@ -312,12 +312,12 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 **Notes**:
 
-- **Free text input**: Students type the English word
+- **Free text input**: Students type the English item
 - **Case insensitive**: Answer comparison ignores case
-- **Flexible phrase matching**: Same validation logic as Definition to Word
+- **Flexible phrase matching**: Same validation logic as Definition to Item
 - **Speech-to-text**: Microphone button for voice input
 - **Definition hint**: The hint reveals the English definition
-- **Same UI as Definition to Word**: Uses the same TextToWord component
+- **Same UI as Definition to Item**: Uses the same TextToVocabularyItem component
 - **Production task**: Requires active recall of English from Ukrainian
 
 **Examples**:
@@ -347,21 +347,21 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ---
 
-### 6. Pronunciation to Word
+### 6. Pronunciation to Item
 
-**Description**: Students listen to a word's pronunciation and type the word they hear. When audio is unavailable, phonetic spelling becomes the primary prompt.
+**Description**: Students listen to an item's pronunciation and type the item they hear. When audio is unavailable, phonetic spelling becomes the primary prompt.
 
 **Schema**:
 
 ```typescript
 {
   id: string; // Unique task ID (crypto.randomUUID())
-  type: TaskType.PronunciationToWord;
+  type: TaskType.PronunciationToVocabularyItem;
   data: {
-    id: number; // User word ID
+    id: number; // User item ID
     pronunciation?: string | null; // Optional audio URL for pronunciation
     spelling: string; // Phonetic spelling (hint with audio, primary prompt without audio)
-    word: string; // Correct word to type
+    vocabularyItem: string; // Correct item to type
   }
 }
 ```
@@ -422,16 +422,16 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 Client tasks are generated and presented in a specific order:
 
-1. **Showcase tasks** - Always first, in word order (not shuffled)
-2. **Word to Definition** - Shuffled among themselves
-3. **Definition to Word** - Shuffled among themselves
-4. **Word to Translation** - Shuffled among themselves
-5. **Translation to Word** - Shuffled among themselves
-6. **Pronunciation to Word** - Shuffled among themselves
+1. **Showcase tasks** - Always first, in item order (not shuffled)
+2. **Item to Definition** - Shuffled among themselves
+3. **Definition to Item** - Shuffled among themselves
+4. **Item to Translation** - Shuffled among themselves
+5. **Translation to Item** - Shuffled among themselves
+6. **Pronunciation to Item** - Shuffled among themselves
 
 This sequence follows a learning progression:
 
-- **Order**: Showcase -> Word to Definition -> Definition to Word -> Word to Translation -> Translation to Word -> Pronunciation to Word
+- **Order**: Showcase -> Item to Definition -> Definition to Item -> Item to Translation -> Translation to Item -> Pronunciation to Item
 - **Why**: Definition and translation pairs use the same recognition/production pattern, so they are alternated before ending with listening-based recall
 
 ---
@@ -440,10 +440,10 @@ This sequence follows a learning progression:
 
 | Task Type             | Score   |
 | --------------------- | ------- |
-| Pronunciation to Word | 50/70   |
-| Translation to Word   | 47/70   |
-| Definition to Word    | 44/70   |
-| Word to Translation   | 39/70   |
-| Word to Definition    | 38/70   |
+| Pronunciation to Item | 50/70   |
+| Translation to Item   | 47/70   |
+| Definition to Item    | 44/70   |
+| Item to Translation   | 39/70   |
+| Item to Definition    | 38/70   |
 | Showcase              | 24/70   |
 | **Overall**           | 242/420 |

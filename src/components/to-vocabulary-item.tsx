@@ -124,7 +124,7 @@ export const ToVocabularyItem: FC<PropsWithChildren<ToVocabularyItemProps>> = ({
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyPress}
-                placeholder="Type the correct word..."
+                placeholder="Type the correct item..."
                 className={cn(
                   'h-12 text-base md:text-lg',
                   isChecked &&

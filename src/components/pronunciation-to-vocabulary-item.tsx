@@ -32,11 +32,11 @@ export const PronunciationToVocabularyItem: FC<PronunciationToVocabularyItemProp
 
   return (
     <ToVocabularyItem
-      title={hasPronunciation ? 'Which word matches this pronunciation?' : 'Which word matches this spelling?'}
+      title={hasPronunciation ? 'Which item matches this pronunciation?' : 'Which item matches this spelling?'}
       subtitle={
         hasPronunciation
-          ? 'Listen to the pronunciation and type the word you hear.'
-          : 'Use the phonetic spelling to type the correct word.'
+          ? 'Listen to the pronunciation and type the item you hear.'
+          : 'Use the phonetic spelling to type the correct item.'
       }
       data={data}
       {...props}

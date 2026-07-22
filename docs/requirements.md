@@ -20,11 +20,11 @@ Instead, reviewed items go to the back of the queue. The queue is always full an
 
 ### Global learning state
 
-A vocabulary item or grammar topic that a user has encountered is tracked globally — one record per user per item, regardless of how many lists contain it. If a word is learned through one list, it is considered learned in all lists that contain it. This prevents redundant re-learning of the same content across lists.
+A vocabulary item or grammar topic that a user has encountered is tracked globally — one record per user per item, regardless of how many lists contain it. If an item is learned through one list, it is considered learned in all lists that contain it. This prevents redundant re-learning of the same content across lists.
 
 ### List-scoped sessions
 
-Despite global state, sessions are scoped to a specific list. A user practices words from "Oxford 5000 A1" separately from "Phrasal Verbs". This gives learners focus and a sense of structured progress per list, while the underlying learning state remains shared.
+Despite global state, sessions are scoped to a specific list. A user practices items from "Oxford 5000 A1" separately from "Phrasal Verbs". This gives learners focus and a sense of structured progress per list, while the underlying learning state remains shared.
 
 ### New and review items
 
@@ -38,20 +38,20 @@ Despite global state, sessions are scoped to a specific list. A user practices w
 
 Vocabulary is organised into named lists (e.g. "Oxford 5000 A1", "Oxford 5000 B2"). Lists are predefined content — users enroll in them, not create them.
 
-A user can enroll in multiple lists. The same word can appear in multiple lists. Enrolling in a list that contains already-known words does not reset their state.
+A user can enroll in multiple lists. The same item can appear in multiple lists. Enrolling in a list that contains already-known items does not reset their state.
 
 ### Session types
 
 Each list exposes two session buttons:
 
-- **Discover** — introduces words the user has never seen before.
-- **Learn** — reviews words the user has already encountered but not yet mastered.
+- **Discover** — introduces items the user has never seen before.
+- **Learn** — reviews items the user has already encountered but not yet mastered.
 
-Sessions are list-scoped: only words belonging to that list appear.
+Sessions are list-scoped: only items belonging to that list appear.
 
 ### Learning status lifecycle
 
-Each word per user moves through these statuses:
+Each item per user moves through these statuses:
 
 - waiting — enrolled but not yet discovered
 - learning — discovered, actively in review rotation
@@ -60,34 +60,34 @@ Each word per user moves through these statuses:
 
 ### Status transitions
 
-Transitions between statuses are **user-driven**: after each word encounter, the app asks the user to decide whether to keep practicing the word or move it forward in the learning cycle. The app never advances a word automatically.
+Transitions between statuses are **user-driven**: after each item encounter, the app asks the user to decide whether to keep practicing the item or move it forward in the learning cycle. The app never advances an item automatically.
 
-- **waiting → learning**: triggered when the user encounters the word for the first time in a Discover session.
-- **learning → learned**: triggered when the user has chosen to move the word forward **3 times** across Learn sessions. Until then, the word remains in `learning` and can appear again in future Learn sessions.
-- **waiting → known**: triggered when the user explicitly marks a word as already known during a Discover session, skipping the learning cycle entirely.
+- **waiting → learning**: triggered when the user encounters the item for the first time in a Discover session.
+- **learning → learned**: triggered when the user has chosen to move the item forward **3 times** across Learn sessions. Until then, the item remains in `learning` and can appear again in future Learn sessions.
+- **waiting → known**: triggered when the user explicitly marks an item as already known during a Discover session, skipping the learning cycle entirely.
 
-After a Learn session, each practiced word gives the user a choice to move it forward in the learning cycle. If the user does not feel comfortable with the word yet, they can leave it at the same step; in that case its `encounter_count` and queue position do not change.
+After a Learn session, each practiced item gives the user a choice to move it forward in the learning cycle. If the user does not feel comfortable with the item yet, they can leave it at the same step; in that case its `encounter_count` and queue position do not change.
 
 ### Queue mechanics
 
-Words are served in queue order — the longest-untouched word comes first. When a user moves a word forward after a Learn session, the word moves to the back of the relevant queue. If the user keeps the word at the same step, it preserves its current queue position.
+Items are served in queue order — the longest-untouched item comes first. When a user moves an item forward after a Learn session, the item moves to the back of the relevant queue. If the user keeps the item at the same step, it preserves its current queue position.
 
-Discover sessions are available while the list has `waiting` words. Learn sessions are available while the list has `learning` words. If the selected session type has no items, the app shows an empty-state message for that session.
+Discover sessions are available while the list has `waiting` items. Learn sessions are available while the list has `learning` items. If the selected session type has no items, the app shows an empty-state message for that session.
 
 ### Progress bar
 
-Each list shows a progress bar for the current user. `learned` and `known` are both complete states for progress purposes, but they remain distinct statuses: `known` means the user marked the word as already known, while `learned` means the word passed through the learning process.
+Each list shows a progress bar for the current user. `learned` and `known` are both complete states for progress purposes, but they remain distinct statuses: `known` means the user marked the item as already known, while `learned` means the item passed through the learning process.
 
 ### Task types
 
-Each vocabulary session generates a sequence of tasks per word. Showcase is counted as a task, but it is a read-only task rather than a recall task.
+Each vocabulary session generates a sequence of tasks per item. Showcase is counted as a task, but it is a read-only task rather than a recall task.
 
-- **Showcase** — display word metadata before recall begins, with link and pronunciation controls when available
-- **Word to Definition** — match the word to its meaning
-- **Definition to Word** — type the word from its definition
-- **Word to Translation** — match English word to Ukrainian translation
-- **Translation to Word** — type the English word from Ukrainian
-- **Pronunciation to Word** — type the word from its audio pronunciation, or from phonetic spelling when audio is unavailable
+- **Showcase** — display item metadata before recall begins, with link and pronunciation controls when available
+- **Item to Definition** — match the item to its meaning
+- **Definition to Item** — type the item from its definition
+- **Item to Translation** — match the English item to its Ukrainian translation
+- **Translation to Item** — type the English item from Ukrainian
+- **Pronunciation to Item** — type the item from its audio pronunciation, or from phonetic spelling when audio is unavailable
 - **Translate English Sentence** (AI-generated) — arrange shuffled Ukrainian words to translate an English sentence
 - **Translate Ukrainian Sentence** (AI-generated) — arrange shuffled English words to translate a Ukrainian sentence
 

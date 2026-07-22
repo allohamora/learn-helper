@@ -17,7 +17,7 @@ export const LearnResult: FC<LearnResultProps> = ({ userVocabularyListId, items,
         <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-3xl">Learn Session Complete! 🎉</h1>
 
         <p className="mb-4 text-base text-muted-foreground md:mb-6 md:text-lg">
-          You practiced {items.length} word{items.length > 1 ? 's' : ''}.
+          You practiced {items.length} item{items.length > 1 ? 's' : ''}.
         </p>
 
         <div className="mb-4 rounded-lg bg-muted/50 p-4 md:mb-6 md:p-6">
@@ -59,7 +59,7 @@ export const LearnResult: FC<LearnResultProps> = ({ userVocabularyListId, items,
           <div className="w-full sm:w-auto">
             <Button asChild className="w-full sm:w-auto">
               <Link to="/vocabulary-lists/$userVocabularyListId/learn" params={{ userVocabularyListId }} reloadDocument>
-                Learn More Words
+                Learn More Items
               </Link>
             </Button>
           </div>
@@ -67,7 +67,7 @@ export const LearnResult: FC<LearnResultProps> = ({ userVocabularyListId, items,
           <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2">
             <Button variant="outline" asChild className="w-full sm:w-auto">
               <Link to="/vocabulary-lists/$userVocabularyListId" params={{ userVocabularyListId }}>
-                View All Words
+                View All Items
               </Link>
             </Button>
           </div>

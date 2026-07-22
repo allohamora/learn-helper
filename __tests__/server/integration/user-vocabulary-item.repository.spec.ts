@@ -140,7 +140,7 @@ describe('userVocabularyItemRepository', () => {
       expect(await countItems(userVocabularyItem)).toBe(items.length);
     });
 
-    it('orders created rows by id to match the order words were added to the list', async () => {
+    it('orders created rows by id to match the order items were added to the list', async () => {
       const [{ id: userId }] = await db
         .insert(user)
         .values({ id: 'user-2', name: 'Test User 2', email: 'test-user-2@example.com' })
@@ -148,7 +148,7 @@ describe('userVocabularyItemRepository', () => {
       if (!userId) throw new Error('expected user to be created');
 
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
-      const words = await createMissingVocabularyItems(
+      const items = await createMissingVocabularyItems(
         Array.from({ length: 10 }, (_, i) => ({
           value: `word-${i}`,
           definition: `definition ${i}`,
@@ -159,12 +159,12 @@ describe('userVocabularyItemRepository', () => {
       );
 
       await createVocabularyListItemsIfNotExist(
-        words.map((word) => ({ vocabularyListId: list.id, vocabularyItemId: word.id })),
+        items.map((item) => ({ vocabularyListId: list.id, vocabularyItemId: item.id })),
       );
 
       await createUserVocabularyItemsFromList({ userId, vocabularyListId: list.id });
 
-      const userWords = await db
+      const userItems = await db
         .select({
           id: userVocabularyItem.id,
           value: vocabularyItem.value,
@@ -174,10 +174,10 @@ describe('userVocabularyItemRepository', () => {
         .where(eq(userVocabularyItem.userId, userId))
         .orderBy(asc(userVocabularyItem.id));
 
-      const idValues = userWords.map((userWord) => userWord.id);
+      const idValues = userItems.map((userItem) => userItem.id);
       expect(new Set(idValues).size).toBe(idValues.length);
 
-      expect(userWords.map((userWord) => userWord.value)).toEqual(words.map((word) => word.value));
+      expect(userItems.map((userItem) => userItem.value)).toEqual(items.map((item) => item.value));
     });
   });
 
@@ -469,7 +469,7 @@ describe('userVocabularyItemRepository', () => {
       expect(result.total).toBe(1);
     });
 
-    it('filters by a case-insensitive partial search on the word value', async () => {
+    it('filters by a case-insensitive partial search on the item value', async () => {
       const { list } = await seedLearningItems({
         values: [
           { value: 'apple', encounterCount: 0, offsetSeconds: 0 },

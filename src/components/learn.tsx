@@ -306,8 +306,8 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
     return (
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
-          <h1 className="mb-4 text-2xl font-bold">No Words to Learn</h1>
-          <p className="mb-6 text-lg text-muted-foreground">You have no words to learn at the moment.</p>
+          <h1 className="mb-4 text-2xl font-bold">No Items to Learn</h1>
+          <p className="mb-6 text-lg text-muted-foreground">You have no items to learn at the moment.</p>
         </div>
       </div>
     );
@@ -390,8 +390,8 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
             {currentTask?.type === UserVocabularyItemTaskType.VocabularyItemToDefinition && (
               <VocabularyItemToOptions
                 key={currentTask.id}
-                title="What does this word mean?"
-                subtitle="Select the correct definition for the given word"
+                title="What does this item mean?"
+                subtitle="Select the correct definition for the given item"
                 userVocabularyListId={userVocabularyListId}
                 taskType={UserVocabularyItemTaskType.VocabularyItemToDefinition}
                 data={currentTask.data}
@@ -403,8 +403,8 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
             {currentTask?.type === UserVocabularyItemTaskType.DefinitionToVocabularyItem && (
               <TextToVocabularyItem
                 key={currentTask.id}
-                title="Which word matches this definition?"
-                subtitle="Type the correct word for the given definition"
+                title="Which item matches this definition?"
+                subtitle="Type the correct item for the given definition"
                 userVocabularyListId={userVocabularyListId}
                 taskType={UserVocabularyItemTaskType.DefinitionToVocabularyItem}
                 data={currentTask.data}
@@ -417,7 +417,7 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
               <VocabularyItemToOptions
                 key={currentTask.id}
                 title="What is the correct translation?"
-                subtitle="Select the Ukrainian translation for the given word"
+                subtitle="Select the Ukrainian translation for the given item"
                 userVocabularyListId={userVocabularyListId}
                 taskType={UserVocabularyItemTaskType.VocabularyItemToTranslation}
                 data={currentTask.data}
@@ -429,8 +429,8 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
             {currentTask?.type === UserVocabularyItemTaskType.TranslationToVocabularyItem && (
               <TextToVocabularyItem
                 key={currentTask.id}
-                title="Which word matches this translation?"
-                subtitle="Type the correct word for the given translation"
+                title="Which item matches this translation?"
+                subtitle="Type the correct item for the given translation"
                 userVocabularyListId={userVocabularyListId}
                 taskType={UserVocabularyItemTaskType.TranslationToVocabularyItem}
                 data={currentTask.data}
