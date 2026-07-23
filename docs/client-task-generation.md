@@ -33,9 +33,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     pronunciation: string; // Audio URL for pronunciation
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
-    level: Level; // CEFR level (A1-C1)
     partOfSpeech?: string | null; // Part of speech (noun, verb, etc.)
-    list: List; // Source list (Oxford 5000 or Phrase List)
     link: string; // Link to Oxford Dictionary
   }
 }
@@ -45,10 +43,9 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - **No user input required**: This is a recognition-only task with no right/wrong answers
 - **Always first**: Showcase tasks always appear at the beginning of a Learn session, before any active recall tasks
-- **Complete information display**: Shows all available item data including value, spelling, pronunciation, translation, definition, level, and part of speech (when available)
+- **Complete information display**: Shows all available item data including value, spelling, pronunciation, translation, definition, and part of speech (when available)
 - **Audio playback**: Includes a button to play the item's pronunciation
 - **External link**: Provides a link to the Oxford Dictionary for additional context
-- **Source indication**: Shows whether the item comes from the Oxford 5000 or Oxford Phrase List
 - **One task per item**: Each Learn item gets exactly one showcase task
 - **Order preserved**: Showcase tasks maintain the order of the Learn items array (not shuffled)
 
@@ -56,18 +53,18 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 - Play pronunciation button with audio player
 - External link to Oxford Dictionary
-- Badge display for CEFR level, part of speech, and source list
+- Badge display for part of speech
 - "Next" button to proceed to the next task
 
 **Examples**:
 
 - **Simple word**:
   - Item: "achieve"
-  - Displays: "achieve", "/əˈtʃiːv/", "досягати", "to succeed in doing or completing something", B1, verb, Oxford 5000
+  - Displays: "achieve", "/əˈtʃiːv/", "досягати", "to succeed in doing or completing something", verb
 
 - **Phrase**:
   - Item: "take care of (sth)"
-  - Displays: "take care of (sth)", phonetic spelling, Ukrainian translation, definition, level, phrase list
+  - Displays: "take care of (sth)", phonetic spelling, Ukrainian translation, definition
 
 **Ranking**:
 
@@ -101,9 +98,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     pronunciation: string; // Audio URL
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
-    level: Level; // CEFR level
     partOfSpeech?: string | null; // Part of speech
-    list: List; // Source list
     link: string; // Oxford Dictionary link
     options: Array<{
       value: string; // Definition text
@@ -129,7 +124,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 **Examples**:
 
 - **Simple word**:
-  - Item: "achieve" (shown with spelling, pronunciation, level badge)
+  - Item: "achieve" (shown with spelling, pronunciation)
   - Options:
     - ✓ "to succeed in doing or completing something"
     - ✗ "to make something known to many people" (definition of "announce")
@@ -236,9 +231,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     pronunciation: string; // Audio URL
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
-    level: Level; // CEFR level
     partOfSpeech?: string | null; // Part of speech
-    list: List; // Source list
     link: string; // Oxford Dictionary link
     options: Array<{
       value: string; // Ukrainian translation
