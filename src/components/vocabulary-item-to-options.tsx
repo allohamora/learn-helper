@@ -58,8 +58,8 @@ export const VocabularyItemToOptions: FC<VocabularyItemToOptionsProps> = ({ data
                 size="sm"
                 asChild
                 className="size-8 shrink-0 p-0"
-                title="View in Oxford Dictionary"
-                aria-label="View in Oxford Dictionary"
+                title="Open external link"
+                aria-label="Open external link"
               >
                 <a href={data.link} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="size-4" />

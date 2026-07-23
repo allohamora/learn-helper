@@ -34,7 +34,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
     partOfSpeech?: string | null; // Part of speech (noun, verb, etc.)
-    link: string; // Link to Oxford Dictionary
+    link: string; // Link to external dictionary
   }
 }
 ```
@@ -45,14 +45,14 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 - **Always first**: Showcase tasks always appear at the beginning of a Learn session, before any active recall tasks
 - **Complete information display**: Shows all available item data including value, spelling, pronunciation, translation, definition, and part of speech (when available)
 - **Audio playback**: Includes a button to play the item's pronunciation
-- **External link**: Provides a link to the Oxford Dictionary for additional context
+- **External link**: Provides a link to an external dictionary for additional context
 - **One task per item**: Each Learn item gets exactly one showcase task
 - **Order preserved**: Showcase tasks maintain the order of the Learn items array (not shuffled)
 
 **UI Features**:
 
 - Play pronunciation button with audio player
-- External link to Oxford Dictionary
+- External link to dictionary resource
 - Badge display for part of speech
 - "Next" button to proceed to the next task
 
@@ -99,7 +99,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
     partOfSpeech?: string | null; // Part of speech
-    link: string; // Oxford Dictionary link
+    link: string; // External dictionary link
     options: Array<{
       value: string; // Definition text
       isAnswer: boolean; // true for correct, false for wrong
@@ -232,7 +232,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
     uaTranslation: string; // Ukrainian translation
     definition: string; // English definition
     partOfSpeech?: string | null; // Part of speech
-    link: string; // Oxford Dictionary link
+    link: string; // External dictionary link
     options: Array<{
       value: string; // Ukrainian translation
       isAnswer: boolean; // true for correct, false for wrong

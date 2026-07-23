@@ -79,13 +79,7 @@ export const VocabularyDiscoverCard: FC<Props> = ({ item }) => {
             )}
 
             {vocabularyItem.link && (
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                asChild
-                title="View in Oxford Dictionary"
-                aria-label="View in Oxford Dictionary"
-              >
+              <Button variant="ghost" size="icon-sm" asChild title="Open external link" aria-label="Open external link">
                 <a href={vocabularyItem.link} target="_blank" rel="noopener noreferrer">
                   <ExternalLink />
                 </a>
