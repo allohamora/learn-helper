@@ -33,7 +33,8 @@ export const createVocabularyListLearnEventsDto = z.object({
         }),
       ]),
     )
-    .min(1),
+    .min(1)
+    .max(20),
 });
 
 export type CreateVocabularyListLearnEventsDto = z.infer<typeof createVocabularyListLearnEventsDto>;
