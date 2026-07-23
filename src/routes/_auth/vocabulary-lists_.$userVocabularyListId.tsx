@@ -75,7 +75,7 @@ function VocabularyListPage() {
               items={items}
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
-              onLoadMore={() => void fetchNextPage()}
+              onLoadMore={() => void fetchNextPage({ cancelRefetch: false })}
               userVocabularyListId={userVocabularyListId}
             />
           )}
