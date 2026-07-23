@@ -7,8 +7,8 @@ type LoaderProps = {
 };
 
 export const Loader: FC<LoaderProps> = ({ className }) => (
-  <div className={cn('flex space-x-2', className)}>
-    <LoaderCircle className="animate-spin" />
+  <div className={cn('flex space-x-2', className)} role="status" aria-live="polite">
+    <LoaderCircle className="animate-spin" aria-hidden="true" />
     <div>Loading...</div>
   </div>
 );
