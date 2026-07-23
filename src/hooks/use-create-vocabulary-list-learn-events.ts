@@ -14,7 +14,7 @@ export const useCreateVocabularyListLearnEvents = (userVocabularyListId: string)
         param: { userVocabularyListId },
         json: { events },
       });
-      if (!res.ok) throw new Error('Failed to create vocabulary list Learn events');
+      if (!res.ok) throw new Error('Failed to create vocabulary list learn events');
 
       return res.json();
     },

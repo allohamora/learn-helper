@@ -228,7 +228,7 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
       const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
         param: { userVocabularyListId },
       });
-      if (!response.ok) throw new Error('Failed to load Learn items');
+      if (!response.ok) throw new Error('Failed to load learn items');
       return (await response.json()).data;
     },
     refetchOnWindowFocus: false,
@@ -241,7 +241,7 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
       const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
         param: { userVocabularyListId },
       });
-      if (!response.ok) throw new Error('Failed to load Learn tasks');
+      if (!response.ok) throw new Error('Failed to load learn tasks');
       return (await response.json()).data;
     },
     refetchOnWindowFocus: false,
@@ -287,7 +287,7 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
       <div className="space-y-6">
         <div className="mx-auto max-w-2xl text-center">
           <h1 className="mb-4 text-2xl font-bold">Something went wrong</h1>
-          <p className="mb-6 text-muted-foreground">Failed to load Learn data. Please try again.</p>
+          <p className="mb-6 text-muted-foreground">Failed to load learn data. Please try again.</p>
           <Button size="lg" asChild>
             <Link to="/vocabulary-lists/$userVocabularyListId/learn" params={{ userVocabularyListId }} reloadDocument>
               Try Again

@@ -138,7 +138,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
             <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
             <DialogDescription>
               This will erase {item.encounterCount} completed {item.encounterCount === 1 ? 'encounter' : 'encounters'}{' '}
-              and return the item to Discover. Because item progress is shared, this change applies to every list
+              and return the item to discover. Because item progress is shared, this change applies to every list
               containing the item.
             </DialogDescription>
           </DialogHeader>
