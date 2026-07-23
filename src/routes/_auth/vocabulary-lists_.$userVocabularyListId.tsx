@@ -7,6 +7,7 @@ import { EditVocabularyItemTranslationProvider } from '@/components/providers/ed
 import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
 import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
+import { Loader } from '@/components/ui/loader';
 import { LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 import { pageHead } from '@/utils/page';
@@ -69,7 +70,9 @@ function VocabularyListPage() {
 
         <div className="mt-4 overflow-hidden rounded-lg border">
           {isPending ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Loading…</p>
+            <div className="flex items-center justify-center py-8">
+              <Loader />
+            </div>
           ) : (
             <VocabularyItemsTable
               items={items}
