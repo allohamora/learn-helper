@@ -52,6 +52,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
     onSuccess: () => {
       setIsUndoConfirmationOpen(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
