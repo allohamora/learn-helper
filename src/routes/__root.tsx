@@ -5,6 +5,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { NotFound } from '@/components/not-found';
 import { Toaster } from '@/components/ui/sonner';
+import { APP_NAME } from '@/utils/page';
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
@@ -18,7 +19,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Learn Helper',
+        title: APP_NAME,
       },
     ],
     links: [

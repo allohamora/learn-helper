@@ -64,12 +64,12 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
     }),
     prompt: [
       '<role>Expert bilingual exercise writer (English-Ukrainian).</role>',
-      `<task>Create exactly ${items.length} English->Ukrainian word-order tasks, one per input word.</task>`,
+      `<task>Create exactly ${items.length} English->Ukrainian word-order tasks, one per input item.</task>`,
       '<workflow>',
-      '1. For each word, build the target pattern from its value.',
+      '1. For each item, build the target pattern from its value.',
       '2. Write an English sentence with specific real-world context.',
       '3. Translate it into natural Ukrainian a native speaker would actually say.',
-      '4. Output: id = word.id, sentence = English, translation = Ukrainian.',
+      '4. Output: id = item.id, sentence = English, translation = Ukrainian.',
       '</workflow>',
       '<requirements>',
       'English sentence:',
@@ -94,7 +94,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
       '- Replace every parenthesized placeholder with a concrete word.',
       '- Never output literal placeholder text in the sentence.',
       '</requirements>',
-      `<words>${JSON.stringify(items)}</words>`,
+      `<items>${JSON.stringify(items)}</items>`,
     ].join('\n'),
   });
 
@@ -135,12 +135,12 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
     }),
     prompt: [
       '<role>Expert bilingual exercise writer (Ukrainian-English).</role>',
-      `<task>Create exactly ${items.length} Ukrainian->English word-order tasks, one per input word.</task>`,
+      `<task>Create exactly ${items.length} Ukrainian->English word-order tasks, one per input item.</task>`,
       '<workflow>',
-      '1. For each word, build the target pattern from its value.',
+      '1. For each item, build the target pattern from its value.',
       '2. Write an English sentence with specific real-world context.',
       '3. Write a natural Ukrainian sentence a native speaker would actually say.',
-      '4. Output: id = word.id, sentence = Ukrainian, translation = English.',
+      '4. Output: id = item.id, sentence = Ukrainian, translation = English.',
       '</workflow>',
       '<requirements>',
       'Ukrainian sentence:',
@@ -165,7 +165,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
       '- Replace every parenthesized placeholder with a concrete word.',
       '- Never output literal placeholder text in the translation.',
       '</requirements>',
-      `<words>${JSON.stringify(items)}</words>`,
+      `<items>${JSON.stringify(items)}</items>`,
     ].join('\n'),
   });
 

@@ -20,14 +20,17 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      - name: Start services
-        run: docker compose up -d
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:unit
+      - name: Run client unit tests
+        run: npm run test:client-unit
+
+      - name: Run server unit tests
+        run: npm run test:server-unit
+
+      - name: Start services
+        run: docker compose up -d --wait
 
       - name: Run integration tests
         run: npm run test:integration

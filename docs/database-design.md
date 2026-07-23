@@ -201,10 +201,10 @@ erDiagram
 
 ### learning_status
 
-- waiting — enrolled but not yet discovered; eligible for Discovery sessions only
-- learning — discovered, actively in review rotation; eligible for Learning sessions only
+- waiting — enrolled but not yet discovered; eligible for Discover sessions only
+- learning — discovered, actively in review rotation; eligible for Learn sessions only
 - learned — completed the learning cycle; no longer appears in any session
-- known — user marked as already known before discovery; skips Discovery entirely
+- known — user marked as already known before discovery; skips Discover entirely
 
 ### part_of_speech
 
@@ -234,7 +234,7 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 
 ### `user_vocabulary_item.encounter_count`
 
-Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
+Tracks the number of successful confirmations in Learn sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
 
 ### `vocabulary_list_item`
 
@@ -271,7 +271,7 @@ This implements the `[new, review, review, …]` cycle via observation rather th
 
 The event table is append-only: a discovery is never deleted when the user undoes it. Instead, undo (`POST .../items/{id}/undo`):
 
-1. Sets `reverted_at = NOW()` on the active `user-vocabulary-item-discovered` event (the one for that user + item with `reverted_at IS NULL` — there is at most one at a time). This keeps "is this word currently discovered" a cheap, self-contained lookup on the event table (`reverted_at IS NULL`) without joining or mutating `user_vocabulary_item`.
+1. Sets `reverted_at = NOW()` on the active `user-vocabulary-item-discovered` event (the one for that user + item with `reverted_at IS NULL` — there is at most one at a time). This keeps "is this item currently discovered" a cheap, self-contained lookup on the event table (`reverted_at IS NULL`) without joining or mutating `user_vocabulary_item`.
 2. Inserts a `user-vocabulary-item-discovery-undone` event, copying `duration_ms` from the event it undoes — not a freshly-computed value — so the undone event is a self-sufficient historical record of what was reverted (no join back to the original event needed for analysis).
 3. Sets `user_vocabulary_item.status` back to `waiting`, same as any other status transition.
 
@@ -291,7 +291,7 @@ Records which field changed on a `vocabulary-item-updated` event (e.g. `uaTransl
 
 ### `user_vocabulary_list_id`
 
-Records which list a word was being practiced in when a session event fired (e.g. discovered, passed, moved to next step). Since a word can belong to multiple lists, `vocabulary_item_id` alone can't tell you which list the session was scoped to. References `user_vocabulary_list` (the user's list enrollment) rather than `vocabulary_list` directly, since the event is always tied to a specific user's enrollment, matching the same pattern as `user_vocabulary_item_id` referencing `user_vocabulary_item` rather than `vocabulary_item`.
+Records which list an item was being practiced in when a session event fired (e.g. discovered, passed, moved to next step). Since an item can belong to multiple lists, `vocabulary_item_id` alone can't tell you which list the session was scoped to. References `user_vocabulary_list` (the user's list enrollment) rather than `vocabulary_list` directly, since the event is always tied to a specific user's enrollment, matching the same pattern as `user_vocabulary_item_id` referencing `user_vocabulary_item` rather than `vocabulary_item`.
 
 ## List-based learning
 
@@ -301,7 +301,7 @@ Both vocabulary and grammar are organised around **lists**. A user enrolls in a 
 
 The queue is designed for **infinite, on-demand practice** — the user opens the app whenever they want and there is always something to do. This is a deliberate rejection of the Anki/time-gated model where items have a `next_review_at` timestamp and the user hits a wall ("nothing due today") after clearing the deck.
 
-A `next_review_at` approach is explicitly **not used** here. Locking items behind a future timestamp would force the user to either stop learning or switch to new words only, which defeats the purpose of review. Instead, reviewed items go to the back of the FIFO queue (`enqueued_at` reset to `NOW()`), so the queue is always full and always playable.
+A `next_review_at` approach is explicitly **not used** here. Locking items behind a future timestamp would force the user to either stop learning or switch to new items only, which defeats the purpose of review. Instead, reviewed items go to the back of the FIFO queue (`enqueued_at` reset to `NOW()`), so the queue is always full and always playable.
 
 ### User flow
 
@@ -309,8 +309,8 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
 2. They see all available lists with an **Add** button.
 3. After adding a list they see it in their list with:
    - A **progress bar** — `learned / total` items in that list.
-   - A **Discovery** button — start a session of new, unseen items.
-   - A **Learning** button — start a review session of previously seen items.
+   - A **Discover** button — start a session of new, unseen items.
+   - A **Learn** button — start a review session of previously seen items.
 4. Tapping a button starts a session scoped to that list.
 
 ### Grammar sessions

@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
+import { pageHead } from '@/utils/page';
 
 export const Route = createFileRoute('/error')({
+  head: () => pageHead('Authentication Error'),
   validateSearch: (search: Record<string, unknown>) => ({
     error: typeof search.error === 'string' ? search.error : undefined,
   }),

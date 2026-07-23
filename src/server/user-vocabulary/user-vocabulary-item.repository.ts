@@ -1,5 +1,5 @@
 import '@tanstack/react-start/server-only';
-import { and, asc, count, eq, gte, ilike, sql } from 'drizzle-orm';
+import { and, asc, count, eq, getTableColumns, gte, ilike, inArray, sql } from 'drizzle-orm';
 import { LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
@@ -27,6 +27,25 @@ export const getUserVocabularyItemById = async (
 ) => {
   return tx.query.userVocabularyItem.findFirst({
     where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)),
+  });
+};
+
+export const getUserVocabularyItemWithRelationsById = async (
+  { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.userVocabularyItem.findFirst({
+    where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)),
+    with: { vocabularyItem: true },
+  });
+};
+
+export const getUserVocabularyItemsByIds = async (
+  { userId, userVocabularyItemIds }: { userId: string; userVocabularyItemIds: string[] },
+  tx: Transaction = db,
+) => {
+  return tx.query.userVocabularyItem.findMany({
+    where: and(eq(userVocabularyItem.userId, userId), inArray(userVocabularyItem.id, userVocabularyItemIds)),
   });
 };
 
@@ -101,17 +120,8 @@ export const getUserVocabularyListItems = async ({
   const getItems = async () => {
     const items = await db
       .select({
-        value: vocabularyItem.value,
-        definition: vocabularyItem.definition,
-        uaTranslation: vocabularyItem.uaTranslation,
-        partOfSpeech: vocabularyItem.partOfSpeech,
-        spelling: vocabularyItem.spelling,
-        pronunciation: vocabularyItem.pronunciation,
-        link: vocabularyItem.link,
-        userVocabularyItemId: userVocabularyItem.id,
-        status: userVocabularyItem.status,
-        encounterCount: userVocabularyItem.encounterCount,
-        createdAt: userVocabularyItem.createdAt,
+        ...getTableColumns(userVocabularyItem),
+        vocabularyItem,
       })
       .from(vocabularyListItem)
       .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
@@ -120,7 +130,7 @@ export const getUserVocabularyListItems = async ({
       .orderBy(asc(userVocabularyItem.id))
       .limit(limit + 1);
 
-    const nextCursor = items.length > limit ? items.pop()?.userVocabularyItemId : undefined;
+    const nextCursor = items.length > limit ? items.pop()?.id : undefined;
 
     return { items, nextCursor };
   };

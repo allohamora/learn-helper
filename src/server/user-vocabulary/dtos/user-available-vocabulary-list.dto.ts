@@ -1,12 +1,9 @@
 import '@tanstack/react-start/server-only';
-import { z } from '@hono/zod-openapi';
+import { vocabularyListDto } from '../../vocabulary/dtos/vocabulary-list.dto';
+import { userVocabularyListDto } from './user-vocabulary-list.dto';
 
-export const userAvailableVocabularyListDto = z.object({
-  id: z
-    .uuidv7()
+export const userAvailableVocabularyListDto = vocabularyListDto.extend({
+  userVocabularyList: userVocabularyListDto
     .nullable()
-    .openapi({ description: "The user's enrollment id for this list, null if the user has not added it" }),
-  vocabularyListId: z.uuidv7(),
-  title: z.string(),
-  addedAt: z.iso.datetime().nullable(),
+    .openapi({ description: "The user's enrollment for this list, null if the user has not added it" }),
 });

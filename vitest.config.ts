@@ -8,9 +8,21 @@ export default defineConfig({
           tsconfigPaths: true,
         },
         test: {
-          name: 'unit',
-          include: ['**/__tests__/unit/**/*.spec.ts'],
-          setupFiles: ['./__tests__/setup-unit-context.ts'],
+          name: 'client-unit',
+          include: ['**/__tests__/client/unit/**/*.spec.{ts,tsx}'],
+          environment: 'happy-dom',
+          setupFiles: ['./__tests__/client/setup-unit-context.ts'],
+          maxWorkers: 5,
+        },
+      },
+      {
+        resolve: {
+          tsconfigPaths: true,
+        },
+        test: {
+          name: 'server-unit',
+          include: ['**/__tests__/server/unit/**/*.spec.ts'],
+          setupFiles: ['./__tests__/server/setup-unit-context.ts'],
           maxWorkers: 5,
         },
       },
@@ -20,8 +32,8 @@ export default defineConfig({
         },
         test: {
           name: 'integration',
-          include: ['**/__tests__/integration/**/*.spec.ts'],
-          setupFiles: ['./__tests__/setup-integration-context.ts'],
+          include: ['**/__tests__/server/integration/**/*.spec.ts'],
+          setupFiles: ['./__tests__/server/setup-integration-context.ts'],
           maxWorkers: 5,
         },
       },
@@ -31,8 +43,8 @@ export default defineConfig({
         },
         test: {
           name: 'e2e',
-          include: ['**/__tests__/e2e/**/*.spec.ts'],
-          setupFiles: ['./__tests__/setup-e2e-context.ts'],
+          include: ['**/__tests__/server/e2e/**/*.spec.ts'],
+          setupFiles: ['./__tests__/server/setup-e2e-context.ts'],
           maxWorkers: 5,
         },
       },
@@ -42,8 +54,8 @@ export default defineConfig({
         },
         test: {
           name: 'evals',
-          include: ['**/__tests__/evals/**/*.spec.ts'],
-          setupFiles: ['./__tests__/setup-evals-context.ts'],
+          include: ['**/__tests__/server/evals/**/*.spec.ts'],
+          setupFiles: ['./__tests__/server/setup-evals-context.ts'],
           testTimeout: 5 * 60 * 1000,
           maxWorkers: 5,
         },

@@ -1,5 +1,5 @@
 import '@tanstack/react-start/server-only';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
@@ -24,6 +24,18 @@ export const getVocabularyListItem = async (
     where: and(
       eq(vocabularyListItem.vocabularyListId, vocabularyListId),
       eq(vocabularyListItem.vocabularyItemId, vocabularyItemId),
+    ),
+  });
+};
+
+export const getVocabularyListItemsByVocabularyItemIds = async (
+  { vocabularyListId, vocabularyItemIds }: { vocabularyListId: string; vocabularyItemIds: string[] },
+  tx: Transaction = db,
+) => {
+  return tx.query.vocabularyListItem.findMany({
+    where: and(
+      eq(vocabularyListItem.vocabularyListId, vocabularyListId),
+      inArray(vocabularyListItem.vocabularyItemId, vocabularyItemIds),
     ),
   });
 };

@@ -1,6 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { pageHead } from '@/utils/page';
 
-export const Route = createFileRoute('/_auth/statistics')({ component: StatisticsPage });
+export const Route = createFileRoute('/_auth/statistics')({
+  head: () => pageHead('Statistics'),
+  component: StatisticsPage,
+});
 
 function StatisticsPage() {
   return (

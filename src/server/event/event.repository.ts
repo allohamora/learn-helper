@@ -9,6 +9,10 @@ export const insertEvent = async (data: typeof event.$inferInsert, tx: Transacti
   await tx.insert(event).values(data);
 };
 
+export const insertEvents = async (data: (typeof event.$inferInsert)[], tx: Transaction = db) => {
+  return await tx.insert(event).values(data).returning();
+};
+
 export const revertUserVocabularyItemDiscoveredEvent = async (
   { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,

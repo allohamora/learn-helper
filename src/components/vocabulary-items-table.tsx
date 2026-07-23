@@ -1,5 +1,5 @@
 import type { FC, UIEvent } from 'react';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -7,6 +7,14 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ExternalLink, Loader2, Pencil, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
@@ -19,10 +27,15 @@ type ItemsResponse = InferResponseType<
 >;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
+export const requiresUndoConfirmation = (status: LearningStatus, encounterCount: number) =>
+  encounterCount > 0 || status === LearningStatus.Learned;
+
 const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
+  const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
-  const pronunciation = item.pronunciation;
+  const { vocabularyItem } = item;
+  const pronunciation = vocabularyItem.pronunciation;
 
   const queryClient = useQueryClient();
   const undoMutation = useMutation({
@@ -30,22 +43,34 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
       ].undo.$post({
-        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItemId },
+        param: { userVocabularyListId, userVocabularyItemId: item.id },
       });
       if (!res.ok) throw new Error('Failed to undo discovery');
 
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress', userVocabularyListId] });
-      toast.success('Discovery undone, word is waiting again');
+      setIsUndoConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      toast.success('Item progress reset to waiting in all lists');
     },
-    onError: () => toast.error('Failed to undo discovery'),
+    onError: () => toast.error('Failed to reset item progress'),
   });
 
-  const canUndo =
-    (item.status === LearningStatus.Learning && item.encounterCount === 0) || item.status === LearningStatus.Known;
+  const canUndo = item.status !== LearningStatus.Waiting;
+  const needsConfirmation = requiresUndoConfirmation(item.status, item.encounterCount);
+  const undo = () => {
+    if (needsConfirmation) {
+      setIsUndoConfirmationOpen(true);
+      return;
+    }
+
+    undoMutation.mutate();
+  };
 
   return (
     <div className="flex items-center gap-1">
@@ -62,7 +87,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
           <Volume2 className={cn(isPlaying && 'animate-pulse')} />
         </Button>
       )}
-      {item.link && (
+      {vocabularyItem.link && (
         <Button
           size="sm"
           variant="ghost"
@@ -71,7 +96,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
           title="Open dictionary entry"
           aria-label="Open dictionary entry"
         >
-          <a href={item.link} target="_blank" rel="noopener noreferrer">
+          <a href={vocabularyItem.link} target="_blank" rel="noopener noreferrer">
             <ExternalLink />
           </a>
         </Button>
@@ -82,10 +107,10 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         className="size-8 px-0"
         onClick={() =>
           openEdit({
-            userVocabularyItemId: item.userVocabularyItemId,
-            value: item.value,
-            partOfSpeech: item.partOfSpeech,
-            uaTranslation: item.uaTranslation,
+            userVocabularyItemId: item.id,
+            value: vocabularyItem.value,
+            partOfSpeech: vocabularyItem.partOfSpeech,
+            uaTranslation: vocabularyItem.uaTranslation,
           })
         }
         title="Edit translation"
@@ -98,12 +123,34 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         variant="ghost"
         className="size-8 px-0"
         disabled={!canUndo || undoMutation.isPending}
-        onClick={() => undoMutation.mutate()}
-        title="Undo discovery"
-        aria-label="Undo discovery"
+        onClick={undo}
+        title="Reset item progress"
+        aria-label="Reset item progress"
       >
         {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
+
+      <Dialog open={isUndoConfirmationOpen} onOpenChange={setIsUndoConfirmationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
+            <DialogDescription>
+              This will erase {item.encounterCount} completed {item.encounterCount === 1 ? 'encounter' : 'encounters'}{' '}
+              and return the item to discover. Because item progress is shared, this change applies to every list
+              containing the item.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUndoConfirmationOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={undoMutation.isPending} onClick={() => undoMutation.mutate()}>
+              {undoMutation.isPending && <Loader2 className="animate-spin" />}
+              Reset progress
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -111,25 +158,25 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
 const columnHelper = createColumnHelper<VocabularyItem>();
 
 const buildColumns = (userVocabularyListId: string) => [
-  columnHelper.accessor('value', {
-    header: 'Word',
+  columnHelper.accessor('vocabularyItem.value', {
+    header: 'Item',
     cell: (info) => {
       const item = info.row.original;
 
       return (
         <div className="min-w-0">
-          <div className="truncate font-medium">{item.value}</div>
-          <div className="truncate text-xs text-muted-foreground">({item.spelling})</div>
-          <div className="truncate text-xs text-muted-foreground">{item.uaTranslation}</div>
+          <div className="truncate font-medium">{item.vocabularyItem.value}</div>
+          <div className="truncate text-xs text-muted-foreground">({item.vocabularyItem.spelling})</div>
+          <div className="truncate text-xs text-muted-foreground">{item.vocabularyItem.uaTranslation}</div>
         </div>
       );
     },
   }),
-  columnHelper.accessor('definition', {
+  columnHelper.accessor('vocabularyItem.definition', {
     header: 'Definition',
     cell: (info) => <div className="text-muted-foreground">{info.getValue()}</div>,
   }),
-  columnHelper.accessor('partOfSpeech', {
+  columnHelper.accessor('vocabularyItem.partOfSpeech', {
     header: 'Part of speech',
     cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '-'}</div>,
   }),
@@ -176,7 +223,7 @@ export const VocabularyItemsTable: FC<Props> = ({
     data: items,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getRowId: (item) => item.userVocabularyItemId,
+    getRowId: (item) => item.id,
   });
 
   const rows = table.getRowModel().rows;
@@ -204,7 +251,7 @@ export const VocabularyItemsTable: FC<Props> = ({
   }
 
   return (
-    <div ref={containerRef} onScroll={handleScroll} className="h-[600px] overflow-auto">
+    <div ref={containerRef} onScroll={handleScroll} className="h-150 overflow-auto">
       <div className={cn(GRID_COLS_CLASS, 'sticky top-0 z-10 border-b bg-background')}>
         {table.getHeaderGroups()[0]?.headers.map((header) => (
           <div key={header.id} className="min-w-0 truncate px-3 py-2.5 text-left text-sm font-medium text-foreground">

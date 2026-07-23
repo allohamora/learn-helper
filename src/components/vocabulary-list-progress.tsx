@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Progress } from '@/components/ui/progress';
+import { Loader } from '@/components/ui/loader';
 import { appClient } from '@/services/api';
 
 type Props = {
@@ -21,7 +22,14 @@ export const VocabularyListProgress: FC<Props> = ({ userVocabularyListId }) => {
     },
   });
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
+
   if (error || !data) return null;
 
   const completed = data.learned + data.known;
