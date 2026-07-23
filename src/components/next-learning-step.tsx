@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { appClient } from '@/services/api';
@@ -11,6 +11,7 @@ export type NextLearningStepProps = {
 };
 
 export const NextLearningStep: FC<NextLearningStepProps> = ({ userVocabularyListId, userVocabularyItemId }) => {
+  const queryClient = useQueryClient();
   const moveVocabularyItemToNextStep = useMutation({
     mutationFn: async () => {
       const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
@@ -18,6 +19,10 @@ export const NextLearningStep: FC<NextLearningStepProps> = ({ userVocabularyList
       ]['move-to-next-step'].$post({ param: { userVocabularyListId, userVocabularyItemId } });
       if (!response.ok) throw new Error('Failed to move vocabulary item to next step');
       return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
     },
     onError: () => toast.error('Failed to move vocabulary item to next step'),
   });
