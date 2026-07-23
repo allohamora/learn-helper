@@ -130,10 +130,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
 
-      <Dialog
-        open={isUndoConfirmationOpen}
-        onOpenChange={(open) => !undoMutation.isPending && setIsUndoConfirmationOpen(open)}
-      >
+      <Dialog open={isUndoConfirmationOpen} onOpenChange={setIsUndoConfirmationOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
@@ -144,11 +141,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={undoMutation.isPending}
-              onClick={() => setIsUndoConfirmationOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsUndoConfirmationOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" disabled={undoMutation.isPending} onClick={() => undoMutation.mutate()}>
