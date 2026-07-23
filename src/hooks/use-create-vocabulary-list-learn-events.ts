@@ -1,5 +1,6 @@
 import type { InferRequestType } from 'hono/client';
 import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { appClient } from '@/services/api';
 
 type CreateVocabularyListLearnEventsEndpoint =
@@ -18,6 +19,7 @@ export const useCreateVocabularyListLearnEvents = (userVocabularyListId: string)
 
       return res.json();
     },
+    onError: () => toast.error('Failed to save Learn progress'),
   });
 
   return {

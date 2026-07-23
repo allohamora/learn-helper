@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Undo2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
@@ -94,11 +95,16 @@ function VocabularyListDiscoverPage() {
   const handle = async (status: LearningStatus.Known | LearningStatus.Learning) => {
     if (!currentItem) return;
 
-    await discoverItem.mutateAsync({
-      userVocabularyItemId: currentItem.id,
-      status,
-      durationMs: Date.now() - startedAt.getTime(),
-    });
+    try {
+      await discoverItem.mutateAsync({
+        userVocabularyItemId: currentItem.id,
+        status,
+        durationMs: Date.now() - startedAt.getTime(),
+      });
+    } catch {
+      toast.error('Failed to discover item');
+      return;
+    }
 
     setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
 
@@ -118,7 +124,12 @@ function VocabularyListDiscoverPage() {
     const [lastUserVocabularyItemId, ...rest] = history;
     if (!lastUserVocabularyItemId) return;
 
-    await undoStatus.mutateAsync({ userVocabularyItemId: lastUserVocabularyItemId });
+    try {
+      await undoStatus.mutateAsync({ userVocabularyItemId: lastUserVocabularyItemId });
+    } catch {
+      toast.error('Failed to undo item status');
+      return;
+    }
 
     setHistory(rest);
     await refetch();
