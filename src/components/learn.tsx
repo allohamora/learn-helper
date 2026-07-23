@@ -278,14 +278,6 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
     }, {});
   }, [learnItemsQuery.data]);
 
-  if (learnItemsQuery.isLoading || !learnItemsQuery.data) {
-    return (
-      <div className="flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
-
   if (learnItemsQuery.error || learnTasksQuery.error) {
     return (
       <div className="space-y-6">
@@ -298,6 +290,14 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
             </Link>
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  if (learnItemsQuery.isLoading || !learnItemsQuery.data) {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader />
       </div>
     );
   }
