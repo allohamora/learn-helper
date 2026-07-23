@@ -231,6 +231,8 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
       if (!response.ok) throw new Error('Failed to load Learn items');
       return (await response.json()).data;
     },
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const learnTasksQuery = useQuery({
@@ -242,6 +244,8 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
       if (!response.ok) throw new Error('Failed to load Learn tasks');
       return (await response.json()).data;
     },
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const { createVocabularyListLearnEvent } = useCreateVocabularyListLearnEvents(userVocabularyListId);
