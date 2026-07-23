@@ -382,6 +382,34 @@ describe('userVocabularyItemService', () => {
       ).rejects.toThrow(Exception);
     });
 
+    it('serializes concurrent undos so the loser sees a conflict, not a stale not-found', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-concurrent-double' });
+      await discoverUserVocabularyItem({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Learning,
+        durationMs: 0,
+      });
+
+      const input = { userId, userVocabularyListId: userList.id, userVocabularyItemId: userItem.id } as const;
+
+      const [first, second] = await Promise.allSettled([
+        undoUserVocabularyItemStatus(input),
+        undoUserVocabularyItemStatus(input),
+      ]);
+
+      const rejected = [first, second].find((result) => result.status === 'rejected');
+      expect(rejected).toBeDefined();
+      // without the row lock, the loser reads the pre-undo status, skips past the "already waiting"
+      // guard, and only fails later inside revertUserVocabularyItemDiscoveredEvent with the wrong
+      // error (NOT_FOUND instead of CONFLICT)
+      expect((rejected as PromiseRejectedResult).reason).toMatchObject({ code: 'CONFLICT' });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated).toMatchObject({ status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null });
+    });
+
     it('serializes with a concurrent learning advancement and leaves progress reset', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-concurrent' });
       await discoverUserVocabularyItem({

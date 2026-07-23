@@ -189,7 +189,7 @@ export const undoUserVocabularyItemStatus = async ({
   userVocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const { userItem } = await validateUserVocabularyItemInList(
+    const { userItem } = await getUserVocabularyItemInListForUpdateOrThrow(
       { userId, userVocabularyListId, userVocabularyItemId },
       tx,
     );
