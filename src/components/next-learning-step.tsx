@@ -27,6 +27,12 @@ export const NextLearningStep: FC<NextLearningStepProps> = ({ userVocabularyList
     onError: () => toast.error('Failed to move vocabulary item to next step'),
   });
 
+  const label = moveVocabularyItemToNextStep.isPending
+    ? 'Moving to next step'
+    : moveVocabularyItemToNextStep.isSuccess
+      ? 'Moved to next step'
+      : 'Move to next step';
+
   return (
     <Button
       size="sm"
@@ -34,6 +40,8 @@ export const NextLearningStep: FC<NextLearningStepProps> = ({ userVocabularyList
       onClick={() => moveVocabularyItemToNextStep.mutate()}
       disabled={moveVocabularyItemToNextStep.isPending || moveVocabularyItemToNextStep.isSuccess}
       className="size-8 p-0"
+      title={label}
+      aria-label={label}
     >
       {moveVocabularyItemToNextStep.isPending ? (
         <Loader2 className="size-4 animate-spin" />

@@ -59,6 +59,7 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
                   }}
                   className="size-8 shrink-0 p-0"
                   title="Edit translation"
+                  aria-label="Edit translation"
                 >
                   <Pencil className="size-4" />
                 </Button>
@@ -72,6 +73,7 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
                   disabled={isPlaying}
                   className="size-8 shrink-0 p-0"
                   title="Play pronunciation"
+                  aria-label="Play pronunciation"
                 >
                   <Volume2 className={cn('size-4', { 'animate-pulse': isPlaying })} />
                 </Button>
@@ -84,6 +86,7 @@ export const LearnShowcaseCard: FC<LearnShowcaseCardProps> = ({ data, item, onNe
                   asChild
                   className="size-8 shrink-0 p-0"
                   title="View in Oxford Dictionary"
+                  aria-label="View in Oxford Dictionary"
                 >
                   <a href={data.link} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="size-4" />
