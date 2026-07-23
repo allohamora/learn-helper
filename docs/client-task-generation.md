@@ -384,7 +384,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
   - Primary prompt: "/əˈtʃiːv/"
   - Correct answer: "achieve"
 
-- **Similar sounding words**:
+- **Similar-sounding words**:
   - Audio plays: [their pronunciation]
   - User must distinguish from "there", "they're"
   - Correct answer: "their"
