@@ -1360,6 +1360,13 @@ describe('user-vocabulary.router', () => {
             },
           ],
         },
+        {
+          events: Array.from({ length: 21 }, () => ({
+            type: EventType.UserVocabularyItemTaskHintUsed,
+            userVocabularyItemId: userItem.id,
+            userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+          })),
+        },
       ];
 
       for (const json of invalidBodies) {
