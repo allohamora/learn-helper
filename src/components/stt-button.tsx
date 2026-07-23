@@ -110,6 +110,8 @@ export const SttButton: FC<SttButtonProps> = ({ onText, disabled = false, classN
     }
   };
 
+  const label = isListening ? 'Stop dictation' : 'Start dictation';
+
   return (
     <Button
       type="button"
@@ -119,6 +121,8 @@ export const SttButton: FC<SttButtonProps> = ({ onText, disabled = false, classN
       disabled={disabled}
       className={cn(className)}
       aria-live="polite"
+      title={label}
+      aria-label={label}
     >
       {isListening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
     </Button>

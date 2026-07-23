@@ -51,6 +51,7 @@ export const PronunciationToVocabularyItem: FC<PronunciationToVocabularyItemProp
               disabled={isPlaying}
               className="size-20 rounded-full md:size-24"
               title="Play pronunciation"
+              aria-label="Play pronunciation"
             >
               <Volume2 className={cn('size-6 md:size-8', { 'animate-pulse': isPlaying })} />
             </Button>
