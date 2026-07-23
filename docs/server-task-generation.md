@@ -30,7 +30,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ```typescript
 {
-  id: number;
+  id: string; // UUIDv7
   sentence: string; // English sentence with target item (max 15 words)
   translation: string; // Ukrainian translation (max 15 words, single spaces, punctuation attached to tokens, sentence case)
 }
@@ -97,7 +97,7 @@ Each task type is scored from 1 to 10 on seven parameters. Maximum total score i
 
 ```typescript
 {
-  id: number;
+  id: string; // UUIDv7
   sentence: string; // Ukrainian sentence with translated target item (max 15 words)
   translation: string; // English translation (max 15 words, single spaces, punctuation attached to tokens, sentence case)
 }
