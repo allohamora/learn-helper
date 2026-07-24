@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
@@ -11,11 +11,6 @@ import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabular
 import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 
 const USER_ID = 'statistics-user';
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.restoreAllMocks();
-});
 
 const toDateOnlyString = (date: Date) => date.toISOString().slice(0, 10);
 
