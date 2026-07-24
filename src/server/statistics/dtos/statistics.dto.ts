@@ -6,6 +6,7 @@ const date = z.iso.date();
 
 const generalStatisticsDto = z.object({
   totalDiscoveredWords: z.number().int(),
+  totalDiscoveryUndos: z.number().int(),
   totalMistakesMade: z.number().int(),
   totalCompletedTasks: z.number().int(),
   totalRetriesCompleted: z.number().int(),

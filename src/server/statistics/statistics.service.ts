@@ -53,6 +53,7 @@ const getDates = ({ dateFrom, dateTo }: { dateFrom: Date; dateTo: Date }) => {
 const getGeneralStatistics = async (userId: string) => {
   const result: Statistics['general'] = {
     totalDiscoveredWords: 0,
+    totalDiscoveryUndos: 0,
     totalMistakesMade: 0,
     totalCompletedTasks: 0,
     totalRetriesCompleted: 0,
@@ -129,6 +130,7 @@ const getGeneralStatistics = async (userId: string) => {
         result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
       case EventType.UserVocabularyItemDiscoveryUndone:
+        result.totalDiscoveryUndos = item.count;
         continue;
     }
   }

@@ -54,6 +54,7 @@ describe('statisticsService', () => {
 
     expect(result.general).toEqual({
       totalDiscoveredWords: 0,
+      totalDiscoveryUndos: 0,
       totalMistakesMade: 0,
       totalCompletedTasks: 0,
       totalRetriesCompleted: 0,
@@ -192,6 +193,7 @@ describe('statisticsService', () => {
 
     expect(result.general).toEqual({
       totalDiscoveredWords: 2,
+      totalDiscoveryUndos: 0,
       totalMistakesMade: 2,
       totalCompletedTasks: 2,
       totalRetriesCompleted: 2,
@@ -420,6 +422,7 @@ describe('statisticsService', () => {
 
     expect(result.general).toMatchObject({
       totalDiscoveredWords: 2,
+      totalDiscoveryUndos: 1,
       totalDiscoveringDurationMs: 4000,
       averageTimePerDiscoveryMs: 2000,
     });
