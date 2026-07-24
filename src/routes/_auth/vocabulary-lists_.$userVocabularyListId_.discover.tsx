@@ -160,7 +160,7 @@ function VocabularyListDiscoverPage() {
           </div>
         </div>
       ) : (
-        <div className="mx-auto max-w-md">
+        <div className="mx-auto my-4 max-w-md">
           <div className="mb-4 flex items-center justify-between text-sm md:mb-8">
             <p className="text-muted-foreground">Remaining items: {remaining}</p>
             <Button
