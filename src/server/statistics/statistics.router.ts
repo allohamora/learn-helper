@@ -2,7 +2,7 @@ import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { authMiddleware } from '../auth/auth.middleware';
 import { successOkResponse, toSuccessResponse } from '../utils/response.utils';
-import { statisticsDto } from './dtos/statistics.dto';
+import { statisticsDto, statisticsQueryDto } from './dtos/statistics.dto';
 import { getStatistics } from './statistics.service';
 
 export const statisticsRouter = new OpenAPIHono().openapi(
@@ -10,6 +10,9 @@ export const statisticsRouter = new OpenAPIHono().openapi(
     method: 'get',
     path: '/',
     tags: ['Statistics'],
+    request: {
+      query: statisticsQueryDto,
+    },
     responses: {
       ...successOkResponse({
         description: "The authenticated user's event-based statistics",
@@ -21,7 +24,8 @@ export const statisticsRouter = new OpenAPIHono().openapi(
   }),
   async (c) => {
     const user = c.get('user');
+    const { timezone } = c.req.valid('query');
 
-    return c.json(...toSuccessResponse({ status: 200, data: await getStatistics({ userId: user.id }) }));
+    return c.json(...toSuccessResponse({ status: 200, data: await getStatistics({ userId: user.id, timezone }) }));
   },
 );

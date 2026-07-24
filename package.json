@@ -30,6 +30,7 @@
   "dependencies": {
     "@ai-sdk/google": "^4.0.18",
     "@ai-sdk/openai": "^4.0.16",
+    "@date-fns/tz": "^1.5.0",
     "@hono/swagger-ui": "^0.6.1",
     "@hono/zod-openapi": "^1.5.1",
     "@scalar/hono-api-reference": "^0.11.11",
@@ -48,6 +49,7 @@
     "class-variance-authority": "^0.7.1",
     "close-with-grace": "^2.5.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.31",

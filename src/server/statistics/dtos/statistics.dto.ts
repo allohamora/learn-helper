@@ -4,6 +4,19 @@ import { PartOfSpeech } from '@/const/vocabulary';
 
 const date = z.iso.date();
 
+const isValidTimezone = (timezone: string) => {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const statisticsQueryDto = z.object({
+  timezone: z.string().trim().min(1).max(255).refine(isValidTimezone, 'Invalid timezone').default('UTC'),
+});
+
 const generalStatisticsDto = z.object({
   totalDiscoveredWords: z.number().int(),
   totalDiscoveryUndos: z.number().int(),

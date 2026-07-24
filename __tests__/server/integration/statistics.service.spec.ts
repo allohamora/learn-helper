@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
@@ -11,6 +11,11 @@ import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabular
 import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 
 const USER_ID = 'statistics-user';
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 const toDateOnlyString = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -385,6 +390,167 @@ describe('statisticsService', () => {
       knownCount: 1,
       durationMs: 3000,
     });
+  });
+
+  it('returns the same events in different daily buckets for different timezones', async () => {
+    const { items, userItems } = await seed();
+    const item = items[0];
+    const userItem = userItems[0];
+    if (!item || !userItem) throw new Error('expected a seeded vocabulary item');
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 1000,
+        createdAt: new Date('2026-07-24T21:30:00.000Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 2000,
+        createdAt: new Date('2026-07-25T01:30:00.000Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskPassed,
+        durationMs: 5000,
+        createdAt: new Date('2026-07-24T21:30:00.000Z'),
+      },
+      {
+        userId: USER_ID,
+        type: EventType.UserVocabularyItemTaskGenerated,
+        costInNanoDollars: 1234,
+        inputTokens: 10,
+        outputTokens: 20,
+        createdAt: new Date('2026-07-24T21:30:00.000Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+        type: EventType.VocabularyItemUpdated,
+        fieldName: 'uaTranslation',
+        createdAt: new Date('2026-07-24T21:30:00.000Z'),
+      },
+    ]);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-25T02:00:00.000Z'));
+    const statistics = [
+      getStatistics({ userId: USER_ID, timezone: 'UTC' }),
+      getStatistics({ userId: USER_ID, timezone: 'Europe/Kyiv' }),
+      getStatistics({ userId: USER_ID, timezone: 'America/New_York' }),
+    ];
+    vi.useRealTimers();
+
+    const [utc, kyiv, newYork] = await Promise.all(statistics);
+
+    expect(utc.discoveringPerDay.find(({ date }) => date === '2026-07-24')).toMatchObject({
+      learningCount: 1,
+      knownCount: 0,
+    });
+    expect(utc.discoveringPerDay.find(({ date }) => date === '2026-07-25')).toMatchObject({
+      learningCount: 0,
+      knownCount: 1,
+    });
+    expect(kyiv.discoveringPerDay.at(-1)).toMatchObject({
+      date: '2026-07-25',
+      learningCount: 1,
+      knownCount: 1,
+      durationMs: 3000,
+    });
+    expect(kyiv.learningPerDay.at(-1)).toMatchObject({ date: '2026-07-25', completedTasks: 1, durationMs: 5000 });
+    expect(kyiv.costPerDay.at(-1)).toMatchObject({
+      date: '2026-07-25',
+      costInNanoDollars: 1234,
+      inputTokens: 10,
+      outputTokens: 20,
+    });
+    expect(kyiv.wordsUpdatedPerDay.at(-1)).toMatchObject({ date: '2026-07-25', uaTranslation: 1 });
+    expect(newYork.discoveringPerDay.at(-1)).toMatchObject({
+      date: '2026-07-24',
+      learningCount: 1,
+      knownCount: 1,
+      durationMs: 3000,
+    });
+  });
+
+  it('uses local-day boundaries across a daylight-saving transition', async () => {
+    const { userItems } = await seed();
+    const userItem = userItems[0];
+    if (!userItem) throw new Error('expected a seeded user vocabulary item');
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 100,
+        createdAt: new Date('2026-03-02T04:59:59.999Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 1000,
+        createdAt: new Date('2026-03-02T05:00:00.000Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 2000,
+        createdAt: new Date('2026-03-08T05:00:00.000Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 3000,
+        createdAt: new Date('2026-03-09T03:59:59.999Z'),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 4000,
+        createdAt: new Date('2026-03-09T04:00:00.000Z'),
+      },
+    ]);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-08T16:00:00.000Z'));
+    const statistics = getStatistics({ userId: USER_ID, timezone: 'America/New_York' });
+    vi.useRealTimers();
+
+    const result = await statistics;
+
+    expect(result.discoveringPerDay).toHaveLength(7);
+    expect(result.discoveringPerDay[0]).toMatchObject({
+      date: '2026-03-02',
+      learningCount: 1,
+      knownCount: 0,
+      durationMs: 1000,
+    });
+    expect(result.discoveringPerDay.at(-1)).toMatchObject({
+      date: '2026-03-08',
+      learningCount: 1,
+      knownCount: 1,
+      durationMs: 5000,
+    });
+    expect(result.discoveringPerDay.find(({ date }) => date === '2026-03-01')).toBeUndefined();
+    expect(result.discoveringPerDay.find(({ date }) => date === '2026-03-09')).toBeUndefined();
   });
 
   it('includes reverted discoveries as historical activity', async () => {

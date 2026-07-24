@@ -1,4 +1,6 @@
 import '@tanstack/react-start/server-only';
+import { tz } from '@date-fns/tz';
+import { eachDayOfInterval, endOfDay, format, startOfDay, subDays } from 'date-fns';
 import { EventType } from '@/const/event';
 import { LearningStatus } from '@/const/vocabulary';
 import {
@@ -18,36 +20,17 @@ import type {
   WordsUpdatedPerDayStatistics,
 } from './dtos/statistics.dto';
 
-const startOfUtcDay = (date: Date) => {
-  const result = new Date(date);
-  result.setUTCHours(0, 0, 0, 0);
-  return result;
+type DailyStatisticsDto = {
+  userId: string;
+  dateFrom: Date;
+  dateTo: Date;
+  timezone: string;
 };
 
-const endOfUtcDay = (date: Date) => {
-  const result = new Date(date);
-  result.setUTCHours(23, 59, 59, 999);
-  return result;
-};
-
-const daysAgo = (days: number, date: Date) => {
-  const result = new Date(date);
-  result.setUTCDate(result.getUTCDate() - days);
-  return result;
-};
-
-const toDateOnlyString = (date: Date) => date.toISOString().slice(0, 10);
-
-const getDates = ({ dateFrom, dateTo }: { dateFrom: Date; dateTo: Date }) => {
-  const dates: string[] = [];
-  const currentDate = new Date(dateFrom);
-
-  while (currentDate.getTime() <= dateTo.getTime()) {
-    dates.push(toDateOnlyString(currentDate));
-    currentDate.setUTCDate(currentDate.getUTCDate() + 1);
-  }
-
-  return dates;
+const getDates = ({ dateFrom, dateTo, timezone }: Omit<DailyStatisticsDto, 'userId'>) => {
+  return eachDayOfInterval({ start: dateFrom, end: dateTo }, { in: tz(timezone) }).map((date) =>
+    format(date, 'yyyy-MM-dd', { in: tz(timezone) }),
+  );
 };
 
 const getGeneralStatistics = async (userId: string) => {
@@ -138,21 +121,13 @@ const getGeneralStatistics = async (userId: string) => {
   return result;
 };
 
-const getDiscoveringPerDayStatistics = async ({
-  userId,
-  dateFrom,
-  dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
-  const state = getDates({ dateFrom, dateTo }).reduce(
+const getDiscoveringPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: DailyStatisticsDto) => {
+  const state = getDates({ dateFrom, dateTo, timezone }).reduce(
     (result, date) => ({ ...result, [date]: { date, learningCount: 0, knownCount: 0, durationMs: 0 } }),
     {} as Record<string, DiscoveringPerDayStatistics>,
   );
 
-  const events = await getDiscoveryEventsGroupedByDay({ userId, dateFrom, dateTo });
+  const events = await getDiscoveryEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
   for (const item of events) {
     const target = state[item.date];
     if (!target) throw new Error(`Date ${item.date} is missing in discovery statistics`);
@@ -175,16 +150,8 @@ const getDiscoveringPerDayStatistics = async ({
   return Object.values(state);
 };
 
-const getLearningPerDayStatistics = async ({
-  userId,
-  dateFrom,
-  dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
-  const state = getDates({ dateFrom, dateTo }).reduce(
+const getLearningPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: DailyStatisticsDto) => {
+  const state = getDates({ dateFrom, dateTo, timezone }).reduce(
     (result, date) => ({
       ...result,
       [date]: {
@@ -200,7 +167,7 @@ const getLearningPerDayStatistics = async ({
     {} as Record<string, LearningPerDayStatistics>,
   );
 
-  const events = await getLearningEventsGroupedByDay({ userId, dateFrom, dateTo });
+  const events = await getLearningEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
   for (const item of events) {
     const target = state[item.date];
     if (!target) throw new Error(`Date ${item.date} is missing in learning statistics`);
@@ -238,21 +205,13 @@ const getLearningPerDayStatistics = async ({
   return Object.values(state);
 };
 
-const getCostPerDayStatistics = async ({
-  userId,
-  dateFrom,
-  dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
-  const state = getDates({ dateFrom, dateTo }).reduce(
+const getCostPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: DailyStatisticsDto) => {
+  const state = getDates({ dateFrom, dateTo, timezone }).reduce(
     (result, date) => ({ ...result, [date]: { date, costInNanoDollars: 0, inputTokens: 0, outputTokens: 0 } }),
     {} as Record<string, CostPerDayStatistics>,
   );
 
-  const events = await getTaskGenerationEventsGroupedByDay({ userId, dateFrom, dateTo });
+  const events = await getTaskGenerationEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
   for (const item of events) {
     const target = state[item.date];
     if (!target) throw new Error(`Date ${item.date} is missing in cost statistics`);
@@ -268,21 +227,18 @@ const getCostPerDayStatistics = async ({
   return Object.values(state);
 };
 
-const getWordsUpdatedPerDayStatistics = async ({
-  userId,
-  dateFrom,
-  dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
-  const state = getDates({ dateFrom, dateTo }).reduce(
+const getWordsUpdatedPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: DailyStatisticsDto) => {
+  const state = getDates({ dateFrom, dateTo, timezone }).reduce(
     (result, date) => ({ ...result, [date]: { date, uaTranslation: 0 } }),
     {} as Record<string, WordsUpdatedPerDayStatistics>,
   );
 
-  const events = await getVocabularyItemUpdatedEventsGroupedByDay({ userId, dateFrom, dateTo });
+  const events = await getVocabularyItemUpdatedEventsGroupedByDay({
+    userId,
+    dateFrom,
+    dateTo,
+    timezone,
+  });
   for (const item of events) {
     const target = state[item.date];
     if (!target) throw new Error(`Date ${item.date} is missing in update statistics`);
@@ -292,10 +248,10 @@ const getWordsUpdatedPerDayStatistics = async ({
   return Object.values(state);
 };
 
-export const getStatistics = async ({ userId }: { userId: string }) => {
-  const dateTo = endOfUtcDay(new Date());
-  const dateFrom = daysAgo(6, startOfUtcDay(dateTo));
-  const range = { userId, dateFrom, dateTo };
+export const getStatistics = async ({ userId, timezone = 'UTC' }: { userId: string; timezone?: string }) => {
+  const dateTo = endOfDay(new Date(), { in: tz(timezone) });
+  const dateFrom = subDays(startOfDay(dateTo, { in: tz(timezone) }), 6, { in: tz(timezone) });
+  const range = { userId, dateFrom, dateTo, timezone };
 
   const [general, discoveringPerDay, learningPerDay, costPerDay, wordsUpdatedPerDay, topMistakes, topHintedWords] =
     await Promise.all([

@@ -48,17 +48,21 @@ export const getEventsGroupedByType = async ({ userId }: { userId: string }) => 
     .groupBy(event.type);
 };
 
-const date = sql<string>`date(${event.createdAt} AT TIME ZONE 'UTC')`;
+type DailyEventStatisticsDto = {
+  userId: string;
+  dateFrom: Date;
+  dateTo: Date;
+  timezone: string;
+};
 
 export const getDiscoveryEventsGroupedByDay = async ({
   userId,
   dateFrom,
   dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
+  timezone,
+}: DailyEventStatisticsDto) => {
+  const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
+
   return await db
     .select({
       count: count(),
@@ -82,11 +86,10 @@ export const getLearningEventsGroupedByDay = async ({
   userId,
   dateFrom,
   dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
+  timezone,
+}: DailyEventStatisticsDto) => {
+  const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
+
   return await db
     .select({
       type: event.type,
@@ -116,11 +119,10 @@ export const getTaskGenerationEventsGroupedByDay = async ({
   userId,
   dateFrom,
   dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
+  timezone,
+}: DailyEventStatisticsDto) => {
+  const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
+
   return await db
     .select({
       date,
@@ -144,11 +146,10 @@ export const getVocabularyItemUpdatedEventsGroupedByDay = async ({
   userId,
   dateFrom,
   dateTo,
-}: {
-  userId: string;
-  dateFrom: Date;
-  dateTo: Date;
-}) => {
+  timezone,
+}: DailyEventStatisticsDto) => {
+  const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
+
   return await db
     .select({
       date,

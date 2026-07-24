@@ -20,7 +20,7 @@ describe('statistics.router', () => {
         outputTokens: 20,
       });
 
-      const res = await client.api.v1.users.me.statistics.$get();
+      const res = await client.api.v1.users.me.statistics.$get({ query: {} });
 
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({
@@ -39,9 +39,71 @@ describe('statistics.router', () => {
     it('returns 401 when unauthenticated', async () => {
       auth.unauthorized();
 
-      const res = await client.api.v1.users.me.statistics.$get();
+      const res = await client.api.v1.users.me.statistics.$get({ query: {} });
 
       expect(res.status).toBe(401);
+    });
+
+    it('returns 400 for an invalid timezone', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+
+      const res = await client.api.v1.users.me.statistics.$get({ query: { timezone: 'Mars/Olympus_Mons' } });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns the same events in different daily buckets for different timezones', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'Statistics User', email: `${USER_ID}@example.com` });
+
+      const previousUtcDay = new Date();
+      previousUtcDay.setUTCDate(previousUtcDay.getUTCDate() - 1);
+      previousUtcDay.setUTCHours(0, 30, 0, 0);
+
+      const previousUtcDayNoon = new Date(previousUtcDay);
+      previousUtcDayNoon.setUTCHours(12, 0, 0, 0);
+
+      await db.insert(event).values([
+        {
+          userId: USER_ID,
+          type: EventType.UserVocabularyItemTaskGenerated,
+          costInNanoDollars: 1000,
+          createdAt: previousUtcDay,
+        },
+        {
+          userId: USER_ID,
+          type: EventType.UserVocabularyItemTaskGenerated,
+          costInNanoDollars: 2000,
+          createdAt: previousUtcDayNoon,
+        },
+      ]);
+
+      const utcDate = previousUtcDay.toISOString().slice(0, 10);
+      const newYorkPreviousDate = new Date(previousUtcDay);
+      newYorkPreviousDate.setUTCDate(newYorkPreviousDate.getUTCDate() - 1);
+      const newYorkPreviousDateString = newYorkPreviousDate.toISOString().slice(0, 10);
+
+      const utcRes = await client.api.v1.users.me.statistics.$get({ query: { timezone: 'UTC' } });
+      const newYorkRes = await client.api.v1.users.me.statistics.$get({
+        query: { timezone: 'America/New_York' },
+      });
+
+      expect(utcRes.status).toBe(200);
+      expect(newYorkRes.status).toBe(200);
+      const utc = await utcRes.json();
+      const newYork = await newYorkRes.json();
+
+      if (!utc.success || !newYork.success) throw new Error('expected successful statistics responses');
+
+      expect(utc.data.costPerDay).toEqual(
+        expect.arrayContaining([expect.objectContaining({ date: utcDate, costInNanoDollars: 3000 })]),
+      );
+      expect(newYork.data.costPerDay).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ date: newYorkPreviousDateString, costInNanoDollars: 1000 }),
+          expect.objectContaining({ date: utcDate, costInNanoDollars: 2000 }),
+        ]),
+      );
     });
   });
 });
