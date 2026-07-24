@@ -1,28 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Statistics } from '@/components/statistics';
 import { statisticsData } from '../../fixtures/statistics.fixture';
-
-const { getStatisticsMock } = vi.hoisted(() => ({
-  getStatisticsMock: vi.fn(),
-}));
-
-vi.mock('@/services/api', () => ({
-  appClient: {
-    api: {
-      v1: {
-        users: {
-          me: {
-            statistics: {
-              $get: getStatisticsMock,
-            },
-          },
-        },
-      },
-    },
-  },
-}));
+import { learnHelperApi } from '../../mocks';
+import { mockServer } from '../../setup-unit-context';
 
 describe('Statistics', () => {
   const renderStatistics = () => {
@@ -46,7 +29,6 @@ describe('Statistics', () => {
   });
 
   beforeEach(() => {
-    getStatisticsMock.mockReset();
     window.matchMedia = vi.fn().mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
@@ -55,37 +37,32 @@ describe('Statistics', () => {
   });
 
   it('loads statistics using the browser timezone', async () => {
-    getStatisticsMock.mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, data: statisticsData }),
+    const getStatistics = vi.fn((searchParams: URLSearchParams) => {
+      expect(searchParams.get('timezone')).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+      return HttpResponse.json({ success: true, data: statisticsData });
     });
+    mockServer.addHandlers(learnHelperApi.statistics.mock(getStatistics));
 
     renderStatistics();
 
     expect(screen.getByText('Loading...')).toBeTruthy();
     expect(await screen.findByText('Discovery Undos')).toBeTruthy();
-    expect(getStatisticsMock).toHaveBeenCalledWith({
-      query: {
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      },
-    });
+    expect(getStatistics).toHaveBeenCalledOnce();
   });
 
   it('shows an API error and retries the request', async () => {
-    getStatisticsMock
-      .mockResolvedValueOnce({
-        ok: false,
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, data: statisticsData }),
-      });
+    const getStatistics = vi
+      .fn()
+      .mockReturnValueOnce(HttpResponse.json(null, { status: 500 }))
+      .mockReturnValueOnce(HttpResponse.json({ success: true, data: statisticsData }));
+    mockServer.addHandlers(learnHelperApi.statistics.mock(getStatistics));
 
     renderStatistics();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Try Again' }));
 
     expect(await screen.findByText('Discovery Undos')).toBeTruthy();
-    expect(getStatisticsMock).toHaveBeenCalledTimes(2);
+    expect(getStatistics).toHaveBeenCalledTimes(2);
   });
 });
