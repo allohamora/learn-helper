@@ -11,6 +11,7 @@ import { userVocabularyRouter } from './user-vocabulary/user-vocabulary.router';
 import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
 import { MimeType } from './utils/mime-type.utils';
+import { statisticsRouter } from './statistics/statistics.router';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -113,7 +114,9 @@ api.on(['POST', 'GET'], '/auth/*', (c) => {
   return auth.handler(c.req.raw);
 });
 
-const v1Router = new OpenAPIHono().route('/users/me/vocabulary-lists', userVocabularyRouter);
+const v1Router = new OpenAPIHono()
+  .route('/users/me/vocabulary-lists', userVocabularyRouter)
+  .route('/users/me/statistics', statisticsRouter);
 
 const app = api.route('/v1', v1Router);
 

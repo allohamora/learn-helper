@@ -1,0 +1,508 @@
+import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { EventType, UserVocabularyItemTaskType } from '@/const/event';
+import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
+import { db } from '@/server/db/db.service';
+import { event, user, userVocabularyItem } from '@/server/db/db.schema';
+import { getStatistics } from '@/server/statistics/statistics.service';
+import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
+import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
+import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
+
+const USER_ID = 'statistics-user';
+
+const toDateOnlyString = (date: Date) => date.toISOString().slice(0, 10);
+
+const daysAgo = (days: number) => {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - days);
+  return date;
+};
+
+const seed = async (itemCount = 1, userId = USER_ID) => {
+  await db.insert(user).values({ id: userId, name: 'Statistics User', email: `${userId}@example.com` });
+  const list = await findOrCreateVocabularyListByTitle(`Statistics ${userId}`);
+  const wordPrefix = userId === USER_ID ? 'word' : `${userId}-word`;
+  const items = await createMissingVocabularyItems(
+    Array.from({ length: itemCount }, (_, index) => ({
+      value: `${wordPrefix}-${index}`,
+      definition: `definition-${index}`,
+      uaTranslation: `translation-${index}`,
+      partOfSpeech: PartOfSpeech.Noun,
+      spelling: `${wordPrefix}-${index}`,
+    })),
+  );
+  await createVocabularyListItemsIfNotExist(
+    items.map((item) => ({ vocabularyListId: list.id, vocabularyItemId: item.id })),
+  );
+  await createUserVocabularyItemsFromList({ userId, vocabularyListId: list.id });
+
+  const userItems = await db.query.userVocabularyItem.findMany({
+    where: eq(userVocabularyItem.userId, userId),
+    with: { vocabularyItem: true },
+  });
+
+  return { items, userItems };
+};
+
+describe('statisticsService', () => {
+  it('returns empty lifetime statistics and seven zero-filled UTC days', async () => {
+    await seed();
+
+    const result = await getStatistics({ userId: USER_ID });
+
+    expect(result.general).toEqual({
+      totalDiscoveredWords: 0,
+      totalMistakesMade: 0,
+      totalCompletedTasks: 0,
+      totalRetriesCompleted: 0,
+      totalShowcasesCompleted: 0,
+      totalWordsMovedToNextStep: 0,
+      totalHintsViewed: 0,
+      totalWordsUpdated: 0,
+      totalTaskCostsInNanoDollars: 0,
+      totalInputTokens: 0,
+      totalOutputTokens: 0,
+      totalLearningDurationMs: 0,
+      totalDiscoveringDurationMs: 0,
+      averageTimePerTaskMs: 0,
+      averageTimePerDiscoveryMs: 0,
+    });
+    expect(result.discoveringPerDay).toHaveLength(7);
+    expect(result.learningPerDay).toHaveLength(7);
+    expect(result.costPerDay).toHaveLength(7);
+    expect(result.wordsUpdatedPerDay).toHaveLength(7);
+    expect(result.topMistakes).toEqual([]);
+    expect(result.topHintedWords).toEqual([]);
+    expect(result.discoveringPerDay).toEqual(
+      expect.arrayContaining([expect.objectContaining({ learningCount: 0, knownCount: 0, durationMs: 0 })]),
+    );
+    expect(result.learningPerDay).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          completedTasks: 0,
+          completedRetries: 0,
+          completedShowcases: 0,
+          mistakesMade: 0,
+          hintsViewed: 0,
+          durationMs: 0,
+        }),
+      ]),
+    );
+    expect(result.costPerDay).toEqual(
+      expect.arrayContaining([expect.objectContaining({ costInNanoDollars: 0, inputTokens: 0, outputTokens: 0 })]),
+    );
+  });
+
+  it('returns correct lifetime statistics for every reportable event type and isolates users', async () => {
+    const { items, userItems } = await seed();
+    const item = items[0];
+    const userItem = userItems[0];
+    if (!item || !userItem) throw new Error('expected a seeded vocabulary item');
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 3000,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 2000,
+      },
+      ...Array.from({ length: 2 }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskFailed,
+        userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+      })),
+      ...[5000, 3000].map((durationMs) => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskPassed,
+        userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+        durationMs,
+      })),
+      ...[1000, 1000].map((durationMs) => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskShowcaseViewed,
+        durationMs,
+      })),
+      ...[5000, 1000].map((durationMs) => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskRetryPassed,
+        userVocabularyItemTaskType: UserVocabularyItemTaskType.DefinitionToVocabularyItem,
+        durationMs,
+      })),
+      ...Array.from({ length: 2 }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemMovedToNextStep,
+      })),
+      ...Array.from({ length: 3 }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskHintUsed,
+        userVocabularyItemTaskType: UserVocabularyItemTaskType.VocabularyItemToDefinition,
+      })),
+      ...Array.from({ length: 2 }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+        type: EventType.VocabularyItemUpdated,
+        fieldName: 'uaTranslation',
+      })),
+      {
+        userId: USER_ID,
+        type: EventType.UserVocabularyItemTaskGenerated,
+        userVocabularyItemIds: [userItem.id],
+        costInNanoDollars: 3_500_000_000,
+        inputTokens: 1500,
+        outputTokens: 3000,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.UserVocabularyItemTaskGenerated,
+        userVocabularyItemIds: [userItem.id],
+        costInNanoDollars: 1_500_000_000,
+        inputTokens: 500,
+        outputTokens: 1000,
+      },
+    ]);
+
+    const otherUserId = 'other-statistics-user';
+    await db.insert(user).values({ id: otherUserId, name: 'Other User', email: `${otherUserId}@example.com` });
+    await db.insert(event).values({
+      userId: otherUserId,
+      type: EventType.UserVocabularyItemTaskGenerated,
+      costInNanoDollars: 9_000_000_000,
+      inputTokens: 999,
+      outputTokens: 999,
+    });
+
+    const result = await getStatistics({ userId: USER_ID });
+
+    expect(result.general).toEqual({
+      totalDiscoveredWords: 2,
+      totalMistakesMade: 2,
+      totalCompletedTasks: 2,
+      totalRetriesCompleted: 2,
+      totalShowcasesCompleted: 2,
+      totalWordsMovedToNextStep: 2,
+      totalHintsViewed: 3,
+      totalWordsUpdated: 2,
+      totalTaskCostsInNanoDollars: 5_000_000_000,
+      totalInputTokens: 2000,
+      totalOutputTokens: 4000,
+      totalLearningDurationMs: 16000,
+      totalDiscoveringDurationMs: 5000,
+      averageTimePerTaskMs: 4000,
+      averageTimePerDiscoveryMs: 2500,
+    });
+  });
+
+  it('limits daily series to seven UTC days while retaining older events in lifetime totals', async () => {
+    const { userItems } = await seed();
+    const userItem = userItems[0];
+    if (!userItem) throw new Error('expected a seeded user vocabulary item');
+
+    const today = new Date();
+    const yesterday = daysAgo(1);
+    const outsideRange = daysAgo(30);
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 2000,
+        createdAt: today,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 1000,
+        createdAt: yesterday,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskPassed,
+        durationMs: 5000,
+        createdAt: today,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskRetryPassed,
+        durationMs: 3000,
+        createdAt: yesterday,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskShowcaseViewed,
+        durationMs: 1000,
+        createdAt: today,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskFailed,
+        createdAt: today,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskHintUsed,
+        createdAt: yesterday,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.UserVocabularyItemTaskGenerated,
+        costInNanoDollars: 1_000_000,
+        inputTokens: 100,
+        outputTokens: 200,
+        createdAt: today,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 4000,
+        createdAt: outsideRange,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemTaskPassed,
+        durationMs: 7000,
+        createdAt: outsideRange,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.UserVocabularyItemTaskGenerated,
+        costInNanoDollars: 2_000_000,
+        inputTokens: 200,
+        outputTokens: 400,
+        createdAt: outsideRange,
+      },
+    ]);
+
+    const result = await getStatistics({ userId: USER_ID });
+    const todayDate = toDateOnlyString(today);
+    const yesterdayDate = toDateOnlyString(yesterday);
+
+    expect(result.general).toMatchObject({
+      totalDiscoveredWords: 3,
+      totalCompletedTasks: 2,
+      totalTaskCostsInNanoDollars: 3_000_000,
+      totalDiscoveringDurationMs: 7000,
+      totalLearningDurationMs: 16000,
+    });
+    expect(result.discoveringPerDay.find(({ date }) => date === todayDate)).toMatchObject({
+      learningCount: 1,
+      knownCount: 0,
+      durationMs: 2000,
+    });
+    expect(result.discoveringPerDay.find(({ date }) => date === yesterdayDate)).toMatchObject({
+      learningCount: 0,
+      knownCount: 1,
+      durationMs: 1000,
+    });
+    expect(result.learningPerDay.find(({ date }) => date === todayDate)).toMatchObject({
+      completedTasks: 1,
+      completedRetries: 0,
+      completedShowcases: 1,
+      mistakesMade: 1,
+      hintsViewed: 0,
+      durationMs: 6000,
+    });
+    expect(result.learningPerDay.find(({ date }) => date === yesterdayDate)).toMatchObject({
+      completedTasks: 0,
+      completedRetries: 1,
+      completedShowcases: 0,
+      mistakesMade: 0,
+      hintsViewed: 1,
+      durationMs: 3000,
+    });
+    expect(result.costPerDay.find(({ date }) => date === todayDate)).toMatchObject({
+      costInNanoDollars: 1_000_000,
+      inputTokens: 100,
+      outputTokens: 200,
+    });
+    expect(result.discoveringPerDay.find(({ date }) => date === toDateOnlyString(outsideRange))).toBeUndefined();
+  });
+
+  it('includes events at both UTC day boundaries', async () => {
+    const { userItems } = await seed();
+    const userItem = userItems[0];
+    if (!userItem) throw new Error('expected a seeded user vocabulary item');
+
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setUTCHours(23, 59, 59, 999);
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 1000,
+        createdAt: startOfToday,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 2000,
+        createdAt: endOfToday,
+      },
+    ]);
+
+    const result = await getStatistics({ userId: USER_ID });
+
+    expect(result.discoveringPerDay.at(-1)).toMatchObject({
+      date: toDateOnlyString(startOfToday),
+      learningCount: 1,
+      knownCount: 1,
+      durationMs: 3000,
+    });
+  });
+
+  it('includes reverted discoveries as historical activity', async () => {
+    const { userItems } = await seed();
+    const userItem = userItems[0];
+    if (!userItem) throw new Error('expected a seeded user vocabulary item');
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Known,
+        durationMs: 1000,
+        revertedAt: new Date(),
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscoveryUndone,
+        status: LearningStatus.Known,
+        durationMs: 1000,
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemDiscovered,
+        status: LearningStatus.Learning,
+        durationMs: 3000,
+      },
+    ]);
+
+    const result = await getStatistics({ userId: USER_ID });
+    const today = result.discoveringPerDay.at(-1);
+
+    expect(result.general).toMatchObject({
+      totalDiscoveredWords: 2,
+      totalDiscoveringDurationMs: 4000,
+      averageTimePerDiscoveryMs: 2000,
+    });
+    expect(today).toMatchObject({ learningCount: 1, knownCount: 1, durationMs: 4000 });
+  });
+
+  it('counts translation updates per day while retaining all updated fields in the general total', async () => {
+    const { items, userItems } = await seed();
+    const item = items[0];
+    const userItem = userItems[0];
+    if (!item || !userItem) throw new Error('expected a seeded vocabulary item');
+
+    await db.insert(event).values([
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+        type: EventType.VocabularyItemUpdated,
+        fieldName: 'uaTranslation',
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+        type: EventType.VocabularyItemUpdated,
+        fieldName: 'uaTranslation',
+      },
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+        type: EventType.VocabularyItemUpdated,
+        fieldName: 'definition',
+      },
+    ]);
+
+    const result = await getStatistics({ userId: USER_ID });
+
+    expect(result.general.totalWordsUpdated).toBe(3);
+    expect(result.wordsUpdatedPerDay.at(-1)?.uaTranslation).toBe(2);
+  });
+
+  it('returns the top 20 mistakes and hinted words ordered by event count', async () => {
+    const { userItems } = await seed(21);
+    const mistakeEvents = userItems.flatMap((item, index) =>
+      Array.from({ length: index + 1 }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: item.id,
+        type: EventType.UserVocabularyItemTaskFailed,
+      })),
+    );
+    const hintEvents = userItems.flatMap((item, index) =>
+      Array.from({ length: userItems.length - index }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: item.id,
+        type: EventType.UserVocabularyItemTaskHintUsed,
+      })),
+    );
+    await db.insert(event).values([...mistakeEvents, ...hintEvents]);
+
+    const { userItems: otherUserItems } = await seed(1, 'other-top-statistics-user');
+    const otherUserItem = otherUserItems[0];
+    if (!otherUserItem) throw new Error('expected another user vocabulary item');
+    await db.insert(event).values([
+      ...Array.from({ length: 30 }, () => ({
+        userId: 'other-top-statistics-user',
+        userVocabularyItemId: otherUserItem.id,
+        type: EventType.UserVocabularyItemTaskFailed,
+      })),
+      ...Array.from({ length: 30 }, () => ({
+        userId: 'other-top-statistics-user',
+        userVocabularyItemId: otherUserItem.id,
+        type: EventType.UserVocabularyItemTaskHintUsed,
+      })),
+    ]);
+
+    const result = await getStatistics({ userId: USER_ID });
+
+    expect(result.topMistakes).toHaveLength(20);
+    expect(result.topMistakes[0]).toMatchObject({ count: 21, value: 'word-20', partOfSpeech: PartOfSpeech.Noun });
+    expect(result.topMistakes.at(-1)?.count).toBe(2);
+    expect(result.topHintedWords).toHaveLength(20);
+    expect(result.topHintedWords[0]).toMatchObject({ count: 21, value: 'word-0', partOfSpeech: PartOfSpeech.Noun });
+    expect(result.topHintedWords.at(-1)?.count).toBe(2);
+  });
+});
