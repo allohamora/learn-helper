@@ -22,7 +22,7 @@ import { appClient } from '@/services/api';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { nanoDollarsToDollars } from '@/utils/currency';
+import { formatDollars, nanoDollarsToDollars } from '@/utils/currency';
 import { toShortDate } from '@/utils/date';
 import { formatDuration } from '@/utils/duration';
 
@@ -322,7 +322,7 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
   const costMetrics: MetricCardProps[] = [
     {
       title: 'Task Cost',
-      value: `$${nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)}`,
+      value: formatDollars(nanoDollarsToDollars(general.totalTaskCostsInNanoDollars)),
       description: 'cost of generated tasks',
       icon: DollarSign,
     },
