@@ -7,12 +7,13 @@ import type { PronunciationToVocabularyItemTask } from '@/types/learn';
 // happy-dom does not implement the Web Speech API, so SttButton (rendered inside
 // ToVocabularyItem) hits its "not supported" branch unless SpeechRecognition exists.
 describe('PronunciationToVocabularyItem', () => {
+  const originalSpeechRecognition = window.SpeechRecognition;
   let speechRecognitionSpy: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
     speechRecognitionSpy = vi.fn<() => void>();
 
-    class SpeechRecognitionMock extends EventTarget implements Partial<SpeechRecognition> {
+    class MockSpeechRecognition extends EventTarget implements Partial<SpeechRecognition> {
       lang = '';
       continuous = false;
       interimResults = false;
@@ -28,7 +29,7 @@ describe('PronunciationToVocabularyItem', () => {
       abort() {}
     }
 
-    vi.stubGlobal('SpeechRecognition', SpeechRecognitionMock);
+    window.SpeechRecognition = MockSpeechRecognition as unknown as typeof SpeechRecognition;
   });
 
   const renderTask = (pronunciation: string | null) => {
@@ -51,7 +52,7 @@ describe('PronunciationToVocabularyItem', () => {
   };
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    window.SpeechRecognition = originalSpeechRecognition;
     cleanup();
   });
 
