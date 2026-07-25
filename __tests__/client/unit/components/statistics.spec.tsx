@@ -8,6 +8,8 @@ import { api } from '../../utils/api.utils';
 import { mockServer } from '../../setup-unit-context';
 
 describe('Statistics', () => {
+  let getBoundingClientRectSpy: ReturnType<typeof vi.spyOn>;
+
   const renderStatistics = () => {
     const queryClient = new QueryClient({
       defaultOptions: {
@@ -25,6 +27,7 @@ describe('Statistics', () => {
   };
 
   afterEach(() => {
+    getBoundingClientRectSpy.mockRestore();
     cleanup();
   });
 
@@ -34,6 +37,20 @@ describe('Statistics', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     });
+
+    // happy-dom has no layout engine, so getBoundingClientRect() always reports 0x0,
+    // which makes Recharts' ResponsiveContainer warn about a non-positive container size.
+    getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 320,
+      height: 200,
+      top: 0,
+      left: 0,
+      right: 320,
+      bottom: 200,
+      x: 0,
+      y: 0,
+      toJSON() {},
+    } as DOMRect);
   });
 
   it('loads statistics using the browser timezone', async () => {
@@ -49,6 +66,7 @@ describe('Statistics', () => {
     expect(screen.getByText('Loading...')).toBeTruthy();
     expect(await screen.findByText('Discovery Undos')).toBeTruthy();
     expect(getStatistics).toHaveBeenCalledOnce();
+    expect(getBoundingClientRectSpy).toHaveBeenCalled();
   });
 
   it('shows an API error and retries the request', async () => {
@@ -64,5 +82,6 @@ describe('Statistics', () => {
 
     expect(await screen.findByText('Discovery Undos')).toBeTruthy();
     expect(getStatistics).toHaveBeenCalledTimes(2);
+    expect(getBoundingClientRectSpy).toHaveBeenCalled();
   });
 });
