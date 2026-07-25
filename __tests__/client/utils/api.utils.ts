@@ -7,7 +7,7 @@ type StatisticsResponse = {
   data: Statistics;
 };
 
-export const learnHelperApi = {
+export const api = {
   statistics: {
     mock: (fn: (searchParams: URLSearchParams) => HttpResponse<JsonBodyType>) => {
       return http.get('/api/v1/users/me/statistics', ({ request }) => {
@@ -15,7 +15,7 @@ export const learnHelperApi = {
       });
     },
     ok: (data: Statistics) =>
-      learnHelperApi.statistics.mock(() =>
+      api.statistics.mock(() =>
         HttpResponse.json<StatisticsResponse>({
           success: true,
           data,

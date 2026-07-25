@@ -4,7 +4,7 @@ import { HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Statistics } from '@/components/statistics';
 import { statisticsData } from '../../fixtures/statistics.fixture';
-import { learnHelperApi } from '../../mocks';
+import { api } from '../../utils/api.utils';
 import { mockServer } from '../../setup-unit-context';
 
 describe('Statistics', () => {
@@ -42,7 +42,7 @@ describe('Statistics', () => {
 
       return HttpResponse.json({ success: true, data: statisticsData });
     });
-    mockServer.addHandlers(learnHelperApi.statistics.mock(getStatistics));
+    mockServer.addHandlers(api.statistics.mock(getStatistics));
 
     renderStatistics();
 
@@ -56,7 +56,7 @@ describe('Statistics', () => {
       .fn()
       .mockReturnValueOnce(HttpResponse.json(null, { status: 500 }))
       .mockReturnValueOnce(HttpResponse.json({ success: true, data: statisticsData }));
-    mockServer.addHandlers(learnHelperApi.statistics.mock(getStatistics));
+    mockServer.addHandlers(api.statistics.mock(getStatistics));
 
     renderStatistics();
 
