@@ -50,6 +50,7 @@ const statisticsData = {
 
 describe('Statistics', () => {
   let getBoundingClientRectSpy: ReturnType<typeof vi.spyOn>;
+  let matchMediaSpy: ReturnType<typeof vi.spyOn>;
 
   const renderStatistics = () => {
     const queryClient = new QueryClient({
@@ -68,16 +69,17 @@ describe('Statistics', () => {
   };
 
   afterEach(() => {
+    matchMediaSpy.mockRestore();
     getBoundingClientRectSpy.mockRestore();
     cleanup();
   });
 
   beforeEach(() => {
-    window.matchMedia = vi.fn().mockReturnValue({
+    matchMediaSpy = vi.spyOn(window, 'matchMedia').mockReturnValue({
       matches: false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-    });
+    } as unknown as MediaQueryList);
 
     // happy-dom has no layout engine, so getBoundingClientRect() always reports 0x0,
     // which makes Recharts' ResponsiveContainer warn about a non-positive container size.
