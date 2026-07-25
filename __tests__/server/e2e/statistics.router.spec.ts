@@ -56,10 +56,14 @@ describe('statistics.router', () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'Statistics User', email: `${USER_ID}@example.com` });
 
+      // example utc: 22.07.2026, 00:30
+      // example new york: 21.07.2026, 20:30
       const previousUtcDay = new Date();
       previousUtcDay.setUTCDate(previousUtcDay.getUTCDate() - 1);
       previousUtcDay.setUTCHours(0, 30, 0, 0);
 
+      // example utc: 22.07.2026, 12:00
+      // example new york: 22.07.2026, 08:00
       const previousUtcDayNoon = new Date(previousUtcDay);
       previousUtcDayNoon.setUTCHours(12, 0, 0, 0);
 
@@ -96,11 +100,17 @@ describe('statistics.router', () => {
       if (!utc.success || !newYork.success) throw new Error('expected successful statistics responses');
 
       expect(utc.data.costPerDay).toEqual(
-        expect.arrayContaining([expect.objectContaining({ date: utcDate, costInNanoDollars: 3000 })]),
+        expect.arrayContaining([
+          // first event in example utc: 22.07.2026, 00:30 with 1000
+          // second event in example utc: 22.07.2026, 12:00 with 2000
+          expect.objectContaining({ date: utcDate, costInNanoDollars: 3000 }),
+        ]),
       );
       expect(newYork.data.costPerDay).toEqual(
         expect.arrayContaining([
+          // first event in example new york: 21.07.2026, 20:30 with 1000
           expect.objectContaining({ date: newYorkPreviousDateString, costInNanoDollars: 1000 }),
+          // second event in example new york: 22.07.2026, 08:00 with 2000
           expect.objectContaining({ date: utcDate, costInNanoDollars: 2000 }),
         ]),
       );

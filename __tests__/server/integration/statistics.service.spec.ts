@@ -353,8 +353,11 @@ describe('statisticsService', () => {
     const userItem = userItems[0];
     if (!userItem) throw new Error('expected a seeded user vocabulary item');
 
+    // example utc: 22.07.2026, 00:00:00.000
     const startOfToday = new Date();
     startOfToday.setUTCHours(0, 0, 0, 0);
+
+    // example utc: 22.07.2026, 23:59:59.999
     const endOfToday = new Date();
     endOfToday.setUTCHours(23, 59, 59, 999);
 
@@ -379,6 +382,8 @@ describe('statisticsService', () => {
 
     const result = await getStatistics({ userId: USER_ID });
 
+    // learning event in example utc: 22.07.2026, 00:00:00.000 with 1000
+    // known event in example utc: 22.07.2026, 23:59:59.999 with 2000
     expect(result.discoveringPerDay.at(-1)).toMatchObject({
       date: toDateOnlyString(startOfToday),
       learningCount: 1,
@@ -400,6 +405,9 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Learning,
         durationMs: 1000,
+        // utc: 2026-07-24, 21:30
+        // kyiv: 2026-07-25, 00:30
+        // new york: 2026-07-24, 17:30
         createdAt: new Date('2026-07-24T21:30:00.000Z'),
       },
       {
@@ -408,6 +416,9 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Known,
         durationMs: 2000,
+        // utc: 2026-07-25, 01:30
+        // kyiv: 2026-07-25, 04:30
+        // new york: 2026-07-24, 21:30
         createdAt: new Date('2026-07-25T01:30:00.000Z'),
       },
       {
@@ -446,28 +457,37 @@ describe('statisticsService', () => {
 
     const [utc, kyiv, newYork] = await Promise.all(statistics);
 
+    // learning event in utc: 2026-07-24, 21:30
     expect(utc.discoveringPerDay.find(({ date }) => date === '2026-07-24')).toMatchObject({
       learningCount: 1,
       knownCount: 0,
     });
+    // known event in utc: 2026-07-25, 01:30
     expect(utc.discoveringPerDay.find(({ date }) => date === '2026-07-25')).toMatchObject({
       learningCount: 0,
       knownCount: 1,
     });
+    // learning event in kyiv: 2026-07-25, 00:30 with 1000
+    // known event in kyiv: 2026-07-25, 04:30 with 2000
     expect(kyiv.discoveringPerDay.at(-1)).toMatchObject({
       date: '2026-07-25',
       learningCount: 1,
       knownCount: 1,
       durationMs: 3000,
     });
+    // task passed event in kyiv: 2026-07-25, 00:30
     expect(kyiv.learningPerDay.at(-1)).toMatchObject({ date: '2026-07-25', completedTasks: 1, durationMs: 5000 });
+    // task generated event in kyiv: 2026-07-25, 00:30
     expect(kyiv.costPerDay.at(-1)).toMatchObject({
       date: '2026-07-25',
       costInNanoDollars: 1234,
       inputTokens: 10,
       outputTokens: 20,
     });
+    // vocabulary item updated event in kyiv: 2026-07-25, 00:30
     expect(kyiv.wordsUpdatedPerDay.at(-1)).toMatchObject({ date: '2026-07-25', uaTranslation: 1 });
+    // learning event in new york: 2026-07-24, 17:30 with 1000
+    // known event in new york: 2026-07-24, 21:30 with 2000
     expect(newYork.discoveringPerDay.at(-1)).toMatchObject({
       date: '2026-07-24',
       learningCount: 1,
@@ -488,6 +508,8 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Learning,
         durationMs: 100,
+        // utc: 2026-03-02, 04:59:59.999
+        // new york: 2026-03-01, 23:59:59.999 (EST)
         createdAt: new Date('2026-03-02T04:59:59.999Z'),
       },
       {
@@ -496,6 +518,8 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Learning,
         durationMs: 1000,
+        // utc: 2026-03-02, 05:00:00.000
+        // new york: 2026-03-02, 00:00:00.000 (EST)
         createdAt: new Date('2026-03-02T05:00:00.000Z'),
       },
       {
@@ -504,6 +528,8 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Learning,
         durationMs: 2000,
+        // utc: 2026-03-08, 05:00:00.000
+        // new york: 2026-03-08, 00:00:00.000 (EST)
         createdAt: new Date('2026-03-08T05:00:00.000Z'),
       },
       {
@@ -512,6 +538,8 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Known,
         durationMs: 3000,
+        // utc: 2026-03-09, 03:59:59.999
+        // new york: 2026-03-08, 23:59:59.999 (EDT)
         createdAt: new Date('2026-03-09T03:59:59.999Z'),
       },
       {
@@ -520,6 +548,8 @@ describe('statisticsService', () => {
         type: EventType.UserVocabularyItemDiscovered,
         status: LearningStatus.Known,
         durationMs: 4000,
+        // utc: 2026-03-09, 04:00:00.000
+        // new york: 2026-03-09, 00:00:00.000 (EDT)
         createdAt: new Date('2026-03-09T04:00:00.000Z'),
       },
     ]);
@@ -532,19 +562,24 @@ describe('statisticsService', () => {
     const result = await statistics;
 
     expect(result.discoveringPerDay).toHaveLength(7);
+    // learning event in new york: 2026-03-02, 00:00:00.000 with 1000
     expect(result.discoveringPerDay[0]).toMatchObject({
       date: '2026-03-02',
       learningCount: 1,
       knownCount: 0,
       durationMs: 1000,
     });
+    // learning event in new york: 2026-03-08, 00:00:00.000 with 2000
+    // known event in new york: 2026-03-08, 23:59:59.999 with 3000
     expect(result.discoveringPerDay.at(-1)).toMatchObject({
       date: '2026-03-08',
       learningCount: 1,
       knownCount: 1,
       durationMs: 5000,
     });
+    // learning event in new york: 2026-03-01, 23:59:59.999 with 100 — one tick before the window, dropped
     expect(result.discoveringPerDay.find(({ date }) => date === '2026-03-01')).toBeUndefined();
+    // known event in new york: 2026-03-09, 00:00:00.000 with 4000 — one day after the window, dropped
     expect(result.discoveringPerDay.find(({ date }) => date === '2026-03-09')).toBeUndefined();
   });
 
