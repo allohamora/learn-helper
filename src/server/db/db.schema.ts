@@ -219,39 +219,46 @@ export const userVocabularyList = pgTable(
   ],
 );
 
-export const event = pgTable('event', {
-  id: uuid('id')
-    .default(sql`uuidv7()`)
-    .primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  type: varchar('type', { length: 48 }).$type<EventType>().notNull(),
-  userVocabularyItemId: uuid('user_vocabulary_item_id').references(() => userVocabularyItem.id, {
-    onDelete: 'restrict',
-  }),
-  // AI-generation-batch cost tracing: array of user_vocabulary_item ids included in a single generation call
-  userVocabularyItemIds: jsonb('user_vocabulary_item_ids').$type<string[]>(),
-  vocabularyItemId: uuid('vocabulary_item_id').references(() => vocabularyItem.id, { onDelete: 'restrict' }),
-  // exists in vocabulary item update and user vocabulary item progression events
-  userVocabularyListId: uuid('user_vocabulary_list_id').references(() => userVocabularyList.id, {
-    onDelete: 'restrict',
-  }),
-  status: varchar('status', { length: 16 }).$type<LearningStatus>(),
-  userVocabularyItemTaskType: varchar('user_vocabulary_item_task_type', {
-    length: 48,
-  }).$type<UserVocabularyItemTaskType>(),
-  // records which vocabulary_item field changed for a vocabulary-item-updated event (e.g. 'uaTranslation')
-  fieldName: text('field_name'),
-  durationMs: integer('duration_ms'),
-  encounterCount: integer('encounter_count'),
-  costInNanoDollars: bigint('cost_in_nano_dollars', { mode: 'number' }),
-  inputTokens: integer('input_tokens'),
-  outputTokens: integer('output_tokens'),
-  // marks a discovered event as later undone; generic across event types, not undo-specific
-  revertedAt: timestamp('reverted_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+export const event = pgTable(
+  'event',
+  {
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    type: varchar('type', { length: 48 }).$type<EventType>().notNull(),
+    userVocabularyItemId: uuid('user_vocabulary_item_id').references(() => userVocabularyItem.id, {
+      onDelete: 'restrict',
+    }),
+    // AI-generation-batch cost tracing: array of user_vocabulary_item ids included in a single generation call
+    userVocabularyItemIds: jsonb('user_vocabulary_item_ids').$type<string[]>(),
+    vocabularyItemId: uuid('vocabulary_item_id').references(() => vocabularyItem.id, { onDelete: 'restrict' }),
+    // exists in vocabulary item update and user vocabulary item progression events
+    userVocabularyListId: uuid('user_vocabulary_list_id').references(() => userVocabularyList.id, {
+      onDelete: 'restrict',
+    }),
+    status: varchar('status', { length: 16 }).$type<LearningStatus>(),
+    userVocabularyItemTaskType: varchar('user_vocabulary_item_task_type', {
+      length: 48,
+    }).$type<UserVocabularyItemTaskType>(),
+    // records which vocabulary_item field changed for a vocabulary-item-updated event (e.g. 'uaTranslation')
+    fieldName: text('field_name'),
+    durationMs: integer('duration_ms'),
+    encounterCount: integer('encounter_count'),
+    costInNanoDollars: bigint('cost_in_nano_dollars', { mode: 'number' }),
+    inputTokens: integer('input_tokens'),
+    outputTokens: integer('output_tokens'),
+    // marks a discovered event as later undone; generic across event types, not undo-specific
+    revertedAt: timestamp('reverted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    // statistics page: every query filters by user_id + type; benchmarked against wider indexes, see docs/database-design.md
+    index('event_user_id_type_idx').on(table.userId, table.type),
+  ],
+);
 
 export const vocabularyListRelations = relations(vocabularyList, ({ many }) => ({
   vocabularyListItems: many(vocabularyListItem),

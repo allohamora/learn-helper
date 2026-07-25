@@ -1,0 +1,1 @@
+CREATE INDEX "event_user_id_type_idx" ON "event" USING btree ("user_id","type");
