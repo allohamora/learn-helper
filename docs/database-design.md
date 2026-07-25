@@ -293,6 +293,10 @@ Records which field changed on a `vocabulary-item-updated` event (e.g. `uaTransl
 
 Records which list an item was being practiced in when a session event fired (e.g. discovered, passed, moved to next step). Since an item can belong to multiple lists, `vocabulary_item_id` alone can't tell you which list the session was scoped to. References `user_vocabulary_list` (the user's list enrollment) rather than `vocabulary_list` directly, since the event is always tied to a specific user's enrollment, matching the same pattern as `user_vocabulary_item_id` referencing `user_vocabulary_item` rather than `vocabulary_item`.
 
+### `(user_id, type)` index
+
+Every statistics query filters on `user_id` and `type` (see the Statistics page). Benchmarked on 1M synthetic rows: unindexed scans took ~30-36ms per query; a single `(user_id, type)` index brought all of them under ~3ms. A wider set of indexes — `(user_id, type, created_at)` plus `(user_id, type, user_vocabulary_item_id)` — was also benchmarked and did not meaningfully outperform the single two-column index at this data volume, so the extra index and write overhead wasn't worth it.
+
 ## List-based learning
 
 Both vocabulary and grammar are organised around **lists**. A user enrolls in a list; the list drives what they discover and review. Learning state (`encounter_count`, `status`) is stored globally per user per item — if an item is learned via one list it is learned everywhere.

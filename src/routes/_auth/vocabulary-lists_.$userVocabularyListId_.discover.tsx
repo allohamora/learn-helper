@@ -142,25 +142,25 @@ function VocabularyListDiscoverPage() {
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       {isLoading ? (
-        <div className="flex items-center justify-center">
+        <div className="my-4 flex items-center justify-center">
           <Loader />
         </div>
       ) : error ? (
-        <div className="flex items-center justify-center">
+        <div className="my-4 flex items-center justify-center">
           <div className="text-center">
             <p className="mb-4 text-destructive">{error.message}</p>
             <Button onClick={() => void refetch()}>Try Again</Button>
           </div>
         </div>
       ) : !currentItem ? (
-        <div className="flex items-center justify-center">
+        <div className="my-4 flex items-center justify-center">
           <div className="text-center">
             <h2 className="mb-4 text-2xl font-bold">Great job!</h2>
             <p className="mb-4 text-muted-foreground">You&apos;ve discovered all available items.</p>
           </div>
         </div>
       ) : (
-        <div className="mx-auto max-w-md">
+        <div className="mx-auto my-4 max-w-md">
           <div className="mb-4 flex items-center justify-between text-sm md:mb-8">
             <p className="text-muted-foreground">Remaining items: {remaining}</p>
             <Button

@@ -20,7 +20,7 @@ function AuthLayout() {
   return (
     <>
       <Header />
-      <main className="container my-4">
+      <main className="container">
         <Outlet />
       </main>
       <Footer />
