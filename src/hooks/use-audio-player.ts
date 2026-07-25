@@ -14,7 +14,11 @@ export const useAudioPlayer = () => {
       const audio = new Audio();
       audio.src = audioUrl;
 
-      const cleanup = () => {
+      const cleanup = (event: Event) => {
+        if (event.type === 'error') {
+          console.error('Audio error:', event);
+        }
+
         setIsPlaying(false);
 
         audio.removeEventListener('ended', cleanup);
@@ -22,10 +26,7 @@ export const useAudioPlayer = () => {
       };
 
       audio.addEventListener('ended', cleanup);
-      audio.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
-        cleanup();
-      });
+      audio.addEventListener('error', cleanup);
 
       await audio.play();
     } catch (error) {

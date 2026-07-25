@@ -10,13 +10,13 @@ erDiagram
 
     vocabulary_item {
         id uuid PK
-        value text
-        definition text
-        ua_translation text
+        value varchar(255)
+        definition varchar(512)
+        ua_translation varchar(255)
         part_of_speech varchar(32) "optional, enum: part_of_speech"
-        spelling text
-        pronunciation text "optional"
-        link text "optional"
+        spelling varchar(255)
+        pronunciation varchar(512) "optional"
+        link varchar(512) "optional"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -45,15 +45,29 @@ erDiagram
         updated_at timestamptz "default NOW"
     }
 
+    vocabulary_list_item {
+        id uuid PK
+        vocabulary_list_id uuid FK "unique with vocabulary_item_id"
+        vocabulary_item_id uuid FK
+        created_at timestamptz "default NOW"
+    }
+
     user_vocabulary_item {
         id uuid PK
-        user_id uuid FK "unique with vocabulary_item_id"
+        user_id uuid FK "unique with vocabulary_item_id (text in practice, matching better-auth's user.id)"
         vocabulary_item_id uuid FK
         encounter_count integer
         status varchar(16) "enum: learning_status"
-        enqueued_at timestamptz "default NOW"
+        enqueued_at timestamptz "nullable"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
+    }
+
+    user_vocabulary_list {
+        id uuid PK
+        user_id uuid FK "unique with vocabulary_list_id (text in practice, matching better-auth's user.id)"
+        vocabulary_list_id uuid FK
+        created_at timestamptz "default NOW"
     }
 
     user_grammar_topic {
@@ -104,23 +118,27 @@ erDiagram
         status varchar(16) "optional, enum: learning_status"
         user_vocabulary_item_task_type varchar(48) "optional, enum: user_vocabulary_item_task_type"
         user_grammar_topic_task_type varchar(48) "optional, enum: user_grammar_topic_task_type"
-        vocabulary_list_id uuid FK "optional"
+        user_vocabulary_list_id uuid FK "optional"
         grammar_topic_list_id uuid FK "optional"
         field_name text "optional"
         duration_ms integer "optional"
         encounter_count integer "optional"
-        cost_in_nano_dollars integer "optional"
+        cost_in_nano_dollars bigint "optional"
         input_tokens integer "optional"
         output_tokens integer "optional"
+        reverted_at timestamptz "optional"
         created_at timestamptz "default NOW"
     }
 
     user ||--o{ user_vocabulary_item : "one-to-many"
+    user ||--o{ user_vocabulary_list : "one-to-many"
     user ||--o{ user_grammar_topic : "one-to-many"
     user ||--o{ event : "one-to-many"
-    vocabulary_list }o--o{ vocabulary_item : "many-to-many"
+    vocabulary_list ||--o{ vocabulary_list_item : "one-to-many"
+    vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
+    vocabulary_item ||--o{ vocabulary_list_item : "one-to-many"
     grammar_topic_list }o--o{ grammar_topic : "many-to-many"
-    vocabulary_list ||--o{ event : "one-to-many"
+    user_vocabulary_list ||--o{ event : "one-to-many"
     grammar_topic_list ||--o{ event : "one-to-many"
     vocabulary_item ||--o{ user_vocabulary_item : "one-to-many"
     grammar_topic ||--o{ user_grammar_topic : "one-to-many"
@@ -139,6 +157,7 @@ erDiagram
 ### event_type
 
 - user-vocabulary-item-discovered
+- user-vocabulary-item-discovery-undone
 - user-vocabulary-item-task-failed
 - user-vocabulary-item-task-showcase-viewed
 - user-vocabulary-item-task-passed
@@ -182,10 +201,10 @@ erDiagram
 
 ### learning_status
 
-- waiting — enrolled but not yet discovered; eligible for Discovery sessions only
-- learning — discovered, actively in review rotation; eligible for Learning sessions only
+- waiting — enrolled but not yet discovered; eligible for Discover sessions only
+- learning — discovered, actively in review rotation; eligible for Learn sessions only
 - learned — completed the learning cycle; no longer appears in any session
-- known — user marked as already known before discovery; skips Discovery entirely
+- known — user marked as already known before discovery; skips Discover entirely
 
 ### part_of_speech
 
@@ -215,7 +234,23 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 
 ### `user_vocabulary_item.encounter_count`
 
-Tracks the number of successful confirmations in Learning sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
+Tracks the number of successful confirmations in Learn sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
+
+### `vocabulary_list_item`
+
+The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-many relationship (not spelled out elsewhere in this doc). Has its own surrogate `id` PK for consistency with every other table here, plus a unique constraint on `(vocabulary_list_id, vocabulary_item_id)` to prevent duplicate links, which also improves join performance. Both FKs cascade on delete — a link row has no meaning without both sides. No `updated_at`: rows are only ever inserted/deleted, never mutated in place.
+
+### `user_vocabulary_list`
+
+Tracks which lists a user has explicitly added, as its own fact rather than something inferred from `user_vocabulary_item` rows. A list is added atomically — `vocabulary_list_id` cascades on delete along with `user_id`, consistent with `vocabulary_list_item`'s two-cascade FKs, since a "list added" record has no meaning without both sides existing. Unique on `(user_id, vocabulary_list_id)` to prevent duplicate adds, which also improves join performance.
+
+### `part_of_speech` / `learning_status` are app-level enums, not native Postgres enum types
+
+Both columns are plain `varchar` (see column lengths above) validated as enums at the application/TypeScript layer, not `CREATE TYPE ... AS ENUM`. This keeps adding new values a plain data migration instead of a schema migration.
+
+### `user_vocabulary_item` FK delete behavior
+
+`user_id` cascades on delete (consistent with `session`/`account`: removing a user removes their derived data). `vocabulary_item_id` uses `ON DELETE RESTRICT` instead — vocabulary items are near-static reference/seed data, so deleting one while users have progress against it should fail loudly rather than silently erase that progress. The unique index on `(user_id, vocabulary_item_id)` also improves join performance.
 
 ### Grammar session rhythm — event-based algorithm
 
@@ -232,9 +267,35 @@ This implements the `[new, review, review, …]` cycle via observation rather th
 
 ## Event table notes
 
+### Undoing a discovery — `reverted_at` and `user-vocabulary-item-discovery-undone`
+
+The event table is append-only: a discovery is never deleted when the user undoes it. Instead, undo (`POST .../items/{id}/undo`):
+
+1. Sets `reverted_at = NOW()` on the active `user-vocabulary-item-discovered` event (the one for that user + item with `reverted_at IS NULL` — there is at most one at a time). This keeps "is this item currently discovered" a cheap, self-contained lookup on the event table (`reverted_at IS NULL`) without joining or mutating `user_vocabulary_item`.
+2. Inserts a `user-vocabulary-item-discovery-undone` event, copying `duration_ms` from the event it undoes — not a freshly-computed value — so the undone event is a self-sufficient historical record of what was reverted (no join back to the original event needed for analysis).
+3. Sets `user_vocabulary_item.status` back to `waiting`, same as any other status transition.
+
+`reverted_at` is a generic column (not undo-specific) so any future event type that needs a "later undone" marker can reuse it, rather than each undo-able event type growing its own flag.
+
 ### `user_vocabulary_item_ids`
 
 Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
+
+### `cost_in_nano_dollars`
+
+`bigint` with `mode: 'number'`, not `integer` — a 32-bit `integer` overflows above ~$2.14 (2^31 nanodollars), which a large AI-generation batch on a pricier model could plausibly exceed. `mode: 'number'` keeps it a plain JS `number` (safe up to ~$9M) rather than a `BigInt`, since the app never needs values anywhere near that range.
+
+### `field_name`
+
+Records which field changed on a `vocabulary-item-updated` event (e.g. `uaTranslation` when the user edits their translation). Powers a per-field "edits per day" breakdown on the statistics page, grouped by `(date, field_name)`.
+
+### `user_vocabulary_list_id`
+
+Records which list an item was being practiced in when a session event fired (e.g. discovered, passed, moved to next step). Since an item can belong to multiple lists, `vocabulary_item_id` alone can't tell you which list the session was scoped to. References `user_vocabulary_list` (the user's list enrollment) rather than `vocabulary_list` directly, since the event is always tied to a specific user's enrollment, matching the same pattern as `user_vocabulary_item_id` referencing `user_vocabulary_item` rather than `vocabulary_item`.
+
+### `(user_id, type)` index
+
+Every statistics query filters on `user_id` and `type` (see the Statistics page). Benchmarked on 1M synthetic rows: unindexed scans took ~30-36ms per query; a single `(user_id, type)` index brought all of them under ~3ms. A wider set of indexes — `(user_id, type, created_at)` plus `(user_id, type, user_vocabulary_item_id)` — was also benchmarked and did not meaningfully outperform the single two-column index at this data volume, so the extra index and write overhead wasn't worth it.
 
 ## List-based learning
 
@@ -244,7 +305,7 @@ Both vocabulary and grammar are organised around **lists**. A user enrolls in a 
 
 The queue is designed for **infinite, on-demand practice** — the user opens the app whenever they want and there is always something to do. This is a deliberate rejection of the Anki/time-gated model where items have a `next_review_at` timestamp and the user hits a wall ("nothing due today") after clearing the deck.
 
-A `next_review_at` approach is explicitly **not used** here. Locking items behind a future timestamp would force the user to either stop learning or switch to new words only, which defeats the purpose of review. Instead, reviewed items go to the back of the FIFO queue (`enqueued_at` reset to `NOW()`), so the queue is always full and always playable.
+A `next_review_at` approach is explicitly **not used** here. Locking items behind a future timestamp would force the user to either stop learning or switch to new items only, which defeats the purpose of review. Instead, reviewed items go to the back of the FIFO queue (`enqueued_at` reset to `NOW()`), so the queue is always full and always playable.
 
 ### User flow
 
@@ -252,8 +313,8 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
 2. They see all available lists with an **Add** button.
 3. After adding a list they see it in their list with:
    - A **progress bar** — `learned / total` items in that list.
-   - A **Discovery** button — start a session of new, unseen items.
-   - A **Learning** button — start a review session of previously seen items.
+   - A **Discover** button — start a session of new, unseen items.
+   - A **Learn** button — start a review session of previously seen items.
 4. Tapping a button starts a session scoped to that list.
 
 ### Grammar sessions
@@ -264,7 +325,7 @@ Grammar has one topic per session. The app picks whether the session is **new** 
 
 All tasks are BE-generated (LLM). When user starts reading the showcase article, the client requests task generation in the background.
 
-Each session generates 4 tasks per grammar topic. Topics follow the [new, old, old] queue pattern.
+Each session generates 4 tasks per grammar topic. Topics follow the [new, review, review] queue pattern.
 
 ### showcase
 

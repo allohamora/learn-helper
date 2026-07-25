@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { type WordArrangementData } from '@/types/user-words.types';
+import type { WordArrangementData } from '@/types/learn';
 
 type WordOrderProps = {
   title: string;
   subtitle: string;
   data: WordArrangementData;
-  onMistake: (userWordId: number) => void;
+  onMistake: (userVocabularyItemId: string) => void;
   onNext: () => void;
 };
 
@@ -59,7 +59,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
         <CardHeader className="px-4 md:px-6">
           <div className="space-y-3 text-center">
             <p className="px-3 py-2 text-base font-semibold text-foreground md:text-lg">{data.sentence}</p>
-            <CardTitle className="flex min-h-[100px] items-center justify-center text-center md:min-h-[120px]">
+            <CardTitle className="flex min-h-25 items-center justify-center text-center md:min-h-30">
               <div className="flex flex-wrap items-center justify-center gap-2">
                 {selectedWords.length === 0 ? (
                   <span className="text-muted-foreground">Select words below to build the sentence</span>
@@ -140,7 +140,7 @@ export const WordOrder: FC<WordOrderProps> = ({ title, subtitle, data, onMistake
               ) : (
                 <Button onClick={handleNext} size="lg" className="min-w-32">
                   Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 size-4" />
                 </Button>
               )}
             </div>

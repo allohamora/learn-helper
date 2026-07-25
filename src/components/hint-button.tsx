@@ -1,26 +1,35 @@
 import { type FC } from 'react';
-import { Button } from '@/components/ui/button';
 import { CircleQuestionMarkIcon } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useCreateEvents } from '@/hooks/use-create-events';
-import { EventType } from '@/types/event.types';
-import { type TaskType } from '@/types/user-words.types';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { EventType, type UserVocabularyItemTaskType } from '@/const/event';
+import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
 import { cn } from '@/lib/utils';
 
 type HintButtonProps = {
   hint: string;
-  userWordId: number;
-  taskType: TaskType;
+  userVocabularyListId: string;
+  userVocabularyItemId: string;
+  taskType: UserVocabularyItemTaskType;
   className?: string;
 };
 
-export const HintButton: FC<HintButtonProps> = ({ hint, userWordId, taskType, className }) => {
-  const { toast } = useToast();
-  const { createEvent } = useCreateEvents();
+export const HintButton: FC<HintButtonProps> = ({
+  hint,
+  userVocabularyListId,
+  userVocabularyItemId,
+  taskType,
+  className,
+}) => {
+  const { createVocabularyListLearnEvent } = useCreateVocabularyListLearnEvents(userVocabularyListId);
 
   const handleClick = () => {
-    toast({ title: 'Hint', description: hint, variant: 'default' });
-    createEvent({ type: EventType.HintViewed, userWordId, taskType });
+    toast.info('Hint', { description: hint });
+    createVocabularyListLearnEvent({
+      type: EventType.UserVocabularyItemTaskHintUsed,
+      userVocabularyItemId,
+      userVocabularyItemTaskType: taskType,
+    });
   };
 
   return (

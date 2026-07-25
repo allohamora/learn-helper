@@ -4,14 +4,16 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HintButton } from './hint-button';
-import { type ToOptionsData, type TaskType } from '@/types/user-words.types';
+import type { UserVocabularyItemTaskType } from '@/const/event';
+import type { ToOptionsData } from '@/types/learn';
 
 type ToOptionsProps = {
   title: string;
   subtitle: string;
-  taskType: TaskType;
+  userVocabularyListId: string;
+  taskType: UserVocabularyItemTaskType;
   data: ToOptionsData;
-  onMistake: (userWordId: number) => void;
+  onMistake: (userVocabularyItemId: string) => void;
   onNext: () => void;
 };
 
@@ -19,6 +21,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
   data,
   title,
   subtitle,
+  userVocabularyListId,
   taskType,
   onMistake,
   onNext,
@@ -44,7 +47,13 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
         <p className="text-sm text-muted-foreground">
           <span className="align-middle">{subtitle}</span>
           {data.hint && (
-            <HintButton hint={data.hint} userWordId={data.id} taskType={taskType} className="ml-2 align-middle" />
+            <HintButton
+              hint={data.hint}
+              userVocabularyListId={userVocabularyListId}
+              userVocabularyItemId={data.id}
+              taskType={taskType}
+              className="ml-2 align-middle"
+            />
           )}
         </p>
       </div>
@@ -62,7 +71,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
                   <Button
                     variant="outline"
                     className={cn(
-                      'w-full justify-start text-left p-4 h-auto transition-colors duration-200 whitespace-normal [&:disabled]:opacity-80',
+                      'h-auto w-full justify-start p-4 text-left whitespace-normal transition-colors duration-200 disabled:opacity-80',
                       {
                         'border-green-500 text-green-500': isAnswered && isAnswer,
                         'border-red-500 text-red-500': isAnswered && !isAnswer,
@@ -72,7 +81,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
                     disabled={isAnswered || isFinished}
                   >
                     <div className="flex w-full items-start justify-between gap-3">
-                      <span className="flex-1 text-sm leading-relaxed md:text-base">{value}</span>
+                      <span className="flex-1 text-sm/relaxed md:text-base">{value}</span>
                     </div>
                   </Button>
                   {isAnswered && description && (
@@ -89,7 +98,7 @@ export const ToOptions: FC<PropsWithChildren<ToOptionsProps>> = ({
         <div className="text-center">
           <Button onClick={onNext} size="lg" className="px-8">
             Next
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="ml-2 size-4" />
           </Button>
         </div>
       )}

@@ -4,25 +4,24 @@ This document summarizes learning task generation across server (AI-generated) a
 
 ## Goal
 
-Task generation aims to build a short learning session (under 30 minutes) that helps learners get acquainted with a focused set of words rather than master them deeply. At the end of the session, learners decide whether to move each word to the next step based on their confidence.
+Task generation aims to build a short Learn session (under 30 minutes) that helps learners get acquainted with a focused set of items rather than master them deeply. At the end of the session, learners decide whether to move each item to the next step based on their confidence.
 
 ## Task sources
 
-- Server tasks: AI-generated per target word or phrase; designed to create varied sentence-level contexts and distractors.
-- Client tasks: generated at runtime from existing word data; no AI required; options are drawn from the current session.
+- Server tasks: AI-generated per target item; designed to create varied sentence-level contexts and distractors.
+- Client tasks: generated at runtime from existing item data; no AI required; options are drawn from the current session.
 
 ## Repeatable learning algorithm
 
-The repetition schedule is driven by `moveUserWordToNextStep` and two fields on each word: `encounterCount` and `wordsToUnlock`.
+The repetition schedule is driven by `moveUserVocabularyItemToNextStep` and two fields on each item: `encounterCount` and `enqueuedAt`.
 
-- Learning queue: `getLearningWords` returns words with `status = Learning`, ordered by `wordsToUnlock` ascending, then `id`.
-- Step advance (per completed word):
-  - Increment `encounterCount` for the word that was just completed.
-  - Decrement `wordsToUnlock` by 1 for all words where it is >= 1.
-  - If `encounterCount` reaches 3, mark the word `Learned` and set `wordsToUnlock` to 0 (it leaves the learning queue).
-  - Otherwise, set the word's `wordsToUnlock` to `max(wordsToUnlock) + 3`, pushing it to the back of the queue with a 3-step buffer.
+- Learning queue: `getUserVocabularyListLearnItems` builds a batch from new and review item pools, each ordered by `enqueuedAt` ascending, then `id`.
+- Step advance (per completed item):
+  - Increment `encounterCount` for the item that was just completed.
+  - If `encounterCount` reaches 3, mark the item `Learned` and clear `enqueuedAt` so it leaves the learning queue.
+  - Otherwise, keep the item in `Learning` and set `enqueuedAt` to the current time, pushing it to the back of the queue.
 
-This means a word reappears after at least 3 other step advances, and spacing increases as the queue grows. Each word is shown up to 3 times before it is marked learned and removed from rotation.
+This means an item returns behind older queued items. Each item advances up to 3 times before it is marked learned and removed from rotation.
 
 ## Scoring model
 
@@ -58,25 +57,25 @@ These criteria define why a task belongs earlier or later in a sequence.
 
 ### Client tasks (runtime sequence)
 
-- **Showcase**: Introduce the word with full metadata before recall starts.
-- **Word to Definition**: Confirm recognition by matching word to meaning.
-- **Definition to Word**: Move into production by typing the word from meaning.
-- **Word to Translation**: Reinforce bilingual mapping from English to Ukrainian.
-- **Translation to Word**: Push active recall from Ukrainian to English.
-- **Pronunciation to Word**: Finish with listening-based spelling recall.
+- **Showcase**: Introduce the item with full metadata before recall starts.
+- **Item to Definition**: Confirm recognition by matching an item to its meaning.
+- **Definition to Item**: Move into production by typing the item from its meaning.
+- **Item to Translation**: Reinforce bilingual mapping from English to Ukrainian.
+- **Translation to Item**: Push active recall from Ukrainian to English.
+- **Pronunciation to Item**: Finish with listening-based spelling recall.
 
 ## Order scoring (current order)
 
-Scores are 0-10 per criterion. Overall score is the average of all criteria (0-10). Rows follow the task sequence in `src/components/learning.tsx`.
+Scores are 0-10 per criterion. Overall score is the average of all criteria (0-10). Rows follow the task sequence in `src/components/learn.tsx`.
 
 | Task                         | Source | Familiarity | Cues | Load | Modality | Feedback | Interleave | Transfer | Engagement | Overall |
 | ---------------------------- | ------ | ----------- | ---- | ---- | -------- | -------- | ---------- | -------- | ---------- | ------- |
 | Showcase                     | Client | 10          | 10   | 9    | 5        | 2        | 2          | 3        | 5          | 5.8     |
-| Word to Definition           | Client | 8           | 7    | 7    | 6        | 7        | 5          | 5        | 6          | 6.4     |
-| Definition to Word           | Client | 5           | 5    | 5    | 6        | 6        | 6          | 8        | 6          | 5.9     |
-| Word to Translation          | Client | 7           | 7    | 6    | 6        | 7        | 7          | 6        | 6          | 6.5     |
-| Translation to Word          | Client | 4           | 4    | 5    | 6        | 6        | 7          | 9        | 7          | 6.0     |
-| Pronunciation to Word        | Client | 3           | 3    | 4    | 10       | 6        | 7          | 8        | 7          | 6.0     |
+| Item to Definition           | Client | 8           | 7    | 7    | 6        | 7        | 5          | 5        | 6          | 6.4     |
+| Definition to Item           | Client | 5           | 5    | 5    | 6        | 6        | 6          | 8        | 6          | 5.9     |
+| Item to Translation          | Client | 7           | 7    | 6    | 6        | 7        | 7          | 6        | 6          | 6.5     |
+| Translation to Item          | Client | 4           | 4    | 5    | 6        | 6        | 7          | 9        | 7          | 6.0     |
+| Pronunciation to Item        | Client | 3           | 3    | 4    | 10       | 6        | 7          | 8        | 7          | 6.0     |
 | Translate English Sentence   | Server | 7           | 7    | 6    | 6        | 7        | 6          | 8        | 6          | 6.6     |
 | Translate Ukrainian Sentence | Server | 6           | 7    | 6    | 6        | 7        | 7          | 8        | 5          | 6.5     |
 
@@ -94,10 +93,10 @@ Scores are 0-10 per criterion. Overall score is the average of all criteria (0-1
 
 | Task Type             | Score   |
 | --------------------- | ------- |
-| Pronunciation to Word | 50/70   |
-| Translation to Word   | 47/70   |
-| Definition to Word    | 44/70   |
-| Word to Translation   | 39/70   |
-| Word to Definition    | 38/70   |
+| Pronunciation to Item | 50/70   |
+| Translation to Item   | 47/70   |
+| Definition to Item    | 44/70   |
+| Item to Translation   | 39/70   |
+| Item to Definition    | 38/70   |
 | Showcase              | 24/70   |
 | **Overall**           | 242/420 |
