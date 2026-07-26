@@ -6,7 +6,7 @@ CLAUDE_CONFIG="${_REMOTE_USER_HOME}/.claude.json"
 SHELL_CONFIG="${_REMOTE_USER_HOME}/.bashrc"
 REMOTE_GROUP="$(id -gn "$_REMOTE_USER")"
 CLAUDE_PATH_EXPORT='export PATH="$HOME/.local/bin:$PATH"'
-CC_ALIAS="alias cc='claude --dangerously-skip-permissions'"
+CLAUDE_YOLO_ALIAS="alias claude-yolo='claude --dangerously-skip-permissions'"
 
 # Set up the Claude configuration volume target and persistent .claude.json symlink
 mkdir -p "$CLAUDE_DIR"
@@ -18,9 +18,9 @@ if ! grep -Fqx "$CLAUDE_PATH_EXPORT" "$SHELL_CONFIG"; then
     printf "\n%s\n" "$CLAUDE_PATH_EXPORT" >> "$SHELL_CONFIG"
 fi
 
-# Add the cc alias
-if ! grep -Fqx "$CC_ALIAS" "$SHELL_CONFIG"; then
-    printf "\n%s\n" "$CC_ALIAS" >> "$SHELL_CONFIG"
+# Add the claude-yolo alias
+if ! grep -Fqx "$CLAUDE_YOLO_ALIAS" "$SHELL_CONFIG"; then
+    printf "\n%s\n" "$CLAUDE_YOLO_ALIAS" >> "$SHELL_CONFIG"
 fi
 
 # Set ownership for the remote user
