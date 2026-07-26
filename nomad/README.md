@@ -26,9 +26,8 @@ POSTGRES_URL=postgres://app:example@localhost:5432/app npm run migrations:up
 
 # Run the app
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
-# Note: we are making localhost as host, so 127.0.0.1 will not be working here, it should be localhost.
-# The app's POSTGRES_URL in .env should point at postgres://app:example@localhost:5432/app,
-# matching Postgres's loopback host_network binding on this same single-node host.
+# The app's POSTGRES_URL in .env should point at
+# postgres://app:example@host.docker.internal:5432/app.
 nomad job run -var="image=learn-helper:local" -var="env=$(cat .env)" nomad/learn-helper.hcl
 
 # Run the Cloudflare Tunnel
