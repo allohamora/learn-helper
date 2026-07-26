@@ -4,7 +4,7 @@
   "name": "Learn Helper Node",
   "description": "Installs Node.js, persists node_modules, and installs npm dependencies",
   "dependsOn": {
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/node:2": {
       "version": "24.13.0"
     }
   },

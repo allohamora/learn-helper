@@ -4,7 +4,7 @@
   "name": "Docker-in-Docker",
   "description": "Installs Docker-in-Docker with persistent Docker data",
   "dependsOn": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:4": {}
   },
   "mounts": [
     {
