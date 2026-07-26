@@ -7,7 +7,7 @@
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
   "features": {
     "./features/personal-docker-in-docker": {},
-    "./features/github-cli": {},
+    "./features/personal-github-cli": {},
     "./features/learn-helper-node": {},
     "./features/nomad": {},
     "./features/personal-claude-code": {},
