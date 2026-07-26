@@ -118,6 +118,11 @@ job "learn-helper" {
     task "app" {
       driver = "docker"
 
+      logs {
+        max_files     = 5
+        max_file_size = 5
+      }
+
       config {
         image = var.image
         ports = ["http"]

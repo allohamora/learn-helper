@@ -12,6 +12,10 @@ client {
   enabled = true
   servers = ["127.0.0.1"]
 
+  # With each one-task allocation retaining 5 files × 5 MB × 2 streams,
+  # 50 allocations can retain approximately 2.5 GB of task logs.
+  gc_max_allocs = 50
+
   # Bind loopback to localhost
   host_network "loopback" {
     cidr = "127.0.0.1/32"

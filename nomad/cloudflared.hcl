@@ -18,6 +18,11 @@ job "cloudflared" {
     task "cloudflared" {
       driver = "docker"
 
+      logs {
+        max_files     = 5
+        max_file_size = 5
+      }
+
       config {
         image        = "cloudflare/cloudflared:2026.7.3"
         network_mode = "host"

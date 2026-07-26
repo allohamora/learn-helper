@@ -65,6 +65,11 @@ job "postgres" {
     task "postgres" {
       driver = "docker"
 
+      logs {
+        max_files     = 5
+        max_file_size = 5
+      }
+
       config {
         image = var.image
         ports = ["db"]

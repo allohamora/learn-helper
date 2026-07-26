@@ -16,6 +16,11 @@ job "traefik" {
     task "traefik" {
       driver = "docker"
 
+      logs {
+        max_files     = 5
+        max_file_size = 5
+      }
+
       config {
         image        = "traefik:v3.7.9"
         network_mode = "host"
