@@ -21,13 +21,6 @@ client {
     cidr = "127.0.0.1/32"
   }
 
-  # Docker's default bridge interface. Other Nomad allocations (sibling containers,
-  # each on their own default docker networking namespace) can reach a port published
-  # here, unlike one published on "loopback" above, which only the host itself can reach.
-  host_network "private" {
-    interface = "docker0"
-  }
-
   # Persistent storage for the postgres job's data directory
   host_volume "postgres-data" {
     path      = "/opt/nomad/volumes/postgres-data"

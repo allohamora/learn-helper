@@ -15,11 +15,7 @@ export const {
 
   PINO_LEVEL,
 
-  POSTGRES_HOST,
-  POSTGRES_PORT,
-  POSTGRES_USER,
-  POSTGRES_PASSWORD,
-  POSTGRES_DB,
+  POSTGRES_URL,
   DRIZZLE_DEBUG,
 
   BETTER_AUTH_SECRET,
@@ -37,11 +33,7 @@ export const {
 
     PINO_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']).default('info'),
 
-    POSTGRES_HOST: z.string(),
-    POSTGRES_PORT: z.coerce.number().int().positive().max(65_535).default(5432),
-    POSTGRES_USER: z.string(),
-    POSTGRES_PASSWORD: z.string(),
-    POSTGRES_DB: z.string(),
+    POSTGRES_URL: z.string(),
     DRIZZLE_DEBUG: z.stringbool().default(false),
 
     BETTER_AUTH_SECRET: z.string(),

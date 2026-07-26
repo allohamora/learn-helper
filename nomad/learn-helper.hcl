@@ -129,13 +129,7 @@ job "learn-helper" {
       }
 
       template {
-        data        = <<-EOF
-          ${regex_replace(var.env, "(?m)^POSTGRES_(HOST|PORT)=.*(\\r?\\n|$)", "")}
-          {{ range nomadService "postgres" }}
-          POSTGRES_HOST={{ .Address }}
-          POSTGRES_PORT={{ .Port }}
-          {{ end }}
-        EOF
+        data        = var.env
         destination = "secrets/.env"
         env         = true
         change_mode = "restart"
