@@ -11,6 +11,11 @@
       "type": "volume",
       "source": "devcontainer-personal-docker-in-docker-data",
       "target": "/var/lib/docker"
+    },
+    {
+      "type": "volume",
+      "source": "devcontainer-personal-docker-in-docker-containerd",
+      "target": "/var/lib/containerd"
     }
   ],
   "customizations": {
