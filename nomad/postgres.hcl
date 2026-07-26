@@ -44,19 +44,28 @@ job "postgres" {
     }
 
     network {
+      # Use a fixed port so clients that resolve the Consul A record can use the
+      # standard postgres.service.consul:5432 endpoint without SRV support.
       port "db" {
+        static = 5432
+        to     = 5432
+      }
+
+      port "db_local" {
         static       = 5432
+        to           = 5432
         host_network = "loopback"
       }
     }
 
     service {
       name     = "postgres"
-      provider = "nomad"
+      provider = "consul"
       port     = "db"
 
       check {
         type     = "tcp"
+        port     = "db"
         interval = "10s"
         timeout  = "5s"
       }
@@ -72,7 +81,7 @@ job "postgres" {
 
       config {
         image = var.image
-        ports = ["db"]
+        ports = ["db", "db_local"]
       }
 
       volume_mount {

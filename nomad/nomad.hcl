@@ -8,6 +8,10 @@ server {
   bootstrap_expect = 1
 }
 
+consul {
+  address = "127.0.0.1:8500"
+}
+
 client {
   enabled = true
   servers = ["127.0.0.1"]

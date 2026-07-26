@@ -27,9 +27,9 @@ job "traefik" {
         args = [
           "--api.insecure=true",
           "--api.dashboard=true",
-          "--providers.nomad=true",
-          "--providers.nomad.exposedByDefault=false",
-          "--providers.nomad.watch=true",
+          "--providers.consulcatalog=true",
+          "--providers.consulcatalog.exposedByDefault=false",
+          "--providers.consulcatalog.watch=true",
           "--entrypoints.web.address=:${NOMAD_PORT_http}"
         ]
       }

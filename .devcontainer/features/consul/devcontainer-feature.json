@@ -1,0 +1,11 @@
+{
+  "id": "consul",
+  "version": "1.0.0",
+  "name": "Consul",
+  "description": "Installs HashiCorp Consul",
+  "customizations": {
+    "vscode": {
+      "extensions": ["hashicorp.hcl"]
+    }
+  }
+}
