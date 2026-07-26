@@ -2,7 +2,7 @@
   "id": "learn-helper-node",
   "version": "1.0.0",
   "name": "Learn Helper Node",
-  "description": "Installs Node.js, persists node_modules, and installs npm dependencies",
+  "description": "Installs Node.js and persists node_modules",
   "dependsOn": {
     "ghcr.io/devcontainers/features/node:2": {
       "version": "24.13.0"
@@ -19,6 +19,5 @@
     "vscode": {
       "extensions": ["editorconfig.editorconfig", "streetsidesoftware.code-spell-checker"]
     }
-  },
-  "postCreateCommand": "npm ci"
+  }
 }
