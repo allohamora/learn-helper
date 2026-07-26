@@ -1,6 +1,10 @@
 # Running Nomad inside devcontainers
 
 ```bash
+# Static host volumes are not created by Nomad. Provision this directory on every
+# Nomad client node eligible to run Postgres before starting the Nomad client:
+sudo install -d -m 0755 /opt/nomad/volumes/postgres-data
+
 # Start a local Nomad dev agent from the project root
 # Pass nomad/devcontainer.hcl to override faulty CPU detection inside containers
 sudo nomad agent -dev -config=nomad/devcontainer.hcl -config=nomad/nomad.hcl
@@ -14,9 +18,11 @@ docker build -t learn-helper:local .
 nomad job run nomad/traefik.hcl
 
 # Run Postgres (must be running before the app; defaults match docker-compose: app/example/app)
-# The host_volume path (nomad/nomad.hcl) must exist on the host before the first run, e.g.:
-# sudo mkdir -p /opt/nomad/volumes/postgres-data
+# The static host_volume path declared in nomad/nomad.hcl was provisioned above.
 nomad job run nomad/postgres.hcl
+
+# Apply all pending Drizzle migrations to the Nomad Postgres database
+POSTGRES_URL=postgres://app:example@localhost:5432/app npm run migrations:up
 
 # Run the app
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
