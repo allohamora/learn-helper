@@ -5,12 +5,17 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { sql } from 'drizzle-orm';
-import { DRIZZLE_DEBUG, POSTGRES_URL } from '../config';
+import { DRIZZLE_DEBUG, POSTGRES_DB, POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_USER } from '../config';
 import { createLogger } from '../utils/logger.utils';
 
 const logger = createLogger('db.service');
 
-export const client = postgres(POSTGRES_URL, {
+export const client = postgres({
+  host: POSTGRES_HOST,
+  port: POSTGRES_PORT,
+  database: POSTGRES_DB,
+  username: POSTGRES_USER,
+  password: POSTGRES_PASSWORD,
   onnotice: ({ message, ...notice }) => logger.debug({ msg: message, ...notice }),
 });
 export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snake_case' });

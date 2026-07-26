@@ -44,7 +44,16 @@ job "postgres" {
     }
 
     network {
-      port "db" {
+      # Used by other Nomad allocations, discovered via the "postgres" service below.
+      port "db_service" {
+        to           = 5432
+        host_network = "private"
+      }
+
+      # Used only from the Nomad host itself, e.g. through an SSH tunnel for admin access.
+      # Not registered as the Nomad service, since another allocation can't reach the host
+      # through its own 127.0.0.1.
+      port "db_local" {
         static       = 5432
         host_network = "loopback"
       }
@@ -53,10 +62,11 @@ job "postgres" {
     service {
       name     = "postgres"
       provider = "nomad"
-      port     = "db"
+      port     = "db_service"
 
       check {
         type     = "tcp"
+        port     = "db_service"
         interval = "10s"
         timeout  = "5s"
       }
@@ -72,7 +82,7 @@ job "postgres" {
 
       config {
         image = var.image
-        ports = ["db"]
+        ports = ["db_service", "db_local"]
       }
 
       volume_mount {

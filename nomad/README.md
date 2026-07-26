@@ -19,16 +19,27 @@ nomad job run nomad/traefik.hcl
 
 # Run Postgres (must be running before the app; defaults match docker-compose: app/example/app)
 # The static host_volume path declared in nomad/nomad.hcl was provisioned above.
+# Publishes two ports (see nomad/postgres.hcl):
+#  - a "private" (docker0) port, registered as the "postgres" Nomad service, used by other
+#    Nomad allocations (e.g. the learn-helper app) to reach Postgres.
+#  - a static 127.0.0.1:5432 loopback port, reachable only from the Nomad host itself, meant
+#    for admin access (migrations below, or an SSH tunnel from your laptop).
 nomad job run nomad/postgres.hcl
 
 # Apply all pending Drizzle migrations to the Nomad Postgres database
-POSTGRES_URL=postgres://app:example@localhost:5432/app npm run migrations:up
+# (runs from the Nomad host itself, so it uses the loopback port, not the "postgres" service)
+POSTGRES_HOST=localhost \
+POSTGRES_PORT=5432 \
+POSTGRES_USER=app \
+POSTGRES_PASSWORD=example \
+POSTGRES_DB=app \
+npm run migrations:up
 
 # Run the app
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
-# Note: we are making localhost as host, so 127.0.0.1 will not be working here, it should be localhost.
-# The app's POSTGRES_URL in .env should point at postgres://app:example@localhost:5432/app,
-# matching Postgres's loopback host_network binding on this same single-node host.
+# POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB must be set in .env and must match
+# the values passed to postgres.hcl. Nomad service discovery injects POSTGRES_HOST and
+# POSTGRES_PORT from the registered "postgres" service.
 nomad job run -var="image=learn-helper:local" -var="env=$(cat .env)" nomad/learn-helper.hcl
 
 # Run the Cloudflare Tunnel
