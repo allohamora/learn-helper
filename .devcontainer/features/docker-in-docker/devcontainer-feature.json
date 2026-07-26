@@ -9,7 +9,7 @@
   "mounts": [
     {
       "type": "volume",
-      "source": "devcontainer-docker-in-docker",
+      "source": "devcontainer-docker-data",
       "target": "/var/lib/docker"
     }
   ],

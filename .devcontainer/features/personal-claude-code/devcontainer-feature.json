@@ -9,7 +9,7 @@
   "mounts": [
     {
       "type": "volume",
-      "source": "devcontainer-claude-personal",
+      "source": "devcontainer-personal-claude-code-config",
       "target": "/home/vscode/.claude"
     }
   ]

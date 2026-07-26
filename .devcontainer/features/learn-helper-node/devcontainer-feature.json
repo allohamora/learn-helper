@@ -11,7 +11,7 @@
   "mounts": [
     {
       "type": "volume",
-      "source": "learn-helper-node-modules",
+      "source": "devcontainer-learn-helper-node-modules",
       "target": "/workspaces/learn-helper/node_modules"
     }
   ],

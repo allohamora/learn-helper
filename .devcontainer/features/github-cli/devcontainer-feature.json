@@ -9,7 +9,7 @@
   "mounts": [
     {
       "type": "volume",
-      "source": "devcontainer-config-gh",
+      "source": "devcontainer-github-cli-config",
       "target": "/home/vscode/.config/gh"
     }
   ]
