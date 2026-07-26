@@ -25,7 +25,20 @@ nomad job run nomad/postgres.hcl
 # matching Postgres's loopback host_network binding on this same single-node host.
 nomad job run -var="image=learn-helper:local" -var="env=$(cat .env)" nomad/learn-helper.hcl
 
+# Run the Cloudflare Tunnel
+# One-time setup in the Cloudflare Zero Trust dashboard (Networks > Tunnels):
+#   1. Create a tunnel, choose "Docker" as the connector environment, copy the token.
+#   2. On the same tunnel, add a Public Hostname (e.g. learn-helper.example.com)
+#      routing to HTTP / localhost:80 (cloudflared shares the host network
+#      namespace with Traefik, so this reaches Traefik directly).
+#   3. That hostname MUST exactly match the -var="domain=..." value passed to
+#      learn-helper.hcl above, since Traefik routes on Host(`${var.domain}`) -
+#      a mismatch means Cloudflare reaches Traefik fine but Traefik 404s it.
+# Export the token in your shell first: export CLOUDFLARE_TUNNEL_TOKEN=...
+nomad job run -var="token=$CLOUDFLARE_TUNNEL_TOKEN" nomad/cloudflared.hcl
+
 # Stop the jobs
+nomad job stop cloudflared
 nomad job stop learn-helper
 nomad job stop postgres
 nomad job stop traefik
