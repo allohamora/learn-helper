@@ -1,0 +1,16 @@
+{
+  "id": "personal-claude-code",
+  "version": "1.0.0",
+  "name": "Personal Claude Code",
+  "description": "Installs Claude Code for the personal development environment",
+  "dependsOn": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "devcontainer-claude-personal",
+      "target": "/home/vscode/.claude"
+    }
+  ]
+}

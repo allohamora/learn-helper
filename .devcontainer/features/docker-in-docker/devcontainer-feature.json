@@ -1,0 +1,21 @@
+{
+  "id": "docker-in-docker",
+  "version": "1.0.0",
+  "name": "Docker-in-Docker",
+  "description": "Installs Docker-in-Docker with persistent Docker data",
+  "dependsOn": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "devcontainer-docker-in-docker",
+      "target": "/var/lib/docker"
+    }
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": ["docker.docker", "ms-azuretools.vscode-containers", "ms-azuretools.vscode-docker"]
+    }
+  }
+}

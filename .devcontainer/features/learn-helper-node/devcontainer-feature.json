@@ -1,0 +1,24 @@
+{
+  "id": "learn-helper-node",
+  "version": "1.0.0",
+  "name": "Learn Helper Node",
+  "description": "Installs Node.js, persists node_modules, and installs npm dependencies",
+  "dependsOn": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24.13.0"
+    }
+  },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "learn-helper-node-modules",
+      "target": "/workspaces/learn-helper/node_modules"
+    }
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": ["editorconfig.editorconfig", "streetsidesoftware.code-spell-checker"]
+    }
+  },
+  "postCreateCommand": "npm ci"
+}

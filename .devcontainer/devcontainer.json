@@ -1,37 +1,18 @@
 {
   "name": "learn-helper",
-  "remoteUser": "user",
-  "containerUser": "user",
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/learn-helper,type=bind,consistency=cached",
   "workspaceFolder": "/workspaces/learn-helper",
-  "build": { "dockerfile": "Dockerfile", "context": ".." },
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "24.13.0"
-    },
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "./features/docker-in-docker": {},
+    "./features/github-cli": {},
+    "./features/learn-helper-node": {},
+    "./features/nomad": {},
+    "./features/personal-claude-code": {}
   },
   "runArgs": ["--name", "learn-helper-devcontainer", "--sysctl", "net.ipv6.conf.all.disable_ipv6=1"],
   "privileged": true,
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "docker.docker",
-        "editorconfig.editorconfig",
-        "hashicorp.hcl",
-        "ms-azuretools.vscode-containers",
-        "ms-azuretools.vscode-docker",
-        "streetsidesoftware.code-spell-checker"
-      ]
-    }
-  },
-  "forwardPorts": [80, 443, 8080, 4646, 3000],
-  "mounts": [
-    "source=devcontainer-claude-personal,target=/home/user/.claude,type=volume",
-    "source=devcontainer-config-gh,target=/home/user/.config/gh,type=volume",
-    "source=devcontainer-docker-in-docker,target=/var/lib/docker,type=volume",
-    "source=learn-helper-node-modules,target=/workspaces/learn-helper/node_modules,type=volume"
-  ]
+  "forwardPorts": [80, 443, 8080, 4646, 3000]
 }
