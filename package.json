@@ -125,9 +125,9 @@
   "homepage": "https://github.com/allohamora/learn-helper#readme",
   "engines": {
     "node": ">=v24.13.0",
-    "npm": ">=11.8.0"
+    "npm": ">=11.6.2"
   },
-  "packageManager": "npm@11.8.0",
+  "packageManager": "npm@11.6.2",
   "lint-staged": {
     "*.css": "stylelint --fix",
     "*.{ts,tsx}": "eslint --fix",
