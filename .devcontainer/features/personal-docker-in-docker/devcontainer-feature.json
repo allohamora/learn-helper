@@ -1,7 +1,7 @@
 {
-  "id": "docker-in-docker",
+  "id": "personal-docker-in-docker",
   "version": "1.0.0",
-  "name": "Docker-in-Docker",
+  "name": "Personal Docker-in-Docker",
   "description": "Installs Docker-in-Docker with persistent Docker data",
   "dependsOn": {
     "ghcr.io/devcontainers/features/docker-in-docker:4": {}
@@ -9,7 +9,7 @@
   "mounts": [
     {
       "type": "volume",
-      "source": "devcontainer-docker-data",
+      "source": "devcontainer-personal-docker-in-docker-data",
       "target": "/var/lib/docker"
     }
   ],

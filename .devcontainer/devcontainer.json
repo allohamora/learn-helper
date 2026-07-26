@@ -6,7 +6,7 @@
   "workspaceFolder": "/workspaces/learn-helper",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
   "features": {
-    "./features/docker-in-docker": {},
+    "./features/personal-docker-in-docker": {},
     "./features/github-cli": {},
     "./features/learn-helper-node": {},
     "./features/nomad": {},
