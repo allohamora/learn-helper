@@ -33,7 +33,8 @@ job "learn-helper" {
   }
 
   group "learn-helper" {
-    count = 1
+    count          = 1
+    shutdown_delay = "10s"
 
     restart {
       attempts = 3
