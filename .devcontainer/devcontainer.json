@@ -11,7 +11,8 @@
     "./features/learn-helper-node": {},
     "./features/nomad": {},
     "./features/personal-claude-code": {},
-    "./features/personal-codex": {}
+    "./features/personal-codex": {},
+    "./features/personal-pi": {}
   },
   "runArgs": ["--name", "learn-helper-devcontainer", "--sysctl", "net.ipv6.conf.all.disable_ipv6=1"],
   "privileged": true,
