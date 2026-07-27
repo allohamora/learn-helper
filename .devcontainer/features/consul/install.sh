@@ -30,5 +30,16 @@ resolv-file=/run/dnsmasq/upstream-resolv.conf
 local-service
 EOF
 
+# Configure the Docker-in-Docker daemon to use dnsmasq for all containers.
+# Pin the default bridge address so the DNS server remains reachable at a
+# stable address across devcontainer rebuilds.
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "bip": "172.18.0.1/24",
+  "dns": ["172.18.0.1"]
+}
+EOF
+
 # Install the runtime entrypoint as an executable in a stable system location.
 install -m 0755 dns-init.sh /usr/local/share/consul-dns-init.sh

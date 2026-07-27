@@ -47,14 +47,6 @@ job "learn-helper" {
       port "http" {
         to = 3000
       }
-
-      # Consul (a default -dev agent) only binds its DNS interface to
-      # 127.0.0.1, unreachable from this container's own network namespace.
-      # dnsmasq listens on the Docker bridge address instead, forwarding
-      # .consul lookups to Consul and everything else to normal recursors.
-      dns {
-        servers = ["${attr.driver.docker.bridge_ip}"]
-      }
     }
 
     service {
