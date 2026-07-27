@@ -14,5 +14,10 @@
       "source": "devcontainer-personal-opencode-data",
       "target": "/home/vscode/.local/share/opencode"
     }
-  ]
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": ["sst-dev.opencode"]
+    }
+  }
 }
