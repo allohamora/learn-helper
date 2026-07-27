@@ -48,13 +48,6 @@ job "postgres" {
       # standard postgres.service.consul:5432 endpoint without SRV support.
       port "db" {
         static = 5432
-        to     = 5432
-      }
-
-      port "db_local" {
-        static       = 5432
-        to           = 5432
-        host_network = "loopback"
       }
     }
 
@@ -81,7 +74,7 @@ job "postgres" {
 
       config {
         image = var.image
-        ports = ["db", "db_local"]
+        ports = ["db"]
       }
 
       volume_mount {

@@ -25,23 +25,19 @@ docker build -t learn-helper:local .
 
 # Consul UI is available at http://localhost:8500/
 # Nomad UI is available at http://localhost:4646/
-# Run Traefik (available at :80 inside the devcontainer, dashboard at http://localhost:8080/dashboard/)
+# Run Traefik (available at http://localhost:80/, dashboard at http://localhost:8080/dashboard/)
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
 nomad job run nomad/traefik.hcl
 
 # Run Postgres (must be running before the app; defaults match docker-compose: app/example/app)
 # The static host_volume path declared in nomad/nomad.hcl was provisioned above.
-# Publishes a static port on Nomad's default host network (the node's real,
-# default-route interface) and registers it as the "postgres" Consul service,
-# discoverable at postgres.service.consul:5432. In a real multi-node cluster
-# this job file needs no changes: Postgres comes up on whichever node's real
-# IP it's scheduled to, and Consul DNS hands that out to callers on any node.
+# Available from the host at localhost:5432 and registered as the "postgres"
+# Consul service, discoverable by Nomad-launched containers at
+# postgres.service.consul:5432.
 nomad job run nomad/postgres.hcl
 
 # Apply all pending Drizzle migrations to the Nomad Postgres database.
-# Uses the "db_local" port from nomad/postgres.hcl (loopback-only, reachable
-# from the Nomad host itself), so this one-off host-side command doesn't need
-# to go through Consul DNS at all.
+# This command runs on the host, where Postgres is available at localhost:5432.
 POSTGRES_URL=postgres://app:example@localhost:5432/app npm run migrations:up
 
 # Run the app

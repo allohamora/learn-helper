@@ -20,11 +20,6 @@ client {
   # 50 allocations can retain approximately 2.5 GB of task logs.
   gc_max_allocs = 50
 
-  # Bind loopback to localhost
-  host_network "loopback" {
-    cidr = "127.0.0.1/32"
-  }
-
   # Persistent storage for the postgres job's data directory
   host_volume "postgres-data" {
     path      = "/opt/nomad/volumes/postgres-data"

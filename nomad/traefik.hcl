@@ -8,8 +8,7 @@ job "traefik" {
         static = 80
       }
       port "dashboard" {
-        static       = 8080
-        host_network = "loopback"
+        static = 8080
       }
     }
 
