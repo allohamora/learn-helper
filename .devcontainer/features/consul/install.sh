@@ -21,10 +21,14 @@ rm -rf /var/lib/apt/lists/*
 # Create the Consul data directory
 mkdir -p /opt/consul/data
 
-# Forward .consul lookups to Consul's DNS interface (127.0.0.1:8600, Consul's
-# default DNS port since the dev agent in nomad/README.md is started with no
-# non-default flags); dnsmasq keeps using the devcontainer's existing
-# resolvers (from /etc/resolv.conf) for everything else. Run via
-# `sudo dnsmasq --conf-dir=/etc/dnsmasq.d` (see nomad/README.md) -
-# there's no init system in this container to run it as a managed service.
-echo "server=/consul/127.0.0.1#8600" > /etc/dnsmasq.d/10-consul.conf
+# Configure split DNS for the devcontainer and Docker allocations: send .consul
+# queries to the local Consul agent and fall back to Docker's saved nameserver
+# for all other queries.
+cat > /etc/dnsmasq.d/10-consul.conf <<'EOF'
+server=/consul/127.0.0.1#8600
+resolv-file=/run/dnsmasq/upstream-resolv.conf
+local-service
+EOF
+
+# Install the runtime entrypoint as an executable in a stable system location.
+install -m 0755 dns-init.sh /usr/local/share/consul-dns-init.sh

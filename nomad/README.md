@@ -10,11 +10,11 @@ sudo install -d -m 0755 /opt/nomad/volumes/postgres-data
 # the Consul agent in production.
 sudo consul agent -dev
 
-# In another terminal, start dnsmasq so Nomad-launched containers can resolve
-# *.consul lookups via the Docker bridge address (see the dns stanza in
-# nomad/learn-helper.hcl); everything else still goes to the devcontainer's
-# normal upstream resolvers.
-sudo dnsmasq --conf-dir=/etc/dnsmasq.d --no-daemon
+# The Consul devcontainer feature saves Docker's initial nameserver and starts
+# dnsmasq automatically. The devcontainer sends all DNS queries to dnsmasq:
+# *.consul queries go to the local Consul agent, while all other queries fall
+# back to Docker's saved nameserver. Nomad allocations reach the same dnsmasq
+# instance through the Docker bridge address configured in nomad/learn-helper.hcl.
 
 # In another terminal, start a local Nomad dev agent from the project root
 # Pass nomad/devcontainer.hcl to override faulty CPU detection inside containers
@@ -37,9 +37,8 @@ nomad job run nomad/traefik.hcl
 nomad job run nomad/postgres.hcl
 
 # Apply all pending Drizzle migrations to the Nomad Postgres database.
-# This command runs on the host, so resolve the service directly through
-# Consul DNS instead of relying on the allocation-specific DNS override.
-POSTGRES_URL="postgres://app:example@$(dig +short @127.0.0.1 -p 8600 postgres.service.consul):5432/app" npm run migrations:up
+# The devcontainer resolver forwards *.consul queries to Consul.
+POSTGRES_URL="postgres://app:example@postgres.service.consul:5432/app" npm run migrations:up
 
 # Run the app
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
