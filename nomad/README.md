@@ -14,7 +14,7 @@ sudo consul agent -dev
 # *.consul lookups via the Docker bridge address (see the dns stanza in
 # nomad/learn-helper.hcl); everything else still goes to the devcontainer's
 # normal upstream resolvers.
-sudo dnsmasq --conf-dir=/etc/dnsmasq.d,.conf --no-daemon
+sudo dnsmasq --conf-dir=/etc/dnsmasq.d --no-daemon
 
 # In another terminal, start a local Nomad dev agent from the project root
 # Pass nomad/devcontainer.hcl to override faulty CPU detection inside containers
