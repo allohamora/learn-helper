@@ -37,8 +37,9 @@ nomad job run nomad/traefik.hcl
 nomad job run nomad/postgres.hcl
 
 # Apply all pending Drizzle migrations to the Nomad Postgres database.
-# This command runs on the host, where Postgres is available at localhost:5432.
-POSTGRES_URL=postgres://app:example@localhost:5432/app npm run migrations:up
+# This command runs on the host, so resolve the service directly through
+# Consul DNS instead of relying on the allocation-specific DNS override.
+POSTGRES_URL="postgres://app:example@$(dig +short @127.0.0.1 -p 8600 postgres.service.consul):5432/app" npm run migrations:up
 
 # Run the app
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
