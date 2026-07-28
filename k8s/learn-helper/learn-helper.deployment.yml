@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: learn-helper
+  namespace: learn-helper
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: learn-helper
+  template:
+    metadata:
+      labels:
+        app: learn-helper
+    spec:
+      # Matches the old Nomad shutdown_delay=10s: give in-flight requests time to
+      # drain before the process receives SIGTERM (grace period alone only delays
+      # the SIGKILL-after-SIGTERM, not the initial removal from the Service/SIGTERM).
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: app
+          image: learn-helper:local
+          ports:
+            - name: http
+              containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: learn-helper-env
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "10"]
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

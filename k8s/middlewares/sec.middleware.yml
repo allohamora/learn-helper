@@ -1,0 +1,12 @@
+# Security headers: nosniff, frame-deny, referrer-policy, HSTS (1 year)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sec
+  namespace: learn-helper
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: strict-origin-when-cross-origin
+    stsSeconds: 31536000

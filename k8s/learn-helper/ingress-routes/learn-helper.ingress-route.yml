@@ -1,0 +1,22 @@
+# Catch-all HTML router. Priority 1 ensures all specific routers below (priority >= 15) take precedence.
+# Edit the Host(...) rule below if you need a custom Cloudflare hostname instead of localhost.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: learn-helper
+  namespace: learn-helper
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`localhost`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-html
+      services:
+        - name: learn-helper
+          port: http

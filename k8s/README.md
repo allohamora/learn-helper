@@ -28,12 +28,12 @@ k3d image import learn-helper:local -c learn-helper
 
 # Create the namespace, then Postgres (must be running before the app)
 kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/postgres.yaml
+kubectl apply -f k8s/postgres/
 kubectl -n learn-helper rollout status deployment/postgres
 
 # Apply all pending Drizzle migrations against the in-cluster Postgres database.
 # Port-forward rather than a NodePort: it's on-demand and only needs to live for the
-# duration of this command (defaults match the values baked into k8s/postgres.yaml: app/example/app).
+# duration of this command (defaults match the values baked into k8s/postgres/postgres.deployment.yml: app/example/app).
 kubectl -n learn-helper port-forward svc/postgres 5432:5432 &
 POSTGRES_URL="postgres://app:example@localhost:5432/app" npm run migrations:up
 kill %1   # stop the port-forward
@@ -41,8 +41,9 @@ kill %1   # stop the port-forward
 # Create the app's env Secret from your local .env file (never read/printed by any tool)
 kubectl -n learn-helper create secret generic learn-helper-env --from-env-file=.env
 
-# Run the app
-kubectl apply -f k8s/learn-helper.yaml
+# Run the app (middlewares first, since the IngressRoutes reference them)
+kubectl apply -f k8s/middlewares/
+kubectl apply -R -f k8s/learn-helper/
 kubectl -n learn-helper rollout status deployment/learn-helper
 
 # Verify by port-forwarding the built-in Traefik's Service (no host port is exposed
@@ -62,8 +63,8 @@ kill %1   # stop the port-forward
 #      Nomad setup (which shared host networking between cloudflared and Traefik), k8s
 #      Pods don't share network namespaces, so cloudflared reaches Traefik over the
 #      cluster network instead.
-#   3. That hostname MUST exactly match the Host(`...`) rule in k8s/learn-helper.yaml's
-#      IngressRoutes (defaults to `localhost`) - edit that file first if you're using a
+#   3. That hostname MUST exactly match the Host(`...`) rule in k8s/learn-helper/ingress-routes/'s
+#      IngressRoutes (defaults to `localhost`) - edit those files first if you're using a
 #      real domain, since Traefik routes on Host() and a mismatch means Cloudflare
 #      reaches Traefik fine but Traefik 404s it.
 # Export the token in your shell first: export CLOUDFLARE_TUNNEL_TOKEN=...
@@ -72,7 +73,7 @@ kubectl -n learn-helper create secret generic cloudflared-token \
 kubectl apply -f k8s/cloudflared.yaml
 
 # Stop the workloads for this session but keep the cluster and Postgres data around
-kubectl delete -f k8s/cloudflared.yaml -f k8s/learn-helper.yaml -f k8s/postgres.yaml
+kubectl delete -f k8s/cloudflared.yaml -R -f k8s/learn-helper/ -f k8s/middlewares/ -f k8s/postgres/
 
 # Pause/resume the cluster itself across devcontainer sessions.
 # Postgres data survives stop/start (the node container isn't removed).
