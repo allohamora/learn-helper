@@ -13,6 +13,7 @@
     "./features/personal-codex": {},
     "./features/personal-opencode": {},
     "./features/personal-pi": {},
+    "./features/k3d": {},
     "./features/nomad": {},
     "./features/consul": {}
   },
