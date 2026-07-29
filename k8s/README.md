@@ -27,7 +27,7 @@ docker build -t learn-helper:local .
 k3d image import learn-helper:local -c learn-helper
 
 # Create the namespace, then Postgres (must be running before the app)
-kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/namespace.yml
 kubectl apply -f k8s/postgres/
 kubectl -n learn-helper rollout status deployment/postgres
 
@@ -70,10 +70,10 @@ kill %1   # stop the port-forward
 # Export the token in your shell first: export CLOUDFLARE_TUNNEL_TOKEN=...
 kubectl -n learn-helper create secret generic cloudflared-token \
   --from-literal=TUNNEL_TOKEN="$CLOUDFLARE_TUNNEL_TOKEN"
-kubectl apply -f k8s/cloudflared.yaml
+kubectl apply -f k8s/cloudflared.yml
 
 # Stop the workloads for this session but keep the cluster and Postgres data around
-kubectl delete -f k8s/cloudflared.yaml -R -f k8s/learn-helper/ -f k8s/middlewares/ -f k8s/postgres/
+kubectl delete -f k8s/cloudflared.yml -R -f k8s/learn-helper/ -f k8s/middlewares/ -f k8s/postgres/
 
 # Pause/resume the cluster itself across devcontainer sessions.
 # Postgres data survives stop/start (the node container isn't removed).
