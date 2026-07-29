@@ -69,7 +69,7 @@ kubectl -n learn-helper rollout status deployment/learn-helper
 # Apply the root Kustomization for learn-helper because it references the generated
 # Postgres Secret and Kustomize must transform both resources together.
 kubectl apply -k k8s/postgres
-kubectl apply -k k8s/middlewares
+kubectl apply -k k8s/learn-helper/middlewares
 
 # Verify by port-forwarding the built-in Traefik's Service (no host port is exposed
 # by the cluster itself, see the persistence/exposure note below).
