@@ -25,7 +25,6 @@ kubectl get deploy traefik -n kube-system -o jsonpath='{.spec.template.spec.cont
 # constructs POSTGRES_URL by direct string expansion and does not percent-encode it.
 cp k8s/postgres/.env.example k8s/postgres/.env
 cp k8s/learn-helper/.env.example k8s/learn-helper/.env
-cp k8s/cloudflared/.env.example k8s/cloudflared/.env
 
 # Build the app image
 docker build -t learn-helper:local .
@@ -52,21 +51,6 @@ set +a
 POSTGRES_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" npm run migrations:up
 kill %1   # stop the port-forward
 
-# Configure the Cloudflare Tunnel before applying the complete Kustomize deployment.
-# One-time setup in the Cloudflare Zero Trust dashboard (Networks > Tunnels):
-#   1. Create a tunnel, choose "Docker" as the connector environment, copy the token.
-#   2. On the same tunnel, add a Public Hostname (e.g. learn-helper.example.com)
-#      routing to HTTP / traefik.kube-system.svc.cluster.local:80 - this is the
-#      built-in Traefik's in-cluster Service DNS name, NOT localhost:80. Unlike the old
-#      Nomad setup (which shared host networking between cloudflared and Traefik), k8s
-#      Pods don't share network namespaces, so cloudflared reaches Traefik over the
-#      cluster network instead.
-#   3. That hostname MUST exactly match the Host(`...`) rule in k8s/learn-helper/ingress-routes/'s
-#      IngressRoutes (defaults to `localhost`) - edit those files first if you're using a
-#      real domain, since Traefik routes on Host() and a mismatch means Cloudflare
-#      reaches Traefik fine but Traefik 404s it.
-# Put the copied tunnel token in k8s/cloudflared/.env before continuing.
-
 # Check that every Kustomization and referenced YAML file renders successfully.
 # This is an offline check: it does not contact or modify the cluster.
 kubectl kustomize k8s > /dev/null
@@ -80,14 +64,12 @@ kubectl apply --dry-run=server --validate=strict -k k8s
 # resources applied during the staged migration setup above.
 kubectl apply -k k8s
 kubectl -n learn-helper rollout status deployment/learn-helper
-kubectl -n learn-helper rollout status deployment/cloudflared
 
-# Postgres, middlewares, and cloudflared can also be reconciled independently.
+# Postgres and middlewares can also be reconciled independently.
 # Apply the root Kustomization for learn-helper because it references the generated
 # Postgres Secret and Kustomize must transform both resources together.
 kubectl apply -k k8s/postgres
 kubectl apply -k k8s/middlewares
-kubectl apply -k k8s/cloudflared
 
 # Verify by port-forwarding the built-in Traefik's Service (no host port is exposed
 # by the cluster itself, see the persistence/exposure note below).
