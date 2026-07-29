@@ -19,6 +19,14 @@ kubectl get nodes
 # if it's ever v2 (traefik.containo.us), the IngressRoute/Middleware specs would need adjusting.
 kubectl get deploy traefik -n kube-system -o jsonpath='{.spec.template.spec.containers[0].image}'
 
+# Create the ignored per-service environment files used by Kustomize's
+# secretGenerator entries, then replace every placeholder with the real value.
+# Keep the Postgres user, password, and database name URL-safe because Kubernetes
+# constructs POSTGRES_URL by direct string expansion and does not percent-encode it.
+cp k8s/postgres/.env.example k8s/postgres/.env
+cp k8s/learn-helper/.env.example k8s/learn-helper/.env
+cp k8s/cloudflared/.env.example k8s/cloudflared/.env
+
 # Build the app image
 docker build -t learn-helper:local .
 
@@ -30,18 +38,19 @@ k3d image import learn-helper:local -c learn-helper
 # Kustomize's namespace field can assign a namespace to resources, but it does not
 # create the Namespace itself, so namespace.yml remains an explicit resource.
 kubectl apply -f k8s/namespace.yml
-kubectl apply -f k8s/postgres/
+kubectl apply -k k8s/postgres
 kubectl -n learn-helper rollout status deployment/postgres
 
 # Apply all pending Drizzle migrations against the in-cluster Postgres database.
 # Port-forward rather than a NodePort: it's on-demand and only needs to live for the
-# duration of this command (defaults match the values baked into k8s/postgres/postgres.deployment.yml: app/example/app).
+# duration of this command. Source the same ignored file that generated the Postgres
+# Secret so the migration credentials stay synchronized with the Deployment.
 kubectl -n learn-helper port-forward svc/postgres 5432:5432 &
-POSTGRES_URL="postgres://app:example@localhost:5432/app" npm run migrations:up
+set -a
+. k8s/postgres/.env
+set +a
+POSTGRES_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" npm run migrations:up
 kill %1   # stop the port-forward
-
-# Create the app's env Secret from your local .env file (never read/printed by any tool)
-kubectl -n learn-helper create secret generic learn-helper-env --from-env-file=.env
 
 # Configure the Cloudflare Tunnel before applying the complete Kustomize deployment.
 # One-time setup in the Cloudflare Zero Trust dashboard (Networks > Tunnels):
@@ -56,9 +65,7 @@ kubectl -n learn-helper create secret generic learn-helper-env --from-env-file=.
 #      IngressRoutes (defaults to `localhost`) - edit those files first if you're using a
 #      real domain, since Traefik routes on Host() and a mismatch means Cloudflare
 #      reaches Traefik fine but Traefik 404s it.
-# Export the token in your shell first: export CLOUDFLARE_TUNNEL_TOKEN=...
-kubectl -n learn-helper create secret generic cloudflared-token \
-  --from-literal=TUNNEL_TOKEN="$CLOUDFLARE_TUNNEL_TOKEN"
+# Put the copied tunnel token in k8s/cloudflared/.env before continuing.
 
 # Check that every Kustomization and referenced YAML file renders successfully.
 # This is an offline check: it does not contact or modify the cluster.
@@ -75,10 +82,11 @@ kubectl apply -k k8s
 kubectl -n learn-helper rollout status deployment/learn-helper
 kubectl -n learn-helper rollout status deployment/cloudflared
 
-# Each component can also be reconciled independently when needed.
+# Postgres, middlewares, and cloudflared can also be reconciled independently.
+# Apply the root Kustomization for learn-helper because it references the generated
+# Postgres Secret and Kustomize must transform both resources together.
 kubectl apply -k k8s/postgres
 kubectl apply -k k8s/middlewares
-kubectl apply -k k8s/learn-helper
 kubectl apply -k k8s/cloudflared
 
 # Verify by port-forwarding the built-in Traefik's Service (no host port is exposed
@@ -102,3 +110,14 @@ k3d cluster start learn-helper
 # the node container, which delete removes. Re-run npm run migrations:up after recreating.
 k3d cluster delete learn-helper
 ```
+
+The `.env` files are ignored by Git, while the `.env.example` files document the
+required keys without containing credentials. Kubernetes Secrets are base64-encoded,
+not encrypted; restrict access to the files, cluster, and Secret resources accordingly.
+
+Kustomize adds content hashes to generated Secret names and updates Deployment
+references automatically, so applying a changed environment file rolls the consuming
+Pod. Postgres only uses `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` while
+initializing an empty data directory. Changing those values later does not update users,
+passwords, or databases stored on the existing persistent volume; rotate them inside
+Postgres first or intentionally recreate the volume.

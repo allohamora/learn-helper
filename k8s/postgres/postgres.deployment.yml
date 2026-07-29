@@ -23,13 +23,10 @@ spec:
           ports:
             - name: db
               containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: postgres-env
           env:
-            - name: POSTGRES_USER
-              value: app
-            - name: POSTGRES_PASSWORD
-              value: example
-            - name: POSTGRES_DB
-              value: app
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
           volumeMounts:

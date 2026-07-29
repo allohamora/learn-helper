@@ -1,6 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: learn-helper
 resources:
   - learn-helper.deployment.yml
   - learn-helper.service.yml
   - ingress-routes
+secretGenerator:
+  - name: learn-helper-env
+    envs:
+      - .env
