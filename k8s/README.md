@@ -41,20 +41,7 @@ kill %1   # stop the port-forward
 # Create the app's env Secret from your local .env file (never read/printed by any tool)
 kubectl -n learn-helper create secret generic learn-helper-env --from-env-file=.env
 
-# Run the app (middlewares first, since the IngressRoutes reference them)
-kubectl apply -f k8s/middlewares/
-kubectl apply -R -f k8s/learn-helper/
-kubectl -n learn-helper rollout status deployment/learn-helper
-
-# Verify by port-forwarding the built-in Traefik's Service (no host port is exposed
-# by the cluster itself, see the persistence/exposure note below).
-kubectl -n kube-system port-forward svc/traefik 8080:80 &
-curl -i http://localhost:8080/                # HTML router: Cache-Control: private, max-age=0, must-revalidate
-curl -i http://localhost:8080/api/...          # /api/ router: no cache header
-curl -i http://localhost:8080/favicon.ico      # favicon router: 1-day public cache + Vary
-kill %1   # stop the port-forward
-
-# Run the Cloudflare Tunnel
+# Configure the Cloudflare Tunnel before applying the complete Kustomize deployment.
 # One-time setup in the Cloudflare Zero Trust dashboard (Networks > Tunnels):
 #   1. Create a tunnel, choose "Docker" as the connector environment, copy the token.
 #   2. On the same tunnel, add a Public Hostname (e.g. learn-helper.example.com)
@@ -70,10 +57,29 @@ kill %1   # stop the port-forward
 # Export the token in your shell first: export CLOUDFLARE_TUNNEL_TOKEN=...
 kubectl -n learn-helper create secret generic cloudflared-token \
   --from-literal=TUNNEL_TOKEN="$CLOUDFLARE_TUNNEL_TOKEN"
-kubectl apply -f k8s/cloudflared.yml
 
-# Stop the workloads for this session but keep the cluster and Postgres data around
-kubectl delete -f k8s/cloudflared.yml -R -f k8s/learn-helper/ -f k8s/middlewares/ -f k8s/postgres/
+# Apply the complete deployment. This also reconciles the namespace and Postgres
+# resources applied during the staged migration setup above.
+kubectl apply -k k8s
+kubectl -n learn-helper rollout status deployment/learn-helper
+kubectl -n learn-helper rollout status deployment/cloudflared
+
+# Each component can also be reconciled independently when needed.
+kubectl apply -k k8s/postgres
+kubectl apply -k k8s/middlewares
+kubectl apply -k k8s/learn-helper
+kubectl apply -k k8s/cloudflared
+
+# Verify by port-forwarding the built-in Traefik's Service (no host port is exposed
+# by the cluster itself, see the persistence/exposure note below).
+kubectl -n kube-system port-forward svc/traefik 8080:80 &
+curl -i http://localhost:8080/                # HTML router: Cache-Control: private, max-age=0, must-revalidate
+curl -i http://localhost:8080/api/...          # /api/ router: no cache header
+curl -i http://localhost:8080/favicon.ico      # favicon router: 1-day public cache + Vary
+kill %1   # stop the port-forward
+
+# Remove the complete deployment, including its namespace and Postgres volume claim.
+kubectl delete -k k8s
 
 # Pause/resume the cluster itself across devcontainer sessions.
 # Postgres data survives stop/start (the node container isn't removed).
