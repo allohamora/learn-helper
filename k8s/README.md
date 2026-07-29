@@ -26,7 +26,9 @@ docker build -t learn-helper:local .
 # import the freshly built image directly into the cluster's containerd (no registry needed).
 k3d image import learn-helper:local -c learn-helper
 
-# Create the namespace, then Postgres (must be running before the app)
+# Create the namespace, then Postgres (must be running before the app).
+# Kustomize's namespace field can assign a namespace to resources, but it does not
+# create the Namespace itself, so namespace.yml remains an explicit resource.
 kubectl apply -f k8s/namespace.yml
 kubectl apply -f k8s/postgres/
 kubectl -n learn-helper rollout status deployment/postgres
@@ -57,6 +59,15 @@ kubectl -n learn-helper create secret generic learn-helper-env --from-env-file=.
 # Export the token in your shell first: export CLOUDFLARE_TUNNEL_TOKEN=...
 kubectl -n learn-helper create secret generic cloudflared-token \
   --from-literal=TUNNEL_TOKEN="$CLOUDFLARE_TUNNEL_TOKEN"
+
+# Check that every Kustomization and referenced YAML file renders successfully.
+# This is an offline check: it does not contact or modify the cluster.
+kubectl kustomize k8s > /dev/null
+
+# Validate the rendered resources against the active cluster's Kubernetes schemas
+# and admission rules without persisting anything. The namespace and Traefik CRDs
+# must already exist so the server can validate namespaced resources and custom kinds.
+kubectl apply --dry-run=server --validate=strict -k k8s
 
 # Apply the complete deployment. This also reconciles the namespace and Postgres
 # resources applied during the staged migration setup above.
