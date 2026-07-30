@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: learn-helper:local
+          image: {{ .Values.images.app | quote }}
           ports:
             - name: http
               containerPort: 3000

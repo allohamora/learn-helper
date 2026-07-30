@@ -19,7 +19,7 @@ helm version
 kubectl get deploy traefik -n kube-system -o jsonpath='{.spec.template.spec.containers[0].image}'
 
 # Create Helm's automatically loaded values.yaml from the tracked example. Set
-# domain and fill the env.app and env.postgres YAML maps. Keep the Postgres
+# domain, images, and the env.app and env.postgres YAML maps. Keep the Postgres
 # values URL-safe because POSTGRES_URL is assembled directly and does not
 # percent-encode them.
 cp helm/values.example.yaml helm/values.yaml
@@ -76,10 +76,15 @@ k3d cluster delete learn-helper
 ```
 
 `domain` defaults to `localhost`. All four Traefik routes use the configured
-value in their `Host(...)` matcher. Environment variables are plain YAML maps:
+value in their `Host(...)` matcher. Container images are configurable as full
+image references, and environment variables are plain YAML maps:
 
 ```yaml
 domain: learn.example.com
+
+images:
+  app: registry.example.com/learn-helper:latest
+  postgres: postgres:18.4-alpine
 
 env:
   app:
@@ -88,6 +93,14 @@ env:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: replace-me
     POSTGRES_DB: learn-helper
+```
+
+Override either image on the command line without editing `values.yaml`:
+
+```bash
+helm upgrade --install learn-helper helm \
+  --namespace learn-helper \
+  --set-string images.app=registry.example.com/learn-helper:123
 ```
 
 `values.yaml` is ignored because it can contain credentials. Kubernetes Secrets

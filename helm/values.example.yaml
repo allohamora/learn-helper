@@ -1,5 +1,9 @@
 domain: localhost
 
+images:
+  app: learn-helper:local
+  postgres: postgres:18.4-alpine
+
 env:
   app:
     PORT: "3000"

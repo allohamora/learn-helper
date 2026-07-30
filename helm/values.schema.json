@@ -2,12 +2,27 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "required": ["domain", "env"],
+  "required": ["domain", "images", "env"],
   "properties": {
     "domain": {
       "type": "string",
       "minLength": 1,
       "pattern": "^[A-Za-z0-9.-]+$"
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app", "postgres"],
+      "properties": {
+        "app": {
+          "type": "string",
+          "minLength": 1
+        },
+        "postgres": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "env": {
       "type": "object",

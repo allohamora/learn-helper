@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:18.4-alpine
+          image: {{ .Values.images.postgres | quote }}
           ports:
             - name: db
               containerPort: 5432
