@@ -1,3 +1,71 @@
+# favicon.ico: 1-day public cache
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cache-favicon
+  namespace: learn-helper
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "public, max-age=86400"
+      Vary: "Accept-Encoding"
+---
+# HTML pages: allow bfcache but force revalidation
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cache-html
+  namespace: learn-helper
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "private, max-age=0, must-revalidate"
+---
+# image/media files: 7-day cache with stale fallback
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cache-media
+  namespace: learn-helper
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "public, max-age=604800, stale-while-revalidate=600, stale-if-error=86400"
+      Vary: "Accept-Encoding"
+---
+# gzip/brotli/zstd negotiated via Accept-Encoding
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: compress
+  namespace: learn-helper
+spec:
+  compress: {}
+---
+# Token bucket: 100 request burst, refills 50/s
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ratelimit
+  namespace: learn-helper
+spec:
+  rateLimit:
+    average: 50
+    burst: 100
+---
+# Security headers: nosniff, frame-deny, referrer-policy, HSTS (1 year)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sec
+  namespace: learn-helper
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: strict-origin-when-cross-origin
+    stsSeconds: 31536000
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
