@@ -19,7 +19,7 @@ helm version
 kubectl get deploy traefik -n kube-system -o jsonpath='{.spec.template.spec.containers[0].image}'
 
 # Create Helm's automatically loaded values.yaml from the tracked example. Set
-# domain and fill the env.learnHelper and env.postgres YAML maps. Keep the Postgres
+# domain and fill the env.app and env.postgres YAML maps. Keep the Postgres
 # values URL-safe because POSTGRES_URL is assembled directly and does not
 # percent-encode them.
 cp helm/values.example.yaml helm/values.yaml
@@ -45,7 +45,7 @@ kubectl -n learn-helper port-forward svc/postgres 5432:5432 &
 POSTGRES_URL="postgres://<POSTGRES_USER>:<POSTGRES_PASSWORD>@localhost:5432/<POSTGRES_DB>" npm run migrations:up
 kill %1
 
-kubectl -n learn-helper rollout status deployment/learn-helper
+kubectl -n learn-helper rollout status deployment/app
 
 # Validate the rendered resources against the active cluster without persisting
 # changes. The cluster must already have the Traefik CRDs.
@@ -82,7 +82,7 @@ value in their `Host(...)` matcher. Environment variables are plain YAML maps:
 domain: learn.example.com
 
 env:
-  learnHelper:
+  app:
     EXAMPLE_APP_VARIABLE: example
   postgres:
     POSTGRES_USER: app

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: learn-helper
+  name: app
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
@@ -11,13 +11,13 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: learn-helper
+      app: app
   template:
     metadata:
       labels:
-        app: learn-helper
+        app: app
       annotations:
-        checksum/learn-helper-env: {{ toYaml .Values.env.learnHelper | sha256sum | quote }}
+        checksum/app-env: {{ toYaml .Values.env.app | sha256sum | quote }}
         checksum/postgres-env: {{ toYaml .Values.env.postgres | sha256sum | quote }}
     spec:
       containers:
@@ -28,7 +28,7 @@ spec:
               containerPort: 3000
           envFrom:
             - secretRef:
-                name: learn-helper-env
+                name: app-env
           env:
             - name: POSTGRES_USER
               valueFrom:

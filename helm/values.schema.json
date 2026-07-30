@@ -12,9 +12,9 @@
     "env": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["learnHelper", "postgres"],
+      "required": ["app", "postgres"],
       "properties": {
-        "learnHelper": {
+        "app": {
           "$ref": "#/definitions/environment"
         },
         "postgres": {

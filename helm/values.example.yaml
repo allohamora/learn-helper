@@ -1,7 +1,7 @@
 domain: localhost
 
 env:
-  learnHelper:
+  app:
     PORT: "3000"
     DRIZZLE_DEBUG: "true"
     BETTER_AUTH_SECRET: dev-only-better-auth-secret-change-me
