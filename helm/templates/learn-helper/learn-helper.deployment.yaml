@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: learn-helper
-  namespace: learn-helper
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   strategy:
@@ -16,6 +16,9 @@ spec:
     metadata:
       labels:
         app: learn-helper
+      annotations:
+        checksum/learn-helper-env: {{ toYaml .Values.env.learnHelper | sha256sum | quote }}
+        checksum/postgres-env: {{ toYaml .Values.env.postgres | sha256sum | quote }}
     spec:
       containers:
         - name: app

@@ -406,4 +406,4 @@ Stats displayed on the readings list: `"Title — 42 / 100 — 5 min"`.
 uploads/{user_id}/{file_id}.pdf
 ```
 
-> **Deployment note:** The `uploads/` directory must be backed by a PersistentVolumeClaim (see `k8s/learn-helper/`) so uploaded files survive Pod restarts and rescheduling.
+> **Deployment note:** The `uploads/` directory must be backed by a PersistentVolumeClaim (see `helm/templates/learn-helper/`) so uploaded files survive Pod restarts and rescheduling.

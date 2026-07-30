@@ -2,10 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres
-  namespace: learn-helper
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
-  # No two allocations should ever race over the same ReadWriteOnce volume.
   strategy:
     type: Recreate
   selector:
@@ -15,6 +14,8 @@ spec:
     metadata:
       labels:
         app: postgres
+      annotations:
+        checksum/postgres-env: {{ toYaml .Values.env.postgres | sha256sum | quote }}
     spec:
       containers:
         - name: postgres

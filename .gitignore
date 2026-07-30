@@ -4,6 +4,7 @@ dist
 dist-ssr
 *.local
 .env
+helm/values.yaml
 .nitro
 .tanstack
 .wrangler

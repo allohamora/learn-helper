@@ -5,3 +5,4 @@ public
 package-lock.json
 coverage
 **/routeTree.gen.ts
+helm/templates
