@@ -5,7 +5,7 @@ resources:
   - learn-helper.deployment.yml
   - learn-helper.service.yml
   - middlewares
-  - ingress-routes
+  - learn-helper.ingress-route.yml
 secretGenerator:
   - name: learn-helper-env
     envs:

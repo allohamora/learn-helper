@@ -1,0 +1,61 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: learn-helper
+  namespace: learn-helper
+spec:
+  entryPoints:
+    - web
+  routes:
+    # /favicon.ico - 1-day cache
+    - match: Host(`localhost`) && Path(`/favicon.ico`)
+      kind: Rule
+      priority: 25
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-favicon
+      services:
+        - name: learn-helper
+          port: http
+
+    # /api/ - no cache header
+    - match: Host(`localhost`) && PathPrefix(`/api/`)
+      kind: Rule
+      priority: 20
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+      services:
+        - name: learn-helper
+          port: http
+
+    # Image/media files - 7-day cache. Priority 15 ensures /favicon.ico wins
+    # over the .ico match here.
+    - match: Host(`localhost`) && PathRegexp(`(?i)\.(png|jpe?g|gif|svg|webp|avif|ico)$`)
+      kind: Rule
+      priority: 15
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-media
+      services:
+        - name: learn-helper
+          port: http
+
+    # Catch-all HTML route. Priority 1 ensures the specific routes above win.
+    # Edit Host(...) to use a custom Cloudflare hostname instead of localhost.
+    - match: Host(`localhost`)
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-html
+      services:
+        - name: learn-helper
+          port: http
