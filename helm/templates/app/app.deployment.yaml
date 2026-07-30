@@ -30,6 +30,8 @@ spec:
             - secretRef:
                 name: app-env
           env:
+            - name: PORT
+              value: "3000"
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
