@@ -16,7 +16,6 @@ spec:
       labels:
         app: postgres
     spec:
-      terminationGracePeriodSeconds: 10
       containers:
         - name: postgres
           image: postgres:18.4-alpine

@@ -17,10 +17,6 @@ spec:
       labels:
         app: learn-helper
     spec:
-      # Matches the old Nomad shutdown_delay=10s: give in-flight requests time to
-      # drain before the process receives SIGTERM (grace period alone only delays
-      # the SIGKILL-after-SIGTERM, not the initial removal from the Service/SIGTERM).
-      terminationGracePeriodSeconds: 15
       containers:
         - name: app
           image: learn-helper:local
