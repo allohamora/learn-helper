@@ -137,6 +137,6 @@
   "lint-staged": {
     "*.css": "stylelint --fix",
     "*.{ts,tsx}": "eslint --fix",
-    "*.{js,cjs,mjs,json,yml,md}": "prettier --write"
+    "*.{js,cjs,mjs,json,yml,yaml,md}": "prettier --write"
   }
 }
