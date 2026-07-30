@@ -11,6 +11,10 @@ rm -f /tmp/kubectl
 # Install k3d via the official installer (k3d does not bundle kubectl, hence the separate install above)
 curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 
-# Verify both installations
+# Install Helm via the official installer
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Verify installations
 kubectl version --client
 k3d version
+helm version
