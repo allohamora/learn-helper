@@ -36,7 +36,10 @@ helm template learn-helper helm \
 # Install the complete stack.
 helm upgrade --install learn-helper helm \
   --namespace learn-helper \
-  --create-namespace
+  --create-namespace \
+  --atomic \
+  --wait \
+  --timeout 10m
 kubectl -n learn-helper rollout status deployment/postgres
 
 # Helm runs all pending Drizzle migrations after install and upgrade.
@@ -58,7 +61,10 @@ kill %1
 
 # Reconcile chart or local values changes.
 helm upgrade learn-helper helm \
-  --namespace learn-helper
+  --namespace learn-helper \
+  --atomic \
+  --wait \
+  --timeout 10m
 
 # Remove the release and namespace.
 helm uninstall learn-helper --namespace learn-helper
@@ -95,6 +101,9 @@ Override either image on the command line without editing `values.yaml`:
 ```bash
 helm upgrade --install learn-helper helm \
   --namespace learn-helper \
+  --atomic \
+  --wait \
+  --timeout 10m \
   --set-string images.app=registry.example.com/learn-helper:123
 ```
 
