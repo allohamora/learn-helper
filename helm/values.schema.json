@@ -30,17 +30,72 @@
       "required": ["app", "postgres"],
       "properties": {
         "app": {
-          "$ref": "#/definitions/environment"
+          "$ref": "#/definitions/appEnvironment"
         },
         "postgres": {
-          "$ref": "#/definitions/environment"
+          "$ref": "#/definitions/postgresEnvironment"
         }
       }
     }
   },
   "definitions": {
-    "environment": {
+    "appEnvironment": {
       "type": "object",
+      "required": [
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "BETTER_AUTH_GOOGLE_CLIENT_ID",
+        "BETTER_AUTH_GOOGLE_CLIENT_SECRET",
+        "BETTER_AUTH_ALLOWED_USERS",
+        "GEMINI_API_KEY"
+      ],
+      "properties": {
+        "BETTER_AUTH_SECRET": {
+          "type": "string",
+          "minLength": 1
+        },
+        "BETTER_AUTH_URL": {
+          "type": "string",
+          "format": "uri"
+        },
+        "BETTER_AUTH_GOOGLE_CLIENT_ID": {
+          "type": "string",
+          "minLength": 1
+        },
+        "BETTER_AUTH_GOOGLE_CLIENT_SECRET": {
+          "type": "string",
+          "minLength": 1
+        },
+        "BETTER_AUTH_ALLOWED_USERS": {
+          "type": "string",
+          "minLength": 2
+        },
+        "GEMINI_API_KEY": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "postgresEnvironment": {
+      "type": "object",
+      "required": ["POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB"],
+      "properties": {
+        "POSTGRES_USER": {
+          "type": "string",
+          "minLength": 1
+        },
+        "POSTGRES_PASSWORD": {
+          "type": "string",
+          "minLength": 1
+        },
+        "POSTGRES_DB": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
       "additionalProperties": {
         "type": "string"
       }
