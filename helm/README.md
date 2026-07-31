@@ -39,12 +39,7 @@ helm upgrade --install learn-helper helm \
   --create-namespace
 kubectl -n learn-helper rollout status deployment/postgres
 
-# Apply all pending Drizzle migrations against the in-cluster database. Use the
-# same Postgres values entered under env.postgres in values.yaml.
-kubectl -n learn-helper port-forward svc/postgres 5432:5432 &
-POSTGRES_URL="postgres://<POSTGRES_USER>:<POSTGRES_PASSWORD>@localhost:5432/<POSTGRES_DB>" npm run migrations:up
-kill %1
-
+# Helm runs all pending Drizzle migrations after install and upgrade.
 kubectl -n learn-helper rollout status deployment/app
 
 # Validate the rendered resources against the active cluster without persisting
