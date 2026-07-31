@@ -42,7 +42,8 @@ helm upgrade --install learn-helper helm \
   --timeout 10m
 kubectl -n learn-helper rollout status deployment/postgres
 
-# Helm runs all pending Drizzle migrations after install and upgrade.
+# The app applies pending Drizzle migrations on boot, safe with multiple
+# replicas via an advisory lock (see runMigrations in db.service.ts).
 kubectl -n learn-helper rollout status deployment/app
 
 # Validate the rendered resources against the active cluster without persisting

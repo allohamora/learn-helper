@@ -36,11 +36,9 @@ nomad job run nomad/traefik.hcl
 # postgres.service.consul:5432.
 nomad job run nomad/postgres.hcl
 
-# Apply all pending Drizzle migrations to the Nomad Postgres database.
-# The devcontainer resolver forwards *.consul queries to Consul.
-POSTGRES_URL="postgres://app:example@postgres.service.consul:5432/app" npm run migrations:up
-
 # Run the app
+# The app applies pending Drizzle migrations on boot, safe with multiple
+# allocations via an advisory lock (see runMigrations in db.service.ts).
 # check the Ports tab in your devcontainer tooling (e.g. VS Code) for the host-side port numbers.
 # .env's POSTGRES_URL must point at postgres://<user>:<password>@postgres.service.consul:5432/<db>,
 # matching the user/password/db passed to postgres.hcl (defaults: app/example/app).

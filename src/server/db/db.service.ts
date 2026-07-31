@@ -17,8 +17,22 @@ export const db = drizzle(client, { schema, logger: DRIZZLE_DEBUG, casing: 'snak
 
 const MIGRATIONS_DIR = path.join(process.cwd(), 'migrations');
 
+// Every app replica calls this on boot. drizzle-orm's migrate() has no built-in locking
+// (github.com/drizzle-team/drizzle-orm/issues/874), so replicas racing here would apply
+// the same migration twice. A session-level advisory lock on a reserved connection
+// serializes them: one replica migrates while the rest block, then those no-op once they
+// see it's already applied. A crash releases the lock as soon as its connection drops.
 export const runMigrations = async () => {
-  await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+  const reserved = await client.reserve();
+  const lock = `hashtext('learn-helper-migrations')`;
+
+  try {
+    await reserved.unsafe(`SELECT pg_advisory_lock(${lock})`);
+    await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+  } finally {
+    await reserved.unsafe(`SELECT pg_advisory_unlock(${lock})`);
+    reserved.release();
+  }
 };
 
 export const disconnectFromDb = async () => {
