@@ -52,7 +52,7 @@ jobs:
               git checkout --detach FETCH_HEAD
               docker image inspect learn-helper:$TAG >/dev/null 2>&1 && { echo 'learn-helper:$TAG already exists locally' >&2; exit 1; }
               docker build -t learn-helper:$TAG .
-              docker save learn-helper:$TAG | sudo k3s ctr images import -
+              docker save learn-helper:$TAG | k3s ctr images import -
               helm upgrade --install learn-helper helm \
                 --namespace learn-helper \
                 --create-namespace \
@@ -74,5 +74,5 @@ jobs:
               set -e
               docker images --format "{{.Repository}}:{{.Tag}}" | grep "^learn-helper:" | sort -t: -k2 -V | head -n -10 | xargs -r docker rmi
               docker image prune -f
-              sudo k3s ctr images list -q | grep "learn-helper:" | sort -t: -k2 -V | head -n -10 | xargs -r sudo k3s ctr images rm
+              k3s ctr images list -q | grep "learn-helper:" | sort -t: -k2 -V | head -n -10 | xargs -r k3s ctr images rm
             '
