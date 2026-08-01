@@ -1,8 +1,12 @@
 domain: localhost
 
+cloudflared:
+  enabled: false
+
 images:
   app: learn-helper:local
   postgres: postgres:18.4-alpine
+  cloudflared: cloudflare/cloudflared:2026.7.2
 
 env:
   app:
@@ -17,3 +21,5 @@ env:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: example
     POSTGRES_DB: test
+  cloudflared:
+    TUNNEL_TOKEN: dummy-tunnel-token
