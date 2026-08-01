@@ -67,21 +67,27 @@ k3d cluster delete learn-helper
 6. Add a second policy with Include > Service Token > the token from step 2, and Action: Service Auth. Save.
 7. Run `cloudflared access login <hostname>` to authenticate, then you can connect with `ssh -o ProxyCommand="cloudflared access ssh --hostname %h" <user>@<hostname>`.
 
+## GitHub Actions deploy access
+
+8. Generate a dedicated deploy keypair (`ssh-keygen -t ed25519 -f deploy_key -N ""`), add the public half to the server's `~/.ssh/authorized_keys` for the login user, and store the private key contents as the `SSH_PRIVATE_KEY` secret in the `production` GitHub environment.
+9. Add a `SSH_HOSTNAME` variable in the `production` GitHub environment, set to the public hostname from step 1.
+10. Add a `SSH_USER` repository secret, set to the server's login user (e.g. `pi`).
+
 ## Server software
 
-8. Install k3s using the official install script from k3s.io.
-9. Make kubectl usable without sudo/root.
-10. Install helm using the official Ubuntu install script.
-11. Install k9s from its GitHub releases.
-12. Install Docker using the official install script, if you don't have it.
+11. Install k3s using the official install script from k3s.io.
+12. Make kubectl usable without sudo/root.
+13. Install helm using the official Ubuntu install script.
+14. Install k9s from its GitHub releases.
+15. Install Docker using the official install script, if you don't have it.
 
 ## App ingress tunnel
 
-13. Set up the app's own Zero Trust tunnel: choose Docker, copy the token, and point it at `http://traefik.kube-system.svc.cluster.local:80`.
+16. Set up the app's own Zero Trust tunnel: choose Docker, copy the token, and point it at `http://traefik.kube-system.svc.cluster.local:80`.
 
 ## Deploy
 
-14. Clone the repo onto the server and deploy the app for the first time.
+17. Clone the repo onto the server and deploy the app for the first time.
 
 # Database backups
 
