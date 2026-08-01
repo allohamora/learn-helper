@@ -23,6 +23,9 @@ helm upgrade --install learn-helper helm \
 # localhost in values.yaml. Run this in its own terminal and leave it running.
 kubectl -n kube-system port-forward svc/traefik 8080:80
 
+# Admin panel: browse and manage the cluster's resources interactively.
+k9s -n learn-helper
+
 # Update: deploy a new app build without editing values.yaml.
 docker build -t learn-helper:v2 .
 k3d image import learn-helper:v2 -c learn-helper
