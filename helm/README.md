@@ -48,7 +48,6 @@ kubectl delete pvc postgres-data --namespace learn-helper
 # Remove the now-empty namespace.
 kubectl delete namespace learn-helper
 
-# Pause or delete the local cluster.
-k3d cluster stop learn-helper
+# Delete the local cluster.
 k3d cluster delete learn-helper
 ```
