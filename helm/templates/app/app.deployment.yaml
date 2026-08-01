@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: {{ .Values.app.image | quote }}
+          image: {{ .Values.app.image | default (printf "learn-helper:%s" .Chart.AppVersion) | quote }}
           ports:
             - name: http
               containerPort: 3000

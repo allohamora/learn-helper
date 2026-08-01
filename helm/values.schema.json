@@ -29,7 +29,7 @@
     "app": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["image", "env"],
+      "required": ["env"],
       "properties": {
         "image": {
           "type": "string",
