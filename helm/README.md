@@ -34,8 +34,15 @@ helm upgrade learn-helper helm \
   --timeout 10m \
   --set-string app.image=learn-helper:v2
 
-# Remove the release and namespace.
+# Remove the release. The postgres-data PVC is kept (helm.sh/resource-policy: keep),
+# so postgresql data survives this step.
 helm uninstall learn-helper --namespace learn-helper
+
+# Remove the postgres data volume. This permanently deletes the database - only
+# run it once you're sure you no longer need the data.
+kubectl delete pvc postgres-data --namespace learn-helper
+
+# Remove the now-empty namespace.
 kubectl delete namespace learn-helper
 
 # Pause or delete the local cluster.
