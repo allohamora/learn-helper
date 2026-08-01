@@ -54,3 +54,17 @@ kubectl delete namespace learn-helper
 # Delete the local cluster.
 k3d cluster delete learn-helper
 ```
+
+# Database backups
+
+```bash
+# Back up the database to a local, timestamped, gzip-compressed SQL file.
+kubectl exec -n learn-helper deploy/postgres -- \
+  pg_dump -U app -d test | gzip > "backup-$(date +"%Y-%m-%d").sql.gz"
+
+# Restore the database from a backup made with the command above. Scale the
+# app down first so nothing is writing mid-restore, then scale it back up.
+kubectl scale -n learn-helper deploy/app --replicas=0
+gunzip -c backup-2026-08-01.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- psql -U app -d test
+kubectl scale -n learn-helper deploy/app --replicas=1
+```
