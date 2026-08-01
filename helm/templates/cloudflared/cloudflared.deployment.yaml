@@ -14,11 +14,11 @@ spec:
       labels:
         app: cloudflared
       annotations:
-        checksum/cloudflared-env: {{ toYaml .Values.env.cloudflared | sha256sum | quote }}
+        checksum/cloudflared-env: {{ toYaml .Values.cloudflared.env | sha256sum | quote }}
     spec:
       containers:
         - name: cloudflared
-          image: {{ .Values.images.cloudflared | quote }}
+          image: {{ .Values.cloudflared.image | quote }}
           args:
             - tunnel
             - --no-autoupdate

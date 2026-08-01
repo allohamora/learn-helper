@@ -17,12 +17,12 @@ spec:
       labels:
         app: app
       annotations:
-        checksum/app-env: {{ toYaml .Values.env.app | sha256sum | quote }}
-        checksum/postgres-env: {{ toYaml .Values.env.postgres | sha256sum | quote }}
+        checksum/app-env: {{ toYaml .Values.app.env | sha256sum | quote }}
+        checksum/postgres-env: {{ toYaml .Values.postgres.env | sha256sum | quote }}
     spec:
       containers:
         - name: app
-          image: {{ .Values.images.app | quote }}
+          image: {{ .Values.app.image | quote }}
           ports:
             - name: http
               containerPort: 3000

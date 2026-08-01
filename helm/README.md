@@ -32,7 +32,7 @@ helm upgrade learn-helper helm \
   --atomic \
   --wait \
   --timeout 10m \
-  --set-string images.app=learn-helper:v2
+  --set-string app.image=learn-helper:v2
 
 # Remove the release and namespace.
 helm uninstall learn-helper --namespace learn-helper

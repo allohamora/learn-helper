@@ -1,6 +1,6 @@
 # Instructions
 
-- Never read `.env` (or other credential/secret files). If a value from one is needed, ask the user first instead of reading it yourself.
+- Never read `.env`, `helm/values.yaml` (or other credential/secret files). If a value from one is needed, ask the user first instead of reading it yourself.
 - Do not make code changes (edits, file writes) until the user explicitly asks you to make the change. Investigate and present options/findings first, and wait for confirmation before editing.
 - Use Conventional Commits for commit messages:
   - Format: `type: subject` — do not add a scope; this is a single-app repo, not a monorepo, so there's no natural scope to put there.
