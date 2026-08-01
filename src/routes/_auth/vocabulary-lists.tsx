@@ -27,7 +27,7 @@ function VocabularyListsPage() {
 
       <div className="px-4 pt-6">
         {lists.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">No vocabulary lists available.</p>
+          <p className="text-center text-sm text-muted-foreground">No vocabulary lists available.</p>
         ) : (
           <div className="mx-auto max-w-2xl divide-y overflow-hidden rounded-lg border text-left">
             {lists.map((list) => (
