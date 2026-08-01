@@ -1,4 +1,4 @@
-# Running Kubernetes (k3d) inside devcontainers
+# Running Kubernetes (k3s) inside devcontainers
 
 ```bash
 # Create a single-node k3d cluster.
