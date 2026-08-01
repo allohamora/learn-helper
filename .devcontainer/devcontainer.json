@@ -13,7 +13,7 @@
     "./features/personal-codex": {},
     "./features/personal-opencode": {},
     "./features/personal-pi": {},
-    "./features/k3d": {}
+    "./features/k3s": {}
   },
   "runArgs": ["--name", "learn-helper-devcontainer", "--sysctl", "net.ipv6.conf.all.disable_ipv6=1"],
   "privileged": true,
