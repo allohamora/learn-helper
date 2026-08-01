@@ -15,7 +15,7 @@ k3d image import learn-helper:local -c learn-helper
 helm upgrade --install learn-helper helm \
   --namespace learn-helper \
   --create-namespace \
-  --atomic \
+  --rollback-on-failure \
   --wait \
   --timeout 10m
 
@@ -32,7 +32,7 @@ k3d image import learn-helper:v2 -c learn-helper
 
 helm upgrade learn-helper helm \
   --namespace learn-helper \
-  --atomic \
+  --rollback-on-failure \
   --wait \
   --timeout 10m \
   --set-string app.image=learn-helper:v2
