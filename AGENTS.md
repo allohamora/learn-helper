@@ -6,7 +6,7 @@
   - Format: `type: subject` — do not add a scope; this is a single-app repo, not a monorepo, so there's no natural scope to put there.
   - Allowed types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`, `perf`, `build`, `ci`, `revert`.
   - Subject: lowercase first word, imperative mood, starts with a verb (e.g. "add pagination to vocabulary list"), no trailing period.
-  - Pick the type based on what actually changed, e.g. `test:` for test-only changes, `docs:` for docs-only, `fix:` for bug fixes, `feat:` for new features, `refactor:` for no-behavior-change restructuring.
+  - Pick the type based on what actually changed, e.g. `test:` for test-only changes, `docs:` for docs-only, `fix:` for bug fixes (in the app itself), `feat:` for new features, `refactor:` for no-behavior-change restructuring, `ci:` for deployment/infra config (helm charts, k8s manifests, GitHub Actions workflows, CI-related Dockerfiles, etc.) even when the change fixes a problem in that config.
   - Breaking changes: add a `!` before the colon (e.g. `feat!: subject`) and/or a `BREAKING CHANGE: <description>` footer explaining the break.
   - After creating a commit, output the commit hash followed by the full commit message to the user.
 - Do not create git commits until the user explicitly asks for one.
