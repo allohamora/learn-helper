@@ -34,6 +34,9 @@ helm upgrade learn-helper helm \
   --timeout 10m \
   --set-string app.image=learn-helper:v2
 
+# Seed the database manually (one-off, run against the live app pod).
+kubectl exec -n learn-helper deploy/app -- npm run vocabulary:seed
+
 # Remove the release. The postgres-data PVC is kept (helm.sh/resource-policy: keep),
 # so postgresql data survives this step.
 helm uninstall learn-helper --namespace learn-helper
