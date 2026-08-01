@@ -11,4 +11,6 @@ spec:
   storageClassName: local-path
   resources:
     requests:
+      # Required field, but not enforced by local-path - it just backs this with a
+      # plain directory, so Postgres can write past 5Gi without any error.
       storage: 5Gi
