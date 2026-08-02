@@ -19,9 +19,6 @@ Sentry.init({
   enableLogs: true,
   // Tracing
   tracesSampleRate: 0.1, //  Capture 10% of the transactions
-
-  // See debug logs in the console
-  // debug: true,
 });
 
 export const startSpan = Sentry.startSpan;
