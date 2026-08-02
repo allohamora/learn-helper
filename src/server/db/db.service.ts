@@ -30,8 +30,11 @@ export const runMigrations = async () => {
     await reserved.unsafe(`SELECT pg_advisory_lock(${lock})`);
     await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
   } finally {
-    await reserved.unsafe(`SELECT pg_advisory_unlock(${lock})`);
-    reserved.release();
+    try {
+      await reserved.unsafe(`SELECT pg_advisory_unlock(${lock})`);
+    } finally {
+      reserved.release();
+    }
   }
 };
 
