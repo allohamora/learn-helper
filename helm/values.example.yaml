@@ -1,0 +1,32 @@
+domain: localhost
+
+cloudflared:
+  enabled: false
+  image: cloudflare/cloudflared:2026.7.2
+  env:
+    TUNNEL_TOKEN: dummy-tunnel-token
+
+app:
+  image: learn-helper:local
+  env:
+    DRIZZLE_DEBUG: "true"
+    BETTER_AUTH_SECRET: dev-only-better-auth-secret-change-me
+    BETTER_AUTH_URL: http://localhost:3000
+    BETTER_AUTH_GOOGLE_CLIENT_ID: client-id
+    BETTER_AUTH_GOOGLE_CLIENT_SECRET: client-secret
+    BETTER_AUTH_ALLOWED_USERS: '["example@gmail.com"]'
+    GEMINI_API_KEY: dummy-gemini-key
+
+postgres:
+  image: postgres:18.4-alpine
+  # NOTE: the Postgres image only applies USER/PASSWORD/DB on first init of an
+  # empty data directory. Changing these after postgres-data is initialized and
+  # running `helm upgrade` will NOT update the database - it only changes what
+  # the app tries to connect with, breaking it. To rotate credentials on an
+  # existing database, exec into the postgres pod and run
+  # `ALTER ROLE <user> WITH PASSWORD '<new-password>';` first, then update
+  # these values to match.
+  env:
+    POSTGRES_USER: app
+    POSTGRES_PASSWORD: example
+    POSTGRES_DB: test

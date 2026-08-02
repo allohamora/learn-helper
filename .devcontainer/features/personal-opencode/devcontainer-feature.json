@@ -1,0 +1,23 @@
+{
+  "id": "personal-opencode",
+  "version": "1.0.0",
+  "name": "Personal OpenCode",
+  "description": "Installs OpenCode with the official native installer for the personal development environment",
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "devcontainer-personal-opencode-config",
+      "target": "/home/vscode/.config/opencode"
+    },
+    {
+      "type": "volume",
+      "source": "devcontainer-personal-opencode-data",
+      "target": "/home/vscode/.local/share/opencode"
+    }
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": ["sst-dev.opencode"]
+    }
+  }
+}

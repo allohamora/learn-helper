@@ -1,0 +1,13 @@
+.env
+helm/values.yaml
+
+node_modules
+dist
+build
+
+.husky
+.git
+
+.dockerignore
+Dockerfile
+docker-compose.yml

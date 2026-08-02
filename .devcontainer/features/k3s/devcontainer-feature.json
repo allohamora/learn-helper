@@ -1,0 +1,7 @@
+{
+  "id": "k3s",
+  "version": "1.0.0",
+  "name": "k3s",
+  "description": "Installs k3d, kubectl, helm, and k9s for running K3s clusters inside the devcontainer's Docker-in-Docker",
+  "installsAfter": ["./features/personal-docker-in-docker"]
+}

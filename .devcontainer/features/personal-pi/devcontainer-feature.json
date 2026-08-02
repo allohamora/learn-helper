@@ -1,0 +1,14 @@
+{
+  "id": "personal-pi",
+  "version": "1.0.0",
+  "name": "Personal Pi",
+  "description": "Installs Pi with the official native installer for the personal development environment",
+  "installsAfter": ["./features/learn-helper-node"],
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "devcontainer-personal-pi-config",
+      "target": "/home/vscode/.pi"
+    }
+  ]
+}

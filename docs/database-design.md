@@ -406,4 +406,4 @@ Stats displayed on the readings list: `"Title — 42 / 100 — 5 min"`.
 uploads/{user_id}/{file_id}.pdf
 ```
 
-> **Nomad note:** The `uploads/` directory must be on a persistent volume to survive allocation restarts.
+> **Deployment note:** The `uploads/` directory must be backed by a PersistentVolumeClaim (see `helm/templates/app/`) so uploaded files survive Pod restarts and rescheduling.

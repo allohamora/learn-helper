@@ -1,0 +1,84 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Get version from package.json
+        id: version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Install cloudflared
+        run: |
+          # Pinned to 2026.5.1: 2026.6.0+ has an open regression where service-token
+          # auth for `access ssh`/`access tcp` is silently ignored, falling back to
+          # interactive browser auth (which hangs forever in CI).
+          # https://github.com/cloudflare/cloudflared/issues/1673
+          curl -L https://github.com/cloudflare/cloudflared/releases/download/2026.5.1/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+          chmod +x /usr/local/bin/cloudflared
+
+      - name: Set up SSH
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          install -m 600 -D /dev/null ~/.ssh/known_hosts
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_ID }}
+          TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_SECRET }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOSTNAME: ${{ secrets.SSH_HOSTNAME }}
+          TARGET: ${{ github.sha }}
+          TAG: ${{ steps.version.outputs.VERSION }}
+        run: |
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            -o ProxyCommand='cloudflared access ssh --hostname %h --service-token-id "$TUNNEL_SERVICE_TOKEN_ID" --service-token-secret "$TUNNEL_SERVICE_TOKEN_SECRET"' \
+            -i ~/.ssh/id_ed25519 \
+            "$SSH_USER@$SSH_HOSTNAME" "
+              set -e
+              cd ~/projects/learn-helper
+              git fetch origin '$TARGET'
+              git checkout --detach FETCH_HEAD
+              docker image inspect learn-helper:$TAG >/dev/null 2>&1 && { echo 'learn-helper:$TAG already exists locally' >&2; exit 1; }
+              docker build -t learn-helper:$TAG .
+              docker save learn-helper:$TAG | k3s ctr images import -
+              helm upgrade --install learn-helper helm \
+                --namespace learn-helper \
+                --create-namespace \
+                --rollback-on-failure \
+                --wait \
+                --timeout 10m \
+                --set-string app.image=learn-helper:$TAG
+            "
+
+      - name: Clean up old images
+        env:
+          TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_ID }}
+          TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_SECRET }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOSTNAME: ${{ secrets.SSH_HOSTNAME }}
+        run: |
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
+            -o ProxyCommand='cloudflared access ssh --hostname %h --service-token-id "$TUNNEL_SERVICE_TOKEN_ID" --service-token-secret "$TUNNEL_SERVICE_TOKEN_SECRET"' \
+            -i ~/.ssh/id_ed25519 \
+            "$SSH_USER@$SSH_HOSTNAME" '
+              set -e
+              docker images --format "{{.Repository}}:{{.Tag}}" | grep "^learn-helper:" | sort -t: -k2 -V | head -n -10 | xargs -r docker rmi
+              docker image prune -f
+              k3s ctr images list -q | grep "learn-helper:" | sort -t: -k2 -V | head -n -10 | xargs -r k3s ctr images rm
+            '

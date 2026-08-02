@@ -1,0 +1,128 @@
+# favicon.ico: 1-day public cache
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cache-favicon
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "public, max-age=86400"
+      Vary: "Accept-Encoding"
+---
+# HTML pages: allow bfcache but force revalidation
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cache-html
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "private, max-age=0, must-revalidate"
+---
+# image/media files: 7-day cache with stale fallback
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cache-media
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    customResponseHeaders:
+      Cache-Control: "public, max-age=604800, stale-while-revalidate=600, stale-if-error=86400"
+      Vary: "Accept-Encoding"
+---
+# gzip/brotli/zstd negotiated via Accept-Encoding
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: compress
+  namespace: {{ .Release.Namespace }}
+spec:
+  compress: {}
+---
+# Token bucket: 100 request burst, refills 50/s
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ratelimit
+  namespace: {{ .Release.Namespace }}
+spec:
+  rateLimit:
+    average: 50
+    burst: 100
+---
+# Security headers: nosniff, frame-deny, referrer-policy, HSTS (1 year)
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: sec
+  namespace: {{ .Release.Namespace }}
+spec:
+  headers:
+    contentTypeNosniff: true
+    frameDeny: true
+    referrerPolicy: strict-origin-when-cross-origin
+    stsSeconds: 31536000
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: app
+  namespace: {{ .Release.Namespace }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    # /favicon.ico - 1-day cache
+    - match: 'Host(`{{ .Values.domain }}`) && Path(`/favicon.ico`)'
+      kind: Rule
+      priority: 25
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-favicon
+      services:
+        - name: app
+          port: http
+
+    # /api/ - no cache header
+    - match: 'Host(`{{ .Values.domain }}`) && PathPrefix(`/api/`)'
+      kind: Rule
+      priority: 20
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+      services:
+        - name: app
+          port: http
+
+    # Image/media files - 7-day cache. Priority 15 ensures /favicon.ico wins
+    # over the .ico match here.
+    - match: 'Host(`{{ .Values.domain }}`) && PathRegexp(`(?i)\.(png|jpe?g|gif|svg|webp|avif|ico)$`)'
+      kind: Rule
+      priority: 15
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-media
+      services:
+        - name: app
+          port: http
+
+    # Catch-all HTML route. Priority 1 ensures the specific routes above win.
+    - match: 'Host(`{{ .Values.domain }}`)'
+      kind: Rule
+      priority: 1
+      middlewares:
+        - name: sec
+        - name: ratelimit
+        - name: compress
+        - name: cache-html
+      services:
+        - name: app
+          port: http

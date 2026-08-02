@@ -1,0 +1,21 @@
+{
+  "name": "learn-helper",
+  "remoteUser": "vscode",
+  "containerUser": "vscode",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/learn-helper,type=bind,consistency=cached",
+  "workspaceFolder": "/workspaces/learn-helper",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "./features/personal-docker-in-docker": {},
+    "./features/personal-github-cli": {},
+    "./features/learn-helper-node": {},
+    "./features/personal-claude-code": {},
+    "./features/personal-codex": {},
+    "./features/personal-opencode": {},
+    "./features/personal-pi": {},
+    "./features/k3s": {}
+  },
+  "runArgs": ["--name", "learn-helper-devcontainer", "--sysctl", "net.ipv6.conf.all.disable_ipv6=1"],
+  "privileged": true,
+  "forwardPorts": [80, 8080, 3000]
+}

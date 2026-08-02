@@ -3,6 +3,7 @@ ssh pi@raspberrypi.local -t '
   cd ~/projects/learn-helper &&
   TIMESTAMP=$(date +"%Y-%m-%d") &&
   mkdir -p .temp/backups &&
-  cp .temp/data.db .temp/backups/$TIMESTAMP-data.db &&
-  echo "Backup created at .temp/backups/$TIMESTAMP-data.db"
+  kubectl exec -n learn-helper deploy/postgres -- sh -c "pg_dump -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\"" > .temp/backups/$TIMESTAMP-data.sql &&
+  gzip .temp/backups/$TIMESTAMP-data.sql &&
+  echo "Backup created at .temp/backups/$TIMESTAMP-data.sql.gz"
 '

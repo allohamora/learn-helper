@@ -123,14 +123,20 @@
     "url": "https://github.com/allohamora/learn-helper/issues"
   },
   "homepage": "https://github.com/allohamora/learn-helper#readme",
-  "engines": {
-    "node": ">=v24.13.0",
-    "npm": ">=11.8.0"
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=24.14.1"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11.11.0"
+    }
   },
-  "packageManager": "npm@11.8.0",
+  "packageManager": "npm@11.11.0",
   "lint-staged": {
     "*.css": "stylelint --fix",
     "*.{ts,tsx}": "eslint --fix",
-    "*.{js,cjs,mjs,json,yml,md}": "prettier --write"
+    "*.{js,cjs,mjs,json,yml,yaml,md}": "prettier --write"
   }
 }
