@@ -12,19 +12,13 @@ Sentry.init({
     Sentry.captureConsoleIntegration({ levels: ['error'] }),
     // error.levels array defines which levels are sent to Sentry as issues
     Sentry.pinoIntegration({ error: { levels: ['error'] } }),
-    Sentry.vercelAIIntegration({
-      recordInputs: true,
-      recordOutputs: true,
-    }),
+    Sentry.vercelAIIntegration(),
   ],
 
   // Send structured logs to Sentry
   enableLogs: true,
   // Tracing
   tracesSampleRate: 0.1, //  Capture 10% of the transactions
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
 
   // See debug logs in the console
   // debug: true,

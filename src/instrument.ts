@@ -6,10 +6,7 @@ Sentry.init({
   enabled: IS_PRODUCTION,
   integrations: [
     Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration({
-      maskAllText: false,
-      maskAllInputs: false,
-    }),
+    Sentry.replayIntegration(),
     // send all console calls to Sentry logs
     Sentry.consoleLoggingIntegration(),
     // send console.error messages to Sentry issues, by default sends all levels as issues
@@ -31,9 +28,6 @@ Sentry.init({
       successMessageText: 'Thank you for your feedback!',
     }),
   ],
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
   // Tracing
   tracesSampleRate: 0.1, //  Capture 10% of the transactions
   // Session Replay
