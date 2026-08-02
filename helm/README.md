@@ -72,16 +72,21 @@ k3d cluster delete learn-helper
 8. Generate a dedicated deploy keypair (`ssh-keygen -t ed25519 -f deploy_key -N ""`), add the public half to the server's `~/.ssh/authorized_keys` for the login user, and store the private key contents as the `SSH_PRIVATE_KEY` secret in the `production` GitHub environment.
 9. Add a `SSH_HOSTNAME` variable in the `production` GitHub environment, set to the public hostname from step 1.
 10. Add a `SSH_USER` repository secret, set to the server's login user (e.g. `pi`).
+11. On the server, read its SSH host public key:
+    ```bash
+    cat /etc/ssh/ssh_host_ed25519_key.pub
+    ```
+    It has three space-separated tokens — type, value, comment. Take the type and value, prepend the hostname from step 9 in place of the comment, and add the result as a `SSH_KNOWN_HOSTS` variable in the `production` GitHub environment, in the format `<hostname> <type> <value>` (e.g. `ssh.example.com ssh-ed25519 AAAA...`). This lets GitHub Actions verify the server's identity instead of trusting whatever host key is presented at connection time.
 
 ## Server software
 
-11. Install k3s using the official install script from k3s.io.
-12. Create a dedicated group for containerd socket access and add the deploy user (the `SSH_USER` from step 10) to it, so deploys can import images without sudo:
+12. Install k3s using the official install script from k3s.io.
+13. Create a dedicated group for containerd socket access and add the deploy user (the `SSH_USER` from step 10) to it, so deploys can import images without sudo:
     ```bash
     sudo groupadd k3s-ctr
     sudo usermod -aG k3s-ctr <deploy-user>
     ```
-13. Add a systemd drop-in that re-applies the socket's group ownership every time k3s (re)starts. This survives k3s restarts and upgrades because it's a supplementary unit fragment systemd merges with `k3s.service` at load time — it doesn't touch or depend on k3s's own unit file, so upgrading/reinstalling k3s never removes it:
+14. Add a systemd drop-in that re-applies the socket's group ownership every time k3s (re)starts. This survives k3s restarts and upgrades because it's a supplementary unit fragment systemd merges with `k3s.service` at load time — it doesn't touch or depend on k3s's own unit file, so upgrading/reinstalling k3s never removes it:
     ```bash
     sudo mkdir -p /etc/systemd/system/k3s.service.d
     printf '[Service]\nExecStartPost=/bin/chown root:k3s-ctr /run/k3s/containerd/containerd.sock\n' | sudo tee /etc/systemd/system/k3s.service.d/containerd-socket-perms.conf > /dev/null
@@ -89,18 +94,18 @@ k3d cluster delete learn-helper
     sudo systemctl restart k3s
     ```
     Verify with `ls -l /run/k3s/containerd/containerd.sock` (expect `root k3s-ctr` ownership). The deploy user needs a fresh login (or `newgrp k3s-ctr`) to pick up the new group when testing interactively — GitHub Actions deploys are unaffected since each run opens a new SSH connection.
-14. Make kubectl usable without sudo/root.
-15. Install helm using the official Ubuntu install script.
-16. Install k9s from its GitHub releases.
-17. Install Docker using the official install script, if you don't have it.
+15. Make kubectl usable without sudo/root.
+16. Install helm using the official Ubuntu install script.
+17. Install k9s from its GitHub releases.
+18. Install Docker using the official install script, if you don't have it.
 
 ## App ingress tunnel
 
-18. Set up the app's own Zero Trust tunnel: choose Docker, copy the token, and point it at `http://traefik.kube-system.svc.cluster.local:80`.
+19. Set up the app's own Zero Trust tunnel: choose Docker, copy the token, and point it at `http://traefik.kube-system.svc.cluster.local:80`.
 
 ## Deploy
 
-19. Clone the repo onto the server and deploy the app for the first time.
+20. Clone the repo onto the server and deploy the app for the first time.
 
 # Database backups
 
