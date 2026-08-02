@@ -59,7 +59,7 @@ k3d cluster delete learn-helper
 
 ## SSH access via Cloudflare Zero Trust
 
-1. In the Cloudflare dashboard, go to Zero Trust > Networks > Tunnels and mesh > Create a tunnel, choose Cloudflared, and give it a name. Run the arm64 Linux install commands it shows, installing it as a service so it keeps running. Add a public hostname route for `localhost:22`.
+1. In the Cloudflare dashboard, go to Zero Trust > Networks > Tunnels and mesh > Create a tunnel, choose Cloudflared, and give it a name. Run the arm64 Linux install commands it shows, installing it as a service so it keeps running. Add a public hostname route: `ssh.example.com` + `ssh://localhost:22`.
 2. Go to Service credentials > Service tokens > Add a token, and copy the client ID and secret.
 3. Create a `production` environment on GitHub and add `CLOUDFLARE_ACCESS_CLIENT_ID` and `CLOUDFLARE_ACCESS_CLIENT_SECRET` as its secrets.
 4. Go to Access > Applications > Add an application, choose Self-hosted > Public DNS, then set the public hostname field to the SSH route from step 1.
