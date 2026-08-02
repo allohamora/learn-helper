@@ -136,7 +136,7 @@
       "version": ">=11.11.0"
     }
   },
-  "packageManager": "npm@12.0.2",
+  "packageManager": "npm@11.11.0",
   "lint-staged": {
     "*.css": "stylelint --fix",
     "*.{ts,tsx}": "eslint --fix",
