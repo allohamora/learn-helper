@@ -102,15 +102,18 @@
       "properties": {
         "POSTGRES_USER": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._~-]+$"
         },
         "POSTGRES_PASSWORD": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._~-]+$"
         },
         "POSTGRES_DB": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9._~-]+$"
         }
       },
       "additionalProperties": {
