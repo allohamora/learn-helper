@@ -19,6 +19,13 @@ app:
 
 postgres:
   image: postgres:18.4-alpine
+  # NOTE: the Postgres image only applies USER/PASSWORD/DB on first init of an
+  # empty data directory. Changing these after postgres-data is initialized and
+  # running `helm upgrade` will NOT update the database - it only changes what
+  # the app tries to connect with, breaking it. To rotate credentials on an
+  # existing database, exec into the postgres pod and run
+  # `ALTER ROLE <user> WITH PASSWORD '<new-password>';` first, then update
+  # these values to match.
   env:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: example
