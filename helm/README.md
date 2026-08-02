@@ -110,13 +110,15 @@ k3d cluster delete learn-helper
 # Database backups
 
 ```bash
-# Back up the database to a local, timestamped, gzip-compressed SQL file.
-kubectl exec -n learn-helper deploy/postgres -- \
-  pg_dump -U app -d test | gzip > "backup-$(date +"%Y-%m-%d").sql.gz"
+# Back up the database to a local, timestamped, gzip-compressed SQL file. See scripts/backup.sh.
+./scripts/backup.sh
+
+# Download the backups locally. See scripts/download-backups.sh.
+./scripts/download-backups.sh
 
 # Restore the database from a backup made with the command above. Scale the
 # app down first so nothing is writing mid-restore, then scale it back up.
 kubectl scale -n learn-helper deploy/app --replicas=0
-gunzip -c backup-2026-08-01.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- psql -U app -d test
+gunzip -c .temp/backups/2026-08-01-data.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 kubectl scale -n learn-helper deploy/app --replicas=1
 ```
