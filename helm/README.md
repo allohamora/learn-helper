@@ -119,6 +119,6 @@ k3d cluster delete learn-helper
 # Restore the database from a backup made with the command above. Scale the
 # app down first so nothing is writing mid-restore, then scale it back up.
 kubectl scale -n learn-helper deploy/app --replicas=0
-gunzip -c .temp/backups/2026-08-01-data.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+gunzip -c .temp/backups/<date>-data.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- sh -c 'psql -1 -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 kubectl scale -n learn-helper deploy/app --replicas=1
 ```
