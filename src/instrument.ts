@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/react';
+import * as Sentry from '@sentry/tanstackstart-react';
 import { IS_PRODUCTION, VITE_SENTRY_DSN } from './config';
 
 Sentry.init({
