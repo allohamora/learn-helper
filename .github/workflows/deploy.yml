@@ -35,19 +35,21 @@ jobs:
           install -m 600 -D /dev/null ~/.ssh/id_ed25519
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           install -m 600 -D /dev/null ~/.ssh/known_hosts
-          printf '%s\n' "${{ vars.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
       - name: Deploy
         env:
           TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_ID }}
           TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_SECRET }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOSTNAME: ${{ secrets.SSH_HOSTNAME }}
           TARGET: ${{ github.sha }}
           TAG: ${{ steps.version.outputs.VERSION }}
         run: |
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
             -o ProxyCommand='cloudflared access ssh --hostname %h --service-token-id "$TUNNEL_SERVICE_TOKEN_ID" --service-token-secret "$TUNNEL_SERVICE_TOKEN_SECRET"' \
             -i ~/.ssh/id_ed25519 \
-            ${{ secrets.SSH_USER }}@${{ vars.SSH_HOSTNAME }} "
+            "$SSH_USER@$SSH_HOSTNAME" "
               set -e
               cd ~/projects/learn-helper
               git fetch origin '$TARGET'
@@ -68,11 +70,13 @@ jobs:
         env:
           TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_ID }}
           TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_SECRET }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOSTNAME: ${{ secrets.SSH_HOSTNAME }}
         run: |
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
             -o ProxyCommand='cloudflared access ssh --hostname %h --service-token-id "$TUNNEL_SERVICE_TOKEN_ID" --service-token-secret "$TUNNEL_SERVICE_TOKEN_SECRET"' \
             -i ~/.ssh/id_ed25519 \
-            ${{ secrets.SSH_USER }}@${{ vars.SSH_HOSTNAME }} '
+            "$SSH_USER@$SSH_HOSTNAME" '
               set -e
               docker images --format "{{.Repository}}:{{.Tag}}" | grep "^learn-helper:" | sort -t: -k2 -V | head -n -10 | xargs -r docker rmi
               docker image prune -f

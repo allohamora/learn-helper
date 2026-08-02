@@ -70,13 +70,13 @@ k3d cluster delete learn-helper
 ## GitHub Actions deploy access
 
 8. Generate a dedicated deploy keypair (`ssh-keygen -t ed25519 -f deploy_key -N ""`), add the public half to the server's `~/.ssh/authorized_keys` for the login user, and store the private key contents as the `SSH_PRIVATE_KEY` secret in the `production` GitHub environment.
-9. Add a `SSH_HOSTNAME` variable in the `production` GitHub environment, set to the public hostname from step 1.
+9. Add a `SSH_HOSTNAME` secret in the `production` GitHub environment, set to the public hostname from step 1.
 10. Add a `SSH_USER` repository secret, set to the server's login user (e.g. `pi`).
 11. On the server, read its SSH host public key:
     ```bash
     cat /etc/ssh/ssh_host_ed25519_key.pub
     ```
-    It has three space-separated tokens — type, value, comment. Take the type and value, prepend the hostname from step 9 in place of the comment, and add the result as a `SSH_KNOWN_HOSTS` variable in the `production` GitHub environment, in the format `<hostname> <type> <value>` (e.g. `ssh.example.com ssh-ed25519 AAAA...`). This lets GitHub Actions verify the server's identity instead of trusting whatever host key is presented at connection time.
+    It has three space-separated tokens — type, value, comment. Take the type and value, prepend the hostname from step 9 in place of the comment, and add the result as a `SSH_KNOWN_HOSTS` secret in the `production` GitHub environment, in the format `<hostname> <type> <value>` (e.g. `ssh.example.com ssh-ed25519 AAAA...`). This lets GitHub Actions verify the server's identity instead of trusting whatever host key is presented at connection time.
 
 ## Server software
 
