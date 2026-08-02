@@ -59,6 +59,7 @@
     "appEnvironment": {
       "type": "object",
       "required": [
+        "NODE_ENV",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
         "BETTER_AUTH_GOOGLE_CLIENT_ID",
@@ -67,6 +68,10 @@
         "GEMINI_API_KEY"
       ],
       "properties": {
+        "NODE_ENV": {
+          "type": "string",
+          "const": "production"
+        },
         "BETTER_AUTH_SECRET": {
           "type": "string",
           "minLength": 1
