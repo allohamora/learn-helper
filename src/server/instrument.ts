@@ -23,7 +23,7 @@ Sentry.init({
   // Send structured logs to Sentry
   enableLogs: true,
   // Tracing
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions, because we need to store all ai traces for debugging
+  tracesSampleRate: 0.1, //  Capture 10% of the transactions
   // Set sampling rate for profiling - this is evaluated only once per SDK.init call
   profileSessionSampleRate: 1.0,
   // Trace lifecycle automatically enables profiling during active traces
