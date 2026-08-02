@@ -25,7 +25,7 @@ Sentry.init({
   // Tracing
   tracesSampleRate: 0.1, //  Capture 10% of the transactions
   // Set sampling rate for profiling - this is evaluated only once per SDK.init call
-  profileSessionSampleRate: 1.0,
+  profileSessionSampleRate: 0.1,
   // Trace lifecycle automatically enables profiling during active traces
   profileLifecycle: 'trace',
   // Setting this option to true will send default PII data to Sentry.
