@@ -12,6 +12,7 @@ import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
 import { MimeType } from './utils/mime-type.utils';
 import { statisticsRouter } from './statistics/statistics.router';
+import { setUser } from './instrument';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -102,9 +103,11 @@ api.use('*', async (c, next) => {
   if (!session) {
     c.set('user', null);
     c.set('session', null);
+    setUser(null);
   } else {
     c.set('user', session.user);
     c.set('session', session.session);
+    setUser({ id: session.user.id, email: session.user.email, username: session.user.name });
   }
 
   await next();
