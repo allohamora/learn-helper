@@ -36,6 +36,3 @@ Sentry.init({
   // Enable logs to be sent to Sentry
   enableLogs: true,
 });
-
-export const setUser = Sentry.setUser;
-export const feedback = Sentry.getFeedback();
