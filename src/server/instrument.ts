@@ -1,3 +1,4 @@
+import '@tanstack/react-start/server-only';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { VITE_SENTRY_DSN } from '@/config';
 import { NODE_ENV } from './config';
