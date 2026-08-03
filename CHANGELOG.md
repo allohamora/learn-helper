@@ -3,6 +3,43 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.3](https://github.com/allohamora/learn-helper/compare/v0.0.2...v0.0.3) (2026-08-03)
+
+### Features
+
+- Add sentry ([2996701](https://github.com/allohamora/learn-helper/commit/2996701cbbd4178de63f3a7e427a1d43b33aae7e))
+- Add @sentry/profiling-node ([dcbfcc7](https://github.com/allohamora/learn-helper/commit/dcbfcc7225e2cf55b5a05e6157994e638d56f15a))
+- Enable nitro sourcemaps ([401d1b4](https://github.com/allohamora/learn-helper/commit/401d1b4baa186449ac71dabc661d1c362de7743a))
+- Decrease server traces to 10% ([68fd4e5](https://github.com/allohamora/learn-helper/commit/68fd4e5db83dbb8ce81d7b448e6c1b6f3fa116ab))
+- Set profileSessionSampleRate to 10% ([934062f](https://github.com/allohamora/learn-helper/commit/934062fed37f62c4e8f5deed6dd2aab478c5569f))
+- Add setUser call in hono api ([327a457](https://github.com/allohamora/learn-helper/commit/327a457c499514fb1a981cfa08c965645bd503c6))
+- Remove @sentry/profiling-node ([b93033e](https://github.com/allohamora/learn-helper/commit/b93033e371c007f463323e0bd652cc36da55d3d9))
+- Enable ai sdk telemetry for sentry tracing ([7b6a417](https://github.com/allohamora/learn-helper/commit/7b6a4171662a1721ec7dd5fd51e6c2d632805139))
+
+### Bug Fixes
+
+- Import sentry client sdk from @sentry/tanstackstart-react ([603d573](https://github.com/allohamora/learn-helper/commit/603d5730c3aa1ffba8b52e5b9e5587e4a95ce8dd))
+- Remove sentry pii-collecting option overrides ([deac882](https://github.com/allohamora/learn-helper/commit/deac8823fc3f86f4aa910aaca213ae1cfb215e4b))
+- Avoid ssr crash from browser-only sentry integrations in _auth route ([bac575d](https://github.com/allohamora/learn-helper/commit/bac575dcb5ad5dc760b0fa6a4c26d2ae4ceb62b3))
+- Add server-only marker to server sentry instrument module ([0efece6](https://github.com/allohamora/learn-helper/commit/0efece623db10c0dca19ffdb723280507b7b4542))
+
+### Refactor
+
+- Remove debug: true comment ([05dff3f](https://github.com/allohamora/learn-helper/commit/05dff3fec7685abce28b146b985dc006ca1ad597))
+
+### Continuous Integration
+
+- Add NODE_ENV usage ([4da4cf6](https://github.com/allohamora/learn-helper/commit/4da4cf68e1643492f2fd7da0f24f7514220cc2d6))
+- Add sentry build secrets ([e7c1ad9](https://github.com/allohamora/learn-helper/commit/e7c1ad960b55bcc14b9333b90236bcf7f5cda2da))
+
+### Chores
+
+- Lock typescript to 6.0.3 ([bbcb2ab](https://github.com/allohamora/learn-helper/commit/bbcb2abda5de6c68cfa0367ea31e78940258f10c))
+- Bump deps ([4247ddc](https://github.com/allohamora/learn-helper/commit/4247ddcede05b28209f3c944336b763ff7bd925c))
+- Add env loading to vite ([9013c57](https://github.com/allohamora/learn-helper/commit/9013c57fa3c15697ede6bf0c31d202b7f56195d0))
+- Lock @vitejs/plugin-react to 6.0.3 ([377617f](https://github.com/allohamora/learn-helper/commit/377617fa589d6cce993503427e44a426fd7abe93))
+- Set packageManager to npm@11.11.0 ([0e08e3a](https://github.com/allohamora/learn-helper/commit/0e08e3a34a8ea9e3a59c0c3ec694d9ac89c63081))
+
 ## 0.0.2 (2026-08-02)
 
 ### Features
