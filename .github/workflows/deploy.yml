@@ -45,6 +45,10 @@ jobs:
           SSH_HOSTNAME: ${{ secrets.SSH_HOSTNAME }}
           TARGET: ${{ github.sha }}
           TAG: ${{ steps.version.outputs.VERSION }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts \
             -o ProxyCommand='cloudflared access ssh --hostname %h --service-token-id "$TUNNEL_SERVICE_TOKEN_ID" --service-token-secret "$TUNNEL_SERVICE_TOKEN_SECRET"' \
@@ -55,7 +59,13 @@ jobs:
               git fetch origin '$TARGET'
               git checkout --detach FETCH_HEAD
               docker image inspect learn-helper:$TAG >/dev/null 2>&1 && { echo 'learn-helper:$TAG already exists locally' >&2; exit 1; }
-              docker build -t learn-helper:$TAG .
+              SENTRY_ORG='$SENTRY_ORG' SENTRY_PROJECT='$SENTRY_PROJECT' SENTRY_AUTH_TOKEN='$SENTRY_AUTH_TOKEN' VITE_SENTRY_DSN='$VITE_SENTRY_DSN' \
+              docker build \
+                --secret id=sentry_org,env=SENTRY_ORG \
+                --secret id=sentry_project,env=SENTRY_PROJECT \
+                --secret id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+                --secret id=vite_sentry_dsn,env=VITE_SENTRY_DSN \
+                -t learn-helper:$TAG .
               docker save learn-helper:$TAG | k3s ctr images import -
               helm upgrade --install learn-helper helm \
                 --namespace learn-helper \

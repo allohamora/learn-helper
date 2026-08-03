@@ -55,6 +55,10 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
       } satisfies GoogleLanguageModelOptions,
     },
     temperature: 0.7,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: 'toTranslateEnglishSentence',
+    },
     output: Output.array({
       element: z.object({
         id: z.uuidv7(),
@@ -126,6 +130,10 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
       } satisfies GoogleLanguageModelOptions,
     },
     temperature: 0.7,
+    experimental_telemetry: {
+      isEnabled: true,
+      functionId: 'toTranslateUkrainianSentence',
+    },
     output: Output.array({
       element: z.object({
         id: z.uuidv7(),

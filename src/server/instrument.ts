@@ -1,0 +1,28 @@
+import '@tanstack/react-start/server-only';
+import * as Sentry from '@sentry/tanstackstart-react';
+import { VITE_SENTRY_DSN } from '@/config';
+import { NODE_ENV } from './config';
+
+Sentry.init({
+  dsn: VITE_SENTRY_DSN,
+  enabled: NODE_ENV === 'production',
+  integrations: [
+    // send all console calls to Sentry logs
+    Sentry.consoleLoggingIntegration(),
+    // send console.error messages to Sentry issues, by default sends all levels as issues
+    Sentry.captureConsoleIntegration({ levels: ['error'] }),
+    // error.levels array defines which levels are sent to Sentry as issues
+    Sentry.pinoIntegration({ error: { levels: ['error'] } }),
+    Sentry.vercelAIIntegration(),
+  ],
+
+  // Send structured logs to Sentry
+  enableLogs: true,
+  // Tracing
+  tracesSampleRate: 0.1, //  Capture 10% of the transactions
+});
+
+export const startSpan = Sentry.startSpan;
+export const setTags = Sentry.setTags;
+export const setUser = Sentry.setUser;
+export const wrapFetchWithSentry = Sentry.wrapFetchWithSentry;

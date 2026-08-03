@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import * as Sentry from '@sentry/tanstackstart-react';
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router';
 import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
@@ -17,6 +19,18 @@ export const Route = createFileRoute('/_auth')({
 });
 
 function AuthLayout() {
+  const { session } = Route.useRouteContext();
+
+  useEffect(() => {
+    Sentry.setUser({ id: session.user.id, email: session.user.email, username: session.user.name });
+    Sentry.getFeedback()?.createWidget();
+
+    return () => {
+      Sentry.setUser(null);
+      Sentry.getFeedback()?.remove();
+    };
+  }, [session.user.id, session.user.email, session.user.name]);
+
   return (
     <>
       <Header />

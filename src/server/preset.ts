@@ -4,4 +4,5 @@ import { defineNitroConfig } from 'nitro/config';
 export default defineNitroConfig({
   extends: 'node-server',
   entry: './src/server/preset-entry.ts',
+  sourcemap: true,
 });
