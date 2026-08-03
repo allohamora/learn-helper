@@ -37,6 +37,13 @@ helm upgrade learn-helper helm \
   --timeout 10m \
   --set-string app.image=learn-helper:v2
 
+# Update env vars: edit helm/values.yaml, then re-run without touching the image.
+helm upgrade learn-helper helm \
+  --namespace learn-helper \
+  --rollback-on-failure \
+  --wait \
+  --timeout 10m
+
 # Seed the database manually (one-off, run against the live app pod).
 kubectl exec -n learn-helper deploy/app -- npm run vocabulary:seed
 
