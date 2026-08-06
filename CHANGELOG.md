@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.4](https://github.com/allohamora/learn-helper/compare/v0.0.3...v0.0.4) (2026-08-06)
+
+### Bug Fixes
+
+- Guard against double-submitting vocabulary discover/undo actions ([703aefc](https://github.com/allohamora/learn-helper/commit/703aefc5bb969f6483740e3dbc922970d2e935ed))
+- Use a ref for the vocabulary discover submit guard ([a71b588](https://github.com/allohamora/learn-helper/commit/a71b588f8f70b3935acf5bd97d80b8d7a58879c9))
+
+### Testing
+
+- Rename generic identifiers in discover test helpers ([cd12a9b](https://github.com/allohamora/learn-helper/commit/cd12a9b383e12b6d7b197fb5b613294ae5141ac2))
+
+### Continuous Integration
+
+- Add update env command to helm/README.md ([1e53ed7](https://github.com/allohamora/learn-helper/commit/1e53ed780f2d24dc72292df7d2dc7c03c042a0bc))
+
+### Chores
+
+- **deps:** Bump actions/setup-node from 6 to 7 ([a91f56c](https://github.com/allohamora/learn-helper/commit/a91f56c071271cfe16eeb95c2cffd29c84ce8a6a))
+- **deps:** Bump the npm_and_yarn group across 1 directory with 2 updates ([f0050af](https://github.com/allohamora/learn-helper/commit/f0050afb15753acf18a773503f66796f1ed95daf))
+- **deps:** Bump the npm_and_yarn group across 1 directory with 3 updates ([a08c0d5](https://github.com/allohamora/learn-helper/commit/a08c0d50f89a3373e253c9d94e5258efb257a1ab))
+- Apply npm audit fix ([98a77d5](https://github.com/allohamora/learn-helper/commit/98a77d5af926c288cf60638052e9cfe4f9481bf9))
+
 ## [0.0.3](https://github.com/allohamora/learn-helper/compare/v0.0.2...v0.0.3) (2026-08-03)
 
 ### Features
