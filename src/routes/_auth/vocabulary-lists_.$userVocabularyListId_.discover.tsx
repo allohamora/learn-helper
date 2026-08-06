@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Undo2 } from 'lucide-react';
@@ -38,15 +38,18 @@ function VocabularyListDiscoverPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [startedAt, setStartedAt] = useState(new Date());
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // for disabled buttons rendering
+  const isSubmittingRef = useRef(false); // for preventing double clicks
 
   const withSubmitGuard = async (action: () => Promise<void>) => {
-    if (isSubmitting) return;
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
       await action();
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };

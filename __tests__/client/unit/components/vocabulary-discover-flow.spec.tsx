@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { act } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { HttpResponse } from 'msw';
@@ -101,6 +102,39 @@ describe('Vocabulary discover page', () => {
     // to re-render the button as disabled
     fireEvent.click(knowButton);
     fireEvent.click(knowButton);
+
+    await screen.findByText('second');
+
+    expect(discoverHandler).toHaveBeenCalledOnce();
+    expect(toastErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('sends only one discover request when two click events land in the same render batch', async () => {
+    const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];
+    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [firstItem, secondItem]));
+
+    const discoverHandler = vi.fn((userVocabularyItemId: string) => {
+      if (userVocabularyItemId !== firstItem.id) throw new Error('unexpected item id');
+
+      return HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Known } });
+    });
+    mockServer.addHandlers(api.discoverUserVocabularyItem.mock(userVocabularyListId, discoverHandler));
+
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+
+    renderDiscoverPage();
+
+    const knowButton = await screen.findByRole('button', { name: 'I Know This' });
+
+    // unlike two separate `fireEvent.click()` calls (each flushes/re-renders on its own),
+    // dispatching both native click events inside a single `act()` call models two click
+    // events landing in the same batch with no render in between - e.g. a touch device
+    // firing both a synthetic and a real click for one tap. The guard must not rely on
+    // `isSubmitting` state alone, since its closure value is still stale for both handlers.
+    act(() => {
+      knowButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      knowButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
 
     await screen.findByText('second');
 
