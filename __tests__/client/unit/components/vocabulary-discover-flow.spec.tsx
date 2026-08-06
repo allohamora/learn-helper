@@ -19,25 +19,25 @@ const { userVocabularyListId } = vi.hoisted(() => ({ userVocabularyListId: crypt
 // <RouterProvider>; stubbing it lets the page component render standalone in a test without
 // pulling in a full router harness for a bug that lives entirely in the component's own state
 vi.mock('@tanstack/react-router', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@tanstack/react-router')>();
+  const actualRouterModule = await importOriginal<typeof import('@tanstack/react-router')>();
 
   return {
-    ...actual,
-    createFileRoute: ((path: string) => {
-      const createRoute = actual.createFileRoute(path as never);
+    ...actualRouterModule,
+    createFileRoute: ((routePath: string) => {
+      const createRoute = actualRouterModule.createFileRoute(routePath as never);
 
       return (options: never) => {
-        const route = createRoute(options);
-        route.useParams = (() => ({ userVocabularyListId })) as typeof route.useParams;
+        const mockedRoute = createRoute(options);
+        mockedRoute.useParams = (() => ({ userVocabularyListId })) as typeof mockedRoute.useParams;
 
-        return route;
+        return mockedRoute;
       };
-    }) as unknown as typeof actual.createFileRoute,
+    }) as unknown as typeof actualRouterModule.createFileRoute,
   };
 });
 
-const item = (value: string): UserVocabularyItem => {
-  const now = new Date().toISOString();
+const createVocabularyItem = (value: string): UserVocabularyItem => {
+  const timestamp = new Date().toISOString();
 
   return {
     id: crypto.randomUUID(),
@@ -46,8 +46,8 @@ const item = (value: string): UserVocabularyItem => {
     encounterCount: 0,
     status: LearningStatus.Waiting,
     enqueuedAt: null,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: timestamp,
+    updatedAt: timestamp,
     vocabularyItem: {
       id: crypto.randomUUID(),
       value,
@@ -57,8 +57,8 @@ const item = (value: string): UserVocabularyItem => {
       spelling: value,
       pronunciation: null,
       link: null,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     },
   };
 };
@@ -78,18 +78,18 @@ describe('Vocabulary discover page', () => {
   afterEach(() => cleanup());
 
   it('sends only one discover request when the button is clicked twice in a row, and does not surface an error', async () => {
-    const [first, second] = [item('first'), item('second')];
-    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [first, second]));
+    const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];
+    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [firstItem, secondItem]));
 
-    const discover = vi.fn((userVocabularyItemId: string) => {
+    const discoverHandler = vi.fn((userVocabularyItemId: string) => {
       // a real server would reject a second concurrent request for the same item with a 409
       // conflict ("already been discovered"); the client-side guard under test must never let
       // that second request fire in the first place
-      if (userVocabularyItemId !== first.id) throw new Error('unexpected item id');
+      if (userVocabularyItemId !== firstItem.id) throw new Error('unexpected item id');
 
-      return HttpResponse.json({ success: true, data: { ...first, status: LearningStatus.Known } });
+      return HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Known } });
     });
-    mockServer.addHandlers(api.discoverUserVocabularyItem.mock(userVocabularyListId, discover));
+    mockServer.addHandlers(api.discoverUserVocabularyItem.mock(userVocabularyListId, discoverHandler));
 
     const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
 
@@ -104,7 +104,7 @@ describe('Vocabulary discover page', () => {
 
     await screen.findByText('second');
 
-    expect(discover).toHaveBeenCalledOnce();
+    expect(discoverHandler).toHaveBeenCalledOnce();
     expect(toastErrorSpy).not.toHaveBeenCalled();
   });
 });

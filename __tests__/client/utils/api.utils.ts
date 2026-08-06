@@ -33,21 +33,24 @@ export const api = {
       ),
   },
   vocabularyListDiscoverItems: {
-    ok: (userVocabularyListId: string, items: UserVocabularyItemWithRelations[]) => {
+    ok: (userVocabularyListId: string, vocabularyItems: UserVocabularyItemWithRelations[]) => {
       return http.get(`/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items`, () => {
         return HttpResponse.json<PaginatedResponse<UserVocabularyItemWithRelations>>({
           success: true,
-          data: items,
-          pageInfo: { total: items.length, count: items.length },
+          data: vocabularyItems,
+          pageInfo: { total: vocabularyItems.length, count: vocabularyItems.length },
         });
       });
     },
   },
   discoverUserVocabularyItem: {
-    mock: (userVocabularyListId: string, fn: (userVocabularyItemId: string) => HttpResponse<JsonBodyType>) => {
+    mock: (
+      userVocabularyListId: string,
+      responseFactory: (userVocabularyItemId: string) => HttpResponse<JsonBodyType>,
+    ) => {
       return http.post(
         `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId/discover`,
-        ({ params }) => fn(params.userVocabularyItemId as string),
+        ({ params: routeParams }) => responseFactory(routeParams.userVocabularyItemId as string),
       );
     },
   },
