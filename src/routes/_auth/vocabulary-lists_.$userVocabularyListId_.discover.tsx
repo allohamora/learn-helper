@@ -38,6 +38,19 @@ function VocabularyListDiscoverPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [startedAt, setStartedAt] = useState(new Date());
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const withSubmitGuard = async (action: () => Promise<void>) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      await action();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['vocabulary-list-discover-items', userVocabularyListId],
     queryFn: async () => {
@@ -93,50 +106,54 @@ function VocabularyListDiscoverPage() {
   const currentItem = items[currentIndex];
 
   const handle = async (status: LearningStatus.Known | LearningStatus.Learning) => {
-    if (!currentItem) return;
+    await withSubmitGuard(async () => {
+      if (!currentItem) return;
 
-    try {
-      await discoverItem.mutateAsync({
-        userVocabularyItemId: currentItem.id,
-        status,
-        durationMs: Date.now() - startedAt.getTime(),
-      });
-    } catch {
-      toast.error('Failed to discover item');
-      return;
-    }
+      try {
+        await discoverItem.mutateAsync({
+          userVocabularyItemId: currentItem.id,
+          status,
+          durationMs: Date.now() - startedAt.getTime(),
+        });
+      } catch {
+        toast.error('Failed to discover item');
+        return;
+      }
 
-    setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
+      setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
 
-    if (currentIndex < items.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setHandled(handled + 1);
-    } else {
-      await refetch();
-      setHandled(0);
-      setCurrentIndex(0);
-    }
+      if (currentIndex < items.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+        setHandled(handled + 1);
+      } else {
+        await refetch();
+        setHandled(0);
+        setCurrentIndex(0);
+      }
 
-    setStartedAt(new Date());
+      setStartedAt(new Date());
+    });
   };
 
   const undo = async () => {
-    const [lastUserVocabularyItemId, ...rest] = history;
-    if (!lastUserVocabularyItemId) return;
+    await withSubmitGuard(async () => {
+      const [lastUserVocabularyItemId, ...rest] = history;
+      if (!lastUserVocabularyItemId) return;
 
-    try {
-      await undoStatus.mutateAsync({ userVocabularyItemId: lastUserVocabularyItemId });
-    } catch {
-      toast.error('Failed to undo item status');
-      return;
-    }
+      try {
+        await undoStatus.mutateAsync({ userVocabularyItemId: lastUserVocabularyItemId });
+      } catch {
+        toast.error('Failed to undo item status');
+        return;
+      }
 
-    setHistory(rest);
-    await refetch();
-    setHandled(0);
-    setCurrentIndex(0);
+      setHistory(rest);
+      await refetch();
+      setHandled(0);
+      setCurrentIndex(0);
 
-    setStartedAt(new Date());
+      setStartedAt(new Date());
+    });
   };
 
   return (
@@ -168,7 +185,7 @@ function VocabularyListDiscoverPage() {
               variant="outline"
               size="sm"
               className="gap-2"
-              disabled={history.length === 0 || discoverItem.isPending || undoStatus.isPending}
+              disabled={history.length === 0 || isSubmitting}
             >
               <Undo2 className="size-4" />
               Undo
@@ -182,7 +199,7 @@ function VocabularyListDiscoverPage() {
               onClick={() => void handle(LearningStatus.Known)}
               variant="destructive"
               className="h-11 flex-1 text-base md:h-12"
-              disabled={discoverItem.isPending}
+              disabled={isSubmitting}
             >
               I Know This
             </Button>
@@ -190,7 +207,7 @@ function VocabularyListDiscoverPage() {
               onClick={() => void handle(LearningStatus.Learning)}
               variant="default"
               className="h-11 flex-1 text-base md:h-12"
-              disabled={discoverItem.isPending}
+              disabled={isSubmitting}
             >
               Learn This
             </Button>
