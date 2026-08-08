@@ -12,6 +12,5 @@
 - Before every commit, show the proposed commit message and ask for confirmation (e.g. "Ready to commit as `<message>`. Go ahead?"). On a yes, commit and push in that same step - don't ask again separately for the push.
 - Don't create git commits or push until the user explicitly asks for it.
 - Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.
-- Don't write comments that just restate what the code does. They add noise and go stale as the code changes. Only comment where it adds real value: explain why, not what, e.g. a non-obvious reason, a tradeoff, a workaround, a gotcha.
 - Before considering a change done, run the relevant checks for what you touched (e.g. typecheck, lint, tests, build), and fix any failures.
 - When a change affects something documented elsewhere (e.g. `docs/`, `README.md`), update that documentation in the same change. Don't add documentation for things that didn't change.
