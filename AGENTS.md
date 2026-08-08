@@ -2,7 +2,7 @@
 
 - Don't read `.env`, `terraform/terraform.tfvars`, `helm/values.yaml`, or other files with secrets. If I need a value from one, ask the user first instead of reading it.
 - Don't make code changes (edits, file writes) until the user explicitly asks for the change. Investigate and present findings/options first, and wait for confirmation before editing.
-- Use Conventional Commits for commit messages: `type: subject`.
+- Use Conventional Commits for commit messages: `type(scope): subject`.
   - Types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`, `perf`, `build`, `ci`, `revert`. Pick the type based on what actually changed.
   - Scope: only in a monorepo (multiple apps/packages, e.g. workspaces in package.json, or an apps/ or packages/ layout) — add a scope matching the exact app/package directory name, e.g. `fix(api): correct pagination offset`. Never invent a scope from anything else (e.g. a feature, skill, or file name). In a single-app repo, always skip the scope, e.g. `fix: correct pagination offset`.
   - Subject: lowercase, imperative mood, starts with a verb, no trailing period.
