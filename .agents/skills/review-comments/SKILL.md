@@ -1,6 +1,6 @@
 ---
 name: review-comments
-description: Walk through PR review comments one at a time with the author - assess each, propose a fix, and wait for a decision before replying and resolving.
+description: Walk through PR review comments one at a time with the author - assess each, propose a change, and wait for a decision before replying and resolving.
 ---
 
 ## What I do
@@ -8,14 +8,21 @@ description: Walk through PR review comments one at a time with the author - ass
 - Read all open review comment threads on the current PR.
 - Go through the threads **one at a time**, never in bulk:
   1. Show a link to the thread, the comment, and my assessment: is this a real/valid issue, or not?
-  2. If valid, propose a concrete fix. If not, explain why I think it doesn't apply.
-  3. Ask the author what to do: apply the fix, decline with a reason, or something else.
+  2. If valid, propose a concrete change. If not, explain why I think it doesn't apply.
+  3. Ask the author what to do: apply the change, decline with a reason, or something else.
   4. Wait for the author's decision - do not act without it.
-  5. Once decided: make the fix (if any), then wait for the author's feedback, then reply to the thread and resolve it once they confirm everything is fine.
-  6. Only then move on to the next comment.
-- I never fix, reply to, or resolve more than one thread without author input in between.
-- Exception: if multiple threads are the same underlying issue (e.g. the same outdated GitHub Action version repeated across 20 workflow files), I group them and treat them as one - one assessment, one proposed fix, one decision from the author - then apply that single decision to all matching threads (fix once if a single commit covers them all, reply to each, resolve each).
+  5. If applying a change: make the code change, then show the proposed commit message and ask for confirmation before committing - wait for a yes, then commit, push, and reply to the thread with the commit link.
+  6. If declined: no code change or commit - just reply to the thread with the reason.
+  7. Once the reply is posted, resolve the thread if the "Who can resolve" rules below allow it.
+  8. Only then move on to the next comment.
+- A decision the author gives for one thread only applies to that thread, not to any other thread (except the grouping case below).
+- Exception: if several threads point to the same underlying issue (e.g. the same outdated GitHub Action version in 20 workflow files), I treat them as one - one assessment, one proposed change, one decision from the author. That decision then applies to all of them: one commit if it covers them all, but each thread still gets its own reply, and is resolved per the "Who can resolve" rules below.
 - This is only for currently open/unresolved threads. Reviewers add new comments after re-reviewing, so this skill is meant to be run again on later review passes - it just picks up whatever is unresolved at that point.
+
+## Who can resolve
+
+- **Bot-authored threads** (e.g. `copilot-pull-request-reviewer`, other automated reviewers): once replied to and the author confirms it's settled, I resolve the thread myself.
+- **Human-authored threads** (a real reviewer's login): I only review and reply - I do not call `resolveReviewThread` on these. Resolving is the human reviewer's call, not something to automate on their behalf.
 
 ## Reply formats
 
@@ -25,7 +32,7 @@ Fixed with a commit:
 <commit-url>
 ```
 
-e.g. `https://github.com/allohamora/learn-helper/commit/abc1234`
+e.g. `https://github.com/<owner>/<repo>/commit/<sha>`
 
 Declined with a reason:
 
