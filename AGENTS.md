@@ -1,12 +1,11 @@
 # Instructions
 
-- Never read `.env`, `helm/values.yaml` (or other credential/secret files). If a value from one is needed, ask the user first instead of reading it yourself.
-- Do not make code changes (edits, file writes) until the user explicitly asks you to make the change. Investigate and present options/findings first, and wait for confirmation before editing.
-- Use Conventional Commits for commit messages:
-  - Format: `type: subject` — do not add a scope; this is a single-app repo, not a monorepo, so there's no natural scope to put there.
-  - Allowed types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`, `perf`, `build`, `ci`, `revert`.
-  - Subject: lowercase first word, imperative mood, starts with a verb (e.g. "add pagination to vocabulary list"), no trailing period.
-  - Pick the type based on what actually changed, e.g. `test:` for test-only changes, `docs:` for docs-only, `fix:` for bug fixes (in the app itself), `feat:` for new features, `refactor:` for no-behavior-change restructuring, `ci:` for deployment/infra config (helm charts, k8s manifests, GitHub Actions workflows, CI-related Dockerfiles, etc.) even when the change fixes a problem in that config.
+- Don't read `.env`, `terraform/terraform.tfvars`, `helm/values.yaml`, or other files with secrets. If I need a value from one, ask the user first instead of reading it.
+- Don't make code changes (edits, file writes) until the user explicitly asks for the change. Investigate and present findings/options first, and wait for confirmation before editing.
+- Use Conventional Commits for commit messages: `type: subject`.
+  - Types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `style`, `perf`, `build`, `ci`, `revert`. Pick the type based on what actually changed.
+  - Scope: in a monorepo (multiple apps/packages, e.g. workspaces in package.json, or an apps/ or packages/ layout), add a scope for the app/lib the change touches, e.g. `fix(api): correct pagination offset`. In a single-app repo, skip the scope, e.g. `fix: correct pagination offset`.
+  - Subject: lowercase, imperative mood, starts with a verb, no trailing period.
   - Breaking changes: add a `!` before the colon (e.g. `feat!: subject`) and/or a `BREAKING CHANGE: <description>` footer explaining the break.
-  - After creating a commit, output the commit hash followed by the full commit message to the user.
-- Do not create git commits until the user explicitly asks for one.
+- Before committing, show the proposed commit message and ask for confirmation (e.g. "Ready to commit as `<message>`. Go ahead?") - wait for a yes, then commit and push.
+- Don't create git commits or push until the user explicitly asks for it.
