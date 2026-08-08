@@ -11,7 +11,7 @@ description: Walk through PR review comments one at a time with the author - ass
   2. If valid, propose a concrete change. If not, explain why I think it doesn't apply.
   3. Ask the author what to do: apply the change, decline with a reason, or something else.
   4. Wait for the author's decision - do not act without it.
-  5. If applying a change: make the code change, then show the proposed commit message and ask for confirmation before committing (e.g. "Ready to commit as `<message>`. Go ahead?") - wait for a yes, then commit, push, and reply to the thread with the commit link.
+  5. If applying a change: make the code change, then show the proposed commit message and ask for confirmation before committing - wait for a yes, then commit, push, and reply to the thread with the commit link.
   6. If declined: no code change or commit - just reply to the thread with the reason.
   7. Either way, resolve the thread once the reply is posted (see "Who can resolve" below).
   8. Only then move on to the next comment.
@@ -23,16 +23,6 @@ description: Walk through PR review comments one at a time with the author - ass
 
 - **Bot-authored threads** (e.g. `copilot-pull-request-reviewer`, other automated reviewers): once replied to and the author confirms it's settled, I resolve the thread myself.
 - **Human-authored threads** (a real reviewer's login): I only review and reply - I do not call `resolveReviewThread` on these. Resolving is the human reviewer's call, not something to automate on their behalf.
-
-## Language
-
-- Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.
-
-## Commit message convention
-
-- Use Conventional Commits: `type: subject`.
-- Scope: in a monorepo (multiple apps/packages, e.g. workspaces in package.json, or an apps/ or packages/ layout), add a scope for the app/lib the change touches, e.g. `fix(api): correct pagination offset`. In a single-app repo, skip the scope, e.g. `fix: correct pagination offset`.
-- If the repo has its own commit-convention doc, that takes precedence over this default.
 
 ## Reply formats
 
