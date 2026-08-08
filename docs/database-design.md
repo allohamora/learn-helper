@@ -253,7 +253,7 @@ Tracks which lists a user has explicitly added, as its own fact rather than some
 
 ### `vocabulary_list`
 
-`owner_id` is nullable: `null` means an admin/seed-curated list (today's only kind), non-null means a personal list owned by that user. A partial unique index on `owner_id` (`WHERE type = 'personal'`) enforces at most one personal list per user at the DB level — the application layer still does a find-or-create first (avoiding a round trip on the common case), but falls back to re-reading the row if it loses a race on the index, mirroring the same `onConflictDoNothing` + re-fetch idiom used for curated-list seeding.
+`owner_id` is nullable: `null` means an admin/seed-curated list (today's only kind), non-null means a personal list owned by that user. A partial unique index on `owner_id` (`WHERE type = 'personal'`) enforces at most one personal list per user at the DB level — the application layer serializes creation with a `SELECT ... FOR UPDATE` lock on the user's own row before the find-or-create, so concurrent calls for the same user queue instead of racing on the index.
 
 `title` is also nullable specifically for personal lists — every personal list means the same thing ("this user's words"), so storing a repeated literal string per row buys nothing; the frontend hardcodes the display label instead. The existing global uniqueness constraint on `title` didn't need to change to allow this: Postgres treats every `NULL` as distinct from every other value (including other `NULL`s) in a standard `UNIQUE` constraint, so any number of personal lists with `title = NULL` coexist without ever colliding with each other or with curated titles.
 
