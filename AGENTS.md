@@ -14,3 +14,4 @@
 - Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.
 - Before considering a change done, run the relevant checks for what you touched (e.g. typecheck, lint, tests, build), and fix any failures.
 - When a change affects something documented elsewhere (e.g. `docs/`, `README.md`), update that documentation in the same change. Don't add documentation for things that didn't change.
+- If you notice code changed since you last looked at it, in a way that no linter/formatter would produce (e.g. removed comments, edited logic, renamed vars), assume the user made a manual edit, and factor that into your next decisions accordingly.
