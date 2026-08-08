@@ -37,7 +37,7 @@ Fixed with a commit:
 <commit-url>
 ```
 
-e.g. `https://github.com/allohamora/learn-helper/commit/abc1234`
+e.g. `https://github.com/<owner>/<repo>/commit/<sha>`
 
 Declined with a reason:
 
