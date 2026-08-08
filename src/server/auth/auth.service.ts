@@ -12,6 +12,7 @@ import {
   BETTER_AUTH_ALLOWED_USERS,
 } from '../config';
 import { createLogger } from '../utils/logger.utils';
+import { createPersonalVocabularyListForUser } from '../user-vocabulary/user-vocabulary-list.service';
 
 const logger = createLogger('auth.service');
 
@@ -35,6 +36,9 @@ export const auth = betterAuth({
 
             throw new APIError('FORBIDDEN', { message: `User is not allowed to register` });
           }
+        },
+        after: async (user) => {
+          await createPersonalVocabularyListForUser(user.id);
         },
       },
     },

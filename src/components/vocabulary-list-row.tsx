@@ -4,16 +4,18 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { appClient } from '@/services/api';
+import { VocabularyListType } from '@/const/vocabulary';
 
 type Props = {
   id: string;
-  title: string;
+  title: string | null;
+  type: VocabularyListType;
   userVocabularyList: {
     id: string;
   } | null;
 };
 
-export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) => {
+export const VocabularyListRow: FC<Props> = ({ id, title, type, userVocabularyList }) => {
   const router = useRouter();
 
   const addMutation = useMutation({
@@ -27,7 +29,9 @@ export const VocabularyListRow: FC<Props> = ({ id, title, userVocabularyList }) 
   return (
     <div className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 sm:gap-4">
       <div className="min-w-0">
-        <h2 className="line-clamp-2 text-sm/5 font-medium text-balance sm:text-base">{title}</h2>
+        <h2 className="line-clamp-2 text-sm/5 font-medium text-balance sm:text-base">
+          {type === VocabularyListType.Personal ? 'Personal' : (title ?? 'Untitled')}
+        </h2>
       </div>
 
       {userVocabularyList ? (

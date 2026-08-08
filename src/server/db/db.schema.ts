@@ -12,8 +12,9 @@ import {
   uniqueIndex,
   unique,
   jsonb,
+  check,
 } from 'drizzle-orm/pg-core';
-import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
+import { LearningStatus, PartOfSpeech, VocabularyListType } from '@/const/vocabulary';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 
 /* start of better-auth */
@@ -95,6 +96,7 @@ export const userRelations = relations(user, ({ many }) => ({
   userVocabularyItems: many(userVocabularyItem),
   userVocabularyLists: many(userVocabularyList),
   events: many(event),
+  ownedVocabularyLists: many(vocabularyList),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -137,17 +139,36 @@ export const vocabularyItem = pgTable(
   ],
 );
 
-export const vocabularyList = pgTable('vocabulary_list', {
-  id: uuid('id')
-    .default(sql`uuidv7()`)
-    .primaryKey(),
-  title: varchar('title', { length: 255 }).notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-});
+export const vocabularyList = pgTable(
+  'vocabulary_list',
+  {
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
+    ownerId: text('owner_id').references(() => user.id, { onDelete: 'cascade' }),
+    type: varchar('type', { length: 16 }).$type<VocabularyListType>().notNull().default(VocabularyListType.Public),
+    title: varchar('title', { length: 255 }).unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    // data integrity: at most one personal list per user
+    uniqueIndex('vocabulary_list_owner_id_personal_idx')
+      .on(table.ownerId)
+      .where(sql`${table.type} = ${sql.raw(`'${VocabularyListType.Personal}'`)}`),
+    check(
+      'vocabulary_list_personal_owner_id_check',
+      sql`${table.type} != ${sql.raw(`'${VocabularyListType.Personal}'`)} OR ${table.ownerId} IS NOT NULL`,
+    ),
+    check(
+      'vocabulary_list_public_title_check',
+      sql`${table.type} != ${sql.raw(`'${VocabularyListType.Public}'`)} OR ${table.title} IS NOT NULL`,
+    ),
+  ],
+);
 
 export const vocabularyListItem = pgTable(
   'vocabulary_list_item',
@@ -260,9 +281,13 @@ export const event = pgTable(
   ],
 );
 
-export const vocabularyListRelations = relations(vocabularyList, ({ many }) => ({
+export const vocabularyListRelations = relations(vocabularyList, ({ one, many }) => ({
   vocabularyListItems: many(vocabularyListItem),
   userVocabularyLists: many(userVocabularyList),
+  owner: one(user, {
+    fields: [vocabularyList.ownerId],
+    references: [user.id],
+  }),
 }));
 
 export const vocabularyItemRelations = relations(vocabularyItem, ({ many }) => ({

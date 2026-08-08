@@ -25,6 +25,11 @@ export enum LearningStatus {
   Known = 'known',
 }
 
+export enum VocabularyListType {
+  Public = 'public',
+  Personal = 'personal',
+}
+
 export const LEARNING_STATUS_ORDER: LearningStatus[] = [
   LearningStatus.Waiting,
   LearningStatus.Learning,

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { user, vocabularyList } from '@/server/db/db.schema';
 import { db } from '@/server/db/db.service';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
-import { addVocabularyListToUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
+import {
+  addVocabularyListToUser,
+  createPersonalVocabularyListForUser,
+} from '@/server/user-vocabulary/user-vocabulary-list.service';
 import {
   getUserAvailableVocabularyLists,
   getUserVocabularyListById,
@@ -73,6 +76,27 @@ describe('userVocabularyListRepository', () => {
       const lists = await getUserAvailableVocabularyLists(userId);
 
       expect(lists.map((list) => list.id)).toEqual([addedOld.id, addedNew.id, unaddedOld.id, unaddedNew.id]);
+    });
+
+    it("sorts the user's personal list first, ahead of an older enrolled public list", async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const publicList = await createVocabularyList('Oxford 5000 A1', new Date('2020-01-01T00:00:00Z'));
+      await addVocabularyListToUser({ userId, vocabularyListId: publicList.id });
+      const personalList = await createPersonalVocabularyListForUser(userId);
+
+      const lists = await getUserAvailableVocabularyLists(userId);
+
+      expect(lists.map((list) => list.id)).toEqual([personalList.id, publicList.id]);
+    });
+
+    it("never returns another user's personal list", async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      await createPersonalVocabularyListForUser(otherUserId);
+
+      const lists = await getUserAvailableVocabularyLists(userId);
+
+      expect(lists).toEqual([]);
     });
   });
 
