@@ -8,7 +8,7 @@
   - Subject: lowercase, imperative mood, starts with a verb, no trailing period.
   - Body: optional, blank line after the subject. Add one when the _why_ isn't obvious from the subject alone, e.g. the reasoning behind a non-obvious change, a tradeoff, or context a reviewer would otherwise have to ask for. Skip it for small, self-explanatory changes.
   - Breaking changes: add a `!` before the colon (e.g. `feat!: subject`) and/or a `BREAKING CHANGE: <description>` footer explaining the break.
-  - Add yourself as a co-author with a `Co-Authored-By: <your name> <your email>` footer.
+  - Add a `Co-Authored-By: <agent name> <agent email>` footer using the agent's own name and email, not the user'.
 - Before every commit, show the proposed commit message and ask for confirmation (e.g. "Ready to commit as `<message>`. Go ahead?"). On a yes, commit and push in that same step - don't ask again separately for the push.
 - Don't create git commits or push until the user explicitly asks for it.
 - Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.
