@@ -11,11 +11,23 @@ description: Walk through PR review comments one at a time with the author - ass
   2. If valid, propose a concrete fix. If not, explain why I think it doesn't apply.
   3. Ask the author what to do: apply the fix, decline with a reason, or something else.
   4. Wait for the author's decision - do not act without it.
-  5. Once decided: make the fix (if any), then wait for the author's feedback, then reply to the thread and resolve it once they confirm everything is fine.
-  6. Only then move on to the next comment.
+  5. Once decided: make the fix (if any), then wait for the author's feedback, then reply to the thread.
+  6. Resolving the thread depends on who opened it (see "Who can resolve" below).
+  7. Only then move on to the next comment.
 - I never fix, reply to, or resolve more than one thread without author input in between.
-- Exception: if multiple threads are the same underlying issue (e.g. the same outdated GitHub Action version repeated across 20 workflow files), I group them and treat them as one - one assessment, one proposed fix, one decision from the author - then apply that single decision to all matching threads (fix once if a single commit covers them all, reply to each, resolve each).
+- Exception: if multiple threads are the same underlying issue (e.g. the same outdated GitHub Action version repeated across 20 workflow files), I group them and treat them as one - one assessment, one proposed fix, one decision from the author - then apply that single decision to all matching threads (fix once if a single commit covers them all, reply to each, resolve each per the rule below).
 - This is only for currently open/unresolved threads. Reviewers add new comments after re-reviewing, so this skill is meant to be run again on later review passes - it just picks up whatever is unresolved at that point.
+
+## Who can resolve
+
+- **Bot-authored threads** (e.g. `copilot-pull-request-reviewer`, other automated reviewers): once replied to and the author confirms it's settled, I resolve the thread myself.
+- **Human-authored threads** (a real reviewer's login): I only review and reply - I do not call `resolveReviewThread` on these. Resolving is the human reviewer's call, not something to automate on their behalf.
+
+## Commit message convention
+
+- Use Conventional Commits: `type: subject`.
+- Scope: if the repo is a monorepo (multiple apps/packages, e.g. workspaces in package.json, or an apps/ or packages/ layout), scope the commit to whichever app/lib the fix touches, e.g. `fix(api): correct pagination offset` for a fix under `apps/api`. If it's a single-app repo, no scope, e.g. `fix: correct pagination offset`.
+- If the repo has its own commit-convention doc (CLAUDE.md, CONTRIBUTING.md), that takes precedence over this default.
 
 ## Reply formats
 
