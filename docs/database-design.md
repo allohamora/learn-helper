@@ -1,4 +1,4 @@
-# Database Design
+# Database Design Plan
 
 > **Abstract design.** This document captures the major structural decisions — the learning algorithm, queue mechanics, session logic — not a precise implementation spec. Minor details (missing `created_at` on some tables, `id` presence, exact index definitions) may be imprecise or incomplete and are expected to change during implementation. Don't get hung up on them here.
 
@@ -45,6 +45,20 @@ erDiagram
         title varchar(255) "unique (e.g. A1 Grammar)"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
+    }
+
+    grammar_topic_list_item {
+        id uuid PK
+        grammar_topic_list_id uuid FK "unique with grammar_topic_id"
+        grammar_topic_id uuid FK
+        created_at timestamptz "default NOW"
+    }
+
+    user_grammar_topic_list {
+        id uuid PK
+        user_id uuid FK "unique with grammar_topic_list_id"
+        grammar_topic_list_id uuid FK
+        created_at timestamptz "default NOW"
     }
 
     vocabulary_list_item {
@@ -121,7 +135,7 @@ erDiagram
         user_vocabulary_item_task_type varchar(48) "optional, enum: user_vocabulary_item_task_type"
         user_grammar_topic_task_type varchar(48) "optional, enum: user_grammar_topic_task_type"
         user_vocabulary_list_id uuid FK "optional"
-        grammar_topic_list_id uuid FK "optional"
+        user_grammar_topic_list_id uuid FK "optional"
         field_name text "optional"
         duration_ms integer "optional"
         encounter_count integer "optional"
@@ -135,13 +149,16 @@ erDiagram
     user ||--o{ user_vocabulary_item : "one-to-many"
     user ||--o{ user_vocabulary_list : "one-to-many"
     user ||--o{ user_grammar_topic : "one-to-many"
+    user ||--o{ user_grammar_topic_list : "one-to-many"
     user ||--o{ event : "one-to-many"
     vocabulary_list ||--o{ vocabulary_list_item : "one-to-many"
     vocabulary_list ||--o{ user_vocabulary_list : "one-to-many"
     vocabulary_item ||--o{ vocabulary_list_item : "one-to-many"
-    grammar_topic_list }o--o{ grammar_topic : "many-to-many"
+    grammar_topic_list ||--o{ grammar_topic_list_item : "one-to-many"
+    grammar_topic ||--o{ grammar_topic_list_item : "one-to-many"
+    grammar_topic_list ||--o{ user_grammar_topic_list : "one-to-many"
     user_vocabulary_list ||--o{ event : "one-to-many"
-    grammar_topic_list ||--o{ event : "one-to-many"
+    user_grammar_topic_list ||--o{ event : "one-to-many"
     vocabulary_item ||--o{ user_vocabulary_item : "one-to-many"
     grammar_topic ||--o{ user_grammar_topic : "one-to-many"
     user_vocabulary_item ||--o{ event : "one-to-many"
@@ -243,6 +260,10 @@ Tracks the total number of times the user has reviewed this grammar topic. `0` m
 
 Tracks the number of successful confirmations in Learn sessions. Required to implement the "3 confirmations → learned" threshold. Cannot be derived from status alone.
 
+### `grammar_topic_list_item` / `user_grammar_topic_list`
+
+Mirror `vocabulary_list_item` and `user_vocabulary_list` respectively, applying the same join-table and user-enrollment pattern to grammar. See those two notes below for the reasoning (surrogate PK, cascade FKs, unique constraint for dedup). `event.user_grammar_topic_list_id` references `user_grammar_topic_list` for the same reason `event.user_vocabulary_list_id` references `user_vocabulary_list` rather than the content table directly — see the [`user_vocabulary_list_id`](#user_vocabulary_list_id) note.
+
 ### `vocabulary_list_item`
 
 The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-many relationship (not spelled out elsewhere in this doc). Has its own surrogate `id` PK for consistency with every other table here, plus a unique constraint on `(vocabulary_list_id, vocabulary_item_id)` to prevent duplicate links, which also improves join performance. Both FKs cascade on delete — a link row has no meaning without both sides. No `updated_at`: rows are only ever inserted/deleted, never mutated in place.
@@ -338,11 +359,11 @@ Every user also has exactly one always-present **personal** vocabulary list (`vo
 
 Grammar has one topic per session. The app picks whether the session is **new** or **review** by examining the last 3 grammar session events for the user (see [Grammar session rhythm](#grammar-session-rhythm--event-based-algorithm) in Field notes).
 
-## Grammar tasks\*
+## Grammar tasks
 
 All tasks are BE-generated (LLM). When user starts reading the showcase article, the client requests task generation in the background.
 
-Each session generates 4 tasks per grammar topic. Topics follow the [new, review, review] queue pattern.
+Each session generates 5 tasks per grammar topic (showcase + 4 exercise types below). Topics follow the [new, review, review] queue pattern.
 
 ### showcase
 
