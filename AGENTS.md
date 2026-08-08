@@ -10,3 +10,4 @@
 - Before committing, show the proposed commit message and ask for confirmation (e.g. "Ready to commit as `<message>`. Go ahead?") - wait for a yes, then commit and push.
 - Don't create git commits or push until the user explicitly asks for it.
 - Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.
+- Don't write comments that just restate what the code does. They add noise and go stale as the code changes. Only comment where it adds real value: explain why, not what, e.g. a non-obvious reason, a tradeoff, a workaround, a gotcha.
