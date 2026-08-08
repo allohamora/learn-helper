@@ -14,7 +14,7 @@ import {
   createPersonalVocabularyList,
   getPersonalVocabularyListByOwnerId,
 } from '../vocabulary/vocabulary-list.repository';
-import { getUserForUpdate } from '../user/user.repository';
+import { getUserForUpdateOrThrow } from '../user/user.service';
 
 export const addVocabularyListToUser = async ({
   userId,
@@ -45,7 +45,7 @@ export const createPersonalVocabularyListForUser = async (userId: string) => {
     // personal-list INSERT below. Locking the personal list row itself wouldn't help here - it
     // only exists to lock once created, and the race we care about is exactly the case where it
     // doesn't exist yet. The user row always exists, which is what makes it lockable regardless.
-    await getUserForUpdate(userId, tx);
+    await getUserForUpdateOrThrow(userId, tx);
 
     const existing = await getPersonalVocabularyListByOwnerId(userId, tx);
     if (existing) return existing;

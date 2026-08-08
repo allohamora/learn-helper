@@ -160,6 +160,12 @@ describe('userVocabularyListService', () => {
       });
       expect(enrollments).toHaveLength(1);
     });
+
+    it('throws not found for a non-existent user', async () => {
+      await expect(createPersonalVocabularyListForUser('00000000-0000-0000-0000-000000000000')).rejects.toThrow(
+        Exception,
+      );
+    });
   });
 
   describe('getUserVocabularyListOrThrow', () => {
