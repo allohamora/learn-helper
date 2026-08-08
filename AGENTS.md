@@ -9,3 +9,4 @@
   - Breaking changes: add a `!` before the colon (e.g. `feat!: subject`) and/or a `BREAKING CHANGE: <description>` footer explaining the break.
 - Before committing, show the proposed commit message and ask for confirmation (e.g. "Ready to commit as `<message>`. Go ahead?") - wait for a yes, then commit and push.
 - Don't create git commits or push until the user explicitly asks for it.
+- Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.

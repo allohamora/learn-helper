@@ -24,6 +24,10 @@ description: Walk through PR review comments one at a time with the author - ass
 - **Bot-authored threads** (e.g. `copilot-pull-request-reviewer`, other automated reviewers): once replied to and the author confirms it's settled, I resolve the thread myself.
 - **Human-authored threads** (a real reviewer's login): I only review and reply - I do not call `resolveReviewThread` on these. Resolving is the human reviewer's call, not something to automate on their behalf.
 
+## Language
+
+- Use simple, concise language, e.g. answers, code, commit messages, PR descriptions, comments.
+
 ## Commit message convention
 
 - Use Conventional Commits: `type: subject`.
