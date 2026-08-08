@@ -78,6 +78,20 @@
       "when": 1784977759662,
       "tag": "0010_grey_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786173507751,
+      "tag": "0011_first_gideon",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786173530891,
+      "tag": "0012_backfill-personal-vocabulary-lists",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import '@tanstack/react-start/server-only';
-import { and, asc, eq, getTableColumns, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, isNull, or } from 'drizzle-orm';
+import { VocabularyListType } from '@/const/vocabulary';
 import { userVocabularyList, vocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
@@ -64,5 +65,10 @@ export const getUserAvailableVocabularyLists = async (userId: string) => {
       userVocabularyList,
       and(eq(userVocabularyList.vocabularyListId, vocabularyList.id), eq(userVocabularyList.userId, userId)),
     )
-    .orderBy(asc(isNull(userVocabularyList.id)), asc(vocabularyList.createdAt));
+    .where(or(eq(vocabularyList.type, VocabularyListType.Public), eq(vocabularyList.ownerId, userId)))
+    .orderBy(
+      desc(eq(vocabularyList.type, VocabularyListType.Personal)),
+      asc(isNull(userVocabularyList.id)),
+      asc(vocabularyList.createdAt),
+    );
 };

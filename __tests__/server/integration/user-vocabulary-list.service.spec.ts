@@ -2,17 +2,19 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { db } from '@/server/db/db.service';
-import { user, userVocabularyItem } from '@/server/db/db.schema';
+import { user, userVocabularyItem, userVocabularyList } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import {
   addVocabularyListToUser,
+  createPersonalVocabularyListForUser,
   getUserVocabularyListOrThrow,
   getUserVocabularyListWithRelationsOrThrow,
 } from '@/server/user-vocabulary/user-vocabulary-list.service';
-import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
+import { getUserVocabularyListByVocabularyListId } from '@/server/user-vocabulary/user-vocabulary-list.repository';
+import { LearningStatus, PartOfSpeech, VocabularyListType } from '@/const/vocabulary';
 
 const createTestUser = async (id: string) => {
   const [row] = await db
@@ -92,6 +94,71 @@ describe('userVocabularyListService', () => {
       await expect(
         addVocabularyListToUser({ userId, vocabularyListId: '00000000-0000-0000-0000-000000000000' }),
       ).rejects.toThrow(Exception);
+    });
+  });
+
+  describe('createPersonalVocabularyListForUser', () => {
+    it('creates a personal list and enrolls the user in it', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      const list = await createPersonalVocabularyListForUser(userId);
+
+      expect(list).toMatchObject({ ownerId: userId, type: VocabularyListType.Personal, title: null });
+      await expect(
+        getUserVocabularyListByVocabularyListId({ userId, vocabularyListId: list.id }),
+      ).resolves.toMatchObject({ vocabularyListId: list.id });
+    });
+
+    it('is idempotent - a second call returns the same list without duplicating the enrollment', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      const first = await createPersonalVocabularyListForUser(userId);
+      const second = await createPersonalVocabularyListForUser(userId);
+
+      expect(second.id).toBe(first.id);
+      const enrollments = await db.query.userVocabularyList.findMany({
+        where: eq(userVocabularyList.vocabularyListId, first.id),
+      });
+      expect(enrollments).toHaveLength(1);
+    });
+
+    it('returns the same list for concurrent calls once it already exists', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const created = await createPersonalVocabularyListForUser(userId);
+
+      // the list already exists before any of these start, so every call takes the "existing"
+      // branch - none of them race on the INSERT, so none of them can fail
+      const results = await Promise.all(Array.from({ length: 5 }, () => createPersonalVocabularyListForUser(userId)));
+
+      expect(results.every((list) => list.id === created.id)).toBe(true);
+      const lists = await db.query.vocabularyList.findMany({
+        where: (list, { eq }) => eq(list.ownerId, userId),
+      });
+      expect(lists).toHaveLength(1);
+    });
+
+    it('never creates more than one personal list per user, even when concurrent calls race to create it for a brand-new user', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      // with no pre-existing row, this would otherwise be a genuine race between the SELECT and
+      // the INSERT (verified empirically without the user-row lock: real runs split anywhere from
+      // 1 to 4 successes out of 5, with the rest throwing real unique-violation errors). The
+      // FOR UPDATE lock on the user's own row in createPersonalVocabularyListForUser serializes
+      // these instead of letting them race, so none of the 5 should ever fail
+      const results = await Promise.all(Array.from({ length: 5 }, () => createPersonalVocabularyListForUser(userId)));
+
+      const listIds = new Set(results.map((list) => list.id));
+      expect(listIds.size).toBe(1);
+
+      const lists = await db.query.vocabularyList.findMany({
+        where: (list, { eq }) => eq(list.ownerId, userId),
+      });
+      expect(lists).toHaveLength(1);
+
+      const enrollments = await db.query.userVocabularyList.findMany({
+        where: eq(userVocabularyList.vocabularyListId, lists[0]!.id),
+      });
+      expect(enrollments).toHaveLength(1);
     });
   });
 

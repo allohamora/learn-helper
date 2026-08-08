@@ -33,7 +33,9 @@ erDiagram
 
     vocabulary_list {
         id uuid PK
-        title varchar(255) "unique (e.g. Oxford 5000 A1)"
+        owner_id uuid FK "optional (text in practice); null = public/admin list; unique where type = personal"
+        type varchar(16) "enum: vocabulary_list_type"
+        title varchar(255) "optional, unique (e.g. Oxford 5000 A1); null for personal lists"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -206,6 +208,11 @@ erDiagram
 - learned — completed the learning cycle; no longer appears in any session
 - known — user marked as already known before discovery; skips Discover entirely
 
+### vocabulary_list_type
+
+- public — admin/seed-curated list (e.g. Oxford 5000), visible to every user
+- personal — a single user's own auto-filled word list, visible only to its owner
+
 ### part_of_speech
 
 - adjective
@@ -243,6 +250,12 @@ The join table implementing the `vocabulary_list` ↔ `vocabulary_item` many-to-
 ### `user_vocabulary_list`
 
 Tracks which lists a user has explicitly added, as its own fact rather than something inferred from `user_vocabulary_item` rows. A list is added atomically — `vocabulary_list_id` cascades on delete along with `user_id`, consistent with `vocabulary_list_item`'s two-cascade FKs, since a "list added" record has no meaning without both sides existing. Unique on `(user_id, vocabulary_list_id)` to prevent duplicate adds, which also improves join performance.
+
+### `vocabulary_list`
+
+`owner_id` is nullable: `null` means an admin/seed-curated list (today's only kind), non-null means a personal list owned by that user. A partial unique index on `owner_id` (`WHERE type = 'personal'`) enforces at most one personal list per user at the DB level — the application layer still does a find-or-create first (avoiding a round trip on the common case), but falls back to re-reading the row if it loses a race on the index, mirroring the same `onConflictDoNothing` + re-fetch idiom used for curated-list seeding.
+
+`title` is also nullable specifically for personal lists — every personal list means the same thing ("this user's words"), so storing a repeated literal string per row buys nothing; the frontend hardcodes the display label instead. The existing global uniqueness constraint on `title` didn't need to change to allow this: Postgres treats every `NULL` as distinct from every other value (including other `NULL`s) in a standard `UNIQUE` constraint, so any number of personal lists with `title = NULL` coexist without ever colliding with each other or with curated titles.
 
 ### `part_of_speech` / `learning_status` are app-level enums, not native Postgres enum types
 
@@ -316,6 +329,10 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
    - A **Discover** button — start a session of new, unseen items.
    - A **Learn** button — start a review session of previously seen items.
 4. Tapping a button starts a session scoped to that list.
+
+### Personal lists
+
+Every user also has exactly one always-present **personal** vocabulary list (`vocabulary_list.type = 'personal'`), auto-created on sign-up and always shown first, separate from the browse-and-add-a-public-list flow above. It's a private word bucket the user fills themselves. As of this round of work it's just the list container — word-adding (with AI enrichment) and learn/discover integration for personal-list words are out of scope and will follow in a later change.
 
 ### Grammar sessions
 

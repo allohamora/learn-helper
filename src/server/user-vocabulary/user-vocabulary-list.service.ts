@@ -10,6 +10,11 @@ import {
   getUserVocabularyListWithRelations,
 } from './user-vocabulary-list.repository';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
+import {
+  createPersonalVocabularyList,
+  getPersonalVocabularyListByOwnerId,
+} from '../vocabulary/vocabulary-list.repository';
+import { getUserForUpdate } from '../user/user.repository';
 
 export const addVocabularyListToUser = async ({
   userId,
@@ -31,6 +36,28 @@ export const addVocabularyListToUser = async ({
     ]);
 
     return { ...created, vocabularyList };
+  });
+};
+
+export const createPersonalVocabularyListForUser = async (userId: string) => {
+  return db.transaction(async (tx) => {
+    // serializes concurrent calls for the same user so they queue instead of racing on the
+    // personal-list INSERT below. Locking the personal list row itself wouldn't help here - it
+    // only exists to lock once created, and the race we care about is exactly the case where it
+    // doesn't exist yet. The user row always exists, which is what makes it lockable regardless.
+    await getUserForUpdate(userId, tx);
+
+    const existing = await getPersonalVocabularyListByOwnerId(userId, tx);
+    if (existing) return existing;
+
+    const list = await createPersonalVocabularyList(userId, tx);
+
+    const existingEnrollment = await getUserVocabularyListByVocabularyListId({ userId, vocabularyListId: list.id }, tx);
+    if (!existingEnrollment) {
+      await createUserVocabularyList({ userId, vocabularyListId: list.id }, tx);
+    }
+
+    return list;
   });
 };
 

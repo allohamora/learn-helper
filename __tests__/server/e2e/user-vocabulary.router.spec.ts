@@ -9,6 +9,7 @@ import { countItems } from '@/server/db/db.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
+import { createPersonalVocabularyListForUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import type { ErrorResponse } from '@/server/utils/response.utils';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
@@ -80,6 +81,25 @@ describe('user-vocabulary.router', () => {
             },
           },
           { userVocabularyList: null },
+        ],
+      });
+    });
+
+    it("returns the user's personal list first, ahead of an enrolled public list", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+      await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].available.$get();
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: [
+          { id: personalList.id, title: null, type: 'personal' },
+          { id: list.id, title: 'Oxford 5000 A1' },
         ],
       });
     });
