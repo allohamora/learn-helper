@@ -53,7 +53,8 @@ commit_parsers = [
     { message = "^Merge pull request", skip = true },
     { message = "^Merge branch", skip = true },
     { message = "^Merge remote-tracking branch", skip = true },
-    { message = "^ci", group = "<!-- 09 -->Continuous Integration" },
-    { message = "^chore", group = "<!-- 10 -->Chores" },
-    { message = ".*", group = "<!-- 11 -->Other" },
+    { message = "^build", group = "<!-- 09 -->Build System" },
+    { message = "^ci", group = "<!-- 10 -->Continuous Integration" },
+    { message = "^chore", group = "<!-- 11 -->Chores" },
+    { message = ".*", group = "<!-- 12 -->Other" },
 ]
