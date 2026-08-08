@@ -28,7 +28,7 @@ description: Walk through PR review comments one at a time with the author - ass
 
 - Use Conventional Commits: `type: subject`.
 - Scope: in a monorepo (multiple apps/packages, e.g. workspaces in package.json, or an apps/ or packages/ layout), add a scope for the app/lib the change touches, e.g. `fix(api): correct pagination offset`. In a single-app repo, skip the scope, e.g. `fix: correct pagination offset`.
-- If the repo has its own commit-convention doc (CLAUDE.md, CONTRIBUTING.md), that takes precedence over this default.
+- If the repo has its own commit-convention doc, that takes precedence over this default.
 
 ## Reply formats
 
