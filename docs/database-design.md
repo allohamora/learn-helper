@@ -211,7 +211,7 @@ erDiagram
 ### vocabulary_list_type
 
 - public — admin/seed-curated list (e.g. Oxford 5000), visible to every user
-- personal — a single user's own auto-filled word list, visible only to its owner
+- personal — a single user's own auto-created word list, visible only to its owner
 
 ### part_of_speech
 
