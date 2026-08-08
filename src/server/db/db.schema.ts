@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   unique,
   jsonb,
+  check,
 } from 'drizzle-orm/pg-core';
 import { LearningStatus, PartOfSpeech, VocabularyListType } from '@/const/vocabulary';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
@@ -158,6 +159,14 @@ export const vocabularyList = pgTable(
     uniqueIndex('vocabulary_list_owner_id_personal_idx')
       .on(table.ownerId)
       .where(sql`${table.type} = ${sql.raw(`'${VocabularyListType.Personal}'`)}`),
+    check(
+      'vocabulary_list_personal_owner_id_check',
+      sql`${table.type} != ${sql.raw(`'${VocabularyListType.Personal}'`)} OR ${table.ownerId} IS NOT NULL`,
+    ),
+    check(
+      'vocabulary_list_public_title_check',
+      sql`${table.type} != ${sql.raw(`'${VocabularyListType.Public}'`)} OR ${table.title} IS NOT NULL`,
+    ),
   ],
 );
 

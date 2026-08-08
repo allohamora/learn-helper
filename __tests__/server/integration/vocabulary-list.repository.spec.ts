@@ -117,11 +117,48 @@ describe('vocabularyListRepository', () => {
     });
 
     it('does not conflict with a public list that has no owner', async () => {
-      const first = await db.insert(vocabularyList).values({ type: VocabularyListType.Public }).returning();
-      const second = await db.insert(vocabularyList).values({ type: VocabularyListType.Public }).returning();
+      const first = await db
+        .insert(vocabularyList)
+        .values({ type: VocabularyListType.Public, title: 'Oxford 5000 A1' })
+        .returning();
+      const second = await db
+        .insert(vocabularyList)
+        .values({ type: VocabularyListType.Public, title: 'Oxford 5000 A2' })
+        .returning();
 
       expect(first[0]?.ownerId).toBeNull();
       expect(second[0]?.ownerId).toBeNull();
+    });
+
+    it('rejects a personal list with no owner', async () => {
+      await expect(
+        db.insert(vocabularyList).values({ type: VocabularyListType.Personal, title: null }),
+      ).rejects.toThrow();
+    });
+
+    it('rejects a public list with no title', async () => {
+      await expect(db.insert(vocabularyList).values({ type: VocabularyListType.Public })).rejects.toThrow();
+    });
+
+    it('rejects a second public list with a duplicate title', async () => {
+      await db.insert(vocabularyList).values({ type: VocabularyListType.Public, title: 'Oxford 5000 A1' });
+
+      await expect(
+        db.insert(vocabularyList).values({ type: VocabularyListType.Public, title: 'Oxford 5000 A1' }),
+      ).rejects.toThrow();
+    });
+
+    it('allows several public lists and title-less personal lists to coexist', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+
+      await db.insert(vocabularyList).values({ type: VocabularyListType.Public, title: 'Oxford 5000 A1' });
+      await db.insert(vocabularyList).values({ type: VocabularyListType.Public, title: 'Oxford 5000 A2' });
+      await createPersonalVocabularyList(userId);
+      await createPersonalVocabularyList(otherUserId);
+
+      const rows = await db.query.vocabularyList.findMany();
+      expect(rows).toHaveLength(4);
     });
   });
 

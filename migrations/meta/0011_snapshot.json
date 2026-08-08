@@ -875,7 +875,16 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "vocabulary_list_personal_owner_id_check": {
+          "name": "vocabulary_list_personal_owner_id_check",
+          "value": "\"vocabulary_list\".\"type\" != 'personal' OR \"vocabulary_list\".\"owner_id\" IS NOT NULL"
+        },
+        "vocabulary_list_public_title_check": {
+          "name": "vocabulary_list_public_title_check",
+          "value": "\"vocabulary_list\".\"type\" != 'public' OR \"vocabulary_list\".\"title\" IS NOT NULL"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.vocabulary_list_item": {
