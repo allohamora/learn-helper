@@ -4,6 +4,7 @@ import { VocabularyListType } from '@/const/vocabulary';
 
 export const vocabularyListDto = z.object({
   id: z.uuidv7(),
+  ownerId: z.string().nullable(),
   title: z.string().nullable(),
   type: z.enum(VocabularyListType),
   createdAt: z.iso.datetime(),
