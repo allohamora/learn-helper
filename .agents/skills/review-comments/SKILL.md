@@ -13,10 +13,10 @@ description: Walk through PR review comments one at a time with the author - ass
   4. Wait for the author's decision - do not act without it.
   5. If applying a change: make the code change, then show the proposed commit message and ask for confirmation before committing - wait for a yes, then commit, push, and reply to the thread with the commit link.
   6. If declined: no code change or commit - just reply to the thread with the reason.
-  7. Either way, resolve the thread once the reply is posted (see "Who can resolve" below).
+  7. Once the reply is posted, resolve the thread if the "Who can resolve" rules below allow it.
   8. Only then move on to the next comment.
 - A decision the author gives for one thread only applies to that thread, not to any other thread (except the grouping case below).
-- Exception: if several threads point to the same underlying issue (e.g. the same outdated GitHub Action version in 20 workflow files), I treat them as one - one assessment, one proposed change, one decision from the author. That decision then applies to all of them: one commit if it covers them all, but each thread still gets its own reply and resolve.
+- Exception: if several threads point to the same underlying issue (e.g. the same outdated GitHub Action version in 20 workflow files), I treat them as one - one assessment, one proposed change, one decision from the author. That decision then applies to all of them: one commit if it covers them all, but each thread still gets its own reply, and is resolved per the "Who can resolve" rules below.
 - This is only for currently open/unresolved threads. Reviewers add new comments after re-reviewing, so this skill is meant to be run again on later review passes - it just picks up whatever is unresolved at that point.
 
 ## Who can resolve
