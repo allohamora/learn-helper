@@ -5,9 +5,11 @@ import { db } from '@/server/db/db.service';
 import { vocabularyItem } from '@/server/db/db.schema';
 import {
   createMissingVocabularyItems,
+  searchVocabularyItems,
   updateVocabularyItemTranslation,
 } from '@/server/vocabulary/vocabulary-item.repository';
 import { PartOfSpeech } from '@/const/vocabulary';
+import { RequestType } from '@/const/request';
 
 const buildItem = (overrides: Partial<typeof vocabularyItem.$inferInsert> = {}) => ({
   value: 'run',
@@ -57,6 +59,54 @@ describe('vocabularyItemRepository', () => {
 
       const updated = await db.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, item.id) });
       expect(updated?.uaTranslation).toBe('бігати');
+    });
+  });
+
+  describe('searchVocabularyItems', () => {
+    it('matches values case-insensitively via ILIKE', async () => {
+      await createMissingVocabularyItems([buildItem({ value: 'Run' }), buildItem({ value: 'walk' })]);
+
+      const result = await searchVocabularyItems({ value: 'run' });
+
+      expect(result.items.map((item) => item.value)).toEqual(['Run']);
+      expect(result.total).toBe(1);
+    });
+
+    it('returns an empty list and total 0 when nothing matches', async () => {
+      await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+
+      const result = await searchVocabularyItems({ value: 'xyz' });
+
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
+    });
+
+    it('paginates with a cursor and returns nextCursor when more items remain', async () => {
+      await createMissingVocabularyItems([
+        buildItem({ value: 'run1' }),
+        buildItem({ value: 'run2' }),
+        buildItem({ value: 'run3' }),
+      ]);
+
+      const firstPage = await searchVocabularyItems({ value: 'run', limit: 2 });
+      expect(firstPage.items).toHaveLength(2);
+      expect(firstPage.nextCursor).toBeDefined();
+
+      const secondPage = await searchVocabularyItems({ value: 'run', limit: 2, cursor: firstPage.nextCursor });
+      expect(secondPage.items).toHaveLength(1);
+      expect(secondPage.nextCursor).toBeUndefined();
+
+      const pagedValues = [...firstPage.items, ...secondPage.items].map((item) => item.value);
+      expect(new Set(pagedValues)).toEqual(new Set(['run1', 'run2', 'run3']));
+    });
+
+    it('skips the total count query and returns total: 0 when type is Data', async () => {
+      await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+
+      const result = await searchVocabularyItems({ value: 'run', type: RequestType.Data });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.total).toBe(0);
     });
   });
 });
