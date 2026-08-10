@@ -1,11 +1,13 @@
 import * as vocabularyItemGenerationService from '@/server/vocabulary/vocabulary-item-generation.service';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
-import { user } from '@/server/db/db.schema';
+import { event, user } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import { PartOfSpeech } from '@/const/vocabulary';
+import { EventType } from '@/const/event';
 import { RequestType } from '@/const/request';
 import type { ErrorResponse } from '@/server/utils/response.utils';
 
@@ -118,6 +120,7 @@ describe('vocabulary-item.router', () => {
   });
 
   describe('POST /api/v1/vocabulary-items/generate', () => {
+    const USER_ID = 'vocabulary-item-generate-user';
     let generateSpy: MockInstance<typeof vocabularyItemGenerationService.generateVocabularyItemData>;
 
     beforeEach(() => {
@@ -131,7 +134,7 @@ describe('vocabulary-item.router', () => {
             partOfSpeech: PartOfSpeech.Noun,
             spelling: `/${value}/`,
           },
-          cost: { costInNanoDollars: 0, inputTokens: 0, outputTokens: 0 },
+          cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
         }));
     });
 
@@ -139,8 +142,9 @@ describe('vocabulary-item.router', () => {
       generateSpy.mockRestore();
     });
 
-    it('returns 200 with the generated vocabulary item data', async () => {
-      auth.authorized();
+    it('returns 200 with the generated vocabulary item data and records a generation event', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
 
       const res = await client.api.v1['vocabulary-items'].generate.$post({
         json: { value: 'run', context: 'a jog' },
@@ -159,10 +163,21 @@ describe('vocabulary-item.router', () => {
         },
       });
       expect(generateSpy).toHaveBeenCalledWith({ value: 'run', context: 'a jog' });
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: EventType.VocabularyItemGenerated,
+          costInNanoDollars: 1_000_000,
+          inputTokens: 100,
+          outputTokens: 200,
+        }),
+      ]);
     });
 
     it('returns 200 without context', async () => {
-      auth.authorized();
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
 
       const res = await client.api.v1['vocabulary-items'].generate.$post({ json: { value: 'run' } });
       expect(res.status).toBe(200);

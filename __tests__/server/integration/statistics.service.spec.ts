@@ -62,7 +62,8 @@ describe('statisticsService', () => {
       totalWordsMovedToNextStep: 0,
       totalHintsViewed: 0,
       totalWordsUpdated: 0,
-      totalTaskCostsInNanoDollars: 0,
+      totalWordsGenerated: 0,
+      totalAiCostsInNanoDollars: 0,
       totalInputTokens: 0,
       totalOutputTokens: 0,
       totalLearningDurationMs: 0,
@@ -177,6 +178,20 @@ describe('statisticsService', () => {
         inputTokens: 500,
         outputTokens: 1000,
       },
+      {
+        userId: USER_ID,
+        type: EventType.VocabularyItemGenerated,
+        costInNanoDollars: 700_000_000,
+        inputTokens: 300,
+        outputTokens: 600,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.VocabularyItemGenerated,
+        costInNanoDollars: 300_000_000,
+        inputTokens: 100,
+        outputTokens: 200,
+      },
     ]);
 
     const otherUserId = 'other-statistics-user';
@@ -201,9 +216,10 @@ describe('statisticsService', () => {
       totalWordsMovedToNextStep: 2,
       totalHintsViewed: 3,
       totalWordsUpdated: 2,
-      totalTaskCostsInNanoDollars: 5_000_000_000,
-      totalInputTokens: 2000,
-      totalOutputTokens: 4000,
+      totalWordsGenerated: 2,
+      totalAiCostsInNanoDollars: 6_000_000_000,
+      totalInputTokens: 2400,
+      totalOutputTokens: 4800,
       totalLearningDurationMs: 16000,
       totalDiscoveringDurationMs: 5000,
       averageTimePerTaskMs: 4000,
@@ -310,7 +326,7 @@ describe('statisticsService', () => {
     expect(result.general).toMatchObject({
       totalDiscoveredWords: 3,
       totalCompletedTasks: 2,
-      totalTaskCostsInNanoDollars: 3_000_000,
+      totalAiCostsInNanoDollars: 3_000_000,
       totalDiscoveringDurationMs: 7000,
       totalLearningDurationMs: 16000,
     });

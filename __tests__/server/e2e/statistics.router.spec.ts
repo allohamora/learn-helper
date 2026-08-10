@@ -27,7 +27,7 @@ describe('statistics.router', () => {
         success: true,
         data: {
           general: {
-            totalTaskCostsInNanoDollars: 1234,
+            totalAiCostsInNanoDollars: 1234,
             totalInputTokens: 10,
             totalOutputTokens: 20,
           },

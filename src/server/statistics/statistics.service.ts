@@ -44,7 +44,8 @@ const getGeneralStatistics = async (userId: string) => {
     totalWordsMovedToNextStep: 0,
     totalHintsViewed: 0,
     totalWordsUpdated: 0,
-    totalTaskCostsInNanoDollars: 0,
+    totalWordsGenerated: 0,
+    totalAiCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
     totalLearningDurationMs: 0,
@@ -108,12 +109,22 @@ const getGeneralStatistics = async (userId: string) => {
           throw new Error(`CostInNanoDollars is null for task generation events: ${JSON.stringify(item)}`);
         }
 
-        result.totalTaskCostsInNanoDollars += item.costInNanoDollars;
+        result.totalAiCostsInNanoDollars += item.costInNanoDollars;
         result.totalInputTokens += item.inputTokens ?? 0;
         result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
       case EventType.UserVocabularyItemDiscoveryUndone:
         result.totalDiscoveryUndos = item.count;
+        continue;
+      case EventType.VocabularyItemGenerated:
+        if (item.costInNanoDollars === null) {
+          throw new Error(`CostInNanoDollars is null for word generation events: ${JSON.stringify(item)}`);
+        }
+
+        result.totalWordsGenerated = item.count;
+        result.totalAiCostsInNanoDollars += item.costInNanoDollars;
+        result.totalInputTokens += item.inputTokens ?? 0;
+        result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
     }
   }

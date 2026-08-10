@@ -17,7 +17,8 @@ const statisticsData = {
     totalWordsMovedToNextStep: 6,
     totalHintsViewed: 7,
     totalWordsUpdated: 8,
-    totalTaskCostsInNanoDollars: 1_500_000_000,
+    totalWordsGenerated: 9,
+    totalAiCostsInNanoDollars: 1_500_000_000,
     totalInputTokens: 1_000,
     totalOutputTokens: 500,
     totalLearningDurationMs: 3_661_000,
@@ -74,7 +75,9 @@ describe('StatisticsDashboard', () => {
     expect(screen.getByText('discoveries reverted')).toBeTruthy();
     expect(screen.getByText('Word Discovery')).toBeTruthy();
     expect(screen.getByText('Learning Activity')).toBeTruthy();
-    expect(screen.getAllByText('Task Cost')).toHaveLength(2);
+    expect(screen.getByText('AI Cost')).toBeTruthy();
+    expect(screen.getByText('Task Cost')).toBeTruthy();
+    expect(screen.getByText('Words Generated')).toBeTruthy();
     expect(screen.getByText('Most Mistaken Words')).toBeTruthy();
     expect(screen.getByText('example')).toBeTruthy();
     expect(screen.getByText('Most Hinted Words')).toBeTruthy();

@@ -13,7 +13,7 @@ import { vocabularyItemDto } from './dtos/vocabulary-item.dto';
 import { generateVocabularyItemDto } from './dtos/generate-vocabulary-item.dto';
 import { generatedVocabularyItemDto } from './dtos/generated-vocabulary-item.dto';
 import { searchVocabularyItems } from './vocabulary-item.repository';
-import { generateVocabularyItemData } from './vocabulary-item-generation.service';
+import { generateVocabularyItem } from './vocabulary-item.service';
 
 export const vocabularyItemRouter = new OpenAPIHono()
   .openapi(
@@ -62,7 +62,8 @@ export const vocabularyItemRouter = new OpenAPIHono()
     }),
     async (c) => {
       const body = c.req.valid('json');
-      const { output } = await generateVocabularyItemData(body);
+      const user = c.get('user');
+      const output = await generateVocabularyItem({ ...body, userId: user.id });
 
       return c.json(...toSuccessResponse({ status: 200, data: output }));
     },
