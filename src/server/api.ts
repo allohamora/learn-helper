@@ -12,6 +12,7 @@ import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
 import { MimeType } from './utils/mime-type.utils';
 import { statisticsRouter } from './statistics/statistics.router';
+import { vocabularyItemRouter } from './vocabulary/vocabulary-item.router';
 import { setUser } from './instrument';
 
 declare module 'hono' {
@@ -119,7 +120,8 @@ api.on(['POST', 'GET'], '/auth/*', (c) => {
 
 const v1Router = new OpenAPIHono()
   .route('/users/me/vocabulary-lists', userVocabularyRouter)
-  .route('/users/me/statistics', statisticsRouter);
+  .route('/users/me/statistics', statisticsRouter)
+  .route('/vocabulary-items', vocabularyItemRouter);
 
 const app = api.route('/v1', v1Router);
 
