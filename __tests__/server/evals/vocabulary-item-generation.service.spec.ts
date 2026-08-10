@@ -196,16 +196,16 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       ]);
     });
 
-    it('keeps a proper noun lowercase, matching the dictionary-value convention', async () => {
-      const { output } = await generateVocabularyItemData({ value: 'Ukraine' });
+    it('capitalizes a proper noun, matching the dictionary-value convention', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'ukraine' });
       console.log('proper-noun', JSON.stringify(output, null, 2));
 
       assertShape(output);
-      expect(output.value).toBe('ukraine');
+      expect(output.value).toBe('Ukraine');
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
       await expect(output).toSatisfyStatements([
-        'uaTranslation is the Ukrainian name for the country ("Україна", case-insensitive) - Ukrainian proper-noun capitalization is expected here even though value is lowercase.',
+        'uaTranslation is the Ukrainian name for the country ("Україна", case-insensitive).',
       ]);
     });
 

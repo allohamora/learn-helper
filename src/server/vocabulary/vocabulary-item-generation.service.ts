@@ -40,7 +40,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
       '- Context is context for the value, provided by the user - it may be a full sentence containing the value, a vague/unhelpful note ("not sure", "no idea what this means"), or contain its own typos; never correct it or copy it into the output.',
       '- Describe only the literal, direct meaning of the value in that sense - no trivia, notable facts, or cultural associations, no matter how famous.',
       'value:',
-      '- The corrected value, max 255 characters, always lowercase regardless of how the input was cased - never capitalize it, including proper nouns, acronyms, or the first word of a phrase/sentence.',
+      '- The corrected value, max 255 characters, cased per standard English capitalization rules regardless of how the input was cased - not capitalized just because it starts a phrase/sentence.',
       '- For a number or ordinal number, use its spelled-out word form (e.g. "forty-two", "third"), not digits.',
       'definition:',
       '- Concise English dictionary-style definition, max 512 characters, meaning only (no examples or translations).',
