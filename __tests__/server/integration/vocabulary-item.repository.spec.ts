@@ -108,5 +108,29 @@ describe('vocabularyItemRepository', () => {
       expect(result.items).toHaveLength(1);
       expect(result.total).toBe(0);
     });
+
+    it('matches a literal % instead of treating it as a wildcard', async () => {
+      await createMissingVocabularyItems([buildItem({ value: '100%' }), buildItem({ value: '100' })]);
+
+      const result = await searchVocabularyItems({ value: '100%' });
+
+      expect(result.items.map((item) => item.value)).toEqual(['100%']);
+    });
+
+    it('matches a literal _ instead of treating it as a single-character wildcard', async () => {
+      await createMissingVocabularyItems([buildItem({ value: 'foo_bar' }), buildItem({ value: 'fooxbar' })]);
+
+      const result = await searchVocabularyItems({ value: 'foo_bar' });
+
+      expect(result.items.map((item) => item.value)).toEqual(['foo_bar']);
+    });
+
+    it('matches a literal backslash', async () => {
+      await createMissingVocabularyItems([buildItem({ value: 'a\\b' }), buildItem({ value: 'ab' })]);
+
+      const result = await searchVocabularyItems({ value: 'a\\b' });
+
+      expect(result.items.map((item) => item.value)).toEqual(['a\\b']);
+    });
   });
 });
