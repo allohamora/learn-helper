@@ -69,8 +69,8 @@ describe.concurrent('vocabulary-task.service', () => {
 
   describe('toTranslateEnglishSentence', () => {
     it('generates English to Ukrainian translation tasks', async () => {
-      const { reasoning, tasks } = await toTranslateEnglishSentence(items);
-      console.log('to-translate-english-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { tasks } = await toTranslateEnglishSentence(items);
+      console.log('to-translate-english-sentence', JSON.stringify({ tasks }, null, 2));
 
       expect(tasks).toHaveLength(items.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(items.map((item) => item.id).toSorted());
@@ -106,8 +106,8 @@ describe.concurrent('vocabulary-task.service', () => {
 
   describe('toTranslateUkrainianSentence', () => {
     it('generates Ukrainian to English translation tasks', async () => {
-      const { reasoning, tasks } = await toTranslateUkrainianSentence(items);
-      console.log('to-translate-ukrainian-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+      const { tasks } = await toTranslateUkrainianSentence(items);
+      console.log('to-translate-ukrainian-sentence', JSON.stringify({ tasks }, null, 2));
 
       expect(tasks).toHaveLength(items.length);
       expect(tasks.map((task) => task.id).toSorted()).toEqual(items.map((item) => item.id).toSorted());
