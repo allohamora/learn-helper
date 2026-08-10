@@ -3,6 +3,7 @@ import { and, asc, count, eq, gte, ilike } from 'drizzle-orm';
 import { RequestType } from '@/const/request';
 import { vocabularyItem } from '../db/db.schema';
 import { db } from '../db/db.service';
+import { escapeLikePattern } from '../db/db.utils';
 import type { Transaction } from '../db/db.types';
 import type { VocabularyItemFilterDto } from './dtos/vocabulary-item-filter.dto';
 
@@ -30,7 +31,7 @@ export const searchVocabularyItems = async ({
   limit = 50,
   type = RequestType.All,
 }: VocabularyItemFilterDto) => {
-  const searchFilter = ilike(vocabularyItem.value, `%${value}%`);
+  const searchFilter = ilike(vocabularyItem.value, `%${escapeLikePattern(value)}%`);
   const cursorFilter = cursor ? gte(vocabularyItem.id, cursor) : undefined;
 
   const getItems = async () => {
