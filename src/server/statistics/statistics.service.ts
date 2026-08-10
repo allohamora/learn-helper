@@ -4,10 +4,10 @@ import { eachDayOfInterval, endOfDay, format, startOfDay, subDays } from 'date-f
 import { EventType } from '@/const/event';
 import { LearningStatus } from '@/const/vocabulary';
 import {
+  getCostEventsGroupedByDay,
   getDiscoveryEventsGroupedByDay,
   getEventsGroupedByType,
   getLearningEventsGroupedByDay,
-  getTaskGenerationEventsGroupedByDay,
   getTopHintedVocabularyItems,
   getTopMistakes,
   getVocabularyItemUpdatedEventsGroupedByDay,
@@ -222,12 +222,12 @@ const getCostPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: D
     {} as Record<string, CostPerDayStatistics>,
   );
 
-  const events = await getTaskGenerationEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
+  const events = await getCostEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
   for (const item of events) {
     const target = state[item.date];
     if (!target) throw new Error(`Date ${item.date} is missing in cost statistics`);
     if (item.costInNanoDollars === null) {
-      throw new Error(`CostInNanoDollars is null for task generation events: ${JSON.stringify(item)}`);
+      throw new Error(`CostInNanoDollars is null for cost events: ${JSON.stringify(item)}`);
     }
 
     target.costInNanoDollars += item.costInNanoDollars;

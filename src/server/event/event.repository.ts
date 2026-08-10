@@ -115,12 +115,7 @@ export const getLearningEventsGroupedByDay = async ({
     .groupBy(event.type, date);
 };
 
-export const getTaskGenerationEventsGroupedByDay = async ({
-  userId,
-  dateFrom,
-  dateTo,
-  timezone,
-}: DailyEventStatisticsDto) => {
+export const getCostEventsGroupedByDay = async ({ userId, dateFrom, dateTo, timezone }: DailyEventStatisticsDto) => {
   const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
 
   return await db
@@ -134,7 +129,7 @@ export const getTaskGenerationEventsGroupedByDay = async ({
     .where(
       and(
         eq(event.userId, userId),
-        eq(event.type, EventType.UserVocabularyItemTaskGenerated),
+        inArray(event.type, [EventType.UserVocabularyItemTaskGenerated, EventType.VocabularyItemGenerated]),
         gte(event.createdAt, dateFrom),
         lte(event.createdAt, dateTo),
       ),

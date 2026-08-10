@@ -225,6 +225,15 @@ describe('statisticsService', () => {
       averageTimePerTaskMs: 4000,
       averageTimePerDiscoveryMs: 2500,
     });
+    expect(result.costPerDay).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          costInNanoDollars: 6_000_000_000,
+          inputTokens: 2400,
+          outputTokens: 4800,
+        }),
+      ]),
+    );
   });
 
   it('limits daily series to seven UTC days while retaining older events in lifetime totals', async () => {
