@@ -18,16 +18,16 @@ export const statisticsQueryDto = z.object({
 });
 
 const generalStatisticsDto = z.object({
-  totalDiscoveredWords: z.number().int(),
+  totalDiscoveredItems: z.number().int(),
   totalDiscoveryUndos: z.number().int(),
   totalMistakesMade: z.number().int(),
   totalCompletedTasks: z.number().int(),
   totalRetriesCompleted: z.number().int(),
   totalShowcasesCompleted: z.number().int(),
-  totalWordsMovedToNextStep: z.number().int(),
+  totalItemsMovedToNextStep: z.number().int(),
   totalHintsViewed: z.number().int(),
-  totalWordsUpdated: z.number().int(),
-  totalWordsGenerated: z.number().int(),
+  totalItemsUpdated: z.number().int(),
+  totalItemsGenerated: z.number().int(),
   totalAiCostsInNanoDollars: z.number(),
   totalInputTokens: z.number().int(),
   totalOutputTokens: z.number().int(),
@@ -61,7 +61,7 @@ const costPerDayStatisticsDto = z.object({
   outputTokens: z.number().int(),
 });
 
-const wordsUpdatedPerDayStatisticsDto = z.object({
+const itemsUpdatedPerDayStatisticsDto = z.object({
   date,
   uaTranslation: z.number().int(),
 });
@@ -77,13 +77,13 @@ export const statisticsDto = z.object({
   discoveringPerDay: z.array(discoveringPerDayStatisticsDto),
   learningPerDay: z.array(learningPerDayStatisticsDto),
   costPerDay: z.array(costPerDayStatisticsDto),
-  wordsUpdatedPerDay: z.array(wordsUpdatedPerDayStatisticsDto),
+  itemsUpdatedPerDay: z.array(itemsUpdatedPerDayStatisticsDto),
   topMistakes: z.array(topVocabularyItemStatisticsDto),
-  topHintedWords: z.array(topVocabularyItemStatisticsDto),
+  topHintedItems: z.array(topVocabularyItemStatisticsDto),
 });
 
 export type Statistics = z.infer<typeof statisticsDto>;
 export type DiscoveringPerDayStatistics = z.infer<typeof discoveringPerDayStatisticsDto>;
 export type LearningPerDayStatistics = z.infer<typeof learningPerDayStatisticsDto>;
 export type CostPerDayStatistics = z.infer<typeof costPerDayStatisticsDto>;
-export type WordsUpdatedPerDayStatistics = z.infer<typeof wordsUpdatedPerDayStatisticsDto>;
+export type ItemsUpdatedPerDayStatistics = z.infer<typeof itemsUpdatedPerDayStatisticsDto>;

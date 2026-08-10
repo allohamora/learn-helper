@@ -228,7 +228,7 @@ erDiagram
 ### vocabulary_list_type
 
 - public — admin/seed-curated list (e.g. Oxford 5000), visible to every user
-- personal — a single user's own auto-created word list, visible only to its owner
+- personal — a single user's own auto-created vocabulary list, visible only to its owner
 
 ### part_of_speech
 
@@ -276,7 +276,7 @@ Tracks which lists a user has explicitly added, as its own fact rather than some
 
 `owner_id` is nullable: `null` means an admin/seed-curated list (today's only kind), non-null means a personal list owned by that user. A partial unique index on `owner_id` (`WHERE type = 'personal'`) enforces at most one personal list per user at the DB level — the application layer serializes creation with a `SELECT ... FOR UPDATE` lock on the user's own row before the find-or-create, so concurrent calls for the same user queue instead of racing on the index.
 
-`title` is also nullable specifically for personal lists — every personal list means the same thing ("this user's words"), so storing a repeated literal string per row buys nothing; the frontend hardcodes the display label instead. The existing global uniqueness constraint on `title` didn't need to change to allow this: Postgres treats every `NULL` as distinct from every other value (including other `NULL`s) in a standard `UNIQUE` constraint, so any number of personal lists with `title = NULL` coexist without ever colliding with each other or with curated titles.
+`title` is also nullable specifically for personal lists — every personal list means the same thing ("this user's vocabulary items"), so storing a repeated literal string per row buys nothing; the frontend hardcodes the display label instead. The existing global uniqueness constraint on `title` didn't need to change to allow this: Postgres treats every `NULL` as distinct from every other value (including other `NULL`s) in a standard `UNIQUE` constraint, so any number of personal lists with `title = NULL` coexist without ever colliding with each other or with curated titles.
 
 ### `part_of_speech` / `learning_status` are app-level enums, not native Postgres enum types
 
@@ -353,7 +353,7 @@ A `next_review_at` approach is explicitly **not used** here. Locking items behin
 
 ### Personal lists
 
-Every user also has exactly one always-present **personal** vocabulary list (`vocabulary_list.type = 'personal'`), auto-created on sign-up and always shown first, separate from the browse-and-add-a-public-list flow above. It's a private word bucket the user fills themselves. As of this round of work it's just the list container — word-adding (with AI enrichment) and learn/discover integration for personal-list words are out of scope and will follow in a later change.
+Every user also has exactly one always-present **personal** vocabulary list (`vocabulary_list.type = 'personal'`), auto-created on sign-up and always shown first, separate from the browse-and-add-a-public-list flow above. It's a private vocabulary bucket the user fills themselves. As of this round of work it's just the list container — item-adding (with AI enrichment) and learn/discover integration for personal-list items are out of scope and will follow in a later change.
 
 ### Grammar sessions
 
