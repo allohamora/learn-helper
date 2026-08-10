@@ -1,8 +1,11 @@
 import { expect } from 'vitest';
 import { generateText, Output } from 'ai';
-import type { GoogleLanguageModelOptions } from '@ai-sdk/google';
-import { google } from '@/server/utils/ai.utils';
+import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from '@ai-sdk/google';
 import { z } from 'zod';
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 type CustomMatchers = {
   toSatisfyStatements: (statements: string[]) => Promise<void>;

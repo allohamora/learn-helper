@@ -65,7 +65,7 @@
         "BETTER_AUTH_GOOGLE_CLIENT_ID",
         "BETTER_AUTH_GOOGLE_CLIENT_SECRET",
         "BETTER_AUTH_ALLOWED_USERS",
-        "GEMINI_API_KEY"
+        "OPENAI_API_KEY"
       ],
       "properties": {
         "NODE_ENV": {
@@ -92,7 +92,7 @@
           "type": "string",
           "minLength": 2
         },
-        "GEMINI_API_KEY": {
+        "OPENAI_API_KEY": {
           "type": "string",
           "minLength": 1
         }
