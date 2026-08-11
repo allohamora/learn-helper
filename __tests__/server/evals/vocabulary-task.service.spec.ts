@@ -99,8 +99,7 @@ describe.concurrent('vocabulary-task.service', () => {
       }
 
       const phrasalVerbTask = findTaskByValue(tasks, 'take (sb) out');
-      expect(phrasalVerbTask?.sentence).toMatch(/\b(take|takes|took|taken|taking)\b/iu);
-      expect(phrasalVerbTask?.sentence).toMatch(/\bout\b/iu);
+      expect(phrasalVerbTask?.sentence).toMatch(/\b(?:take|takes|took|taken|taking)\b[\s\S]*\bout\b/iu);
 
       const articleTask = findTaskByValue(tasks, 'a');
       expect(articleTask?.sentence).toMatch(/\ba\b/iu);
@@ -147,8 +146,7 @@ describe.concurrent('vocabulary-task.service', () => {
       }
 
       const phrasalVerbTask = findTaskByValue(tasks, 'take (sb) out');
-      expect(phrasalVerbTask?.translation).toMatch(/\b(take|takes|took|taken|taking)\b/iu);
-      expect(phrasalVerbTask?.translation).toMatch(/\bout\b/iu);
+      expect(phrasalVerbTask?.translation).toMatch(/\b(?:take|takes|took|taken|taking)\b[\s\S]*\bout\b/iu);
 
       const articleTask = findTaskByValue(tasks, 'a');
       expect(articleTask?.translation).toMatch(/\ba\b/iu);
