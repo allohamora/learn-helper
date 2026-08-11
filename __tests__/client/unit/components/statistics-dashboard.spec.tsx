@@ -75,8 +75,7 @@ describe('StatisticsDashboard', () => {
     expect(screen.getByText('discoveries reverted')).toBeTruthy();
     expect(screen.getByText('Item Discovery')).toBeTruthy();
     expect(screen.getByText('Learning Activity')).toBeTruthy();
-    expect(screen.getByText('AI Cost')).toBeTruthy();
-    expect(screen.getByText('Task Cost')).toBeTruthy();
+    expect(screen.getAllByText('AI Cost')).toHaveLength(2);
     expect(screen.getByText('Items Generated')).toBeTruthy();
     expect(screen.getByText('Most Mistaken Items')).toBeTruthy();
     expect(screen.getByText('example')).toBeTruthy();

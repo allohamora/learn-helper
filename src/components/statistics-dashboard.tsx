@@ -462,8 +462,8 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
         </StatisticsChartCard>
 
         <StatisticsChartCard
-          title="Task Cost"
-          description="Daily spend, input tokens, and output tokens for generated learning tasks"
+          title="AI Cost"
+          description="Daily spend, input tokens, and output tokens for AI generations"
         >
           <ChartContainer config={costChartConfig} className="min-h-52 w-full">
             <AreaChart accessibilityLayer data={costPerDay}>
