@@ -19,6 +19,7 @@ describe.concurrent('vocabulary-task.service', () => {
 
   const hasForbiddenSemicolonOrColon = (value: string) => /[;:]/gim.test(value);
   const hasForbiddenDash = (value: string) => /[-–—]/gim.test(value);
+  const hasParenthesizedPlaceholder = (value: string) => /\([^)]*\)/gim.test(value);
 
   const item = (data: Omit<VocabularyItemData, 'id'>) => ({
     id: uuidv7(),
@@ -67,6 +68,9 @@ describe.concurrent('vocabulary-task.service', () => {
     ] satisfies Omit<VocabularyItemData, 'id'>[]
   ).map((data) => item(data));
 
+  const findTaskByValue = <T extends { id: string }>(tasks: T[], value: string) =>
+    tasks.find((task) => task.id === items.find((item) => item.value === value)?.id);
+
   describe('toTranslateEnglishSentence', () => {
     it('generates English to Ukrainian translation tasks', async () => {
       const { tasks } = await toTranslateEnglishSentence(items);
@@ -90,16 +94,27 @@ describe.concurrent('vocabulary-task.service', () => {
         expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
         expect(hasForbiddenDash(task.sentence)).toBe(false);
         expect(hasForbiddenDash(task.translation)).toBe(false);
+        expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
+        expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
       }
+
+      const phrasalVerbTask = findTaskByValue(tasks, 'take (sb) out');
+      expect(phrasalVerbTask?.sentence).toMatch(/\b(take|takes|took|taken|taking)\b/iu);
+      expect(phrasalVerbTask?.sentence).toMatch(/\bout\b/iu);
+
+      const articleTask = findTaskByValue(tasks, 'a');
+      expect(articleTask?.sentence).toMatch(/\ba\b/iu);
 
       await expect({ items, tasks }).toSatisfyStatements([
         `Exactly ${items.length} tasks with id matching input item.id, an English sentence, and a Ukrainian translation.`,
-        'English sentences are max 15 words, natural, sentence case, and contain the target phrase (case-insensitive) or a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to"). All function words unchanged. Parenthesized placeholders replaced with concrete words, never output literally.',
+        'English sentences are complete sentences with a subject and a verb (not a fragment), max 15 words, natural, sentence case.',
+        'English sentences contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" correctly before a consonant sound (never "an" when the target word is "a"). All function words unchanged. The sentence may naturally include additional surrounding words for context beyond the target phrase itself.',
+        'Parenthesized placeholders (e.g. "(sb)", "(sth)") are replaced with a concrete word and never appear literally in the sentence.',
+        'Sentences use specific real-world context, not vague or abstract phrases.',
         'Ukrainian translations are max 15 words, sentence case, single spaces, punctuation attached to tokens. No dashes (–, —). Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English.',
         'Single sentence only. No semicolons, colons, or dashes. No joined independent clauses.',
         'Ukrainian translations have one unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles as separate tokens.',
-        'Ukrainian grammar should be generally correct. Do NOT flag declension variations as errors. Both singular and plural accusative/genitive forms are valid (e.g., "бабусю і дідуся", "бабусів і дідусів", "бабусь і дідусів" are all acceptable).',
-        'Sentences use specific real-world context, not vague or abstract phrases.',
+        'Ukrainian translations use correct adjective-noun agreement (gender, number, case) and are otherwise generally grammatical. Do NOT flag declension variations as errors. Both singular and plural accusative/genitive forms are valid (e.g., "бабусю і дідуся", "бабусів і дідусів", "бабусь і дідусів" are all acceptable).',
       ]);
     });
   });
@@ -127,12 +142,23 @@ describe.concurrent('vocabulary-task.service', () => {
         expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
         expect(hasForbiddenDash(task.sentence)).toBe(false);
         expect(hasForbiddenDash(task.translation)).toBe(false);
+        expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
+        expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
       }
+
+      const phrasalVerbTask = findTaskByValue(tasks, 'take (sb) out');
+      expect(phrasalVerbTask?.translation).toMatch(/\b(take|takes|took|taken|taking)\b/iu);
+      expect(phrasalVerbTask?.translation).toMatch(/\bout\b/iu);
+
+      const articleTask = findTaskByValue(tasks, 'a');
+      expect(articleTask?.translation).toMatch(/\ba\b/iu);
 
       await expect({ items, tasks }).toSatisfyStatements([
         `Exactly ${items.length} tasks with id matching input item.id, a Ukrainian sentence, and an English translation.`,
         'Ukrainian sentences are max 15 words, sentence case. No dashes (–, —). Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English. Do NOT flag grammar style preferences as errors. Accept all valid Ukrainian constructions: alternative declension forms (e.g., "бабусю і дідуся" and "бабусів і дідусів" are both valid), active impersonal voice (e.g., "покинули") alongside passive (e.g., "було покинуто"), and flexible word order.',
-        'English translations are max 15 words, sentence case, and contain the target phrase (case-insensitive) or a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to"). All function words unchanged. Parenthesized placeholders replaced with concrete words, never output literally.',
+        'English translations are complete sentences with a subject and a verb (not a fragment), max 15 words, sentence case.',
+        'English translations contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" correctly before a consonant sound (never "an" when the target word is "a"). All function words unchanged. The translation may naturally include additional surrounding words for context beyond the target phrase itself.',
+        'Parenthesized placeholders (e.g. "(sb)", "(sth)") are replaced with a concrete word and never appear literally in the translation.',
         'English translations use single spaces, punctuation attached to tokens. Include required articles/prepositions/auxiliaries as separate tokens.',
         'Single sentence only. No semicolons, colons, or dashes. No joined independent clauses.',
         'English translations have one unambiguous word order when shuffled.',
