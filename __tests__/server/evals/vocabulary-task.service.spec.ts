@@ -102,12 +102,12 @@ describe.concurrent('vocabulary-task.service', () => {
       expect(phrasalVerbTask?.sentence).toMatch(/\b(?:take|takes|took|taken|taking)\b[\s\S]*\bout\b/iu);
 
       const articleTask = findTaskByValue(tasks, 'a');
-      expect(articleTask?.sentence).toMatch(/\ba\b/iu);
+      expect(articleTask?.sentence).toMatch(/\b(?:a|an)\b/iu);
 
       await expect({ items, tasks }).toSatisfyStatements([
         `Exactly ${items.length} tasks with id matching input item.id, an English sentence, and a Ukrainian translation.`,
         'English sentences are complete sentences with a subject and a verb (not a fragment), max 15 words, natural, sentence case.',
-        'English sentences contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" correctly before a consonant sound (never "an" when the target word is "a"). All function words unchanged. The sentence may naturally include additional surrounding words for context beyond the target phrase itself.',
+        'English sentences contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" as "an" when grammatically required before a vowel sound. All function words unchanged. The sentence may naturally include additional surrounding words for context beyond the target phrase itself.',
         'Parenthesized placeholders (e.g. "(sb)", "(sth)") are replaced with a concrete word and never appear literally in the sentence.',
         'Sentences use specific real-world context, not vague or abstract phrases.',
         'Ukrainian translations are max 15 words, sentence case, single spaces, punctuation attached to tokens. No dashes (–, —). Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English.',
@@ -149,13 +149,13 @@ describe.concurrent('vocabulary-task.service', () => {
       expect(phrasalVerbTask?.translation).toMatch(/\b(?:take|takes|took|taken|taking)\b[\s\S]*\bout\b/iu);
 
       const articleTask = findTaskByValue(tasks, 'a');
-      expect(articleTask?.translation).toMatch(/\ba\b/iu);
+      expect(articleTask?.translation).toMatch(/\b(?:a|an)\b/iu);
 
       await expect({ items, tasks }).toSatisfyStatements([
         `Exactly ${items.length} tasks with id matching input item.id, a Ukrainian sentence, and an English translation.`,
         'Ukrainian sentences are max 15 words, sentence case. No dashes (–, —). Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English. Do NOT flag grammar style preferences as errors. Accept all valid Ukrainian constructions: alternative declension forms (e.g., "бабусю і дідуся" and "бабусів і дідусів" are both valid), active impersonal voice (e.g., "покинули") alongside passive (e.g., "було покинуто"), and flexible word order.',
         'English translations are complete sentences with a subject and a verb (not a fragment), max 15 words, sentence case.',
-        'English translations contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" correctly before a consonant sound (never "an" when the target word is "a"). All function words unchanged. The translation may naturally include additional surrounding words for context beyond the target phrase itself.',
+        'English translations contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" as "an" when grammatically required before a vowel sound. All function words unchanged. The translation may naturally include additional surrounding words for context beyond the target phrase itself.',
         'Parenthesized placeholders (e.g. "(sb)", "(sth)") are replaced with a concrete word and never appear literally in the translation.',
         'English translations use single spaces, punctuation attached to tokens. Include required articles/prepositions/auxiliaries as separate tokens.',
         'Single sentence only. No semicolons, colons, or dashes. No joined independent clauses.',
