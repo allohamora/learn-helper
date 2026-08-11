@@ -15,7 +15,7 @@ app:
     BETTER_AUTH_GOOGLE_CLIENT_ID: client-id
     BETTER_AUTH_GOOGLE_CLIENT_SECRET: client-secret
     BETTER_AUTH_ALLOWED_USERS: '["example@gmail.com"]'
-    GEMINI_API_KEY: dummy-gemini-key
+    OPENAI_API_KEY: dummy-openai-key
 
 postgres:
   image: postgres:18.4-alpine

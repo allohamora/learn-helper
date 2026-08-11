@@ -1,15 +1,15 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output, type LanguageModelUsage } from 'ai';
-import type { GoogleLanguageModelOptions } from '@ai-sdk/google';
 import { z } from 'zod';
-import { google } from '../utils/ai.utils';
+import { openai } from '../utils/ai.utils';
 import { UserVocabularyItemTaskType } from '@/const/event';
 import { Exception } from '../utils/exception.utils';
 
-const model = google('gemini-2.5-flash-lite');
+const model = openai('gpt-5.6-luna');
 
-const INPUT_NANO_DOLLARS_PER_TOKEN = 100;
-const OUTPUT_NANO_DOLLARS_PER_TOKEN = 400;
+// gpt-5.6-luna standard-tier, short-context pricing: https://developers.openai.com/api/docs/pricing
+const INPUT_NANO_DOLLARS_PER_TOKEN = 200;
+const OUTPUT_NANO_DOLLARS_PER_TOKEN = 1200;
 
 const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: LanguageModelUsage) => {
   const inputCostInNanoDollars = inputTokens * INPUT_NANO_DOLLARS_PER_TOKEN;
@@ -40,17 +40,8 @@ export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: Vocabula
 };
 
 export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) => {
-  const { finalStep, output, usage } = await generateText({
+  const { output, usage } = await generateText({
     model,
-    providerOptions: {
-      google: {
-        thinkingConfig: {
-          includeThoughts: true,
-          thinkingBudget: 2048,
-        },
-      } satisfies GoogleLanguageModelOptions,
-    },
-    temperature: 0.7,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateEnglishSentence',
@@ -64,7 +55,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
     }),
     prompt: [
       '<role>Expert bilingual exercise writer (English-Ukrainian).</role>',
-      `<task>Create exactly ${items.length} English->Ukrainian word-order tasks, one per input item.</task>`,
+      `<task>Create exactly ${items.length} English-to-Ukrainian word-order tasks, one per input item.</task>`,
       '<workflow>',
       '1. For each item, build the target pattern from its value.',
       '2. Write an English sentence with specific real-world context.',
@@ -73,26 +64,16 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
       '</workflow>',
       '<requirements>',
       'English sentence:',
-      '- Complete sentence (subject + verb), sentence case, max 15 words.',
-      '- Single sentence. No semicolons, colons, or dashes (–, —, -).',
-      '- Must contain ALL non-placeholder tokens from the target in order.',
-      '- For phrasal verbs, include every particle (e.g., "take (sb) out" requires "take" AND "out").',
-      '- Only verb/auxiliary inflection allowed (e.g., "be going to" -> "is going to").',
-      '- Keep all function words unchanged.',
-      '- If the target is "a", place it before a consonant-starting word (not "an").',
-      '- Use specific context, not vague abstract sentences.',
+      '- A single, complete, natural sentence in sentence case, max 15 words, with no semicolons, colons, or dashes (–, —, -).',
+      '- Contains every word of the target pattern, in order and otherwise unchanged, with only the minimal grammatical adjustment English requires (e.g. verb/auxiliary inflection, "a" vs "an").',
+      '- Set in a specific, real situation, not a vague or abstract statement.',
       'Ukrainian translation:',
-      '- Max 15 words, sentence case, single sentence.',
-      '- Must sound natural to a native Ukrainian speaker.',
-      '- Use idiomatic Ukrainian, not word-for-word translation from English.',
-      '- Single spaces, punctuation attached to tokens.',
-      '- NEVER use dash characters (–, —, -) in the translation. Rephrase to avoid them.',
-      '- One unambiguous word order when shuffled.',
-      '- Pronouns/prepositions/conjunctions/particles as separate tokens.',
-      '- Correct adjective-noun agreement (gender/number/case).',
+      '- A single, natural sentence in sentence case, max 15 words, that a native speaker would actually say - idiomatic, not a word-for-word rendering of the English.',
+      '- No semicolons, colons, or dashes (–, —, -), including any introduced while rephrasing.',
+      '- Single spaces, punctuation attached to the preceding token, and only one sensible word order once the words are shuffled.',
+      '- Pronouns, prepositions, conjunctions, and particles as separate tokens, with correct adjective-noun agreement.',
       'Placeholders:',
-      '- Replace every parenthesized placeholder with a concrete word.',
-      '- Never output literal placeholder text in the sentence.',
+      '- Replace every parenthesized placeholder in the target with a concrete word; never output the placeholder text itself.',
       '</requirements>',
       `<items>${JSON.stringify(items)}</items>`,
     ].join('\n'),
@@ -111,21 +92,12 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
     outputTokens: usage.outputTokens,
   };
 
-  return { reasoning: finalStep.reasoning, tasks: output, cost };
+  return { tasks: output, cost };
 };
 
 export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) => {
-  const { finalStep, output, usage } = await generateText({
+  const { output, usage } = await generateText({
     model,
-    providerOptions: {
-      google: {
-        thinkingConfig: {
-          includeThoughts: true,
-          thinkingBudget: 2048,
-        },
-      } satisfies GoogleLanguageModelOptions,
-    },
-    temperature: 0.7,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateUkrainianSentence',
@@ -139,7 +111,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
     }),
     prompt: [
       '<role>Expert bilingual exercise writer (Ukrainian-English).</role>',
-      `<task>Create exactly ${items.length} Ukrainian->English word-order tasks, one per input item.</task>`,
+      `<task>Create exactly ${items.length} Ukrainian-to-English word-order tasks, one per input item.</task>`,
       '<workflow>',
       '1. For each item, build the target pattern from its value.',
       '2. Write an English sentence with specific real-world context.',
@@ -148,26 +120,15 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
       '</workflow>',
       '<requirements>',
       'Ukrainian sentence:',
-      '- Max 15 words, sentence case, grammatical, single sentence.',
-      '- No semicolons or colons.',
-      '- NEVER use dash characters (–, —, -) in the sentence. Rephrase to avoid them.',
-      '- Must sound natural to a native Ukrainian speaker.',
-      '- Use idiomatic Ukrainian, not word-for-word translation from English.',
+      '- A single, natural, grammatical sentence in sentence case, max 15 words, that a native speaker would actually say - idiomatic, not a word-for-word rendering of the English.',
+      '- No semicolons, colons, or dashes (–, —, -), including any introduced while rephrasing.',
       'English translation:',
-      '- Complete sentence (subject + verb), sentence case, max 15 words.',
-      '- Single sentence. No semicolons, colons, or dashes (–, —, -).',
-      '- Must contain ALL non-placeholder tokens from the target in order.',
-      '- For phrasal verbs, include every particle (e.g., "take (sb) out" requires "take" AND "out").',
-      '- Only verb/auxiliary inflection allowed (e.g., "be going to" -> "is going to").',
-      '- Keep all function words unchanged.',
-      '- If the target is "a", place it before a consonant-starting word (not "an").',
-      '- Use specific context, not vague abstract sentences.',
-      '- Include required articles/prepositions/auxiliaries as separate tokens.',
-      '- Single spaces, punctuation attached to tokens.',
-      '- One unambiguous word order when shuffled.',
+      '- A single, complete, natural sentence in sentence case, max 15 words, with no semicolons, colons, or dashes (–, —, -).',
+      '- Contains every word of the target pattern, in order and otherwise unchanged, with only the minimal grammatical adjustment English requires (e.g. verb/auxiliary inflection, "a" vs "an").',
+      '- Set in a specific, real situation, not a vague or abstract statement.',
+      '- Single spaces, punctuation attached to the preceding token, and only one sensible word order once the words are shuffled.',
       'Placeholders:',
-      '- Replace every parenthesized placeholder with a concrete word.',
-      '- Never output literal placeholder text in the translation.',
+      '- Replace every parenthesized placeholder in the target with a concrete word; never output the placeholder text itself.',
       '</requirements>',
       `<items>${JSON.stringify(items)}</items>`,
     ].join('\n'),
@@ -186,5 +147,5 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
     outputTokens: usage.outputTokens,
   };
 
-  return { reasoning: finalStep.reasoning, tasks: output, cost };
+  return { tasks: output, cost };
 };

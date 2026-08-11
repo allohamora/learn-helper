@@ -1,7 +1,11 @@
 import { expect } from 'vitest';
 import { generateText, Output } from 'ai';
-import { createOpenAI, type OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from '@ai-sdk/google';
 import { z } from 'zod';
+
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
 
 type CustomMatchers = {
   toSatisfyStatements: (statements: string[]) => Promise<void>;
@@ -12,18 +16,19 @@ declare module 'vitest' {
   interface Matchers extends CustomMatchers {}
 }
 
-const openai = createOpenAI();
-
-const model = openai('gpt-5-nano');
+const model = google('gemini-3.1-flash-lite');
 
 expect.extend({
   toSatisfyStatements: async (input, statements) => {
     const { output } = await generateText({
       model,
+      // without a thinking budget this judge hallucinates evidence (quotes text that isn't in the input); removing it made false positives worse
       providerOptions: {
-        openai: {
-          reasoningEffort: 'medium',
-        } satisfies OpenAILanguageModelResponsesOptions,
+        google: {
+          thinkingConfig: {
+            thinkingBudget: 1024,
+          },
+        } satisfies GoogleLanguageModelOptions,
       },
       output: Output.object({
         schema: z.object({
@@ -35,10 +40,15 @@ expect.extend({
       }),
       prompt: [
         '# Role',
-        'Act as a meticulous test evaluator.',
+        'Act as a meticulous, evidence-based test evaluator.',
         '',
         '# Task',
         'Compare the input against the statements and determine whether all statements are satisfied.',
+        '',
+        '## Rules',
+        '- Judge only what is literally present in the Input JSON. Do not infer or hallucinate content.',
+        '- Only flag a statement as violated if you can quote the exact offending part of the Input JSON, from the field the statement actually refers to; otherwise treat it as satisfied.',
+        '- Interpret statements leniently: accept any reasonable equivalent, not just the examples given.',
         '',
         '## Output Requirements',
         '- `reason`: explanation if the input does not satisfy the statements.',
