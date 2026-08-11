@@ -4,10 +4,10 @@ import { eachDayOfInterval, endOfDay, format, startOfDay, subDays } from 'date-f
 import { EventType } from '@/const/event';
 import { LearningStatus } from '@/const/vocabulary';
 import {
+  getCostEventsGroupedByDay,
   getDiscoveryEventsGroupedByDay,
   getEventsGroupedByType,
   getLearningEventsGroupedByDay,
-  getTaskGenerationEventsGroupedByDay,
   getTopHintedVocabularyItems,
   getTopMistakes,
   getVocabularyItemUpdatedEventsGroupedByDay,
@@ -16,8 +16,8 @@ import type {
   CostPerDayStatistics,
   DiscoveringPerDayStatistics,
   LearningPerDayStatistics,
+  ItemsUpdatedPerDayStatistics,
   Statistics,
-  WordsUpdatedPerDayStatistics,
 } from './dtos/statistics.dto';
 
 type DailyStatisticsDto = {
@@ -35,16 +35,17 @@ const getDates = ({ dateFrom, dateTo, timezone }: Omit<DailyStatisticsDto, 'user
 
 const getGeneralStatistics = async (userId: string) => {
   const result: Statistics['general'] = {
-    totalDiscoveredWords: 0,
+    totalDiscoveredItems: 0,
     totalDiscoveryUndos: 0,
     totalMistakesMade: 0,
     totalCompletedTasks: 0,
     totalRetriesCompleted: 0,
     totalShowcasesCompleted: 0,
-    totalWordsMovedToNextStep: 0,
+    totalItemsMovedToNextStep: 0,
     totalHintsViewed: 0,
-    totalWordsUpdated: 0,
-    totalTaskCostsInNanoDollars: 0,
+    totalItemsUpdated: 0,
+    totalItemsGenerated: 0,
+    totalAiCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
     totalLearningDurationMs: 0,
@@ -62,7 +63,7 @@ const getGeneralStatistics = async (userId: string) => {
           throw new Error(`DurationMs is null for discovery events: ${JSON.stringify(item)}`);
         }
 
-        result.totalDiscoveredWords = item.count;
+        result.totalDiscoveredItems = item.count;
         result.totalDiscoveringDurationMs = item.durationMs;
         result.averageTimePerDiscoveryMs = Math.round(item.durationMs / item.count);
         continue;
@@ -95,25 +96,35 @@ const getGeneralStatistics = async (userId: string) => {
         result.totalLearningDurationMs += item.durationMs;
         continue;
       case EventType.UserVocabularyItemMovedToNextStep:
-        result.totalWordsMovedToNextStep = item.count;
+        result.totalItemsMovedToNextStep = item.count;
         continue;
       case EventType.UserVocabularyItemTaskHintUsed:
         result.totalHintsViewed = item.count;
         continue;
       case EventType.VocabularyItemUpdated:
-        result.totalWordsUpdated = item.count;
+        result.totalItemsUpdated = item.count;
         continue;
       case EventType.UserVocabularyItemTaskGenerated:
         if (item.costInNanoDollars === null) {
           throw new Error(`CostInNanoDollars is null for task generation events: ${JSON.stringify(item)}`);
         }
 
-        result.totalTaskCostsInNanoDollars += item.costInNanoDollars;
+        result.totalAiCostsInNanoDollars += item.costInNanoDollars;
         result.totalInputTokens += item.inputTokens ?? 0;
         result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
       case EventType.UserVocabularyItemDiscoveryUndone:
         result.totalDiscoveryUndos = item.count;
+        continue;
+      case EventType.VocabularyItemGenerated:
+        if (item.costInNanoDollars === null) {
+          throw new Error(`CostInNanoDollars is null for item generation events: ${JSON.stringify(item)}`);
+        }
+
+        result.totalItemsGenerated = item.count;
+        result.totalAiCostsInNanoDollars += item.costInNanoDollars;
+        result.totalInputTokens += item.inputTokens ?? 0;
+        result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
     }
   }
@@ -211,12 +222,12 @@ const getCostPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: D
     {} as Record<string, CostPerDayStatistics>,
   );
 
-  const events = await getTaskGenerationEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
+  const events = await getCostEventsGroupedByDay({ userId, dateFrom, dateTo, timezone });
   for (const item of events) {
     const target = state[item.date];
     if (!target) throw new Error(`Date ${item.date} is missing in cost statistics`);
     if (item.costInNanoDollars === null) {
-      throw new Error(`CostInNanoDollars is null for task generation events: ${JSON.stringify(item)}`);
+      throw new Error(`CostInNanoDollars is null for cost events: ${JSON.stringify(item)}`);
     }
 
     target.costInNanoDollars += item.costInNanoDollars;
@@ -227,10 +238,10 @@ const getCostPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: D
   return Object.values(state);
 };
 
-const getWordsUpdatedPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: DailyStatisticsDto) => {
+const getItemsUpdatedPerDayStatistics = async ({ userId, dateFrom, dateTo, timezone }: DailyStatisticsDto) => {
   const state = getDates({ dateFrom, dateTo, timezone }).reduce(
     (result, date) => ({ ...result, [date]: { date, uaTranslation: 0 } }),
-    {} as Record<string, WordsUpdatedPerDayStatistics>,
+    {} as Record<string, ItemsUpdatedPerDayStatistics>,
   );
 
   const events = await getVocabularyItemUpdatedEventsGroupedByDay({
@@ -253,13 +264,13 @@ export const getStatistics = async ({ userId, timezone = 'UTC' }: { userId: stri
   const dateFrom = subDays(startOfDay(dateTo, { in: tz(timezone) }), 6, { in: tz(timezone) });
   const range = { userId, dateFrom, dateTo, timezone };
 
-  const [general, discoveringPerDay, learningPerDay, costPerDay, wordsUpdatedPerDay, topMistakes, topHintedWords] =
+  const [general, discoveringPerDay, learningPerDay, costPerDay, itemsUpdatedPerDay, topMistakes, topHintedItems] =
     await Promise.all([
       getGeneralStatistics(userId),
       getDiscoveringPerDayStatistics(range),
       getLearningPerDayStatistics(range),
       getCostPerDayStatistics(range),
-      getWordsUpdatedPerDayStatistics(range),
+      getItemsUpdatedPerDayStatistics(range),
       getTopMistakes({ userId, limit: 20 }),
       getTopHintedVocabularyItems({ userId, limit: 20 }),
     ]);
@@ -269,8 +280,8 @@ export const getStatistics = async ({ userId, timezone = 'UTC' }: { userId: stri
     discoveringPerDay,
     learningPerDay,
     costPerDay,
-    wordsUpdatedPerDay,
+    itemsUpdatedPerDay,
     topMistakes,
-    topHintedWords,
+    topHintedItems,
   } satisfies Statistics;
 };

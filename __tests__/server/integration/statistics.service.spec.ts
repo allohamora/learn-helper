@@ -23,14 +23,14 @@ const daysAgo = (days: number) => {
 const seed = async (itemCount = 1, userId = USER_ID) => {
   await db.insert(user).values({ id: userId, name: 'Statistics User', email: `${userId}@example.com` });
   const list = await findOrCreateVocabularyListByTitle(`Statistics ${userId}`);
-  const wordPrefix = userId === USER_ID ? 'word' : `${userId}-word`;
+  const itemPrefix = userId === USER_ID ? 'item' : `${userId}-item`;
   const items = await createMissingVocabularyItems(
     Array.from({ length: itemCount }, (_, index) => ({
-      value: `${wordPrefix}-${index}`,
+      value: `${itemPrefix}-${index}`,
       definition: `definition-${index}`,
       uaTranslation: `translation-${index}`,
       partOfSpeech: PartOfSpeech.Noun,
-      spelling: `${wordPrefix}-${index}`,
+      spelling: `${itemPrefix}-${index}`,
     })),
   );
   await createVocabularyListItemsIfNotExist(
@@ -53,16 +53,17 @@ describe('statisticsService', () => {
     const result = await getStatistics({ userId: USER_ID });
 
     expect(result.general).toEqual({
-      totalDiscoveredWords: 0,
+      totalDiscoveredItems: 0,
       totalDiscoveryUndos: 0,
       totalMistakesMade: 0,
       totalCompletedTasks: 0,
       totalRetriesCompleted: 0,
       totalShowcasesCompleted: 0,
-      totalWordsMovedToNextStep: 0,
+      totalItemsMovedToNextStep: 0,
       totalHintsViewed: 0,
-      totalWordsUpdated: 0,
-      totalTaskCostsInNanoDollars: 0,
+      totalItemsUpdated: 0,
+      totalItemsGenerated: 0,
+      totalAiCostsInNanoDollars: 0,
       totalInputTokens: 0,
       totalOutputTokens: 0,
       totalLearningDurationMs: 0,
@@ -73,9 +74,9 @@ describe('statisticsService', () => {
     expect(result.discoveringPerDay).toHaveLength(7);
     expect(result.learningPerDay).toHaveLength(7);
     expect(result.costPerDay).toHaveLength(7);
-    expect(result.wordsUpdatedPerDay).toHaveLength(7);
+    expect(result.itemsUpdatedPerDay).toHaveLength(7);
     expect(result.topMistakes).toEqual([]);
-    expect(result.topHintedWords).toEqual([]);
+    expect(result.topHintedItems).toEqual([]);
     expect(result.discoveringPerDay).toEqual(
       expect.arrayContaining([expect.objectContaining({ learningCount: 0, knownCount: 0, durationMs: 0 })]),
     );
@@ -177,6 +178,20 @@ describe('statisticsService', () => {
         inputTokens: 500,
         outputTokens: 1000,
       },
+      {
+        userId: USER_ID,
+        type: EventType.VocabularyItemGenerated,
+        costInNanoDollars: 700_000_000,
+        inputTokens: 300,
+        outputTokens: 600,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.VocabularyItemGenerated,
+        costInNanoDollars: 300_000_000,
+        inputTokens: 100,
+        outputTokens: 200,
+      },
     ]);
 
     const otherUserId = 'other-statistics-user';
@@ -192,23 +207,33 @@ describe('statisticsService', () => {
     const result = await getStatistics({ userId: USER_ID });
 
     expect(result.general).toEqual({
-      totalDiscoveredWords: 2,
+      totalDiscoveredItems: 2,
       totalDiscoveryUndos: 0,
       totalMistakesMade: 2,
       totalCompletedTasks: 2,
       totalRetriesCompleted: 2,
       totalShowcasesCompleted: 2,
-      totalWordsMovedToNextStep: 2,
+      totalItemsMovedToNextStep: 2,
       totalHintsViewed: 3,
-      totalWordsUpdated: 2,
-      totalTaskCostsInNanoDollars: 5_000_000_000,
-      totalInputTokens: 2000,
-      totalOutputTokens: 4000,
+      totalItemsUpdated: 2,
+      totalItemsGenerated: 2,
+      totalAiCostsInNanoDollars: 6_000_000_000,
+      totalInputTokens: 2400,
+      totalOutputTokens: 4800,
       totalLearningDurationMs: 16000,
       totalDiscoveringDurationMs: 5000,
       averageTimePerTaskMs: 4000,
       averageTimePerDiscoveryMs: 2500,
     });
+    expect(result.costPerDay).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          costInNanoDollars: 6_000_000_000,
+          inputTokens: 2400,
+          outputTokens: 4800,
+        }),
+      ]),
+    );
   });
 
   it('limits daily series to seven UTC days while retaining older events in lifetime totals', async () => {
@@ -308,9 +333,9 @@ describe('statisticsService', () => {
     const yesterdayDate = toDateOnlyString(yesterday);
 
     expect(result.general).toMatchObject({
-      totalDiscoveredWords: 3,
+      totalDiscoveredItems: 3,
       totalCompletedTasks: 2,
-      totalTaskCostsInNanoDollars: 3_000_000,
+      totalAiCostsInNanoDollars: 3_000_000,
       totalDiscoveringDurationMs: 7000,
       totalLearningDurationMs: 16000,
     });
@@ -485,7 +510,7 @@ describe('statisticsService', () => {
       outputTokens: 20,
     });
     // vocabulary item updated event in kyiv: 2026-07-25, 00:30
-    expect(kyiv.wordsUpdatedPerDay.at(-1)).toMatchObject({ date: '2026-07-25', uaTranslation: 1 });
+    expect(kyiv.itemsUpdatedPerDay.at(-1)).toMatchObject({ date: '2026-07-25', uaTranslation: 1 });
     // learning event in new york: 2026-07-24, 17:30 with 1000
     // known event in new york: 2026-07-24, 21:30 with 2000
     expect(newYork.discoveringPerDay.at(-1)).toMatchObject({
@@ -617,7 +642,7 @@ describe('statisticsService', () => {
     const today = result.discoveringPerDay.at(-1);
 
     expect(result.general).toMatchObject({
-      totalDiscoveredWords: 2,
+      totalDiscoveredItems: 2,
       totalDiscoveryUndos: 1,
       totalDiscoveringDurationMs: 4000,
       averageTimePerDiscoveryMs: 2000,
@@ -657,11 +682,11 @@ describe('statisticsService', () => {
 
     const result = await getStatistics({ userId: USER_ID });
 
-    expect(result.general.totalWordsUpdated).toBe(3);
-    expect(result.wordsUpdatedPerDay.at(-1)?.uaTranslation).toBe(2);
+    expect(result.general.totalItemsUpdated).toBe(3);
+    expect(result.itemsUpdatedPerDay.at(-1)?.uaTranslation).toBe(2);
   });
 
-  it('returns the top 20 mistakes and hinted words ordered by event count', async () => {
+  it('returns the top 20 mistakes and hinted items ordered by event count', async () => {
     const { userItems } = await seed(21);
     const mistakeEvents = userItems.flatMap((item, index) =>
       Array.from({ length: index + 1 }, () => ({
@@ -698,10 +723,10 @@ describe('statisticsService', () => {
     const result = await getStatistics({ userId: USER_ID });
 
     expect(result.topMistakes).toHaveLength(20);
-    expect(result.topMistakes[0]).toMatchObject({ count: 21, value: 'word-20', partOfSpeech: PartOfSpeech.Noun });
+    expect(result.topMistakes[0]).toMatchObject({ count: 21, value: 'item-20', partOfSpeech: PartOfSpeech.Noun });
     expect(result.topMistakes.at(-1)?.count).toBe(2);
-    expect(result.topHintedWords).toHaveLength(20);
-    expect(result.topHintedWords[0]).toMatchObject({ count: 21, value: 'word-0', partOfSpeech: PartOfSpeech.Noun });
-    expect(result.topHintedWords.at(-1)?.count).toBe(2);
+    expect(result.topHintedItems).toHaveLength(20);
+    expect(result.topHintedItems[0]).toMatchObject({ count: 21, value: 'item-0', partOfSpeech: PartOfSpeech.Noun });
+    expect(result.topHintedItems.at(-1)?.count).toBe(2);
   });
 });

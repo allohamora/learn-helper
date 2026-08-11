@@ -92,6 +92,13 @@
       "when": 1786173530891,
       "tag": "0012_backfill-personal-vocabulary-lists",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786378537941,
+      "tag": "0013_fix-vocabulary-item-casing",
+      "breakpoints": true
     }
   ]
 }

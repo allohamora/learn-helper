@@ -9,6 +9,7 @@ export enum EventType {
   UserVocabularyItemTaskGenerated = 'user-vocabulary-item-task-generated',
   UserVocabularyItemMovedToNextStep = 'user-vocabulary-item-moved-to-next-step',
   VocabularyItemUpdated = 'vocabulary-item-updated',
+  VocabularyItemGenerated = 'vocabulary-item-generated',
 }
 
 export enum UserVocabularyItemTaskType {

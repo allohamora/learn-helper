@@ -1,14 +1,10 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output, type LanguageModelUsage } from 'ai';
-import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from '@ai-sdk/google';
+import type { GoogleLanguageModelOptions } from '@ai-sdk/google';
 import { z } from 'zod';
-import { GEMINI_API_KEY } from '../config';
+import { google } from '../utils/ai.utils';
 import { UserVocabularyItemTaskType } from '@/const/event';
 import { Exception } from '../utils/exception.utils';
-
-const google = createGoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY,
-});
 
 const model = google('gemini-2.5-flash-lite');
 
