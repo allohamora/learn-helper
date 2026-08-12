@@ -168,6 +168,42 @@ describe('userVocabularyListService', () => {
       ).rejects.toThrow(Exception);
     });
 
+    it('only lets one of several concurrent adds of the same word succeed', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+
+      // with no pre-existing row, this would otherwise be a genuine race between the
+      // getVocabularyListItem check and the INSERT: both could pass the check before either
+      // commits, and onConflictDoNothing would silently drop the loser instead of it getting a 409
+      const results = await Promise.allSettled(
+        Array.from({ length: 5 }, () =>
+          addVocabularyItemToPersonalList({
+            userId,
+            userVocabularyListId: userVocabularyList.id,
+            vocabularyItemId: item.id,
+          }),
+        ),
+      );
+
+      const fulfilled = results.filter((result) => result.status === 'fulfilled');
+      const rejected = results.filter((result) => result.status === 'rejected');
+      expect(fulfilled).toHaveLength(1);
+      expect(rejected).toHaveLength(4);
+      expect(rejected.every((result) => result.reason instanceof Exception)).toBe(true);
+
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).resolves.toBeDefined();
+      expect(await countItems(userVocabularyItem)).toBe(1);
+    });
+
     it('throws forbidden when the list is not personal', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { list, items } = await createTestList(['run']);

@@ -21,7 +21,7 @@ import {
   getPersonalVocabularyListByOwnerId,
 } from '../vocabulary/vocabulary-list.repository';
 import {
-  createVocabularyListItemsIfNotExist,
+  createVocabularyListItemIfNotExist,
   getVocabularyListItem,
 } from '../vocabulary/vocabulary-list-item.repository';
 import { getUserForUpdateOrThrow } from '../user/user.service';
@@ -97,7 +97,11 @@ export const addVocabularyItemToPersonalList = async ({
       throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
-    await createVocabularyListItemsIfNotExist([{ vocabularyListId, vocabularyItemId }], tx);
+    const createdListItem = await createVocabularyListItemIfNotExist({ vocabularyListId, vocabularyItemId }, tx);
+    if (!createdListItem) {
+      throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
+    }
+
     await createUserVocabularyItemIfNotExist({ userId, vocabularyItemId }, tx);
 
     const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
