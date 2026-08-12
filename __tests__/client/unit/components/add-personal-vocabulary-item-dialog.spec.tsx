@@ -239,6 +239,20 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await vi.waitFor(() => expect(generateHandler).toHaveBeenCalledOnce());
   });
 
+  it('shows an error message when the search request fails', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+
+    mockServer.addHandlers(
+      api.personalVocabularyItemSearch.mock(userVocabularyListId, () => HttpResponse.json({}, { status: 500 })),
+    );
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('whatever');
+
+    await screen.findByText('Failed to search items. Please try again.');
+    expect(screen.queryByText(/No matches for/)).toBeNull();
+  });
+
   it('surfaces a toast and keeps the Add button enabled when adding fails', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('quixotic');

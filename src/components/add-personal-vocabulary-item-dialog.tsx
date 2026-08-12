@@ -109,7 +109,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
   const searchValue = searchInput.trim();
   const [debouncedValue] = useDebounce(searchValue, 300);
 
-  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
+  const { data, isPending, isError, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['personal-vocabulary-search', userVocabularyListId, debouncedValue],
     queryFn: async ({ pageParam }) => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
@@ -212,6 +212,10 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
             <div className="flex items-center justify-center py-6">
               <Loader />
             </div>
+          ) : isError ? (
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+              Failed to search items. Please try again.
+            </p>
           ) : results.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               No matches for &ldquo;{debouncedValue}&rdquo;.
