@@ -197,10 +197,8 @@ export const undoUserVocabularyItemStatus = async ({
       throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is already waiting`);
     }
 
+    // programmatically-added items skip the discovery phase, so there may be no event to revert
     const revertedEvent = await revertUserVocabularyItemDiscoveredEvent({ userId, userVocabularyItemId }, tx);
-    if (!revertedEvent) {
-      throw Exception.notFound(`no active discovery event for user vocabulary item "${userVocabularyItemId}"`);
-    }
 
     await Promise.all([
       insertEvent(

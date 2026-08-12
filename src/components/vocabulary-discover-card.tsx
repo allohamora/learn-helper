@@ -8,6 +8,7 @@ import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vo
 import { appClient } from '@/services/api';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
+import { formatPartOfSpeech } from '@/utils/vocabulary';
 
 type ItemsResponse = InferResponseType<
   (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']
@@ -91,7 +92,7 @@ export const VocabularyDiscoverCard: FC<Props> = ({ item }) => {
         {vocabularyItem.partOfSpeech && (
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="text-xs">
-              {vocabularyItem.partOfSpeech.replace(/-/g, ' ')}
+              {formatPartOfSpeech(vocabularyItem.partOfSpeech)}
             </Badge>
           </div>
         )}
