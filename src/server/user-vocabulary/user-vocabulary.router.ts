@@ -3,6 +3,7 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
   errorConflictResponse,
   errorForbiddenResponse,
+  errorNotFoundResponse,
   successCreatedResponse,
   successOkResponse,
   successPaginatedResponse,
@@ -177,6 +178,7 @@ export const userVocabularyRouter = new OpenAPIHono()
         }),
         ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
         ...errorConflictResponse({ description: 'The word is already in the list' }),
+        ...errorNotFoundResponse({ description: 'The list or word was not found' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
