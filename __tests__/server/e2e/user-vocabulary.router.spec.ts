@@ -1,4 +1,5 @@
 import * as vocabularyTaskService from '@/server/user-vocabulary/vocabulary-task.service';
+import * as vocabularyItemGenerationService from '@/server/vocabulary/vocabulary-item-generation.service';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
@@ -283,6 +284,185 @@ describe('user-vocabulary.router', () => {
 
       expect((await addItem()).status).toBe(201);
       expect((await addItem()).status).toBe(409);
+    });
+  });
+
+  describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/generate', () => {
+    let generateSpy: MockInstance<typeof vocabularyItemGenerationService.generateVocabularyItemData>;
+
+    beforeEach(() => {
+      generateSpy = vi
+        .spyOn(vocabularyItemGenerationService, 'generateVocabularyItemData')
+        .mockImplementation(async ({ value }) => ({
+          output: {
+            value,
+            definition: `definition of ${value}`,
+            uaTranslation: `переклад ${value}`,
+            partOfSpeech: PartOfSpeech.Noun,
+            spelling: `/${value}/`,
+          },
+          cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+        }));
+    });
+
+    afterEach(() => {
+      generateSpy.mockRestore();
+    });
+
+    it("returns 201, persists the generated word, and links it to the user's personal list", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { value: 'run', context: 'a jog' },
+      });
+      expect(res.status).toBe(201);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: {
+          status: LearningStatus.Learning,
+          vocabularyItem: { value: 'run', definition: 'definition of run', partOfSpeech: PartOfSpeech.Noun },
+        },
+      });
+
+      const items = await db.query.vocabularyItem.findMany({ where: eq(vocabularyItem.value, 'run') });
+      expect(items).toHaveLength(1);
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: EventType.VocabularyItemGenerated,
+          costInNanoDollars: 1_000_000,
+          inputTokens: 100,
+          outputTokens: 200,
+        }),
+      ]);
+    });
+
+    it('returns 409 and still records the event when the generated word already exists', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await createMissingVocabularyItems([
+        {
+          value: 'run',
+          definition: 'existing definition',
+          uaTranslation: 'existing translation',
+          partOfSpeech: PartOfSpeech.Noun,
+          spelling: '/run/',
+        },
+      ]);
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { value: 'run' },
+      });
+      expect(res.status).toBe(409);
+
+      const items = await db.query.vocabularyItem.findMany({ where: eq(vocabularyItem.value, 'run') });
+      expect(items).toHaveLength(1);
+      const [item] = items;
+      if (!item) throw new Error('expected the pre-seeded item to still exist');
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toHaveLength(1);
+
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('returns 403 when the target list is not personal, without calling the AI or persisting anything', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: userList.id },
+        json: { value: 'sprint' },
+      });
+      expect(res.status).toBe(403);
+      expect(generateSpy).not.toHaveBeenCalled();
+
+      const items = await db.query.vocabularyItem.findMany({ where: eq(vocabularyItem.value, 'sprint') });
+      expect(items).toHaveLength(0);
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toHaveLength(0);
+    });
+
+    it('returns 404 for a non-existent list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        json: { value: 'run' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 400 when value is missing', async () => {
+      auth.authorized();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        json: {} as never,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        json: { value: 'run' },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 429 Too Many Requests after 20 requests within the rate-limit window', async () => {
+      const rateLimitedUserId = 'user-generate-rate-limit';
+      auth.authorized({ user: { id: rateLimitedUserId } });
+      await db
+        .insert(user)
+        .values({ id: rateLimitedUserId, name: 'E2E User', email: `${rateLimitedUserId}@example.com` });
+      const personalList = await createPersonalVocabularyListForUser(rateLimitedUserId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: rateLimitedUserId,
+        vocabularyListId: personalList.id,
+      });
+
+      for (let i = 0; i < 20; i++) {
+        const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+          param: { userVocabularyListId: userVocabularyList.id },
+          json: { value: `run${i}` },
+        });
+        expect(res.status).toBe(201);
+      }
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { value: 'run20' },
+      });
+      expect(res.status).toBe(429);
+
+      const body = (await res.json()) as unknown as ErrorResponse;
+      expect(body.error.code).toBe('TOO_MANY_REQUESTS');
     });
   });
 

@@ -16,6 +16,15 @@ export const createVocabularyListItemsIfNotExist = async (
     .onConflictDoNothing({ target: [vocabularyListItem.vocabularyListId, vocabularyListItem.vocabularyItemId] });
 };
 
+export const createVocabularyListItem = async (
+  values: typeof vocabularyListItem.$inferInsert,
+  tx: Transaction = db,
+) => {
+  const [created] = await tx.insert(vocabularyListItem).values(values).returning();
+
+  return created;
+};
+
 export const createVocabularyListItemIfNotExist = async (
   values: typeof vocabularyListItem.$inferInsert,
   tx: Transaction = db,

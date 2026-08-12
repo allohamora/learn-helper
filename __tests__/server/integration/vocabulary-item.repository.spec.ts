@@ -5,6 +5,7 @@ import { db } from '@/server/db/db.service';
 import { vocabularyItem } from '@/server/db/db.schema';
 import {
   createMissingVocabularyItems,
+  createVocabularyItemIfNotExist,
   searchVocabularyItemsForList,
   updateVocabularyItemTranslation,
 } from '@/server/vocabulary/vocabulary-item.repository';
@@ -48,6 +49,34 @@ describe('vocabularyItemRepository', () => {
       const items = await createMissingVocabularyItems([phrase]);
 
       expect(items).toHaveLength(0);
+      expect(await countItems(vocabularyItem)).toBe(1);
+    });
+  });
+
+  describe('createVocabularyItemIfNotExist', () => {
+    it('inserts and returns the item when new', async () => {
+      const item = await createVocabularyItemIfNotExist(buildItem());
+
+      expect(item?.value).toBe('run');
+      expect(await countItems(vocabularyItem)).toBe(1);
+    });
+
+    it('returns undefined when an item with the same value and part of speech already exists', async () => {
+      await createVocabularyItemIfNotExist(buildItem());
+
+      const item = await createVocabularyItemIfNotExist(buildItem());
+
+      expect(item).toBeUndefined();
+      expect(await countItems(vocabularyItem)).toBe(1);
+    });
+
+    it('treats items with the same value and no part of speech as duplicates (NULLS NOT DISTINCT)', async () => {
+      const phrase = buildItem({ value: 'a few', partOfSpeech: undefined });
+      await createVocabularyItemIfNotExist(phrase);
+
+      const item = await createVocabularyItemIfNotExist(phrase);
+
+      expect(item).toBeUndefined();
       expect(await countItems(vocabularyItem)).toBe(1);
     });
   });

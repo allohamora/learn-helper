@@ -24,6 +24,7 @@ import { userAvailableVocabularyListDto } from './dtos/user-available-vocabulary
 import { discoverUserVocabularyItemDto } from './dtos/discover-user-vocabulary-item.dto';
 import { updateUserVocabularyItemTranslationDto } from './dtos/update-user-vocabulary-item-translation.dto';
 import { createVocabularyListLearnEventsDto } from './dtos/create-vocabulary-list-learn-events.dto';
+import { generateVocabularyItemDto } from '../vocabulary/dtos/generate-vocabulary-item.dto';
 import {
   getUserVocabularyListItems,
   getUserVocabularyListLearnItems,
@@ -38,6 +39,7 @@ import {
 import {
   addVocabularyItemToPersonalList,
   addVocabularyListToUser,
+  generateVocabularyItem,
   getUserVocabularyListWithRelationsOrThrow,
   searchPersonalVocabularyListItems,
 } from './user-vocabulary-list.service';
@@ -195,6 +197,49 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 201,
           data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items/generate',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: generateVocabularyItemDto,
+            },
+          },
+        },
+      },
+      responses: {
+        ...successCreatedResponse({
+          description:
+            "The AI-generated word, persisted and linked to the user's personal list, with the user's progress on it",
+          schema: userVocabularyItemWithRelationsDto,
+        }),
+        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
+        ...errorConflictResponse({
+          description: 'A vocabulary item with the generated value and part of speech already exists',
+        }),
+        ...errorNotFoundResponse({ description: 'The list was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware, rateLimit({ count: 20, durationSec: 60 })] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 201,
+          data: await generateVocabularyItem({ userId: user.id, userVocabularyListId, ...body }),
         }),
       );
     },

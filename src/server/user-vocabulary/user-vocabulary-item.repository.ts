@@ -21,25 +21,22 @@ export const createUserVocabularyItemsFromList = async (
   `);
 };
 
+export const createUserVocabularyItem = async (
+  values: typeof userVocabularyItem.$inferInsert,
+  tx: Transaction = db,
+) => {
+  const [created] = await tx.insert(userVocabularyItem).values(values).returning();
+
+  return created;
+};
+
 export const createUserVocabularyItemIfNotExist = async (
-  {
-    userId,
-    vocabularyItemId,
-    status,
-    encounterCount,
-    enqueuedAt,
-  }: {
-    userId: string;
-    vocabularyItemId: string;
-    status: LearningStatus;
-    encounterCount: number;
-    enqueuedAt: Date | null;
-  },
+  values: typeof userVocabularyItem.$inferInsert,
   tx: Transaction = db,
 ) => {
   const [created] = await tx
     .insert(userVocabularyItem)
-    .values({ userId, vocabularyItemId, status, encounterCount, enqueuedAt })
+    .values(values)
     .onConflictDoNothing({ target: [userVocabularyItem.userId, userVocabularyItem.vocabularyItemId] })
     .returning();
 
