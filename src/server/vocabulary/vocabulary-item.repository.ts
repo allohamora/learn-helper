@@ -1,11 +1,11 @@
 import '@tanstack/react-start/server-only';
-import { and, asc, count, eq, gte, ilike } from 'drizzle-orm';
+import { and, asc, count, eq, getTableColumns, gte, ilike } from 'drizzle-orm';
 import { RequestType } from '@/const/request';
-import { vocabularyItem } from '../db/db.schema';
+import { vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import { escapeLikePattern } from '../db/db.utils';
 import type { Transaction } from '../db/db.types';
-import type { VocabularyItemFilterDto } from './dtos/vocabulary-item-filter.dto';
+import type { PersonalVocabularyItemSearchFilterDto } from '../user-vocabulary/dtos/personal-vocabulary-item-search-filter.dto';
 
 export const getVocabularyItemById = async (vocabularyItemId: string, tx: Transaction = db) => {
   return tx.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, vocabularyItemId) });
@@ -29,19 +29,27 @@ export const updateVocabularyItemTranslation = async (
   await tx.update(vocabularyItem).set({ uaTranslation }).where(eq(vocabularyItem.id, vocabularyItemId));
 };
 
-export const searchVocabularyItems = async ({
+export const searchVocabularyItemsForList = async ({
+  vocabularyListId,
   value,
   cursor,
   limit = 50,
   type = RequestType.All,
-}: VocabularyItemFilterDto) => {
+}: { vocabularyListId: string } & PersonalVocabularyItemSearchFilterDto) => {
   const searchFilter = ilike(vocabularyItem.value, `%${escapeLikePattern(value)}%`);
   const cursorFilter = cursor ? gte(vocabularyItem.id, cursor) : undefined;
 
   const getItems = async () => {
     const items = await db
-      .select()
+      .select({ ...getTableColumns(vocabularyItem), vocabularyListItem })
       .from(vocabularyItem)
+      .leftJoin(
+        vocabularyListItem,
+        and(
+          eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id),
+          eq(vocabularyListItem.vocabularyListId, vocabularyListId),
+        ),
+      )
       .where(and(searchFilter, cursorFilter))
       .orderBy(asc(vocabularyItem.id))
       .limit(limit + 1);

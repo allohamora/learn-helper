@@ -28,7 +28,9 @@ import {
   createVocabularyListItemIfNotExist,
   getVocabularyListItem,
 } from '../vocabulary/vocabulary-list-item.repository';
+import { searchVocabularyItemsForList } from '../vocabulary/vocabulary-item.repository';
 import { getUserForUpdateOrThrow } from '../user/user.service';
+import type { PersonalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
 
 export const addVocabularyListToUser = async ({
   userId,
@@ -157,6 +159,23 @@ export const addVocabularyItemToPersonalList = async ({
 
     return userItem;
   });
+};
+
+export const searchPersonalVocabularyListItems = async ({
+  userId,
+  userVocabularyListId,
+  ...filter
+}: { userId: string; userVocabularyListId: string } & PersonalVocabularyItemSearchFilterDto) => {
+  const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId });
+
+  if (vocabularyList.type !== VocabularyListType.Personal) {
+    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" is not a personal list`);
+  }
+  if (vocabularyList.ownerId !== userId) {
+    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" does not belong to the user`);
+  }
+
+  return searchVocabularyItemsForList({ vocabularyListId: vocabularyList.id, ...filter });
 };
 
 export const createPersonalVocabularyListForUser = async (userId: string) => {

@@ -14,6 +14,8 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
+import { personalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
+import { personalVocabularyItemSearchResultDto } from './dtos/personal-vocabulary-item-search-result.dto';
 import { userVocabularyItemWithRelationsDto } from './dtos/user-vocabulary-item-with-relations.dto';
 import { userVocabularyListLearnTasksDto } from './dtos/user-vocabulary-item-task.dto';
 import { userVocabularyListProgressDto } from './dtos/user-vocabulary-list-progress.dto';
@@ -37,6 +39,7 @@ import {
   addVocabularyItemToPersonalList,
   addVocabularyListToUser,
   getUserVocabularyListWithRelationsOrThrow,
+  searchPersonalVocabularyListItems,
 } from './user-vocabulary-list.service';
 import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
 
@@ -192,6 +195,39 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 201,
           data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{userVocabularyListId}/search',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+        query: personalVocabularyItemSearchFilterDto,
+      },
+      responses: {
+        ...successPaginatedResponse({
+          description: "Vocabulary items matching the search value, with the personal list's join state",
+          schema: personalVocabularyItemSearchResultDto,
+        }),
+        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
+        ...errorNotFoundResponse({ description: 'The list was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+      const query = c.req.valid('query');
+
+      return c.json(
+        ...toPaginatedResponse({
+          status: 200,
+          data: await searchPersonalVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
         }),
       );
     },
