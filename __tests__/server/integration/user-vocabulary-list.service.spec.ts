@@ -5,9 +5,13 @@ import { db } from '@/server/db/db.service';
 import { user, userVocabularyItem, userVocabularyList } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
-import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
+import {
+  createVocabularyListItemsIfNotExist,
+  getVocabularyListItem,
+} from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import {
+  addVocabularyItemToPersonalList,
   addVocabularyListToUser,
   createPersonalVocabularyListForUser,
   getUserVocabularyListOrThrow,
@@ -94,6 +98,121 @@ describe('userVocabularyListService', () => {
       await expect(
         addVocabularyListToUser({ userId, vocabularyListId: '00000000-0000-0000-0000-000000000000' }),
       ).rejects.toThrow(Exception);
+    });
+  });
+
+  describe('addVocabularyItemToPersonalList', () => {
+    it('links the word to the list and creates a waiting progress row', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run', 'walk']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+
+      const userItem = await addVocabularyItemToPersonalList({
+        userId,
+        vocabularyListId: personalList.id,
+        vocabularyItemId: item.id,
+      });
+
+      expect(userItem).toMatchObject({
+        vocabularyItemId: item.id,
+        status: LearningStatus.Waiting,
+        vocabularyItem: { id: item.id },
+      });
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).resolves.toBeDefined();
+    });
+
+    it('throws a conflict when the word is already in the list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+
+      await addVocabularyItemToPersonalList({ userId, vocabularyListId: personalList.id, vocabularyItemId: item.id });
+
+      await expect(
+        addVocabularyItemToPersonalList({ userId, vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws forbidden when the list is not personal', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list, items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+
+      await expect(
+        addVocabularyItemToPersonalList({ userId, vocabularyListId: list.id, vocabularyItemId: item.id }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws forbidden when the list belongs to another user', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const otherPersonalList = await createPersonalVocabularyListForUser(otherUserId);
+
+      await expect(
+        addVocabularyItemToPersonalList({
+          userId,
+          vocabularyListId: otherPersonalList.id,
+          vocabularyItemId: item.id,
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found for a non-existent list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+
+      await expect(
+        addVocabularyItemToPersonalList({
+          userId,
+          vocabularyListId: '00000000-0000-0000-0000-000000000000',
+          vocabularyItemId: item.id,
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found for a non-existent item', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+
+      await expect(
+        addVocabularyItemToPersonalList({
+          userId,
+          vocabularyListId: personalList.id,
+          vocabularyItemId: '00000000-0000-0000-0000-000000000000',
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('does not reset the status of an item already tracked from another list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      await db
+        .insert(userVocabularyItem)
+        .values({ userId, vocabularyItemId: item.id, status: LearningStatus.Learned, encounterCount: 3 });
+      const personalList = await createPersonalVocabularyListForUser(userId);
+
+      const userItem = await addVocabularyItemToPersonalList({
+        userId,
+        vocabularyListId: personalList.id,
+        vocabularyItemId: item.id,
+      });
+
+      expect(userItem.status).toBe(LearningStatus.Learned);
+      expect(await countItems(userVocabularyItem)).toBe(1);
     });
   });
 

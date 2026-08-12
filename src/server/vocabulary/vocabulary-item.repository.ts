@@ -7,6 +7,10 @@ import { escapeLikePattern } from '../db/db.utils';
 import type { Transaction } from '../db/db.types';
 import type { VocabularyItemFilterDto } from './dtos/vocabulary-item-filter.dto';
 
+export const getVocabularyItemById = async (vocabularyItemId: string, tx: Transaction = db) => {
+  return tx.query.vocabularyItem.findFirst({ where: eq(vocabularyItem.id, vocabularyItemId) });
+};
+
 // inserts rows not already present (matched by value + partOfSpeech); returns only the newly inserted rows
 export const createMissingVocabularyItems = async (values: (typeof vocabularyItem.$inferInsert)[]) => {
   if (values.length === 0) return [];

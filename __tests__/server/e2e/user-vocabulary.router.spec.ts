@@ -7,7 +7,10 @@ import { db } from '@/server/db/db.service';
 import { event, user, userVocabularyItem, vocabularyItem } from '@/server/db/db.schema';
 import { countItems } from '@/server/db/db.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
-import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
+import {
+  createVocabularyListItemsIfNotExist,
+  getVocabularyListItem,
+} from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { createPersonalVocabularyListForUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
@@ -133,6 +136,114 @@ describe('user-vocabulary.router', () => {
         json: { vocabularyListId: '00000000-0000-7000-8000-000000000000' },
       });
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('POST /api/v1/users/me/vocabulary-lists/items', () => {
+    it("returns 201 and links the word to the user's personal list", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
+        json: { vocabularyListId: personalList.id, vocabularyItemId: item.id },
+      });
+      expect(res.status).toBe(201);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: { vocabularyItemId: item.id, status: LearningStatus.Waiting, vocabularyItem: { id: item.id } },
+      });
+
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).resolves.toBeDefined();
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
+        json: { vocabularyListId: '00000000-0000-7000-8000-000000000000', vocabularyItemId: item.id },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 for a non-existent list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
+        json: { vocabularyListId: '00000000-0000-7000-8000-000000000000', vocabularyItemId: item.id },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for a non-existent item', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
+        json: { vocabularyListId: personalList.id, vocabularyItemId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 403 when the target list is not personal', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list, items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
+        json: { vocabularyListId: list.id, vocabularyItemId: item.id },
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 when the target personal list belongs to another user', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const OTHER_USER_ID = 'e2e-other-user';
+      await db.insert(user).values({ id: OTHER_USER_ID, name: 'Other User', email: `${OTHER_USER_ID}@example.com` });
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+      const otherPersonalList = await createPersonalVocabularyListForUser(OTHER_USER_ID);
+
+      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
+        json: { vocabularyListId: otherPersonalList.id, vocabularyItemId: item.id },
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 409 when the word is already in the personal list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+
+      const addItem = () =>
+        client.api.v1.users.me['vocabulary-lists'].items.$post({
+          json: { vocabularyListId: personalList.id, vocabularyItemId: item.id },
+        });
+
+      expect((await addItem()).status).toBe(201);
+      expect((await addItem()).status).toBe(409);
     });
   });
 

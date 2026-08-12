@@ -1,19 +1,29 @@
 import '@tanstack/react-start/server-only';
+import { VocabularyListType } from '@/const/vocabulary';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import { Exception } from '../utils/exception.utils';
-import { createUserVocabularyItemsFromList } from './user-vocabulary-item.repository';
+import {
+  createUserVocabularyItemIfNotExist,
+  createUserVocabularyItemsFromList,
+  getUserVocabularyItemWithRelationsByVocabularyItemId,
+} from './user-vocabulary-item.repository';
 import {
   createUserVocabularyList,
   getUserVocabularyListById,
   getUserVocabularyListByVocabularyListId,
   getUserVocabularyListWithRelations,
 } from './user-vocabulary-list.repository';
+import { getVocabularyItemByIdOrThrow } from '../vocabulary/vocabulary-item.service';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 import {
   createPersonalVocabularyList,
   getPersonalVocabularyListByOwnerId,
 } from '../vocabulary/vocabulary-list.repository';
+import {
+  createVocabularyListItemsIfNotExist,
+  getVocabularyListItem,
+} from '../vocabulary/vocabulary-list-item.repository';
 import { getUserForUpdateOrThrow } from '../user/user.service';
 
 export const addVocabularyListToUser = async ({
@@ -36,6 +46,43 @@ export const addVocabularyListToUser = async ({
     ]);
 
     return { ...created, vocabularyList };
+  });
+};
+
+export const addVocabularyItemToPersonalList = async ({
+  userId,
+  vocabularyListId,
+  vocabularyItemId,
+}: {
+  userId: string;
+  vocabularyListId: string;
+  vocabularyItemId: string;
+}) => {
+  return db.transaction(async (tx) => {
+    const [list] = await Promise.all([
+      getVocabularyListByIdOrThrow(vocabularyListId, tx),
+      getVocabularyItemByIdOrThrow(vocabularyItemId, tx),
+    ]);
+
+    if (list.type !== VocabularyListType.Personal) {
+      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" is not a personal list`);
+    }
+    if (list.ownerId !== userId) {
+      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
+    }
+
+    const existingListItem = await getVocabularyListItem({ vocabularyListId, vocabularyItemId }, tx);
+    if (existingListItem) {
+      throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
+    }
+
+    await createVocabularyListItemsIfNotExist([{ vocabularyListId, vocabularyItemId }], tx);
+    await createUserVocabularyItemIfNotExist({ userId, vocabularyItemId }, tx);
+
+    const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
+    if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);
+
+    return userItem;
   });
 };
 

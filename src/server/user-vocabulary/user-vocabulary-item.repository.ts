@@ -21,6 +21,26 @@ export const createUserVocabularyItemsFromList = async (
   `);
 };
 
+export const createUserVocabularyItemIfNotExist = async (
+  { userId, vocabularyItemId }: { userId: string; vocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  await tx
+    .insert(userVocabularyItem)
+    .values({ userId, vocabularyItemId })
+    .onConflictDoNothing({ target: [userVocabularyItem.userId, userVocabularyItem.vocabularyItemId] });
+};
+
+export const getUserVocabularyItemWithRelationsByVocabularyItemId = async (
+  { userId, vocabularyItemId }: { userId: string; vocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.userVocabularyItem.findFirst({
+    where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.vocabularyItemId, vocabularyItemId)),
+    with: { vocabularyItem: true },
+  });
+};
+
 export const getUserVocabularyItemById = async (
   { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,
