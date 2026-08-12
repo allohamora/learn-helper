@@ -286,6 +286,166 @@ describe('user-vocabulary.router', () => {
     });
   });
 
+  describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId/search', () => {
+    it('returns 200 with matches not yet on the list marked as null', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await seedList(['Run', 'running', 'jump']);
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userVocabularyList.id },
+        query: { value: 'run' },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: [
+          { value: 'Run', vocabularyListItem: null },
+          { value: 'running', vocabularyListItem: null },
+        ],
+        pageInfo: { total: 2, count: 2 },
+      });
+    });
+
+    it('returns 200 with an already-added word carrying its list item', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { items } = await seedList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+      await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { vocabularyItemId: item.id },
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userVocabularyList.id },
+        query: { value: 'run' },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: [{ value: 'run', vocabularyListItem: { vocabularyListId: personalList.id, vocabularyItemId: item.id } }],
+      });
+    });
+
+    it('paginates items across pages honoring limit and cursor', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await seedList(['run1', 'run2', 'run3']);
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+
+      const firstRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userVocabularyList.id },
+        query: { value: 'run', limit: '2' },
+      });
+      expect(firstRes.status).toBe(200);
+      if (!firstRes.ok) throw new Error('expected a successful response');
+      const firstBody = await firstRes.json();
+      expect(firstBody.data).toHaveLength(2);
+      expect(firstBody.pageInfo).toMatchObject({ total: 3, count: 2 });
+      expect(firstBody.pageInfo.nextCursor).toEqual(expect.any(String));
+
+      const secondRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userVocabularyList.id },
+        query: { value: 'run', limit: '2', cursor: firstBody.pageInfo.nextCursor },
+      });
+      expect(secondRes.status).toBe(200);
+      if (!secondRes.ok) throw new Error('expected a successful response');
+      const secondBody = await secondRes.json();
+      expect(secondBody.data).toHaveLength(1);
+      expect(secondBody.pageInfo).toMatchObject({ total: 3, count: 1 });
+      expect(secondBody.pageInfo.nextCursor).toBeUndefined();
+    });
+
+    it('returns 400 when value is missing', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userVocabularyList.id },
+        query: {} as never,
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        query: { value: 'run' },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 403 when the target list is not personal', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userList.id },
+        query: { value: 'run' },
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 when the target personal list belongs to another user', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const OTHER_USER_ID = 'e2e-other-user';
+      await db.insert(user).values({ id: OTHER_USER_ID, name: 'Other User', email: `${OTHER_USER_ID}@example.com` });
+      const otherPersonalList = await createPersonalVocabularyListForUser(OTHER_USER_ID);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({
+        json: { vocabularyListId: otherPersonalList.id },
+      });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: userList.id },
+        query: { value: 'run' },
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 404 for a non-existent list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        query: { value: 'run' },
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
   describe('GET /api/v1/users/me/vocabulary-lists/:userVocabularyListId', () => {
     it("returns 200 with the user's list and the vocabulary list it points to", async () => {
       auth.authorized({ user: { id: USER_ID } });

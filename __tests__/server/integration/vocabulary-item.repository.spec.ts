@@ -5,9 +5,11 @@ import { db } from '@/server/db/db.service';
 import { vocabularyItem } from '@/server/db/db.schema';
 import {
   createMissingVocabularyItems,
-  searchVocabularyItems,
+  searchVocabularyItemsForList,
   updateVocabularyItemTranslation,
 } from '@/server/vocabulary/vocabulary-item.repository';
+import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
+import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { PartOfSpeech } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 
@@ -62,37 +64,45 @@ describe('vocabularyItemRepository', () => {
     });
   });
 
-  describe('searchVocabularyItems', () => {
+  describe('searchVocabularyItemsForList', () => {
     it('matches values case-insensitively via ILIKE', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'Run' }), buildItem({ value: 'walk' })]);
 
-      const result = await searchVocabularyItems({ value: 'run' });
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
 
       expect(result.items.map((item) => item.value)).toEqual(['Run']);
       expect(result.total).toBe(1);
     });
 
     it('returns an empty list and total 0 when nothing matches', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' })]);
 
-      const result = await searchVocabularyItems({ value: 'xyz' });
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'xyz' });
 
       expect(result.items).toEqual([]);
       expect(result.total).toBe(0);
     });
 
     it('paginates with a cursor and returns nextCursor when more items remain', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([
         buildItem({ value: 'run1' }),
         buildItem({ value: 'run2' }),
         buildItem({ value: 'run3' }),
       ]);
 
-      const firstPage = await searchVocabularyItems({ value: 'run', limit: 2 });
+      const firstPage = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run', limit: 2 });
       expect(firstPage.items).toHaveLength(2);
       expect(firstPage.nextCursor).toBeDefined();
 
-      const secondPage = await searchVocabularyItems({ value: 'run', limit: 2, cursor: firstPage.nextCursor });
+      const secondPage = await searchVocabularyItemsForList({
+        vocabularyListId: list.id,
+        value: 'run',
+        limit: 2,
+        cursor: firstPage.nextCursor,
+      });
       expect(secondPage.items).toHaveLength(1);
       expect(secondPage.nextCursor).toBeUndefined();
 
@@ -101,36 +111,81 @@ describe('vocabularyItemRepository', () => {
     });
 
     it('skips the total count query and returns total: 0 when type is Data', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' })]);
 
-      const result = await searchVocabularyItems({ value: 'run', type: RequestType.Data });
+      const result = await searchVocabularyItemsForList({
+        vocabularyListId: list.id,
+        value: 'run',
+        type: RequestType.Data,
+      });
 
       expect(result.items).toHaveLength(1);
       expect(result.total).toBe(0);
     });
 
     it('matches a literal % instead of treating it as a wildcard', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: '100%' }), buildItem({ value: '100' })]);
 
-      const result = await searchVocabularyItems({ value: '100%' });
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: '100%' });
 
       expect(result.items.map((item) => item.value)).toEqual(['100%']);
     });
 
     it('matches a literal _ instead of treating it as a single-character wildcard', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'foo_bar' }), buildItem({ value: 'fooxbar' })]);
 
-      const result = await searchVocabularyItems({ value: 'foo_bar' });
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'foo_bar' });
 
       expect(result.items.map((item) => item.value)).toEqual(['foo_bar']);
     });
 
     it('matches a literal backslash', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'a\\b' }), buildItem({ value: 'ab' })]);
 
-      const result = await searchVocabularyItems({ value: 'a\\b' });
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'a\\b' });
 
       expect(result.items.map((item) => item.value)).toEqual(['a\\b']);
+    });
+
+    it('marks a matched item as null when it is not on the list', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+
+      expect(result.items).toEqual([expect.objectContaining({ value: 'run', vocabularyListItem: null })]);
+    });
+
+    it('joins the list item when the matched item is on the list', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const [item] = await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+      if (!item) throw new Error('expected item to be created');
+      await createVocabularyListItemsIfNotExist([{ vocabularyListId: list.id, vocabularyItemId: item.id }]);
+
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          value: 'run',
+          vocabularyListItem: expect.objectContaining({ vocabularyListId: list.id, vocabularyItemId: item.id }),
+        }),
+      ]);
+    });
+
+    it('scopes the join to the given list, leaving items on other lists null', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const otherList = await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
+      const [item] = await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+      if (!item) throw new Error('expected item to be created');
+      await createVocabularyListItemsIfNotExist([{ vocabularyListId: otherList.id, vocabularyItemId: item.id }]);
+
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+
+      expect(result.items).toEqual([expect.objectContaining({ value: 'run', vocabularyListItem: null })]);
     });
   });
 });
