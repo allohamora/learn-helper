@@ -13,6 +13,7 @@ import {
 } from '@/server/vocabulary/vocabulary-list-item.repository';
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { createPersonalVocabularyListForUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
+import { getUserVocabularyListByVocabularyListId } from '@/server/user-vocabulary/user-vocabulary-list.repository';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import type { ErrorResponse } from '@/server/utils/response.utils';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
@@ -35,6 +36,19 @@ const seedList = async (values: string[] = ['run'], title = 'Oxford 5000 A1') =>
   );
 
   return { list, items };
+};
+
+const getUserVocabularyListByVocabularyListIdOrThrow = async ({
+  userId,
+  vocabularyListId,
+}: {
+  userId: string;
+  vocabularyListId: string;
+}) => {
+  const userVocabularyList = await getUserVocabularyListByVocabularyListId({ userId, vocabularyListId });
+  if (!userVocabularyList) throw new Error('expected a user vocabulary list');
+
+  return userVocabularyList;
 };
 
 describe('user-vocabulary.router', () => {
@@ -139,7 +153,7 @@ describe('user-vocabulary.router', () => {
     });
   });
 
-  describe('POST /api/v1/users/me/vocabulary-lists/items', () => {
+  describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items', () => {
     it("returns 201 and links the word to the user's personal list", async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
@@ -147,9 +161,14 @@ describe('user-vocabulary.router', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item to be created');
       const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
-        json: { vocabularyListId: personalList.id, vocabularyItemId: item.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { vocabularyItemId: item.id },
       });
       expect(res.status).toBe(201);
 
@@ -170,8 +189,9 @@ describe('user-vocabulary.router', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item to be created');
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
-        json: { vocabularyListId: '00000000-0000-7000-8000-000000000000', vocabularyItemId: item.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        json: { vocabularyItemId: item.id },
       });
       expect(res.status).toBe(401);
     });
@@ -183,8 +203,9 @@ describe('user-vocabulary.router', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item to be created');
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
-        json: { vocabularyListId: '00000000-0000-7000-8000-000000000000', vocabularyItemId: item.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: '00000000-0000-7000-8000-000000000000' },
+        json: { vocabularyItemId: item.id },
       });
       expect(res.status).toBe(404);
     });
@@ -193,9 +214,14 @@ describe('user-vocabulary.router', () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
-        json: { vocabularyListId: personalList.id, vocabularyItemId: '00000000-0000-7000-8000-000000000000' },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { vocabularyItemId: '00000000-0000-7000-8000-000000000000' },
       });
       expect(res.status).toBe(404);
     });
@@ -206,9 +232,12 @@ describe('user-vocabulary.router', () => {
       const { list, items } = await seedList();
       const [item] = items;
       if (!item) throw new Error('expected an item to be created');
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
-        json: { vocabularyListId: list.id, vocabularyItemId: item.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userList.id },
+        json: { vocabularyItemId: item.id },
       });
       expect(res.status).toBe(403);
     });
@@ -222,9 +251,14 @@ describe('user-vocabulary.router', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item to be created');
       const otherPersonalList = await createPersonalVocabularyListForUser(OTHER_USER_ID);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({
+        json: { vocabularyListId: otherPersonalList.id },
+      });
+      const { data: userList } = await postRes.json();
 
-      const res = await client.api.v1.users.me['vocabulary-lists'].items.$post({
-        json: { vocabularyListId: otherPersonalList.id, vocabularyItemId: item.id },
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userList.id },
+        json: { vocabularyItemId: item.id },
       });
       expect(res.status).toBe(403);
     });
@@ -236,10 +270,15 @@ describe('user-vocabulary.router', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item to be created');
       const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
 
       const addItem = () =>
-        client.api.v1.users.me['vocabulary-lists'].items.$post({
-          json: { vocabularyListId: personalList.id, vocabularyItemId: item.id },
+        client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+          param: { userVocabularyListId: userVocabularyList.id },
+          json: { vocabularyItemId: item.id },
         });
 
       expect((await addItem()).status).toBe(201);

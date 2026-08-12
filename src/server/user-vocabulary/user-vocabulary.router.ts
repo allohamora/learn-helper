@@ -97,43 +97,6 @@ export const userVocabularyRouter = new OpenAPIHono()
   )
   .openapi(
     createRoute({
-      method: 'post',
-      path: '/items',
-      tags: ['Vocabulary'],
-      request: {
-        body: {
-          content: {
-            'application/json': {
-              schema: z.object({ vocabularyListId: z.uuidv7(), vocabularyItemId: z.uuidv7() }),
-            },
-          },
-        },
-      },
-      responses: {
-        ...successCreatedResponse({
-          description: "The word linked to the user's personal list, with the user's progress on it",
-          schema: userVocabularyItemWithRelationsDto,
-        }),
-        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
-        ...errorConflictResponse({ description: 'The word is already in the list' }),
-      },
-      security: [{ cookieAuth: [] }],
-      middleware: [authMiddleware] as const,
-    }),
-    async (c) => {
-      const user = c.get('user');
-      const { vocabularyListId, vocabularyItemId } = c.req.valid('json');
-
-      return c.json(
-        ...toSuccessResponse({
-          status: 201,
-          data: await addVocabularyItemToPersonalList({ userId: user.id, vocabularyListId, vocabularyItemId }),
-        }),
-      );
-    },
-  )
-  .openapi(
-    createRoute({
       method: 'get',
       path: '/{userVocabularyListId}',
       tags: ['Vocabulary'],
@@ -188,6 +151,45 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toPaginatedResponse({
           status: 200,
           data: await getUserVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: z.object({ vocabularyItemId: z.uuidv7() }),
+            },
+          },
+        },
+      },
+      responses: {
+        ...successCreatedResponse({
+          description: "The word linked to the user's personal list, with the user's progress on it",
+          schema: userVocabularyItemWithRelationsDto,
+        }),
+        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
+        ...errorConflictResponse({ description: 'The word is already in the list' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+      const { vocabularyItemId } = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 201,
+          data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
         }),
       );
     },

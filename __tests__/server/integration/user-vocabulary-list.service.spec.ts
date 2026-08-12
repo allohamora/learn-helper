@@ -49,6 +49,19 @@ const createTestList = async (values: string[]) => {
   return { list, items };
 };
 
+const getUserVocabularyListByVocabularyListIdOrThrow = async ({
+  userId,
+  vocabularyListId,
+}: {
+  userId: string;
+  vocabularyListId: string;
+}) => {
+  const userVocabularyList = await getUserVocabularyListByVocabularyListId({ userId, vocabularyListId });
+  if (!userVocabularyList) throw new Error('expected a user vocabulary list');
+
+  return userVocabularyList;
+};
+
 describe('userVocabularyListService', () => {
   describe('addVocabularyListToUser', () => {
     it('creates a waiting progress row for every item in the list', async () => {
@@ -108,10 +121,14 @@ describe('userVocabularyListService', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item');
       const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
 
       const userItem = await addVocabularyItemToPersonalList({
         userId,
-        vocabularyListId: personalList.id,
+        userVocabularyListId: userVocabularyList.id,
         vocabularyItemId: item.id,
       });
 
@@ -131,11 +148,23 @@ describe('userVocabularyListService', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item');
       const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
 
-      await addVocabularyItemToPersonalList({ userId, vocabularyListId: personalList.id, vocabularyItemId: item.id });
+      await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+      });
 
       await expect(
-        addVocabularyItemToPersonalList({ userId, vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+        addVocabularyItemToPersonalList({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          vocabularyItemId: item.id,
+        }),
       ).rejects.toThrow(Exception);
     });
 
@@ -144,9 +173,14 @@ describe('userVocabularyListService', () => {
       const { list, items } = await createTestList(['run']);
       const [item] = items;
       if (!item) throw new Error('expected an item');
+      const userVocabularyList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
 
       await expect(
-        addVocabularyItemToPersonalList({ userId, vocabularyListId: list.id, vocabularyItemId: item.id }),
+        addVocabularyItemToPersonalList({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          vocabularyItemId: item.id,
+        }),
       ).rejects.toThrow(Exception);
     });
 
@@ -157,11 +191,12 @@ describe('userVocabularyListService', () => {
       const [item] = items;
       if (!item) throw new Error('expected an item');
       const otherPersonalList = await createPersonalVocabularyListForUser(otherUserId);
+      const userVocabularyList = await addVocabularyListToUser({ userId, vocabularyListId: otherPersonalList.id });
 
       await expect(
         addVocabularyItemToPersonalList({
           userId,
-          vocabularyListId: otherPersonalList.id,
+          userVocabularyListId: userVocabularyList.id,
           vocabularyItemId: item.id,
         }),
       ).rejects.toThrow(Exception);
@@ -176,7 +211,7 @@ describe('userVocabularyListService', () => {
       await expect(
         addVocabularyItemToPersonalList({
           userId,
-          vocabularyListId: '00000000-0000-0000-0000-000000000000',
+          userVocabularyListId: '00000000-0000-0000-0000-000000000000',
           vocabularyItemId: item.id,
         }),
       ).rejects.toThrow(Exception);
@@ -185,11 +220,15 @@ describe('userVocabularyListService', () => {
     it('throws not found for a non-existent item', async () => {
       const { id: userId } = await createTestUser('user-1');
       const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
 
       await expect(
         addVocabularyItemToPersonalList({
           userId,
-          vocabularyListId: personalList.id,
+          userVocabularyListId: userVocabularyList.id,
           vocabularyItemId: '00000000-0000-0000-0000-000000000000',
         }),
       ).rejects.toThrow(Exception);
@@ -204,10 +243,14 @@ describe('userVocabularyListService', () => {
         .insert(userVocabularyItem)
         .values({ userId, vocabularyItemId: item.id, status: LearningStatus.Learned, encounterCount: 3 });
       const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
 
       const userItem = await addVocabularyItemToPersonalList({
         userId,
-        vocabularyListId: personalList.id,
+        userVocabularyListId: userVocabularyList.id,
         vocabularyItemId: item.id,
       });
 

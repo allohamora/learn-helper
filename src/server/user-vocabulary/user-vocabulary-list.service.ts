@@ -49,25 +49,46 @@ export const addVocabularyListToUser = async ({
   });
 };
 
+export const getUserVocabularyListOrThrow = async (
+  { userId, userVocabularyListId }: { userId: string; userVocabularyListId: string },
+  tx: Transaction = db,
+) => {
+  const userList = await getUserVocabularyListById({ userId, userVocabularyListId }, tx);
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+
+  return userList;
+};
+
+export const getUserVocabularyListWithRelationsOrThrow = async (
+  { userId, userVocabularyListId }: { userId: string; userVocabularyListId: string },
+  tx: Transaction = db,
+) => {
+  const userList = await getUserVocabularyListWithRelations({ userId, userVocabularyListId }, tx);
+  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+
+  return userList;
+};
+
 export const addVocabularyItemToPersonalList = async ({
   userId,
-  vocabularyListId,
+  userVocabularyListId,
   vocabularyItemId,
 }: {
   userId: string;
-  vocabularyListId: string;
+  userVocabularyListId: string;
   vocabularyItemId: string;
 }) => {
   return db.transaction(async (tx) => {
-    const [list] = await Promise.all([
-      getVocabularyListByIdOrThrow(vocabularyListId, tx),
+    const [{ vocabularyList }] = await Promise.all([
+      getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx),
       getVocabularyItemByIdOrThrow(vocabularyItemId, tx),
     ]);
+    const vocabularyListId = vocabularyList.id;
 
-    if (list.type !== VocabularyListType.Personal) {
+    if (vocabularyList.type !== VocabularyListType.Personal) {
       throw Exception.forbidden(`vocabulary list "${vocabularyListId}" is not a personal list`);
     }
-    if (list.ownerId !== userId) {
+    if (vocabularyList.ownerId !== userId) {
       throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
     }
 
@@ -106,27 +127,4 @@ export const createPersonalVocabularyListForUser = async (userId: string) => {
 
     return list;
   });
-};
-
-export const getUserVocabularyListOrThrow = async (
-  { userId, userVocabularyListId }: { userId: string; userVocabularyListId: string },
-  tx: Transaction = db,
-) => {
-  const userList = await getUserVocabularyListById({ userId, userVocabularyListId }, tx);
-  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
-
-  return userList;
-};
-
-export const getUserVocabularyListWithRelationsOrThrow = async ({
-  userId,
-  userVocabularyListId,
-}: {
-  userId: string;
-  userVocabularyListId: string;
-}) => {
-  const userList = await getUserVocabularyListWithRelations({ userId, userVocabularyListId });
-  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
-
-  return userList;
 };
