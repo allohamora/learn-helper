@@ -5,6 +5,7 @@ import { Link, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { appClient } from '@/services/api';
 import { VocabularyListType } from '@/const/vocabulary';
+import { getVocabularyListTitle } from '@/utils/vocabulary';
 
 type Props = {
   id: string;
@@ -30,7 +31,7 @@ export const VocabularyListRow: FC<Props> = ({ id, title, type, userVocabularyLi
     <div className="grid min-h-16 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40 sm:gap-4">
       <div className="min-w-0">
         <h2 className="line-clamp-2 text-sm/5 font-medium text-balance sm:text-base">
-          {type === VocabularyListType.Personal ? 'Personal' : (title ?? 'Untitled')}
+          {getVocabularyListTitle({ type, title })}
         </h2>
       </div>
 

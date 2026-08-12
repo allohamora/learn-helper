@@ -11,6 +11,7 @@ import { Loader } from '@/components/ui/loader';
 import { LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 import { pageHead } from '@/utils/page';
+import { getVocabularyListTitle } from '@/utils/vocabulary';
 
 const vocabularyListSearchSchema = z.object({
   status: z.enum(LearningStatus).optional(),
@@ -29,7 +30,8 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
     const body = await res.json();
     return body.data;
   },
-  head: ({ loaderData }) => pageHead(loaderData?.vocabularyList.title ?? 'Vocabulary List'),
+  head: ({ loaderData }) =>
+    pageHead(loaderData ? getVocabularyListTitle(loaderData.vocabularyList) : 'Vocabulary List'),
   component: VocabularyListPage,
 });
 
@@ -58,7 +60,9 @@ function VocabularyListPage() {
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{userVocabularyList.vocabularyList.title}</h1>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+          {getVocabularyListTitle(userVocabularyList.vocabularyList)}
+        </h1>
 
         <div className="mt-4">
           <VocabularyListProgress userVocabularyListId={userVocabularyListId} />
