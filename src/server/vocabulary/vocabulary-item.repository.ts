@@ -22,6 +22,19 @@ export const createMissingVocabularyItems = async (values: (typeof vocabularyIte
     .returning();
 };
 
+export const createVocabularyItemIfNotExist = async (
+  values: typeof vocabularyItem.$inferInsert,
+  tx: Transaction = db,
+) => {
+  const [created] = await tx
+    .insert(vocabularyItem)
+    .values(values)
+    .onConflictDoNothing({ target: [vocabularyItem.value, vocabularyItem.partOfSpeech] })
+    .returning();
+
+  return created;
+};
+
 export const updateVocabularyItemTranslation = async (
   { vocabularyItemId, uaTranslation }: { vocabularyItemId: string; uaTranslation: string },
   tx: Transaction = db,

@@ -15,7 +15,10 @@ export const getVocabularyItemByIdOrThrow = async (vocabularyItemId: string, tx:
   return item;
 };
 
-export const generateVocabularyItem = async ({ userId, ...data }: GenerateVocabularyItemDto & { userId: string }) => {
+export const generateVocabularyItemContent = async ({
+  userId,
+  ...data
+}: GenerateVocabularyItemDto & { userId: string }) => {
   const { output, cost } = await generateVocabularyItemData(data);
 
   await insertEvent({

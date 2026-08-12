@@ -1,8 +1,9 @@
+import * as vocabularyItemGenerationService from '@/server/vocabulary/vocabulary-item-generation.service';
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { db } from '@/server/db/db.service';
-import { event, user, userVocabularyItem, userVocabularyList } from '@/server/db/db.schema';
+import { event, user, userVocabularyItem, userVocabularyList, vocabularyItem } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import {
@@ -14,6 +15,7 @@ import {
   addVocabularyItemToPersonalList,
   addVocabularyListToUser,
   createPersonalVocabularyListForUser,
+  generateVocabularyItem,
   getUserVocabularyListOrThrow,
   getUserVocabularyListWithRelationsOrThrow,
   searchPersonalVocabularyListItems,
@@ -310,6 +312,113 @@ describe('userVocabularyListService', () => {
         status: LearningStatus.Learning,
         encounterCount: 3,
       });
+    });
+  });
+
+  describe('generateVocabularyItem', () => {
+    let generateSpy: MockInstance<typeof vocabularyItemGenerationService.generateVocabularyItemData>;
+
+    beforeEach(() => {
+      generateSpy = vi
+        .spyOn(vocabularyItemGenerationService, 'generateVocabularyItemData')
+        .mockImplementation(async ({ value }) => ({
+          output: {
+            value,
+            definition: `definition of ${value}`,
+            uaTranslation: `переклад ${value}`,
+            partOfSpeech: PartOfSpeech.Noun,
+            spelling: `/${value}/`,
+          },
+          cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+        }));
+    });
+
+    afterEach(() => {
+      generateSpy.mockRestore();
+    });
+
+    it('persists the generated word and links it to the list with learning progress', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+
+      const userItem = await generateVocabularyItem({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        value: 'run',
+      });
+
+      expect(userItem).toMatchObject({
+        status: LearningStatus.Learning,
+        encounterCount: 0,
+        vocabularyItem: { value: 'run', definition: 'definition of run' },
+      });
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: userItem.vocabularyItemId }),
+      ).resolves.toBeDefined();
+    });
+
+    it('throws a conflict and does not add to the list when the generated word already exists', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const [existingItem] = await createMissingVocabularyItems([
+        {
+          value: 'run',
+          definition: 'existing definition',
+          uaTranslation: 'existing translation',
+          partOfSpeech: PartOfSpeech.Noun,
+          spelling: '/run/',
+        },
+      ]);
+      if (!existingItem) throw new Error('expected item to be created');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+
+      await expect(
+        generateVocabularyItem({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          value: 'run',
+        }),
+      ).rejects.toThrow(Exception);
+
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: existingItem.id }),
+      ).resolves.toBeUndefined();
+    });
+
+    it('throws forbidden when the list is not personal, without calling the AI or persisting anything', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list } = await createTestList([]);
+      const userVocabularyList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(
+        generateVocabularyItem({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          value: 'sprint',
+        }),
+      ).rejects.toThrow(Exception);
+
+      expect(generateSpy).not.toHaveBeenCalled();
+      expect(await countItems(vocabularyItem)).toBe(0);
+    });
+
+    it('throws not found for a non-existent list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      await expect(
+        generateVocabularyItem({
+          userId,
+          userVocabularyListId: '00000000-0000-0000-0000-000000000000',
+          value: 'run',
+        }),
+      ).rejects.toThrow(Exception);
     });
   });
 

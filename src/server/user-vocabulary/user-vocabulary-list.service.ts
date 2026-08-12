@@ -6,6 +6,7 @@ import type { Transaction } from '../db/db.types';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import {
+  createUserVocabularyItem,
   createUserVocabularyItemIfNotExist,
   createUserVocabularyItemsFromList,
   getUserVocabularyItemByVocabularyItemIdForUpdate,
@@ -18,19 +19,21 @@ import {
   getUserVocabularyListByVocabularyListId,
   getUserVocabularyListWithRelations,
 } from './user-vocabulary-list.repository';
-import { getVocabularyItemByIdOrThrow } from '../vocabulary/vocabulary-item.service';
+import { generateVocabularyItemContent, getVocabularyItemByIdOrThrow } from '../vocabulary/vocabulary-item.service';
 import { getVocabularyListByIdOrThrow } from '../vocabulary/vocabulary-list.service';
 import {
   createPersonalVocabularyList,
   getPersonalVocabularyListByOwnerId,
 } from '../vocabulary/vocabulary-list.repository';
 import {
+  createVocabularyListItem,
   createVocabularyListItemIfNotExist,
   getVocabularyListItem,
 } from '../vocabulary/vocabulary-list-item.repository';
-import { searchVocabularyItemsForList } from '../vocabulary/vocabulary-item.repository';
+import { createVocabularyItemIfNotExist, searchVocabularyItemsForList } from '../vocabulary/vocabulary-item.repository';
 import { getUserForUpdateOrThrow } from '../user/user.service';
 import type { PersonalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
+import type { GenerateVocabularyItemDto } from '../vocabulary/dtos/generate-vocabulary-item.dto';
 
 export const addVocabularyListToUser = async ({
   userId,
@@ -75,6 +78,12 @@ export const getUserVocabularyListWithRelationsOrThrow = async (
   return userList;
 };
 
+const newLearningProgress = () => ({
+  status: LearningStatus.Learning,
+  encounterCount: 0,
+  enqueuedAt: new Date(),
+});
+
 const addUserVocabularyItemInLearningStatus = async (
   {
     userId,
@@ -84,7 +93,7 @@ const addUserVocabularyItemInLearningStatus = async (
   tx: Transaction,
 ) => {
   const createdUserItem = await createUserVocabularyItemIfNotExist(
-    { userId, vocabularyItemId, status: LearningStatus.Learning, encounterCount: 0, enqueuedAt: new Date() },
+    { userId, vocabularyItemId, ...newLearningProgress() },
     tx,
   );
   if (createdUserItem) return;
@@ -107,13 +116,7 @@ const addUserVocabularyItemInLearningStatus = async (
       tx,
     ),
     updateUserVocabularyItemProgress(
-      {
-        userId,
-        userVocabularyItemId: existingUserItem.id,
-        status: LearningStatus.Learning,
-        encounterCount: 0,
-        enqueuedAt: new Date(),
-      },
+      { userId, userVocabularyItemId: existingUserItem.id, ...newLearningProgress() },
       tx,
     ),
   ]);
@@ -158,6 +161,40 @@ export const addVocabularyItemToPersonalList = async ({
     if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);
 
     return userItem;
+  });
+};
+
+export const generateVocabularyItem = async ({
+  userId,
+  userVocabularyListId,
+  ...data
+}: GenerateVocabularyItemDto & { userId: string; userVocabularyListId: string }) => {
+  const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId });
+  if (vocabularyList.type !== VocabularyListType.Personal) {
+    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" is not a personal list`);
+  }
+  if (vocabularyList.ownerId !== userId) {
+    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" does not belong to the user`);
+  }
+
+  const output = await generateVocabularyItemContent({ userId, ...data });
+
+  return db.transaction(async (tx) => {
+    const vocabularyItem = await createVocabularyItemIfNotExist(output, tx);
+    if (!vocabularyItem) {
+      throw Exception.conflict(
+        `vocabulary item "${output.value}" (${output.partOfSpeech ?? 'no part of speech'}) already exists`,
+      );
+    }
+
+    await createVocabularyListItem({ vocabularyListId: vocabularyList.id, vocabularyItemId: vocabularyItem.id }, tx);
+
+    const userItem = await createUserVocabularyItem(
+      { userId, vocabularyItemId: vocabularyItem.id, ...newLearningProgress() },
+      tx,
+    );
+
+    return { ...userItem, vocabularyItem };
   });
 };
 
