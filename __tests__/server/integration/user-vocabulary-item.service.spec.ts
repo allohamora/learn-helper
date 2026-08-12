@@ -374,6 +374,40 @@ describe('userVocabularyItemService', () => {
       );
     });
 
+    it('resets status to waiting when there is no discovery event to revert (e.g. programmatically-added items)', async () => {
+      const { userId, userList } = await seedLearnUser({
+        userSuffix: 'undo-no-discovery-event',
+        values: [{ value: 'sprint', encounterCount: 2, offsetSeconds: 0 }],
+      });
+      const userItem = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.userId, userId) });
+      if (!userItem) throw new Error('expected user item to be created');
+
+      const result = await undoUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(result).toMatchObject({
+        id: userItem.id,
+        status: LearningStatus.Waiting,
+        encounterCount: 0,
+        enqueuedAt: null,
+      });
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toMatchObject([
+        {
+          type: EventType.UserVocabularyItemDiscoveryUndone,
+          userId,
+          userVocabularyItemId: userItem.id,
+          userVocabularyListId: userList.id,
+          status: LearningStatus.Learning,
+          encounterCount: 2,
+        },
+      ]);
+    });
+
     it('throws conflict when the item is already waiting', async () => {
       const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'undo-waiting' });
 
