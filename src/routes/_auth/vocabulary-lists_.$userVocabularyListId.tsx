@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { appClient, getIsomorphicAppClient } from '@/services/api';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
+import { AddPersonalVocabularyItemDialog } from '@/components/add-personal-vocabulary-item-dialog';
 import { VocabularyListFilters } from '@/components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '@/components/vocabulary-items-table';
 import { VocabularyListProgress } from '@/components/vocabulary-list-progress';
 import { Loader } from '@/components/ui/loader';
-import { LearningStatus } from '@/const/vocabulary';
+import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 import { pageHead } from '@/utils/page';
 import { getVocabularyListTitle } from '@/utils/vocabulary';
@@ -60,9 +61,14 @@ function VocabularyListPage() {
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-          {getVocabularyListTitle(userVocabularyList.vocabularyList)}
-        </h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+            {getVocabularyListTitle(userVocabularyList.vocabularyList)}
+          </h1>
+          {userVocabularyList.vocabularyList.type === VocabularyListType.Personal && (
+            <AddPersonalVocabularyItemDialog userVocabularyListId={userVocabularyListId} />
+          )}
+        </div>
 
         <div className="mt-4">
           <VocabularyListProgress userVocabularyListId={userVocabularyListId} />

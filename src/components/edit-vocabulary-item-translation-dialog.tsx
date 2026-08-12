@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
+import { formatPartOfSpeech } from '@/utils/vocabulary';
 
 type EditFormProps = {
   value: string;
@@ -43,7 +44,7 @@ const EditForm: FC<EditFormProps> = ({
       <DialogHeader>
         <DialogTitle>
           Edit translation - {value}
-          {partOfSpeech && <span className="text-muted-foreground"> ({partOfSpeech.replace(/-/g, ' ')})</span>}
+          {partOfSpeech && <span className="text-muted-foreground"> ({formatPartOfSpeech(partOfSpeech)})</span>}
         </DialogTitle>
       </DialogHeader>
 
