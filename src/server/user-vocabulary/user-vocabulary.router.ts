@@ -2,6 +2,8 @@ import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
   errorConflictResponse,
+  errorForbiddenResponse,
+  errorNotFoundResponse,
   successCreatedResponse,
   successOkResponse,
   successPaginatedResponse,
@@ -31,7 +33,11 @@ import {
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
-import { addVocabularyListToUser, getUserVocabularyListWithRelationsOrThrow } from './user-vocabulary-list.service';
+import {
+  addVocabularyItemToPersonalList,
+  addVocabularyListToUser,
+  getUserVocabularyListWithRelationsOrThrow,
+} from './user-vocabulary-list.service';
 import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
 
 export const userVocabularyRouter = new OpenAPIHono()
@@ -146,6 +152,46 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toPaginatedResponse({
           status: 200,
           data: await getUserVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: z.object({ vocabularyItemId: z.uuidv7() }),
+            },
+          },
+        },
+      },
+      responses: {
+        ...successCreatedResponse({
+          description: "The word linked to the user's personal list, with the user's progress on it",
+          schema: userVocabularyItemWithRelationsDto,
+        }),
+        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
+        ...errorConflictResponse({ description: 'The word is already in the list' }),
+        ...errorNotFoundResponse({ description: 'The list or word was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId } = c.req.valid('param');
+      const { vocabularyItemId } = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 201,
+          data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
         }),
       );
     },

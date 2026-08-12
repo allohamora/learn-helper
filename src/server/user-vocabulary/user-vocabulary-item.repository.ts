@@ -21,6 +21,41 @@ export const createUserVocabularyItemsFromList = async (
   `);
 };
 
+export const createUserVocabularyItemIfNotExist = async (
+  {
+    userId,
+    vocabularyItemId,
+    status,
+    encounterCount,
+    enqueuedAt,
+  }: {
+    userId: string;
+    vocabularyItemId: string;
+    status: LearningStatus;
+    encounterCount: number;
+    enqueuedAt: Date | null;
+  },
+  tx: Transaction = db,
+) => {
+  const [created] = await tx
+    .insert(userVocabularyItem)
+    .values({ userId, vocabularyItemId, status, encounterCount, enqueuedAt })
+    .onConflictDoNothing({ target: [userVocabularyItem.userId, userVocabularyItem.vocabularyItemId] })
+    .returning();
+
+  return created;
+};
+
+export const getUserVocabularyItemWithRelationsByVocabularyItemId = async (
+  { userId, vocabularyItemId }: { userId: string; vocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.userVocabularyItem.findFirst({
+    where: and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.vocabularyItemId, vocabularyItemId)),
+    with: { vocabularyItem: true },
+  });
+};
+
 export const getUserVocabularyItemById = async (
   { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,
@@ -59,6 +94,20 @@ export const getUserVocabularyItemByIdForUpdate = async (
     .select()
     .from(userVocabularyItem)
     .where(and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)))
+    .for('update');
+
+  return userItem;
+};
+
+// locks the row until the caller's transaction commits/rolls back, mirroring getUserVocabularyItemByIdForUpdate
+export const getUserVocabularyItemByVocabularyItemIdForUpdate = async (
+  { userId, vocabularyItemId }: { userId: string; vocabularyItemId: string },
+  tx: Transaction,
+) => {
+  const [userItem] = await tx
+    .select()
+    .from(userVocabularyItem)
+    .where(and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.vocabularyItemId, vocabularyItemId)))
     .for('update');
 
   return userItem;
