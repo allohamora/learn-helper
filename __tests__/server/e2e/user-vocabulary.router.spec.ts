@@ -175,7 +175,7 @@ describe('user-vocabulary.router', () => {
       const body = await res.json();
       expect(body).toMatchObject({
         success: true,
-        data: { vocabularyItemId: item.id, status: LearningStatus.Waiting, vocabularyItem: { id: item.id } },
+        data: { vocabularyItemId: item.id, status: LearningStatus.Learning, vocabularyItem: { id: item.id } },
       });
 
       await expect(

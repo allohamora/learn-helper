@@ -8,6 +8,7 @@ export enum EventType {
   UserVocabularyItemTaskHintUsed = 'user-vocabulary-item-task-hint-used',
   UserVocabularyItemTaskGenerated = 'user-vocabulary-item-task-generated',
   UserVocabularyItemMovedToNextStep = 'user-vocabulary-item-moved-to-next-step',
+  UserVocabularyItemProgressReset = 'user-vocabulary-item-progress-reset',
   VocabularyItemUpdated = 'vocabulary-item-updated',
   VocabularyItemGenerated = 'vocabulary-item-generated',
 }

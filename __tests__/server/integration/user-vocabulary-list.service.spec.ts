@@ -1,8 +1,8 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { db } from '@/server/db/db.service';
-import { user, userVocabularyItem, userVocabularyList } from '@/server/db/db.schema';
+import { event, user, userVocabularyItem, userVocabularyList } from '@/server/db/db.schema';
 import { Exception } from '@/server/utils/exception.utils';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
 import {
@@ -18,6 +18,7 @@ import {
   getUserVocabularyListWithRelationsOrThrow,
 } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { getUserVocabularyListByVocabularyListId } from '@/server/user-vocabulary/user-vocabulary-list.repository';
+import { EventType } from '@/const/event';
 import { LearningStatus, PartOfSpeech, VocabularyListType } from '@/const/vocabulary';
 
 const createTestUser = async (id: string) => {
@@ -115,7 +116,7 @@ describe('userVocabularyListService', () => {
   });
 
   describe('addVocabularyItemToPersonalList', () => {
-    it('links the word to the list and creates a waiting progress row', async () => {
+    it('links the word to the list and creates a learning progress row', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { items } = await createTestList(['run', 'walk']);
       const [item] = items;
@@ -134,9 +135,11 @@ describe('userVocabularyListService', () => {
 
       expect(userItem).toMatchObject({
         vocabularyItemId: item.id,
-        status: LearningStatus.Waiting,
+        status: LearningStatus.Learning,
+        encounterCount: 0,
         vocabularyItem: { id: item.id },
       });
+      expect(userItem.enqueuedAt).not.toBeNull();
       await expect(
         getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
       ).resolves.toBeDefined();
@@ -270,7 +273,7 @@ describe('userVocabularyListService', () => {
       ).rejects.toThrow(Exception);
     });
 
-    it('does not reset the status of an item already tracked from another list', async () => {
+    it('resets the status of an item already tracked from another list', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { items } = await createTestList(['run']);
       const [item] = items;
@@ -290,8 +293,22 @@ describe('userVocabularyListService', () => {
         vocabularyItemId: item.id,
       });
 
-      expect(userItem.status).toBe(LearningStatus.Learned);
+      expect(userItem.status).toBe(LearningStatus.Learning);
+      expect(userItem.encounterCount).toBe(0);
+      expect(userItem.enqueuedAt).not.toBeNull();
       expect(await countItems(userVocabularyItem)).toBe(1);
+
+      const [resetEvent] = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemProgressReset)));
+
+      expect(resetEvent).toMatchObject({
+        userVocabularyItemId: userItem.id,
+        userVocabularyListId: userVocabularyList.id,
+        status: LearningStatus.Learning,
+        encounterCount: 3,
+      });
     });
   });
 

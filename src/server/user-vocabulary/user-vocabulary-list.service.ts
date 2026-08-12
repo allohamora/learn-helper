@@ -1,12 +1,16 @@
 import '@tanstack/react-start/server-only';
-import { VocabularyListType } from '@/const/vocabulary';
+import { EventType } from '@/const/event';
+import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
+import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import {
   createUserVocabularyItemIfNotExist,
   createUserVocabularyItemsFromList,
+  getUserVocabularyItemByVocabularyItemIdForUpdate,
   getUserVocabularyItemWithRelationsByVocabularyItemId,
+  updateUserVocabularyItemProgress,
 } from './user-vocabulary-item.repository';
 import {
   createUserVocabularyList,
@@ -69,6 +73,50 @@ export const getUserVocabularyListWithRelationsOrThrow = async (
   return userList;
 };
 
+const addUserVocabularyItemInLearningStatus = async (
+  {
+    userId,
+    vocabularyItemId,
+    userVocabularyListId,
+  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string },
+  tx: Transaction,
+) => {
+  const createdUserItem = await createUserVocabularyItemIfNotExist(
+    { userId, vocabularyItemId, status: LearningStatus.Learning, encounterCount: 0, enqueuedAt: new Date() },
+    tx,
+  );
+  if (createdUserItem) return;
+
+  const existingUserItem = await getUserVocabularyItemByVocabularyItemIdForUpdate({ userId, vocabularyItemId }, tx);
+  if (!existingUserItem) {
+    throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" for reset`);
+  }
+
+  await Promise.all([
+    insertEvent(
+      {
+        type: EventType.UserVocabularyItemProgressReset,
+        userId,
+        userVocabularyItemId: existingUserItem.id,
+        userVocabularyListId,
+        status: LearningStatus.Learning,
+        encounterCount: existingUserItem.encounterCount,
+      },
+      tx,
+    ),
+    updateUserVocabularyItemProgress(
+      {
+        userId,
+        userVocabularyItemId: existingUserItem.id,
+        status: LearningStatus.Learning,
+        encounterCount: 0,
+        enqueuedAt: new Date(),
+      },
+      tx,
+    ),
+  ]);
+};
+
 export const addVocabularyItemToPersonalList = async ({
   userId,
   userVocabularyListId,
@@ -102,7 +150,7 @@ export const addVocabularyItemToPersonalList = async ({
       throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
-    await createUserVocabularyItemIfNotExist({ userId, vocabularyItemId }, tx);
+    await addUserVocabularyItemInLearningStatus({ userId, vocabularyItemId, userVocabularyListId }, tx);
 
     const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
     if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);

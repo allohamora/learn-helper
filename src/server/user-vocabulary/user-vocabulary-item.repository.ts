@@ -22,13 +22,28 @@ export const createUserVocabularyItemsFromList = async (
 };
 
 export const createUserVocabularyItemIfNotExist = async (
-  { userId, vocabularyItemId }: { userId: string; vocabularyItemId: string },
+  {
+    userId,
+    vocabularyItemId,
+    status,
+    encounterCount,
+    enqueuedAt,
+  }: {
+    userId: string;
+    vocabularyItemId: string;
+    status: LearningStatus;
+    encounterCount: number;
+    enqueuedAt: Date | null;
+  },
   tx: Transaction = db,
 ) => {
-  await tx
+  const [created] = await tx
     .insert(userVocabularyItem)
-    .values({ userId, vocabularyItemId })
-    .onConflictDoNothing({ target: [userVocabularyItem.userId, userVocabularyItem.vocabularyItemId] });
+    .values({ userId, vocabularyItemId, status, encounterCount, enqueuedAt })
+    .onConflictDoNothing({ target: [userVocabularyItem.userId, userVocabularyItem.vocabularyItemId] })
+    .returning();
+
+  return created;
 };
 
 export const getUserVocabularyItemWithRelationsByVocabularyItemId = async (
@@ -79,6 +94,20 @@ export const getUserVocabularyItemByIdForUpdate = async (
     .select()
     .from(userVocabularyItem)
     .where(and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.id, userVocabularyItemId)))
+    .for('update');
+
+  return userItem;
+};
+
+// locks the row until the caller's transaction commits/rolls back, mirroring getUserVocabularyItemByIdForUpdate
+export const getUserVocabularyItemByVocabularyItemIdForUpdate = async (
+  { userId, vocabularyItemId }: { userId: string; vocabularyItemId: string },
+  tx: Transaction,
+) => {
+  const [userItem] = await tx
+    .select()
+    .from(userVocabularyItem)
+    .where(and(eq(userVocabularyItem.userId, userId), eq(userVocabularyItem.vocabularyItemId, vocabularyItemId)))
     .for('update');
 
   return userItem;
