@@ -3,6 +3,95 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.5](https://github.com/allohamora/learn-helper/compare/v0.0.4...v0.0.5) (2026-08-12)
+
+### Features
+
+- Add personal vocabulary list for users ([1fc7c03](https://github.com/allohamora/learn-helper/commit/1fc7c03ad0ef22b388c6107d2b99e10cfef8605d))
+- Add endpoint to search vocabulary items by value ([d751121](https://github.com/allohamora/learn-helper/commit/d7511215e99b5c48ef365eb28ef940cfd9230a6f))
+- Add generateVocabularyItemData ([2d2351d](https://github.com/allohamora/learn-helper/commit/2d2351d728fd8b847874cccc6971e85d87f9d68d))
+- Track vocabulary item generation cost in ai statistics ([0df0483](https://github.com/allohamora/learn-helper/commit/0df048316f516431f7307b19c4902ed103884878))
+- Switch vocabulary task generation to gpt-5.6-luna ([a4e4d70](https://github.com/allohamora/learn-helper/commit/a4e4d70951e8ae9dbcb55b109f12a92e8cd8de51))
+- Add endpoint to add a word from the global list to a personal list ([6aaaae8](https://github.com/allohamora/learn-helper/commit/6aaaae8250f5bff215e21796ed442b5ffc683e2b))
+- Nest add-word endpoint under its user vocabulary list ([dff9f93](https://github.com/allohamora/learn-helper/commit/dff9f93408c0907222aa48263eaff91df053c437))
+- Start added personal-list words in learning status ([8d7412b](https://github.com/allohamora/learn-helper/commit/8d7412ba1f1c9bc7ffb0ea710ba2bc070d8da722))
+- Replace global word search with a personal-list-scoped search endpoint ([ff96da9](https://github.com/allohamora/learn-helper/commit/ff96da993166ad94096ccf445e9dd1be226cd023))
+- Replace ai-generated-only vocabulary endpoint with generate-and-add ([8b940dc](https://github.com/allohamora/learn-helper/commit/8b940dc37515ead5e7f2231b03b36f500743eef6))
+- Add search-and-add UI for the personal vocabulary list ([cfa5bb3](https://github.com/allohamora/learn-helper/commit/cfa5bb3a4e959a5e74ca165ee2a859a919d81a31))
+
+### Bug Fixes
+
+- Enforce vocabulary list type invariants with db check constraints ([12e8225](https://github.com/allohamora/learn-helper/commit/12e82255e6c8c479b3b0a0e47474049aae28a10e))
+- Fail fast when creating a personal list for a non-existent user ([1117c56](https://github.com/allohamora/learn-helper/commit/1117c5641b086391ec49d134257587d17eff6d89))
+- Include ownerId in vocabulary list openapi schema ([aeabad1](https://github.com/allohamora/learn-helper/commit/aeabad1aa0f46e7777da7cde0d91ebb1cdb18189))
+- Add fallback label for null vocabulary list title ([f5df500](https://github.com/allohamora/learn-helper/commit/f5df5000549587a1922571f9fcfb6f21a7183f04))
+- Correct casing of proper nouns and acronyms in vocabulary seed data ([ca59101](https://github.com/allohamora/learn-helper/commit/ca59101419beb496c54a39c04c83b4702e6cda18))
+- Correct typo in "fix" verb translation in vocabulary seed data ([66c17eb](https://github.com/allohamora/learn-helper/commit/66c17eb3ea346f5e38b0603488c2c4d0962c40ef))
+- Escape ILIKE metacharacters in vocabulary item search ([1fa64bc](https://github.com/allohamora/learn-helper/commit/1fa64bccc6bd72818b250bb247c789d9377d697b))
+- Capitalize proper nouns and acronyms in generated vocabulary values ([715a847](https://github.com/allohamora/learn-helper/commit/715a8472c7c818813226b42b4dfb744bf4a92221))
+- Include vocabulary-item generation costs in daily cost statistics ([7c54bed](https://github.com/allohamora/learn-helper/commit/7c54bed57ebdb4a3fc091c121597225573ac91fa))
+- Rename daily cost chart from "Task Cost" to "AI Cost" ([f5b7455](https://github.com/allohamora/learn-helper/commit/f5b745521e6f55f3a9ae9c608f8f3047d9382493))
+- Reject blank fields in generated vocabulary item dto ([2392dca](https://github.com/allohamora/learn-helper/commit/2392dca8e306d0e09449f7d66c738ab8b5f933d6))
+- Make personal-list duplicate-word insert atomic ([7450a24](https://github.com/allohamora/learn-helper/commit/7450a248d657fc37478f2962323522b26bce7cca))
+- Declare not-found response for add-word route ([4d85680](https://github.com/allohamora/learn-helper/commit/4d85680f19755f77f9f5af79a19f19bc58d11c92))
+- Render "Personal" as the personal list's title ([300316d](https://github.com/allohamora/learn-helper/commit/300316d6fdb4e82e91917e23a76c4f7772058ecf))
+- Match personal vocabulary search by prefix instead of substring ([b804ed3](https://github.com/allohamora/learn-helper/commit/b804ed3e1ad7700e97c2dd6ff9ad1ff89246ee5b))
+- Allow undoing vocabulary items without a discovery event ([551caa1](https://github.com/allohamora/learn-helper/commit/551caa1ed860997fc05b8d8e641e601da953eba7))
+- Send the current input to the generate endpoint, not the stale debounced value ([3d4a4f5](https://github.com/allohamora/learn-helper/commit/3d4a4f5d2b7541a4d157938629fa7a661abcdb76))
+- Show an error state when the personal vocabulary search fails ([1277f61](https://github.com/allohamora/learn-helper/commit/1277f61980ab6693b3f00d283a80ad4f220b6def))
+
+### Code Refactoring
+
+- Rename "word" to "item" in statistics feature ([52879e1](https://github.com/allohamora/learn-helper/commit/52879e15966186de062d94c14d48fbe60394206a))
+- Scope GEMINI_API_KEY to evals only, add missing OPENAI_API_KEY to helm ([636021a](https://github.com/allohamora/learn-helper/commit/636021a086e69e7999d85874f00737d1f1f4f95c))
+
+### Tests
+
+- Switch eval judge model to gemini-3.1-flash-lite ([f7e0faa](https://github.com/allohamora/learn-helper/commit/f7e0faa93ec3c7f3bdca31da4322d949d4300161))
+- Remove prompt-injection eval test for vocabulary generation ([f111e93](https://github.com/allohamora/learn-helper/commit/f111e932d5379d1c5a199ddaef12534d64425445))
+- Expand vocabulary-task eval coverage for prompt edge cases ([fe44b3c](https://github.com/allohamora/learn-helper/commit/fe44b3c3009574533c8b3565e03da674d64da0f4))
+- Assert phrasal verb order in vocabulary-task evals ([3a11085](https://github.com/allohamora/learn-helper/commit/3a11085d392f9ea65bdb068b7a9b5573d01957c2))
+- Allow "an" for article evals in vocabulary-task specs ([7ca6295](https://github.com/allohamora/learn-helper/commit/7ca62952cfc788b8a5a85674957ab189915dba78))
+
+### Documentation
+
+- Describe personal list as auto-created, not auto-filled ([b7412a5](https://github.com/allohamora/learn-helper/commit/b7412a566bd89fb8bd2dadcdb0336588c81c9d74))
+- Describe the actual concurrency strategy for personal list creation ([45032a7](https://github.com/allohamora/learn-helper/commit/45032a7491b13486fa6bba08b790de6a10094645))
+- Clarify thread resolution ownership and commit message convention in review-comments skill ([eee728e](https://github.com/allohamora/learn-helper/commit/eee728e117b43742bfdb84a3f26366e359a3e7d4))
+- Use generic placeholder example in review-comments skill ([1dc14c8](https://github.com/allohamora/learn-helper/commit/1dc14c8f6dbf916ee3296e971964132ce9de5c2a))
+- Clarify commit/push flow and simplify review-comments skill wording ([661c79b](https://github.com/allohamora/learn-helper/commit/661c79bde35160fb717ae7b40f52112832d01d9f))
+- Genericize commit-convention doc reference in review-comments skill ([f8ad2e1](https://github.com/allohamora/learn-helper/commit/f8ad2e1d9ce1343e6e6bc53a8e9e7c576cf83a5d))
+- Rewrite AGENTS.md instructions in simpler, flatter style ([c04e4c6](https://github.com/allohamora/learn-helper/commit/c04e4c603600cca18f1c865486ca2aa8953cf811))
+- Add simple, concise language guideline ([4cfcd5f](https://github.com/allohamora/learn-helper/commit/4cfcd5fe54d3b630aade0c1c125f7289e6adcce7))
+- Discourage useless comments that just restate code ([b29706a](https://github.com/allohamora/learn-helper/commit/b29706abfbd5b5cc100a954d092545f9102c0703))
+- Clarify commit and push happen in one confirmation step ([c7fcab9](https://github.com/allohamora/learn-helper/commit/c7fcab9f8e57392ba5f094ad7cff6e168882f31e))
+- Require commit confirmation on every commit, not just once ([471e7f0](https://github.com/allohamora/learn-helper/commit/471e7f0400b2a14a7a46d950ed4a029fbc84c8b8))
+- Add commit body guideline to AGENTS.md ([56fe520](https://github.com/allohamora/learn-helper/commit/56fe520ac60e59ad4a017b8a8f0e7803bcdeacb0))
+- Require co-author footer on commits ([c234750](https://github.com/allohamora/learn-helper/commit/c234750de4a75ed8a406d2575e6124b1aafba035))
+- Dedupe instructions covered by agents.md ([0068785](https://github.com/allohamora/learn-helper/commit/00687857a182d2badcb2e7105ad886438ef2e3a5))
+- Clarify commit scope must match a real app/package directory ([8c6506e](https://github.com/allohamora/learn-helper/commit/8c6506e2ae53d9d921a6fea4b09e2f24c477bc13))
+- Add commit format doc and update scope example to type(scope) ([68e2299](https://github.com/allohamora/learn-helper/commit/68e2299651b7ab24ddf7d24e50d137fbfcb3addd))
+- Add verification and doc-maintenance rules ([197f9c4](https://github.com/allohamora/learn-helper/commit/197f9c4516abcc364d26bad2e6329dc027639aeb))
+- Clarify co-author footer must use the agent's identity ([12fee7f](https://github.com/allohamora/learn-helper/commit/12fee7f9eebcba177ba89f30494390104879f29f))
+- Fix inconsistencies in database design plan ([bb9c0a6](https://github.com/allohamora/learn-helper/commit/bb9c0a655d4fc17db1f7c29d4f54da11fbf0fa21))
+- Remove outdated docs ([024bf0a](https://github.com/allohamora/learn-helper/commit/024bf0a0a54d96de2c043a09286c5c2681b2accf))
+- Remove redundant comment-writing instruction ([5efe84b](https://github.com/allohamora/learn-helper/commit/5efe84b94b3799d95836cf94f716c7c212decf4e))
+- Rename changelog groups to match conventional-changelog-conventionalcommits ([7f0074a](https://github.com/allohamora/learn-helper/commit/7f0074a5b1067cd7600d13aa7241205dac86d8c9))
+- Reorder changelog groups by impact ([d028342](https://github.com/allohamora/learn-helper/commit/d0283428f1b84b8a3ec6d428796688c881ff6211))
+- Note that unexplained changes likely came from the user ([7759eac](https://github.com/allohamora/learn-helper/commit/7759eac8e5ae5e1ca8f8f257c82afa61d437a507))
+- Discourage comments that just restate code ([ceda865](https://github.com/allohamora/learn-helper/commit/ceda865e3583963ec5baaa7eb11bce80d5c14334))
+- Generalize no-comments guidance to cover unreadable code ([6dd488b](https://github.com/allohamora/learn-helper/commit/6dd488bd4826d7325c0ebdebb3dd335f43d2ca70))
+- Fix typo in co-authored-by instruction ([81cede5](https://github.com/allohamora/learn-helper/commit/81cede5e0a7e0a8098e6b3bfe417b3d460e83be7))
+- Make thread resolution follow resolver rules ([335403e](https://github.com/allohamora/learn-helper/commit/335403e976c97190e2ec1bed18d0a126134ba171))
+- Type user id fields as text to match schema ([e516ca2](https://github.com/allohamora/learn-helper/commit/e516ca23f51871712c4b7c60a80d248b2ba9f624))
+
+### Miscellaneous Chores
+
+- Add missing build type parser to cliff.toml ([c1cdba1](https://github.com/allohamora/learn-helper/commit/c1cdba18eb7d4f1316644a82ce28e0ae53d57e10))
+- Change style and test order in changelog ([a731769](https://github.com/allohamora/learn-helper/commit/a7317699b90b78a87cce28d834a31f8fc4ce9609))
+- **deps:** Bump js-yaml in the npm_and_yarn group across 1 directory ([5398137](https://github.com/allohamora/learn-helper/commit/5398137dfa9dcd458d91d0b6efa20a9f4981f744))
+- Apply npm audit fix ([2c8e935](https://github.com/allohamora/learn-helper/commit/2c8e9350f3f5fb31bc8e24fcc6f88e1fd3097f4a))
+
 ## [0.0.4](https://github.com/allohamora/learn-helper/compare/v0.0.3...v0.0.4) (2026-08-06)
 
 ### Bug Fixes
