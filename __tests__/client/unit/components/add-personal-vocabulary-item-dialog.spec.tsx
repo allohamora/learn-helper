@@ -214,6 +214,31 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await vi.waitFor(() => expect(generateHandler).toHaveBeenCalledOnce());
   });
 
+  it('generates with the current input value even before the search debounce settles', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const value = 'perspicacious';
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, []));
+
+    const generateHandler = vi.fn((requestedValue: string) => {
+      if (requestedValue !== value) throw new Error('unexpected value');
+
+      return HttpResponse.json({ success: true, data: createUserVocabularyItem(value) });
+    });
+    mockServer.addHandlers(api.generateVocabularyItem.mock(userVocabularyListId, generateHandler));
+
+    renderDialog(userVocabularyListId);
+    fireEvent.click(screen.getByRole('button', { name: /add item/i }));
+    const searchInput = await screen.findByPlaceholderText('Search items...');
+
+    fireEvent.change(searchInput, { target: { value: 'p' } });
+    fireEvent.change(searchInput, { target: { value } });
+
+    fireEvent.click(screen.getByRole('button', { name: `Generate "${value}" with AI & add` }));
+
+    await vi.waitFor(() => expect(generateHandler).toHaveBeenCalledOnce());
+  });
+
   it('surfaces a toast and keeps the Add button enabled when adding fails', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('quixotic');

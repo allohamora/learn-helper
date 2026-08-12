@@ -106,7 +106,8 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
   const [open, setOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [context, setContext] = useState('');
-  const [debouncedValue] = useDebounce(searchInput.trim(), 300);
+  const searchValue = searchInput.trim();
+  const [debouncedValue] = useDebounce(searchValue, 300);
 
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['personal-vocabulary-search', userVocabularyListId, debouncedValue],
@@ -132,7 +133,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
         param: { userVocabularyListId },
-        json: { value: debouncedValue, context: context.trim() || undefined },
+        json: { value: searchValue, context: context.trim() || undefined },
       });
       if (!res.ok) throw new Error('Failed to generate item');
 
@@ -195,10 +196,10 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           <Button
             size="icon"
             variant="outline"
-            disabled={debouncedValue.length === 0 || generateMutation.isPending}
+            disabled={searchValue.length === 0 || generateMutation.isPending}
             onClick={() => generateMutation.mutate()}
-            title={`Generate "${debouncedValue}" with AI & add`}
-            aria-label={`Generate "${debouncedValue}" with AI & add`}
+            title={`Generate "${searchValue}" with AI & add`}
+            aria-label={`Generate "${searchValue}" with AI & add`}
           >
             <Sparkles />
           </Button>
