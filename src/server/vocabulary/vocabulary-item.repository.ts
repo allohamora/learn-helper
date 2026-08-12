@@ -49,7 +49,7 @@ export const searchVocabularyItemsForList = async ({
   limit = 50,
   type = RequestType.All,
 }: { vocabularyListId: string } & PersonalVocabularyItemSearchFilterDto) => {
-  const searchFilter = ilike(vocabularyItem.value, `%${escapeLikePattern(value)}%`);
+  const searchFilter = ilike(vocabularyItem.value, `${escapeLikePattern(value)}%`);
   const cursorFilter = cursor ? gte(vocabularyItem.id, cursor) : undefined;
 
   const getItems = async () => {

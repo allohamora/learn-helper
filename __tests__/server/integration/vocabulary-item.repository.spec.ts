@@ -104,6 +104,16 @@ describe('vocabularyItemRepository', () => {
       expect(result.total).toBe(1);
     });
 
+    it('matches values by prefix, not by substring', async () => {
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      await createMissingVocabularyItems([buildItem({ value: 'run' }), buildItem({ value: 'overrun' })]);
+
+      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+
+      expect(result.items.map((item) => item.value)).toEqual(['run']);
+      expect(result.total).toBe(1);
+    });
+
     it('returns an empty list and total 0 when nothing matches', async () => {
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' })]);
