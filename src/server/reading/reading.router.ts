@@ -3,6 +3,7 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import { bodyLimit } from 'hono/body-limit';
 import {
   errorBadRequestResponse,
+  errorConflictResponse,
   successCreatedResponse,
   successPaginatedResponse,
   toPaginatedResponse,
@@ -76,6 +77,7 @@ export const readingRouter = new OpenAPIHono()
         ...errorBadRequestResponse({
           description: 'Missing file, wrong mime type, over the size limit, or a corrupt PDF',
         }),
+        ...errorConflictResponse({ description: 'This file was already uploaded' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [

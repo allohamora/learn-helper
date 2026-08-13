@@ -12,6 +12,15 @@ export const createFile = async (data: typeof file.$inferInsert, tx: Transaction
   return created;
 };
 
+export const getFileByUserIdAndHash = async (
+  { userId, hash }: { userId: string; hash: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.file.findFirst({
+    where: and(eq(file.userId, userId), eq(file.hash, hash)),
+  });
+};
+
 export const createReading = async (data: typeof reading.$inferInsert, tx: Transaction = db) => {
   const [created] = await tx.insert(reading).values(data).returning();
 

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { db } from '@/server/db/db.service';
 import { user } from '@/server/db/db.schema';
-import { createFile, createReading, getReadingsByUserId } from '@/server/reading/reading.repository';
+import {
+  createFile,
+  createReading,
+  getFileByUserIdAndHash,
+  getReadingsByUserId,
+} from '@/server/reading/reading.repository';
 import { RequestType } from '@/const/request';
 
 const USER_ID = 'readings-user';
@@ -89,6 +94,35 @@ describe('reading.repository', () => {
 
       expect(result.items).toHaveLength(2);
       expect(result.total).toBe(0);
+    });
+  });
+
+  describe('getFileByUserIdAndHash', () => {
+    it("returns the user's file with the given hash", async () => {
+      await seedUser(USER_ID);
+      await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const result = await getFileByUserIdAndHash({ userId: USER_ID, hash: 'Book' });
+
+      expect(result).toMatchObject({ userId: USER_ID, hash: 'Book' });
+    });
+
+    it('returns undefined when the hash belongs to a different user', async () => {
+      await seedUser(USER_ID);
+      await seedUser('other-user');
+      await seedReading({ userId: 'other-user', title: 'Book' });
+
+      const result = await getFileByUserIdAndHash({ userId: USER_ID, hash: 'Book' });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined when no file has the given hash', async () => {
+      await seedUser(USER_ID);
+
+      const result = await getFileByUserIdAndHash({ userId: USER_ID, hash: 'missing' });
+
+      expect(result).toBeUndefined();
     });
   });
 });

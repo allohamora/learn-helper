@@ -242,24 +242,31 @@ export const userVocabularyList = pgTable(
   ],
 );
 
-export const file = pgTable('file', {
-  id: uuid('id')
-    .default(sql`uuidv7()`)
-    .primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  fileName: text('file_name').notNull(),
-  filePath: text('file_path').notNull(),
-  mimeType: varchar('mime_type', { length: 64 }).notNull(),
-  sizeBytes: integer('size_bytes').notNull(),
-  hash: varchar('hash', { length: 64 }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
-    .notNull(),
-});
+export const file = pgTable(
+  'file',
+  {
+    id: uuid('id')
+      .default(sql`uuidv7()`)
+      .primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    fileName: text('file_name').notNull(),
+    filePath: text('file_path').notNull(),
+    mimeType: varchar('mime_type', { length: 64 }).notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    hash: varchar('hash', { length: 64 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    // data integrity: prevents the same user from uploading the same file twice
+    uniqueIndex('file_user_id_hash_idx').on(table.userId, table.hash),
+  ],
+);
 
 export const reading = pgTable('reading', {
   id: uuid('id')

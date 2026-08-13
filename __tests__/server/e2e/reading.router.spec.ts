@@ -183,6 +183,45 @@ describe('reading.router', () => {
       const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
       expect(res.status).toBe(401);
     });
+
+    it('returns 409 when the user uploads the same file again, without writing it to disk again', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const pdfBytes = makeMinimalPdf();
+      const firstRes = await client.api.v1.users.me.readings.$post({
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+      });
+      expect(firstRes.status).toBe(201);
+      expect(writeFileSpy).toHaveBeenCalledOnce();
+
+      const secondRes = await client.api.v1.users.me.readings.$post({
+        form: { file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }) },
+      });
+      expect(secondRes.status).toBe(409);
+      expect(writeFileSpy).toHaveBeenCalledOnce();
+
+      const readings = await db.query.reading.findMany({ where: eq(reading.userId, USER_ID) });
+      expect(readings).toHaveLength(1);
+    });
+
+    it('allows different users to upload the same file content', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+
+      const pdfBytes = makeMinimalPdf();
+      const firstRes = await client.api.v1.users.me.readings.$post({
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+      });
+      expect(firstRes.status).toBe(201);
+
+      auth.authorized({ user: { id: 'other-user' } });
+      const secondRes = await client.api.v1.users.me.readings.$post({
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+      });
+      expect(secondRes.status).toBe(201);
+    });
   });
 
   describe('GET /api/v1/users/me/readings', () => {

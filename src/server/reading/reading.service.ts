@@ -7,7 +7,7 @@ import { EventType } from '@/const/event';
 import { db } from '../db/db.service';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
-import { createFile, createReading } from './reading.repository';
+import { createFile, createReading, getFileByUserIdAndHash } from './reading.repository';
 
 export const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
@@ -35,8 +35,13 @@ const stripPdfExtension = (fileName: string) => fileName.replace(/\.pdf$/i, '');
 
 export const uploadReading = async ({ userId, file, title }: { userId: string; file: File; title?: string }) => {
   const buffer = Buffer.from(await file.arrayBuffer());
-  const totalPages = await getPdfPageCount(buffer);
   const hash = createHash('sha256').update(buffer).digest('hex');
+
+  if (await getFileByUserIdAndHash({ userId, hash })) {
+    throw Exception.conflict('this file was already uploaded');
+  }
+
+  const totalPages = await getPdfPageCount(buffer);
   const filePath = await writePdfFile({ userId, hash, buffer });
 
   return await db.transaction(async (tx) => {

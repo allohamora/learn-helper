@@ -104,7 +104,7 @@ erDiagram
         file_path text "(relative path on disk)"
         mime_type varchar(64)
         size_bytes integer
-        hash varchar(64) "(SHA-256, for caching/integrity)"
+        hash varchar(64) "(SHA-256, for caching/integrity, unique per user)"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -420,7 +420,9 @@ Each reading belongs to one user. File data is stored on the local filesystem; m
 
 ### Upload flow
 
-Client uploads PDF via multipart form → Server validates (mime type, size limit) → computes SHA-256 hash → stores file at `uploads/{user_id}/{file_id}.pdf` → creates `file` + `reading` records (`total_pages` extracted server-side).
+Client uploads PDF via multipart form → Server validates (mime type, size limit) → computes SHA-256 hash → rejects with `409 Conflict` if the user already has a file with that hash → stores file at `uploads/{user_id}/{file_id}.pdf` → creates `file` + `reading` records (`total_pages` extracted server-side).
+
+Duplicate detection is scoped per user (`file.(user_id, hash)` unique index): the same content can be uploaded once per user, but different users may each upload the same file independently.
 
 ### Download / serve flow
 
