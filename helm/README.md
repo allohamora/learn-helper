@@ -122,15 +122,28 @@ k3d cluster delete learn-helper
 # Database backups
 
 ```bash
-# Back up the database to a local, timestamped, gzip-compressed SQL file. See scripts/backup.sh.
-./scripts/backup.sh
+# Back up the database to a local, timestamped, gzip-compressed SQL file. See scripts/backup-db.sh.
+./scripts/backup-db.sh
 
-# Download the backups locally. See scripts/download-backups.sh.
-./scripts/download-backups.sh
+# Download the backups locally. See scripts/download-db-backups.sh.
+./scripts/download-db-backups.sh
 
 # Restore the database from a backup made with the command above. Scale the
 # app down first so nothing is writing mid-restore, then scale it back up.
 kubectl scale -n learn-helper deploy/app --replicas=0
 gunzip -c .temp/backups/<date>-data.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- sh -c 'psql -1 -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 kubectl scale -n learn-helper deploy/app --replicas=1
+```
+
+# Uploads backups
+
+```bash
+# Back up the uploaded PDFs to a local, timestamped, gzip-compressed tarball. See scripts/backup-uploads.sh.
+./scripts/backup-uploads.sh
+
+# Download the uploads backups locally. See scripts/download-uploads.sh.
+./scripts/download-uploads.sh
+
+# Restore uploads from a backup made with the command above.
+gunzip -c .temp/uploads/<date>-uploads.tar.gz | kubectl exec -i -n learn-helper deploy/app -- tar xf - -C /app/uploads
 ```
