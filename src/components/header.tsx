@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { BarChart, Book, User } from 'lucide-react';
+import { BarChart, Book, BookOpen, User } from 'lucide-react';
 import { Link, useRouter } from '@tanstack/react-router';
 import { authClient } from '@/services/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,6 +36,14 @@ export const Header: FC = () => {
           >
             <Book className="size-5 md:size-4" aria-hidden="true" />
             <span className="sr-only text-xs md:not-sr-only md:inline md:text-sm">Vocabulary Lists</span>
+          </Link>
+
+          <Link
+            to="/readings"
+            className="flex flex-col items-center p-2 text-foreground transition-colors hover:text-primary md:flex-row md:space-x-2 md:p-0"
+          >
+            <BookOpen className="size-5 md:size-4" aria-hidden="true" />
+            <span className="sr-only text-xs md:not-sr-only md:inline md:text-sm">Readings</span>
           </Link>
 
           <Link
