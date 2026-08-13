@@ -7,9 +7,32 @@ import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
 import { event, file, reading, user } from '@/server/db/db.schema';
+import { createFile, createReading } from '@/server/reading/reading.repository';
 import { EventType } from '@/const/event';
 
 const USER_ID = 'e2e-test-user';
+
+const seedReading = async ({ userId, title }: { userId: string; title: string }) => {
+  const createdFile = await createFile({
+    userId,
+    fileName: `${title}.pdf`,
+    filePath: `uploads/${userId}/${title}.pdf`,
+    mimeType: 'application/pdf',
+    sizeBytes: 1,
+    hash: title,
+  });
+
+  return createReading({ userId, fileId: createdFile.id, title, totalPages: 1 });
+};
+
+const seedReadings = async ({ userId, titles }: { userId: string; titles: string[] }) => {
+  const readings = [];
+  for (const title of titles) {
+    readings.push(await seedReading({ userId, title }));
+  }
+
+  return readings;
+};
 
 const makeMinimalPdf = () => {
   const objects = [
@@ -159,6 +182,107 @@ describe('reading.router', () => {
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
       const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('GET /api/v1/users/me/readings', () => {
+    it('returns the readings newest-first, with file metadata and pageInfo', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const titles = ['First Book', 'Second Book', 'Third Book'];
+      await seedReadings({ userId: USER_ID, titles });
+
+      const res = await client.api.v1.users.me.readings.$get({ query: {} });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.data.map((item) => item.title)).toEqual([...titles].reverse());
+      expect(body.data[0]).toMatchObject({ userId: USER_ID, file: { fileName: 'Third Book.pdf' } });
+      expect(body.pageInfo).toMatchObject({ total: 3, count: 3 });
+      expect(body.pageInfo.nextCursor).toBeUndefined();
+    });
+
+    it('paginates readings across pages honoring limit and cursor', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const titles = ['A', 'B', 'C', 'D', 'E'];
+      await seedReadings({ userId: USER_ID, titles });
+      const newestFirst = [...titles].reverse();
+
+      const firstRes = await client.api.v1.users.me.readings.$get({ query: { limit: '2' } });
+      expect(firstRes.status).toBe(200);
+      const firstBody = await firstRes.json();
+      expect(firstBody.data).toHaveLength(2);
+      expect(firstBody.pageInfo).toMatchObject({ total: 5, count: 2 });
+      expect(firstBody.pageInfo.nextCursor).toEqual(expect.any(String));
+
+      const secondRes = await client.api.v1.users.me.readings.$get({
+        query: { limit: '2', cursor: firstBody.pageInfo.nextCursor },
+      });
+      expect(secondRes.status).toBe(200);
+      const secondBody = await secondRes.json();
+      expect(secondBody.data).toHaveLength(2);
+      expect(secondBody.pageInfo).toMatchObject({ total: 5, count: 2 });
+      expect(secondBody.pageInfo.nextCursor).toEqual(expect.any(String));
+
+      const thirdRes = await client.api.v1.users.me.readings.$get({
+        query: { limit: '2', cursor: secondBody.pageInfo.nextCursor },
+      });
+      expect(thirdRes.status).toBe(200);
+      const thirdBody = await thirdRes.json();
+      expect(thirdBody.data).toHaveLength(1);
+      expect(thirdBody.pageInfo).toMatchObject({ total: 5, count: 1 });
+      expect(thirdBody.pageInfo.nextCursor).toBeUndefined();
+
+      const pagedTitles = [...firstBody.data, ...secondBody.data, ...thirdBody.data].map((item) => item.title);
+      expect(pagedTitles).toEqual(newestFirst);
+    });
+
+    it('returns every reading exactly once when following nextCursor to the end', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const titles = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+      await seedReadings({ userId: USER_ID, titles });
+
+      const collected: string[] = [];
+      let cursor: string | undefined;
+
+      do {
+        const res = await client.api.v1.users.me.readings.$get({
+          query: { limit: '3', ...(cursor ? { cursor } : {}) },
+        });
+        expect(res.status).toBe(200);
+
+        const body = await res.json();
+        expect(body.pageInfo.total).toBe(titles.length);
+        collected.push(...body.data.map((item) => item.title));
+        cursor = body.pageInfo.nextCursor;
+      } while (cursor);
+
+      expect(collected).toEqual([...titles].reverse());
+      expect(new Set(collected).size).toBe(titles.length);
+    });
+
+    it("only returns the authenticated user's readings", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      await seedReading({ userId: USER_ID, title: 'Mine' });
+      await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings.$get({ query: {} });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body.data.map((item) => item.title)).toEqual(['Mine']);
+      expect(body.pageInfo).toMatchObject({ total: 1, count: 1 });
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings.$get({ query: {} });
       expect(res.status).toBe(401);
     });
   });
