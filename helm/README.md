@@ -47,13 +47,18 @@ helm upgrade learn-helper helm \
 # Seed the database manually (one-off, run against the live app pod).
 kubectl exec -n learn-helper deploy/app -- npm run vocabulary:seed
 
-# Remove the release. The postgres-data PVC is kept (helm.sh/resource-policy: keep),
-# so postgresql data survives this step.
+# Remove the release. The postgres-data and app-uploads PVCs are kept
+# (helm.sh/resource-policy: keep), so postgresql data and uploaded files survive
+# this step.
 helm uninstall learn-helper --namespace learn-helper
 
 # Remove the postgres data volume. This permanently deletes the database - only
 # run it once you're sure you no longer need the data.
 kubectl delete pvc postgres-data --namespace learn-helper
+
+# Remove the uploaded files volume. This permanently deletes all uploaded PDFs -
+# only run it once you're sure you no longer need them.
+kubectl delete pvc app-uploads --namespace learn-helper
 
 # Remove the now-empty namespace.
 kubectl delete namespace learn-helper
