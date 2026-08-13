@@ -52,6 +52,6 @@ export const uploadReading = async ({ userId, file, title }: { userId: string; f
 
     await insertEvent({ type: EventType.ReadingUploaded, userId, readingId: createdReading.id }, tx);
 
-    return { ...createdReading, file: createdFile };
+    return createdReading;
   });
 };

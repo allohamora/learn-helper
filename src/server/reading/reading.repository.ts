@@ -30,7 +30,6 @@ export const getReadingsByUserId = async (
       where: and(userFilter, cursorFilter),
       orderBy: desc(reading.id),
       limit: limit + 1,
-      with: { file: true },
     });
 
     const nextCursor = items.length > limit ? items.pop()?.id : undefined;

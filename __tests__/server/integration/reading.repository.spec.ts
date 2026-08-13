@@ -41,7 +41,6 @@ describe('reading.repository', () => {
       const result = await getReadingsByUserId({ userId: USER_ID });
 
       expect(result.items.map((item) => item.title)).toEqual(['Third', 'Second', 'First']);
-      expect(result.items[0].file).toMatchObject({ fileName: 'Third.pdf' });
       expect(result.total).toBe(3);
       expect(result.nextCursor).toBeUndefined();
     });

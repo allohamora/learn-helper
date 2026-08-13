@@ -91,7 +91,6 @@ describe('reading.router', () => {
           totalPages: 1,
           currentPage: 0,
           durationMs: 0,
-          file: { fileName: 'My Book.pdf', mimeType: 'application/pdf' },
         },
       });
 
@@ -187,7 +186,7 @@ describe('reading.router', () => {
   });
 
   describe('GET /api/v1/users/me/readings', () => {
-    it('returns the readings newest-first, with file metadata and pageInfo', async () => {
+    it('returns the readings newest-first, with pageInfo', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const titles = ['First Book', 'Second Book', 'Third Book'];
@@ -198,7 +197,7 @@ describe('reading.router', () => {
 
       const body = await res.json();
       expect(body.data.map((item) => item.title)).toEqual([...titles].reverse());
-      expect(body.data[0]).toMatchObject({ userId: USER_ID, file: { fileName: 'Third Book.pdf' } });
+      expect(body.data[0]).toMatchObject({ userId: USER_ID, title: 'Third Book' });
       expect(body.pageInfo).toMatchObject({ total: 3, count: 3 });
       expect(body.pageInfo.nextCursor).toBeUndefined();
     });

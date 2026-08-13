@@ -13,7 +13,7 @@ import { MimeType } from '../utils/mime-type.utils';
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
-import { readingWithRelationsDto } from './dtos/reading-with-relations.dto';
+import { readingDto } from './dtos/reading.dto';
 import { getReadingsByUserId } from './reading.repository';
 import { uploadReading } from './reading.service';
 
@@ -31,7 +31,7 @@ export const readingRouter = new OpenAPIHono()
       responses: {
         ...successPaginatedResponse({
           description: "The user's readings, newest first",
-          schema: readingWithRelationsDto,
+          schema: readingDto,
         }),
       },
       security: [{ cookieAuth: [] }],
@@ -70,8 +70,8 @@ export const readingRouter = new OpenAPIHono()
       },
       responses: {
         ...successCreatedResponse({
-          description: 'The uploaded reading, with its file metadata',
-          schema: readingWithRelationsDto,
+          description: 'The uploaded reading',
+          schema: readingDto,
         }),
         ...errorBadRequestResponse({
           description: 'Missing file, wrong mime type, over the size limit, or a corrupt PDF',
