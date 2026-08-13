@@ -97,6 +97,8 @@ export const userRelations = relations(user, ({ many }) => ({
   userVocabularyLists: many(userVocabularyList),
   events: many(event),
   ownedVocabularyLists: many(vocabularyList),
+  files: many(file),
+  readings: many(reading),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -240,6 +242,47 @@ export const userVocabularyList = pgTable(
   ],
 );
 
+export const file = pgTable('file', {
+  id: uuid('id')
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  fileName: text('file_name').notNull(),
+  filePath: text('file_path').notNull(),
+  mimeType: varchar('mime_type', { length: 64 }).notNull(),
+  sizeBytes: integer('size_bytes').notNull(),
+  hash: varchar('hash', { length: 64 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
+export const reading = pgTable('reading', {
+  id: uuid('id')
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  fileId: uuid('file_id')
+    .notNull()
+    .unique()
+    .references(() => file.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  totalPages: integer('total_pages').notNull(),
+  currentPage: integer('current_page').default(0).notNull(),
+  durationMs: integer('duration_ms').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
 export const event = pgTable(
   'event',
   {
@@ -260,6 +303,7 @@ export const event = pgTable(
     userVocabularyListId: uuid('user_vocabulary_list_id').references(() => userVocabularyList.id, {
       onDelete: 'restrict',
     }),
+    readingId: uuid('reading_id').references(() => reading.id, { onDelete: 'restrict' }),
     status: varchar('status', { length: 16 }).$type<LearningStatus>(),
     userVocabularyItemTaskType: varchar('user_vocabulary_item_task_type', {
       length: 48,
@@ -327,6 +371,29 @@ export const userVocabularyListRelations = relations(userVocabularyList, ({ one,
   vocabularyList: one(vocabularyList, {
     fields: [userVocabularyList.vocabularyListId],
     references: [vocabularyList.id],
+  }),
+  events: many(event),
+}));
+
+export const fileRelations = relations(file, ({ one }) => ({
+  user: one(user, {
+    fields: [file.userId],
+    references: [user.id],
+  }),
+  reading: one(reading, {
+    fields: [file.id],
+    references: [reading.fileId],
+  }),
+}));
+
+export const readingRelations = relations(reading, ({ one, many }) => ({
+  user: one(user, {
+    fields: [reading.userId],
+    references: [user.id],
+  }),
+  file: one(file, {
+    fields: [reading.fileId],
+    references: [file.id],
   }),
   events: many(event),
 }));
