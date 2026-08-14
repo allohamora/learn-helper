@@ -281,11 +281,12 @@ const buildColumns = (userVocabularyListId: string, vocabularyListType: Vocabula
 ];
 
 // one fixed template shared by the header and every row, so columns always line up (each row is
-// its own grid instance — virtualization renders them independently — so tracks must be sized
-// proportionally with a fixed-length floor, not to content, or a row's widths would depend on that
-// row's own content instead of matching the header and other rows). Narrow viewports scroll the
-// table horizontally (the container below is overflow-auto) rather than reflowing the columns.
-const GRID_COLS_CLASS = 'grid grid-cols-[minmax(9rem,1.3fr)_minmax(10rem,3fr)_minmax(5rem,1fr)_7rem_minmax(7rem,1fr)]';
+// its own grid instance — virtualization renders them independently — so tracks must be sized to
+// a static width, not to content, or a row's widths would depend on that row's own content instead
+// of matching the header and other rows). Widths are static on every screen size so columns never
+// reflow or squeeze; narrow viewports instead scroll the table horizontally (the container below is
+// overflow-auto).
+const GRID_COLS_CLASS = 'grid grid-cols-[15rem_24rem_10rem_7rem_13rem]';
 
 const ROW_HEIGHT_PX = 72;
 const LOAD_MORE_THRESHOLD_PX = 200;
@@ -346,7 +347,7 @@ export const VocabularyItemsTable: FC<Props> = ({
 
   return (
     <div ref={containerRef} onScroll={handleScroll} className="h-150 overflow-auto">
-      <div className={cn(GRID_COLS_CLASS, 'sticky top-0 z-10 border-b bg-background')}>
+      <div className={cn(GRID_COLS_CLASS, 'sticky top-0 z-10 w-max border-b bg-background')}>
         {table.getHeaderGroups()[0]?.headers.map((header) => (
           <div key={header.id} className="min-w-0 truncate px-3 py-2.5 text-left text-sm font-medium text-foreground">
             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -364,7 +365,7 @@ export const VocabularyItemsTable: FC<Props> = ({
               key={row.id}
               data-index={virtualRow.index}
               ref={rowVirtualizer.measureElement}
-              className={cn(GRID_COLS_CLASS, 'absolute top-0 left-0 w-full items-center border-b hover:bg-muted/40')}
+              className={cn(GRID_COLS_CLASS, 'absolute top-0 left-0 w-max items-center border-b hover:bg-muted/40')}
               style={{ minHeight: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
             >
               {row.getVisibleCells().map((cell) => (
