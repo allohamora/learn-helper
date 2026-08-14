@@ -14,6 +14,7 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
 import { addVocabularyItemToListDto } from './dtos/add-vocabulary-item-to-list.dto';
+import { removeVocabularyItemFromListDto } from './dtos/remove-vocabulary-item-from-list.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { personalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
 import { personalVocabularyItemSearchResultDto } from './dtos/personal-vocabulary-item-search-result.dto';
@@ -215,10 +216,18 @@ export const userVocabularyRouter = new OpenAPIHono()
       tags: ['Vocabulary'],
       request: {
         params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: removeVocabularyItemFromListDto,
+            },
+          },
+        },
       },
       responses: {
         ...successOkResponse({
-          description: "The word unlinked from the user's personal list; progress is preserved",
+          description:
+            "The word unlinked from the user's personal list; progress is preserved unless resetProgress was set",
           schema: z.object({ userVocabularyItemId: z.uuidv7() }),
         }),
         ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
@@ -230,6 +239,7 @@ export const userVocabularyRouter = new OpenAPIHono()
     async (c) => {
       const user = c.get('user');
       const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+      const { resetProgress } = c.req.valid('json');
 
       return c.json(
         ...toSuccessResponse({
@@ -238,6 +248,7 @@ export const userVocabularyRouter = new OpenAPIHono()
             userId: user.id,
             userVocabularyListId,
             userVocabularyItemId,
+            resetProgress,
           }),
         }),
       );

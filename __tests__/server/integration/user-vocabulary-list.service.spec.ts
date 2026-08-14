@@ -419,9 +419,132 @@ describe('userVocabularyListService', () => {
         userVocabularyItemId: addedItem.id,
         vocabularyItemId: item.id,
         userVocabularyListId: userVocabularyList.id,
-        status: null,
-        encounterCount: null,
+        status: LearningStatus.Learning,
+        encounterCount: 0,
       });
+    });
+
+    it('resets progress to waiting when resetProgress is true', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+      const addedItem = await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+      });
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learned, encounterCount: 3 })
+        .where(eq(userVocabularyItem.id, addedItem.id));
+
+      await removeVocabularyItemFromPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        userVocabularyItemId: addedItem.id,
+        resetProgress: true,
+      });
+
+      const progressRow = await db.query.userVocabularyItem.findFirst({
+        where: eq(userVocabularyItem.id, addedItem.id),
+      });
+      expect(progressRow).toMatchObject({ status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null });
+
+      const [removedEvent] = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemRemovedFromList)));
+      expect(removedEvent).toMatchObject({ status: LearningStatus.Learned, encounterCount: 3 });
+
+      const [resetEvent] = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemProgressReset)));
+      expect(resetEvent).toMatchObject({
+        userVocabularyItemId: addedItem.id,
+        userVocabularyListId: userVocabularyList.id,
+        status: LearningStatus.Waiting,
+        encounterCount: 3,
+      });
+    });
+
+    it('does not reset progress when resetProgress is false', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+      const addedItem = await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+      });
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learned, encounterCount: 3 })
+        .where(eq(userVocabularyItem.id, addedItem.id));
+
+      await removeVocabularyItemFromPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        userVocabularyItemId: addedItem.id,
+        resetProgress: false,
+      });
+
+      const progressRow = await db.query.userVocabularyItem.findFirst({
+        where: eq(userVocabularyItem.id, addedItem.id),
+      });
+      expect(progressRow).toMatchObject({ status: LearningStatus.Learned, encounterCount: 3 });
+
+      const resetEvents = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemProgressReset)));
+      expect(resetEvents).toEqual([]);
+    });
+
+    it('does not log a redundant reset event when the item is already waiting', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+      const addedItem = await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+      });
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Waiting, encounterCount: 0 })
+        .where(eq(userVocabularyItem.id, addedItem.id));
+
+      await removeVocabularyItemFromPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        userVocabularyItemId: addedItem.id,
+        resetProgress: true,
+      });
+
+      const resetEvents = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemProgressReset)));
+      expect(resetEvents).toEqual([]);
     });
 
     it('throws forbidden when the list is not personal', async () => {

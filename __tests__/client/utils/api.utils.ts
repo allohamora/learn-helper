@@ -86,11 +86,15 @@ export const api = {
   removeVocabularyItemFromPersonalList: {
     mock: (
       userVocabularyListId: string,
-      responseFactory: (userVocabularyItemId: string) => HttpResponse<JsonBodyType>,
+      responseFactory: (userVocabularyItemId: string, resetProgress: boolean) => HttpResponse<JsonBodyType>,
     ) => {
       return http.delete(
         `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId`,
-        ({ params: routeParams }) => responseFactory(routeParams.userVocabularyItemId as string),
+        async ({ params: routeParams, request }) => {
+          const body = (await request.json()) as { resetProgress: boolean };
+
+          return responseFactory(routeParams.userVocabularyItemId as string, body.resetProgress);
+        },
       );
     },
   },

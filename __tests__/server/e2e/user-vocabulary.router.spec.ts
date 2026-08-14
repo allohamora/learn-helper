@@ -309,6 +309,7 @@ describe('user-vocabulary.router', () => {
         .where(eq(userVocabularyItem.id, addedItem.id));
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[':userVocabularyItemId'].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
+        json: { resetProgress: false },
       });
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
@@ -347,6 +348,7 @@ describe('user-vocabulary.router', () => {
         .where(eq(userVocabularyItem.id, addedItem.id));
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[':userVocabularyItemId'].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
+        json: { resetProgress: false },
       });
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
@@ -395,6 +397,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
+        json: { resetProgress: false },
       });
       expect(res.status).toBe(200);
 
@@ -413,7 +416,72 @@ describe('user-vocabulary.router', () => {
       const events = await db.query.event.findMany({
         where: and(eq(event.userId, USER_ID), eq(event.type, EventType.UserVocabularyItemRemovedFromList)),
       });
-      expect(events).toMatchObject([{ vocabularyItemId: item.id, userVocabularyListId: userVocabularyList.id }]);
+      expect(events).toMatchObject([
+        {
+          vocabularyItemId: item.id,
+          userVocabularyListId: userVocabularyList.id,
+          status: LearningStatus.Learning,
+          encounterCount: 2,
+        },
+      ]);
+
+      const resetEvents = await db.query.event.findMany({
+        where: and(eq(event.userId, USER_ID), eq(event.type, EventType.UserVocabularyItemProgressReset)),
+      });
+      expect(resetEvents).toEqual([]);
+    });
+
+    it('resets progress to waiting when resetProgress is true', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+      const addRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { vocabularyItemId: item.id },
+      });
+      if (!addRes.ok) throw new Error('expected item to be added');
+      const { data: addedItem } = await addRes.json();
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learned, encounterCount: 3 })
+        .where(eq(userVocabularyItem.vocabularyItemId, item.id));
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
+        json: { resetProgress: true },
+      });
+      expect(res.status).toBe(200);
+
+      const progressRow = await db.query.userVocabularyItem.findFirst({
+        where: eq(userVocabularyItem.vocabularyItemId, item.id),
+      });
+      expect(progressRow).toMatchObject({ status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null });
+
+      const events = await db.query.event.findMany({
+        where: and(eq(event.userId, USER_ID), eq(event.type, EventType.UserVocabularyItemRemovedFromList)),
+      });
+      expect(events).toMatchObject([{ status: LearningStatus.Learned, encounterCount: 3 }]);
+
+      const resetEvents = await db.query.event.findMany({
+        where: and(eq(event.userId, USER_ID), eq(event.type, EventType.UserVocabularyItemProgressReset)),
+      });
+      expect(resetEvents).toMatchObject([
+        {
+          userVocabularyItemId: addedItem.id,
+          userVocabularyListId: userVocabularyList.id,
+          status: LearningStatus.Waiting,
+          encounterCount: 3,
+        },
+      ]);
     });
 
     it('returns 401 Unauthorized when not authenticated', async () => {
@@ -426,6 +494,7 @@ describe('user-vocabulary.router', () => {
           userVocabularyListId: '00000000-0000-7000-8000-000000000000',
           userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
         },
+        json: { resetProgress: false },
       });
       expect(res.status).toBe(401);
     });
@@ -441,6 +510,7 @@ describe('user-vocabulary.router', () => {
           userVocabularyListId: '00000000-0000-7000-8000-000000000000',
           userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
         },
+        json: { resetProgress: false },
       });
       expect(res.status).toBe(404);
     });
@@ -461,6 +531,7 @@ describe('user-vocabulary.router', () => {
           userVocabularyListId: userVocabularyList.id,
           userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
         },
+        json: { resetProgress: false },
       });
       expect(res.status).toBe(404);
     });
@@ -476,6 +547,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: '00000000-0000-7000-8000-000000000000' },
+        json: { resetProgress: false },
       });
       expect(res.status).toBe(403);
     });
@@ -495,6 +567,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: '00000000-0000-7000-8000-000000000000' },
+        json: { resetProgress: false },
       });
       expect(res.status).toBe(403);
     });

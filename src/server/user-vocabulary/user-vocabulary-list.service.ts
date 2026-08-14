@@ -174,10 +174,12 @@ export const removeVocabularyItemFromPersonalList = async ({
   userId,
   userVocabularyListId,
   userVocabularyItemId,
+  resetProgress = false,
 }: {
   userId: string;
   userVocabularyListId: string;
   userVocabularyItemId: string;
+  resetProgress?: boolean;
 }) => {
   return db.transaction(async (tx) => {
     const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx);
@@ -208,9 +210,31 @@ export const removeVocabularyItemFromPersonalList = async ({
         userVocabularyItemId,
         vocabularyItemId: userItem.vocabularyItemId,
         userVocabularyListId,
+        status: userItem.status,
+        encounterCount: userItem.encounterCount,
       },
       tx,
     );
+
+    if (resetProgress && userItem.status !== LearningStatus.Waiting) {
+      await Promise.all([
+        insertEvent(
+          {
+            type: EventType.UserVocabularyItemProgressReset,
+            userId,
+            userVocabularyItemId,
+            userVocabularyListId,
+            status: LearningStatus.Waiting,
+            encounterCount: userItem.encounterCount,
+          },
+          tx,
+        ),
+        updateUserVocabularyItemProgress(
+          { userId, userVocabularyItemId, status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null },
+          tx,
+        ),
+      ]);
+    }
 
     return { userVocabularyItemId };
   });

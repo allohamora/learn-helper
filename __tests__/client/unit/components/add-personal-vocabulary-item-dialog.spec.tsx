@@ -234,6 +234,91 @@ describe('AddPersonalVocabularyItemDialog', () => {
     expect(screen.queryByRole('button', { name: 'Remove serendipity' })).toBeNull();
   });
 
+  it('shows a reset progress checkbox unchecked by default in the remove dialog, and sends resetProgress: false', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    const removeHandler = vi.fn((userVocabularyItemId: string) =>
+      HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
+    );
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+
+    const checkbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    expect(checkbox.getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+
+    await vi.waitFor(() => expect(removeHandler).toHaveBeenCalledWith(item.userVocabularyItem?.id, false));
+  });
+
+  it('checking reset progress in the remove dialog sends resetProgress: true', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    const removeHandler = vi.fn((userVocabularyItemId: string) =>
+      HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
+    );
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+
+    const checkbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    fireEvent.click(checkbox);
+    expect(checkbox.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+
+    await vi.waitFor(() => expect(removeHandler).toHaveBeenCalledWith(item.userVocabularyItem?.id, true));
+  });
+
+  it('resets the checkbox to unchecked after cancelling the remove dialog', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+    const checkbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    fireEvent.click(checkbox);
+    expect(checkbox.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+
+    const reopenedCheckbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    expect(reopenedCheckbox.getAttribute('aria-checked')).toBe('false');
+  });
+
   it('shows a generate fallback for zero results, and generating adds the word', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const value = 'flibbertigibbet';

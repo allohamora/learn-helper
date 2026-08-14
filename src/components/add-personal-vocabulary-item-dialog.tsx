@@ -37,6 +37,7 @@ type ResultRowProps = {
 const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const [resetProgress, setResetProgress] = useState(true);
+  const [removeResetProgress, setRemoveResetProgress] = useState(false);
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
@@ -68,6 +69,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItem.id },
+        json: { resetProgress: removeResetProgress },
       });
       if (!res.ok) throw new Error('Failed to remove item');
 
@@ -75,6 +77,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
     },
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
+      setRemoveResetProgress(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
@@ -118,7 +121,13 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
               <span className="hidden sm:inline">Remove</span>
             </Button>
 
-            <Dialog open={isRemoveConfirmationOpen} onOpenChange={setIsRemoveConfirmationOpen}>
+            <Dialog
+              open={isRemoveConfirmationOpen}
+              onOpenChange={(nextOpen) => {
+                setIsRemoveConfirmationOpen(nextOpen);
+                if (!nextOpen) setRemoveResetProgress(false);
+              }}
+            >
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Remove &ldquo;{item.value}&rdquo; from your list?</DialogTitle>
@@ -127,8 +136,25 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
                     add it back at any time.
                   </DialogDescription>
                 </DialogHeader>
+                <label
+                  className="flex items-center gap-1.5 text-sm text-muted-foreground"
+                  title="Reset progress to waiting"
+                >
+                  <Checkbox
+                    checked={removeResetProgress}
+                    onCheckedChange={(v) => setRemoveResetProgress(v === true)}
+                    aria-label="Reset progress to waiting"
+                  />
+                  Reset progress to waiting
+                </label>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsRemoveConfirmationOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsRemoveConfirmationOpen(false);
+                      setRemoveResetProgress(false);
+                    }}
+                  >
                     Cancel
                   </Button>
                   <Button

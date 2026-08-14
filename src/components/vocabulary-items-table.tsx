@@ -7,6 +7,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ExternalLink, Loader2, Pencil, Trash2, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ const ActionsCell: FC<{
 }> = ({ item, userVocabularyListId, vocabularyListType }) => {
   const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
+  const [removeResetProgress, setRemoveResetProgress] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const { vocabularyItem } = item;
@@ -72,6 +74,7 @@ const ActionsCell: FC<{
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId, userVocabularyItemId: item.id },
+        json: { resetProgress: removeResetProgress },
       });
       if (!res.ok) throw new Error('Failed to remove item from list');
 
@@ -79,6 +82,7 @@ const ActionsCell: FC<{
     },
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
+      setRemoveResetProgress(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
@@ -194,7 +198,13 @@ const ActionsCell: FC<{
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isRemoveConfirmationOpen} onOpenChange={setIsRemoveConfirmationOpen}>
+      <Dialog
+        open={isRemoveConfirmationOpen}
+        onOpenChange={(nextOpen) => {
+          setIsRemoveConfirmationOpen(nextOpen);
+          if (!nextOpen) setRemoveResetProgress(false);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Remove &ldquo;{vocabularyItem.value}&rdquo; from your list?</DialogTitle>
@@ -203,8 +213,22 @@ const ActionsCell: FC<{
               back at any time.
             </DialogDescription>
           </DialogHeader>
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset progress to waiting">
+            <Checkbox
+              checked={removeResetProgress}
+              onCheckedChange={(v) => setRemoveResetProgress(v === true)}
+              aria-label="Reset progress to waiting"
+            />
+            Reset progress to waiting
+          </label>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRemoveConfirmationOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsRemoveConfirmationOpen(false);
+                setRemoveResetProgress(false);
+              }}
+            >
               Cancel
             </Button>
             <Button variant="destructive" disabled={removeMutation.isPending} onClick={() => removeMutation.mutate()}>
