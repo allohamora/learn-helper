@@ -123,10 +123,10 @@ k3d cluster delete learn-helper
 
 ```bash
 # Back up the database to a local, timestamped, gzip-compressed SQL file. See scripts/backup-db.sh.
-./scripts/backup-db.sh
+sh scripts/backup-db.sh
 
 # Download the backups locally. See scripts/download-db-backups.sh.
-./scripts/download-db-backups.sh
+sh scripts/download-db-backups.sh
 
 # Restore the database from a backup made with the command above. Scale the
 # app down first so nothing is writing mid-restore, then scale it back up.
@@ -139,10 +139,10 @@ kubectl scale -n learn-helper deploy/app --replicas=1
 
 ```bash
 # Back up the uploaded PDFs to a local, timestamped, gzip-compressed tarball. See scripts/backup-uploads.sh.
-./scripts/backup-uploads.sh
+sh scripts/backup-uploads.sh
 
 # Download the uploads backups locally. See scripts/download-uploads.sh.
-./scripts/download-uploads.sh
+sh scripts/download-uploads.sh
 
 # Restore uploads from a backup made with the command above.
 gunzip -c .temp/uploads/<date>-uploads.tar.gz | kubectl exec -i -n learn-helper deploy/app -- tar xf - -C /app/uploads
