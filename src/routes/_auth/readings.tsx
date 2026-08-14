@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_auth/readings')({
 });
 
 function ReadingsPage() {
-  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
+  const { data, isPending, isError, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['readings'],
     queryFn: async ({ pageParam }) => {
       const res = await appClient.api.v1.users.me.readings.$get({
@@ -42,6 +42,8 @@ function ReadingsPage() {
           <div className="flex items-center justify-center py-8">
             <Loader />
           </div>
+        ) : isError ? (
+          <p className="text-center text-sm text-muted-foreground">Failed to load readings. Please try again.</p>
         ) : readings.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">No readings yet.</p>
         ) : (
