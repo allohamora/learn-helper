@@ -144,6 +144,22 @@ sh scripts/backup-uploads.sh
 # Download the uploads backups locally. See scripts/download-uploads.sh.
 sh scripts/download-uploads.sh
 
-# Restore uploads from a backup made with the command above.
-gunzip -c .temp/uploads/<date>-uploads.tar.gz | kubectl exec -i -n learn-helper deploy/app -- tar xf - -C /app/uploads
+# Restore uploads from a backup made with the command above. The uploads volume is
+# ReadWriteOnce, so scale the app down first (it's the only pod mounting it), restore
+# through a temporary pod, then scale the app back up.
+kubectl scale -n learn-helper deploy/app --replicas=0
+gunzip -c .temp/uploads/<date>-uploads.tar.gz | kubectl run -n learn-helper uploads-restore --image=alpine --restart=Never --rm -i \
+  --overrides='{
+    "spec": {
+      "containers": [{
+        "name": "uploads-restore",
+        "image": "alpine",
+        "stdin": true,
+        "command": ["tar", "xf", "-", "-C", "/app/uploads"],
+        "volumeMounts": [{"name": "uploads", "mountPath": "/app/uploads"}]
+      }],
+      "volumes": [{"name": "uploads", "persistentVolumeClaim": {"claimName": "app-uploads"}}]
+    }
+  }'
+kubectl scale -n learn-helper deploy/app --replicas=1
 ```
