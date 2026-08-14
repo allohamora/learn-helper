@@ -45,6 +45,9 @@ const getGeneralStatistics = async (userId: string) => {
     totalHintsViewed: 0,
     totalItemsUpdated: 0,
     totalItemsGenerated: 0,
+    totalProgressResets: 0,
+    totalItemsRemovedFromList: 0,
+    totalReadingsUploaded: 0,
     totalAiCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -126,6 +129,19 @@ const getGeneralStatistics = async (userId: string) => {
         result.totalInputTokens += item.inputTokens ?? 0;
         result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
+      case EventType.UserVocabularyItemProgressReset:
+        result.totalProgressResets = item.count;
+        continue;
+      case EventType.UserVocabularyItemRemovedFromList:
+        result.totalItemsRemovedFromList = item.count;
+        continue;
+      case EventType.ReadingUploaded:
+        result.totalReadingsUploaded = item.count;
+        continue;
+      default: {
+        const exhaustiveCheck: never = item.type;
+        throw new Error(`Unknown event type: ${exhaustiveCheck}`);
+      }
     }
   }
 
