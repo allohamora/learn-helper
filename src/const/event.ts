@@ -9,6 +9,7 @@ export enum EventType {
   UserVocabularyItemTaskGenerated = 'user-vocabulary-item-task-generated',
   UserVocabularyItemMovedToNextStep = 'user-vocabulary-item-moved-to-next-step',
   UserVocabularyItemProgressReset = 'user-vocabulary-item-progress-reset',
+  UserVocabularyItemRemovedFromList = 'user-vocabulary-item-removed-from-list',
   VocabularyItemUpdated = 'vocabulary-item-updated',
   VocabularyItemGenerated = 'vocabulary-item-generated',
   ReadingUploaded = 'reading-uploaded',

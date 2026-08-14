@@ -3,13 +3,21 @@ import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { InferResponseType } from 'hono/client';
-import { Check, Plus, Sparkles } from 'lucide-react';
+import { Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader } from '@/components/ui/loader';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { appClient } from '@/services/api';
 import { formatPartOfSpeech } from '@/utils/vocabulary';
 
@@ -34,6 +42,7 @@ type ResultRowProps = {
 };
 
 const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
+  const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
@@ -53,6 +62,28 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
     onError: () => toast.error('Failed to add item'),
   });
 
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      if (!item.userVocabularyItem) throw new Error('expected a userVocabularyItem for an added item');
+
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItem.id },
+      });
+      if (!res.ok) throw new Error('Failed to remove item');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsRemoveConfirmationOpen(false);
+      ADDED_QUERY_KEYS.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey: [queryKey] }));
+      void queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      toast.success('Item removed from list');
+    },
+    onError: () => toast.error('Failed to remove item'),
+  });
+
   return (
     <div className="flex items-start justify-between gap-3 px-3 py-2.5">
       <div className="min-w-0 space-y-1">
@@ -70,17 +101,45 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
       </div>
 
       {item.vocabularyListItem ? (
-        <Button
-          size="sm"
-          variant="outline"
-          className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
-          disabled
-          title="Added"
-          aria-label="Added"
-        >
-          <Check />
-          <span className="hidden sm:inline">Added</span>
-        </Button>
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
+            disabled={removeMutation.isPending}
+            onClick={() => setIsRemoveConfirmationOpen(true)}
+            title={`Remove ${item.value}`}
+            aria-label={`Remove ${item.value}`}
+          >
+            {removeMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+            <span className="hidden sm:inline">Remove</span>
+          </Button>
+
+          <Dialog open={isRemoveConfirmationOpen} onOpenChange={setIsRemoveConfirmationOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Remove &ldquo;{item.value}&rdquo; from your list?</DialogTitle>
+                <DialogDescription>
+                  This word will be unlinked from your personal list. Your progress on it is preserved, and you can add
+                  it back at any time.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsRemoveConfirmationOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={removeMutation.isPending}
+                  onClick={() => removeMutation.mutate()}
+                >
+                  {removeMutation.isPending && <Loader2 className="animate-spin" />}
+                  Remove
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       ) : (
         <Button
           size="sm"

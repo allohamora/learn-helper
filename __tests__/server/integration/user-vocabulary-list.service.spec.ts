@@ -18,6 +18,7 @@ import {
   generateVocabularyItem,
   getUserVocabularyListOrThrow,
   getUserVocabularyListWithRelationsOrThrow,
+  removeVocabularyItemFromPersonalList,
   searchPersonalVocabularyListItems,
 } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { getUserVocabularyListByVocabularyListId } from '@/server/user-vocabulary/user-vocabulary-list.repository';
@@ -312,6 +313,165 @@ describe('userVocabularyListService', () => {
         status: LearningStatus.Learning,
         encounterCount: 3,
       });
+    });
+  });
+
+  describe('removeVocabularyItemFromPersonalList', () => {
+    it('unlinks the word from the list but preserves progress', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+      const addedItem = await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+      });
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learning, encounterCount: 2 })
+        .where(eq(userVocabularyItem.id, addedItem.id));
+
+      const result = await removeVocabularyItemFromPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        userVocabularyItemId: addedItem.id,
+      });
+
+      expect(result).toEqual({ userVocabularyItemId: addedItem.id });
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).resolves.toBeUndefined();
+
+      const progressRow = await db.query.userVocabularyItem.findFirst({
+        where: eq(userVocabularyItem.id, addedItem.id),
+      });
+      expect(progressRow).toMatchObject({ status: LearningStatus.Learning, encounterCount: 2 });
+    });
+
+    it('logs a removed-from-list event', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+      const addedItem = await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+      });
+
+      await removeVocabularyItemFromPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        userVocabularyItemId: addedItem.id,
+      });
+
+      const [removedEvent] = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemRemovedFromList)));
+
+      expect(removedEvent).toMatchObject({
+        userVocabularyItemId: addedItem.id,
+        vocabularyItemId: item.id,
+        userVocabularyListId: userVocabularyList.id,
+        status: null,
+        encounterCount: null,
+      });
+    });
+
+    it('throws forbidden when the list is not personal', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list } = await createTestList(['run']);
+      const userVocabularyList = await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+
+      await expect(
+        removeVocabularyItemFromPersonalList({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          userVocabularyItemId: '00000000-0000-0000-0000-000000000000',
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws forbidden when the list belongs to another user', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      const otherPersonalList = await createPersonalVocabularyListForUser(otherUserId);
+      const userVocabularyList = await addVocabularyListToUser({ userId, vocabularyListId: otherPersonalList.id });
+
+      await expect(
+        removeVocabularyItemFromPersonalList({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          userVocabularyItemId: '00000000-0000-0000-0000-000000000000',
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found for a non-existent list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+
+      await expect(
+        removeVocabularyItemFromPersonalList({
+          userId,
+          userVocabularyListId: '00000000-0000-0000-0000-000000000000',
+          userVocabularyItemId: '00000000-0000-0000-0000-000000000000',
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found for a non-existent item', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+
+      await expect(
+        removeVocabularyItemFromPersonalList({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          userVocabularyItemId: '00000000-0000-0000-0000-000000000000',
+        }),
+      ).rejects.toThrow(Exception);
+    });
+
+    it('throws not found when the word is not linked to this personal list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { list, items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      // creates progress for the word via a different (public) list, without linking it to the personal list
+      await addVocabularyListToUser({ userId, vocabularyListId: list.id });
+      const untrackedUserItem = await db.query.userVocabularyItem.findFirst({
+        where: eq(userVocabularyItem.vocabularyItemId, item.id),
+      });
+      if (!untrackedUserItem) throw new Error('expected a user vocabulary item');
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+
+      await expect(
+        removeVocabularyItemFromPersonalList({
+          userId,
+          userVocabularyListId: userVocabularyList.id,
+          userVocabularyItemId: untrackedUserItem.id,
+        }),
+      ).rejects.toThrow(Exception);
     });
   });
 

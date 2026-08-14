@@ -41,6 +41,7 @@ import {
   addVocabularyListToUser,
   generateVocabularyItem,
   getUserVocabularyListWithRelationsOrThrow,
+  removeVocabularyItemFromPersonalList,
   searchPersonalVocabularyListItems,
 } from './user-vocabulary-list.service';
 import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
@@ -197,6 +198,41 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 201,
           data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'delete',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The word unlinked from the user's personal list; progress is preserved",
+          schema: z.object({ userVocabularyItemId: z.uuidv7() }),
+        }),
+        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
+        ...errorNotFoundResponse({ description: 'The list, item, or link was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await removeVocabularyItemFromPersonalList({
+            userId: user.id,
+            userVocabularyListId,
+            userVocabularyItemId,
+          }),
         }),
       );
     },

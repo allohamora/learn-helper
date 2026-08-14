@@ -287,6 +287,138 @@ describe('user-vocabulary.router', () => {
     });
   });
 
+  describe('DELETE /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/:userVocabularyItemId', () => {
+    it("returns 200, unlinks the word from the user's personal list, and preserves progress", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { items } = await seedList();
+      const [item] = items;
+      if (!item) throw new Error('expected an item to be created');
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+      const addRes = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
+        param: { userVocabularyListId: userVocabularyList.id },
+        json: { vocabularyItemId: item.id },
+      });
+      if (!addRes.ok) throw new Error('expected item to be added');
+      const { data: addedItem } = await addRes.json();
+      await db
+        .update(userVocabularyItem)
+        .set({ status: LearningStatus.Learning, encounterCount: 2 })
+        .where(eq(userVocabularyItem.vocabularyItemId, item.id));
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ success: true, data: { userVocabularyItemId: addedItem.id } });
+
+      await expect(
+        getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
+      ).resolves.toBeUndefined();
+
+      const progressRow = await db.query.userVocabularyItem.findFirst({
+        where: eq(userVocabularyItem.vocabularyItemId, item.id),
+      });
+      expect(progressRow).toMatchObject({ status: LearningStatus.Learning, encounterCount: 2 });
+
+      const events = await db.query.event.findMany({
+        where: and(eq(event.userId, USER_ID), eq(event.type, EventType.UserVocabularyItemRemovedFromList)),
+      });
+      expect(events).toMatchObject([{ vocabularyItemId: item.id, userVocabularyListId: userVocabularyList.id }]);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: {
+          userVocabularyListId: '00000000-0000-7000-8000-000000000000',
+          userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
+        },
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('returns 404 for a non-existent list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: {
+          userVocabularyListId: '00000000-0000-7000-8000-000000000000',
+          userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
+        },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for a non-existent item', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const personalList = await createPersonalVocabularyListForUser(USER_ID);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId: USER_ID,
+        vocabularyListId: personalList.id,
+      });
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: {
+          userVocabularyListId: userVocabularyList.id,
+          userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
+        },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 403 when the target list is not personal', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const { list } = await seedList();
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: list.id } });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 403 when the target personal list belongs to another user', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const OTHER_USER_ID = 'e2e-other-user';
+      await db.insert(user).values({ id: OTHER_USER_ID, name: 'Other User', email: `${OTHER_USER_ID}@example.com` });
+      const otherPersonalList = await createPersonalVocabularyListForUser(OTHER_USER_ID);
+      const postRes = await client.api.v1.users.me['vocabulary-lists'].$post({
+        json: { vocabularyListId: otherPersonalList.id },
+      });
+      const { data: userList } = await postRes.json();
+
+      const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId: userList.id, userVocabularyItemId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe('POST /api/v1/users/me/vocabulary-lists/:userVocabularyListId/items/generate', () => {
     let generateSpy: MockInstance<typeof vocabularyItemGenerationService.generateVocabularyItemData>;
 

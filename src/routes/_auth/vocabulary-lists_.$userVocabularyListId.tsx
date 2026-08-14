@@ -90,6 +90,7 @@ function VocabularyListPage() {
               isFetchingNextPage={isFetchingNextPage}
               onLoadMore={() => void fetchNextPage({ cancelRefetch: false })}
               userVocabularyListId={userVocabularyListId}
+              vocabularyListType={userVocabularyList.vocabularyList.type}
             />
           )}
         </div>

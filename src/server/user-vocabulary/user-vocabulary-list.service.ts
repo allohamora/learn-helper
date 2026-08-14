@@ -10,6 +10,7 @@ import {
   createUserVocabularyItemIfNotExist,
   createUserVocabularyItemsFromList,
   getUserVocabularyItemByVocabularyItemIdForUpdate,
+  getUserVocabularyItemWithRelationsById,
   getUserVocabularyItemWithRelationsByVocabularyItemId,
   updateUserVocabularyItemProgress,
 } from './user-vocabulary-item.repository';
@@ -28,6 +29,7 @@ import {
 import {
   createVocabularyListItem,
   createVocabularyListItemIfNotExist,
+  deleteVocabularyListItem,
   getVocabularyListItem,
 } from '../vocabulary/vocabulary-list-item.repository';
 import { createVocabularyItemIfNotExist, searchVocabularyItemsForList } from '../vocabulary/vocabulary-item.repository';
@@ -164,6 +166,52 @@ export const addVocabularyItemToPersonalList = async ({
   });
 };
 
+export const removeVocabularyItemFromPersonalList = async ({
+  userId,
+  userVocabularyListId,
+  userVocabularyItemId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+  userVocabularyItemId: string;
+}) => {
+  return db.transaction(async (tx) => {
+    const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx);
+    const vocabularyListId = vocabularyList.id;
+
+    if (vocabularyList.type !== VocabularyListType.Personal) {
+      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" is not a personal list`);
+    }
+    if (vocabularyList.ownerId !== userId) {
+      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
+    }
+
+    const userItem = await getUserVocabularyItemWithRelationsById({ userId, userVocabularyItemId }, tx);
+    if (!userItem) throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+
+    const deletedListItem = await deleteVocabularyListItem(
+      { vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
+      tx,
+    );
+    if (!deletedListItem) {
+      throw Exception.notFound(`vocabulary item "${userItem.vocabularyItemId}" not in list "${vocabularyListId}"`);
+    }
+
+    await insertEvent(
+      {
+        type: EventType.UserVocabularyItemRemovedFromList,
+        userId,
+        userVocabularyItemId,
+        vocabularyItemId: userItem.vocabularyItemId,
+        userVocabularyListId,
+      },
+      tx,
+    );
+
+    return { userVocabularyItemId };
+  });
+};
+
 export const generateVocabularyItem = async ({
   userId,
   userVocabularyListId,
@@ -212,7 +260,7 @@ export const searchPersonalVocabularyListItems = async ({
     throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" does not belong to the user`);
   }
 
-  return searchVocabularyItemsForList({ vocabularyListId: vocabularyList.id, ...filter });
+  return searchVocabularyItemsForList({ userId, vocabularyListId: vocabularyList.id, ...filter });
 };
 
 export const createPersonalVocabularyListForUser = async (userId: string) => {

@@ -4,7 +4,7 @@ import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ExternalLink, Loader2, Pencil, Undo2, Volume2 } from 'lucide-react';
+import { ExternalLink, Loader2, Pencil, Trash2, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,7 @@ import {
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
-import { LearningStatus } from '@/const/vocabulary';
+import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
 
@@ -30,8 +30,13 @@ type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 export const requiresUndoConfirmation = (status: LearningStatus, encounterCount: number) =>
   encounterCount > 0 || status === LearningStatus.Learned;
 
-const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
+const ActionsCell: FC<{
+  item: VocabularyItem;
+  userVocabularyListId: string;
+  vocabularyListType: VocabularyListType;
+}> = ({ item, userVocabularyListId, vocabularyListType }) => {
   const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
+  const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const { vocabularyItem } = item;
@@ -59,6 +64,30 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       toast.success('Item progress reset to waiting in all lists');
     },
     onError: () => toast.error('Failed to reset item progress'),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId, userVocabularyItemId: item.id },
+      });
+      if (!res.ok) throw new Error('Failed to remove item from list');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsRemoveConfirmationOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      toast.success('Item removed from list');
+    },
+    onError: () => toast.error('Failed to remove item from list'),
   });
 
   const canUndo = item.status !== LearningStatus.Waiting;
@@ -129,6 +158,19 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
       >
         {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
+      {vocabularyListType === VocabularyListType.Personal && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="size-8 px-0"
+          disabled={removeMutation.isPending}
+          onClick={() => setIsRemoveConfirmationOpen(true)}
+          title="Remove from list"
+          aria-label="Remove from list"
+        >
+          {removeMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+        </Button>
+      )}
 
       <Dialog open={isUndoConfirmationOpen} onOpenChange={setIsUndoConfirmationOpen}>
         <DialogContent>
@@ -151,13 +193,34 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isRemoveConfirmationOpen} onOpenChange={setIsRemoveConfirmationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove &ldquo;{vocabularyItem.value}&rdquo; from your list?</DialogTitle>
+            <DialogDescription>
+              This word will be unlinked from your personal list. Your progress on it is preserved, and you can add it
+              back at any time.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRemoveConfirmationOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={removeMutation.isPending} onClick={() => removeMutation.mutate()}>
+              {removeMutation.isPending && <Loader2 className="animate-spin" />}
+              Remove
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 const columnHelper = createColumnHelper<VocabularyItem>();
 
-const buildColumns = (userVocabularyListId: string) => [
+const buildColumns = (userVocabularyListId: string, vocabularyListType: VocabularyListType) => [
   columnHelper.accessor('vocabularyItem.value', {
     header: 'Item',
     cell: (info) => {
@@ -187,7 +250,13 @@ const buildColumns = (userVocabularyListId: string) => [
   columnHelper.display({
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => <ActionsCell item={row.original} userVocabularyListId={userVocabularyListId} />,
+    cell: ({ row }) => (
+      <ActionsCell
+        item={row.original}
+        userVocabularyListId={userVocabularyListId}
+        vocabularyListType={vocabularyListType}
+      />
+    ),
   }),
 ];
 
@@ -207,6 +276,7 @@ type Props = {
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
   userVocabularyListId: string;
+  vocabularyListType: VocabularyListType;
 };
 
 export const VocabularyItemsTable: FC<Props> = ({
@@ -215,9 +285,13 @@ export const VocabularyItemsTable: FC<Props> = ({
   isFetchingNextPage,
   onLoadMore,
   userVocabularyListId,
+  vocabularyListType,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const columns = useMemo(() => buildColumns(userVocabularyListId), [userVocabularyListId]);
+  const columns = useMemo(
+    () => buildColumns(userVocabularyListId, vocabularyListType),
+    [userVocabularyListId, vocabularyListType],
+  );
 
   const table = useReactTable({
     data: items,

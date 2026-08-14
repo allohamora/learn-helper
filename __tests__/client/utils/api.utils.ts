@@ -80,6 +80,17 @@ export const api = {
       });
     },
   },
+  removeVocabularyItemFromPersonalList: {
+    mock: (
+      userVocabularyListId: string,
+      responseFactory: (userVocabularyItemId: string) => HttpResponse<JsonBodyType>,
+    ) => {
+      return http.delete(
+        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId`,
+        ({ params: routeParams }) => responseFactory(routeParams.userVocabularyItemId as string),
+      );
+    },
+  },
   generateVocabularyItem: {
     mock: (
       userVocabularyListId: string,
