@@ -1,6 +1,8 @@
 import * as readingService from '@/server/reading/reading.service';
+import * as readingRepository from '@/server/reading/reading.repository';
 import * as fsp from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
@@ -221,6 +223,53 @@ describe('reading.router', () => {
         form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
       });
       expect(secondRes.status).toBe(201);
+    });
+
+    it('returns 409 when a duplicate slips past the pre-check and hits the unique constraint', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const pdfBytes = makeMinimalPdf();
+      const hash = createHash('sha256').update(pdfBytes).digest('hex');
+      await seedReading({ userId: USER_ID, title: hash });
+
+      const getFileByUserIdAndHashSpy = vi
+        .spyOn(readingRepository, 'getFileByUserIdAndHash')
+        .mockResolvedValueOnce(undefined);
+
+      const res = await client.api.v1.users.me.readings.$post({
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+      });
+      expect(res.status).toBe(409);
+
+      const readings = await db.query.reading.findMany({ where: eq(reading.userId, USER_ID) });
+      expect(readings).toHaveLength(1);
+
+      getFileByUserIdAndHashSpy.mockRestore();
+    });
+
+    it('lets exactly one of two concurrent duplicate uploads succeed', async () => {
+      const concurrentUserId = 'e2e-test-user-concurrent';
+      auth.authorized({ user: { id: concurrentUserId } });
+      await db
+        .insert(user)
+        .values({ id: concurrentUserId, name: 'Concurrent User', email: `${concurrentUserId}@example.com` });
+
+      const pdfBytes = makeMinimalPdf();
+
+      const [firstRes, secondRes] = await Promise.all([
+        client.api.v1.users.me.readings.$post({
+          form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        }),
+        client.api.v1.users.me.readings.$post({
+          form: { file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }) },
+        }),
+      ]);
+
+      expect([firstRes.status, secondRes.status].sort()).toEqual([201, 409]);
+
+      const readings = await db.query.reading.findMany({ where: eq(reading.userId, concurrentUserId) });
+      expect(readings).toHaveLength(1);
     });
   });
 

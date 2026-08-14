@@ -4,12 +4,22 @@ import { RequestType } from '@/const/request';
 import { file, reading } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
+import { Exception } from '../utils/exception.utils';
+import { isUniqueConstraintViolation } from '../utils/db.utils';
 import type { ListReadingsFilterDto } from './dtos/list-readings-filter.dto';
 
 export const createFile = async (data: typeof file.$inferInsert, tx: Transaction = db) => {
-  const [created] = await tx.insert(file).values(data).returning();
+  try {
+    const [created] = await tx.insert(file).values(data).returning();
 
-  return created;
+    return created;
+  } catch (err) {
+    if (isUniqueConstraintViolation(err, 'file_user_id_hash_idx')) {
+      throw Exception.conflict('this file was already uploaded');
+    }
+
+    throw err;
+  }
 };
 
 export const getFileByUserIdAndHash = async (
