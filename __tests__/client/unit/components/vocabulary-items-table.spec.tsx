@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { z } from '@hono/zod-openapi';
-import { VocabularyItemsTable, requiresUndoConfirmation } from '@/components/vocabulary-items-table';
+import { VocabularyItemsTable, requiresResetConfirmation } from '@/components/vocabulary-items-table';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import type { userVocabularyItemWithRelationsDto } from '@/server/user-vocabulary/dtos/user-vocabulary-item-with-relations.dto';
@@ -50,15 +50,15 @@ const createVocabularyItem = (value: string): VocabularyItem => {
   };
 };
 
-describe('requiresUndoConfirmation', () => {
+describe('requiresResetConfirmation', () => {
   it('requires confirmation when learning progress would be erased', () => {
-    expect(requiresUndoConfirmation(LearningStatus.Learning, 1)).toBe(true);
-    expect(requiresUndoConfirmation(LearningStatus.Learned, 3)).toBe(true);
+    expect(requiresResetConfirmation(LearningStatus.Learning, 1)).toBe(true);
+    expect(requiresResetConfirmation(LearningStatus.Learned, 3)).toBe(true);
   });
 
   it('does not require confirmation when no encounters have been completed', () => {
-    expect(requiresUndoConfirmation(LearningStatus.Learning, 0)).toBe(false);
-    expect(requiresUndoConfirmation(LearningStatus.Known, 0)).toBe(false);
+    expect(requiresResetConfirmation(LearningStatus.Learning, 0)).toBe(false);
+    expect(requiresResetConfirmation(LearningStatus.Known, 0)).toBe(false);
   });
 });
 

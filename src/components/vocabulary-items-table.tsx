@@ -28,7 +28,7 @@ type ItemsResponse = InferResponseType<
 >;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
-export const requiresUndoConfirmation = (status: LearningStatus, encounterCount: number) =>
+export const requiresResetConfirmation = (status: LearningStatus, encounterCount: number) =>
   encounterCount > 0 || status === LearningStatus.Learned;
 
 const ActionsCell: FC<{
@@ -36,7 +36,7 @@ const ActionsCell: FC<{
   userVocabularyListId: string;
   vocabularyListType: VocabularyListType;
 }> = ({ item, userVocabularyListId, vocabularyListType }) => {
-  const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
+  const [isResetConfirmationOpen, setIsResetConfirmationOpen] = useState(false);
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const [isReset, setIsReset] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
@@ -45,7 +45,7 @@ const ActionsCell: FC<{
   const pronunciation = vocabularyItem.pronunciation;
 
   const queryClient = useQueryClient();
-  const undoMutation = useMutation({
+  const resetMutation = useMutation({
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
@@ -57,7 +57,7 @@ const ActionsCell: FC<{
       return res.json();
     },
     onSuccess: () => {
-      setIsUndoConfirmationOpen(false);
+      setIsResetConfirmationOpen(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
@@ -94,15 +94,15 @@ const ActionsCell: FC<{
     onError: () => toast.error('Failed to remove item from list'),
   });
 
-  const canUndo = item.status !== LearningStatus.Waiting;
-  const needsConfirmation = requiresUndoConfirmation(item.status, item.encounterCount);
-  const undo = () => {
+  const canReset = item.status !== LearningStatus.Waiting;
+  const needsConfirmation = requiresResetConfirmation(item.status, item.encounterCount);
+  const reset = () => {
     if (needsConfirmation) {
-      setIsUndoConfirmationOpen(true);
+      setIsResetConfirmationOpen(true);
       return;
     }
 
-    undoMutation.mutate();
+    resetMutation.mutate();
   };
 
   return (
@@ -155,12 +155,12 @@ const ActionsCell: FC<{
         size="sm"
         variant="ghost"
         className="size-8 px-0"
-        disabled={!canUndo || undoMutation.isPending}
-        onClick={undo}
+        disabled={!canReset || resetMutation.isPending}
+        onClick={reset}
         title="Reset item progress"
         aria-label="Reset item progress"
       >
-        {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
+        {resetMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
       {vocabularyListType === VocabularyListType.Personal && (
         <Button
@@ -176,7 +176,7 @@ const ActionsCell: FC<{
         </Button>
       )}
 
-      <Dialog open={isUndoConfirmationOpen} onOpenChange={setIsUndoConfirmationOpen}>
+      <Dialog open={isResetConfirmationOpen} onOpenChange={setIsResetConfirmationOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
@@ -187,11 +187,11 @@ const ActionsCell: FC<{
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUndoConfirmationOpen(false)}>
+            <Button variant="outline" onClick={() => setIsResetConfirmationOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" disabled={undoMutation.isPending} onClick={() => undoMutation.mutate()}>
-              {undoMutation.isPending && <Loader2 className="animate-spin" />}
+            <Button variant="destructive" disabled={resetMutation.isPending} onClick={() => resetMutation.mutate()}>
+              {resetMutation.isPending && <Loader2 className="animate-spin" />}
               Reset progress
             </Button>
           </DialogFooter>
