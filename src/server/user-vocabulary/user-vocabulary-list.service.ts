@@ -9,8 +9,8 @@ import {
   createUserVocabularyItem,
   createUserVocabularyItemIfNotExist,
   createUserVocabularyItemsFromList,
+  getUserVocabularyItemByIdForUpdate,
   getUserVocabularyItemByVocabularyItemIdForUpdate,
-  getUserVocabularyItemWithRelationsById,
   getUserVocabularyItemWithRelationsByVocabularyItemId,
   newWaitingProgress,
   updateUserVocabularyItemProgress,
@@ -196,7 +196,7 @@ export const removeVocabularyItemFromPersonalList = async ({
       throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
     }
 
-    const userItem = await getUserVocabularyItemWithRelationsById({ userId, userVocabularyItemId }, tx);
+    const userItem = await getUserVocabularyItemByIdForUpdate({ userId, userVocabularyItemId }, tx);
     if (!userItem) throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
 
     const deletedListItem = await deleteVocabularyListItem(
