@@ -209,8 +209,9 @@ const ActionsCell: FC<{
           <DialogHeader>
             <DialogTitle>Remove &ldquo;{vocabularyItem.value}&rdquo; from your list?</DialogTitle>
             <DialogDescription>
-              This word will be unlinked from your personal list. Your progress on it is preserved, and you can add it
-              back at any time.
+              {isReset
+                ? 'This word will be unlinked from your personal list, and its progress will be reset to waiting in every list that contains it.'
+                : 'This word will be unlinked from your personal list. Your progress on it is preserved, and you can add it back at any time.'}
             </DialogDescription>
           </DialogHeader>
           <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset">
