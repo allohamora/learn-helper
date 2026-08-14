@@ -14,9 +14,25 @@ import { mockServer } from '../../setup-unit-context';
 type SearchResult = z.infer<typeof personalVocabularyItemSearchResultDto>;
 type UserVocabularyItem = z.infer<typeof userVocabularyItemWithRelationsDto>;
 
+const createUserVocabularyItemRow = (): NonNullable<SearchResult['userVocabularyItem']> => {
+  const timestamp = new Date().toISOString();
+
+  return {
+    id: crypto.randomUUID(),
+    userId: crypto.randomUUID(),
+    vocabularyItemId: crypto.randomUUID(),
+    encounterCount: 0,
+    status: LearningStatus.Learning,
+    enqueuedAt: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+};
+
 const createSearchResult = (
   value: string,
   vocabularyListItem: SearchResult['vocabularyListItem'] = null,
+  userVocabularyItem: SearchResult['userVocabularyItem'] = vocabularyListItem ? createUserVocabularyItemRow() : null,
 ): SearchResult => {
   const timestamp = new Date().toISOString();
 
@@ -32,6 +48,7 @@ const createSearchResult = (
     createdAt: timestamp,
     updatedAt: timestamp,
     vocabularyListItem,
+    userVocabularyItem,
   };
 };
 
@@ -39,14 +56,7 @@ const createUserVocabularyItem = (value: string): UserVocabularyItem => {
   const timestamp = new Date().toISOString();
 
   return {
-    id: crypto.randomUUID(),
-    userId: crypto.randomUUID(),
-    vocabularyItemId: crypto.randomUUID(),
-    encounterCount: 0,
-    status: LearningStatus.Learning,
-    enqueuedAt: null,
-    createdAt: timestamp,
-    updatedAt: timestamp,
+    ...createUserVocabularyItemRow(),
     vocabularyItem: {
       id: crypto.randomUUID(),
       value,
@@ -83,6 +93,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
   it('shows Add for an unadded word, and adding it flips the row to Already added', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity');
+    const addedUserVocabularyItem = createUserVocabularyItemRow();
 
     let added = false;
     mockServer.addHandlers(
@@ -100,6 +111,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
                     createdAt: item.createdAt,
                   }
                 : null,
+              userVocabularyItem: added ? addedUserVocabularyItem : null,
             },
           ],
           pageInfo: { total: 1, count: 1 },
@@ -120,12 +132,12 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Add serendipity' }));
 
-    await screen.findByRole('button', { name: 'Added' });
+    await screen.findByRole('button', { name: 'Remove serendipity' });
     expect(addHandler).toHaveBeenCalledOnce();
     expect(screen.queryByRole('button', { name: 'Add serendipity' })).toBeNull();
   });
 
-  it('renders Already added directly when the word is already in the list', async () => {
+  it('renders a Remove button directly when the word is already in the list', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('ubiquitous', {
       id: crypto.randomUUID(),
@@ -139,8 +151,172 @@ describe('AddPersonalVocabularyItemDialog', () => {
     renderDialog(userVocabularyListId);
     await openDialogAndSearch('ubiquitous');
 
-    await screen.findByRole('button', { name: 'Added' });
+    await screen.findByRole('button', { name: 'Remove ubiquitous' });
     expect(screen.queryByRole('button', { name: 'Add ubiquitous' })).toBeNull();
+  });
+
+  it('does not show a reset to learning checkbox for a brand-new word', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity');
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    await screen.findByRole('button', { name: 'Add serendipity' });
+    expect(screen.queryByRole('checkbox', { name: /reset to learning/i })).toBeNull();
+  });
+
+  it('shows a reset to learning checkbox checked by default for a previously removed word, and unchecking it sends isResetToLearning: false', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', null, createUserVocabularyItemRow());
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    const addHandler = vi.fn((vocabularyItemId: string) => {
+      if (vocabularyItemId !== item.id) throw new Error('unexpected vocabulary item id');
+
+      return HttpResponse.json({ success: true, data: createUserVocabularyItem(item.value) });
+    });
+    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(userVocabularyListId, addHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    const checkbox = await screen.findByRole('checkbox', { name: /reset to learning/i });
+    expect(checkbox.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(checkbox);
+    expect(checkbox.getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add serendipity' }));
+
+    await vi.waitFor(() => expect(addHandler).toHaveBeenCalledWith(item.id, false));
+  });
+
+  it('removing a word unlinks it and flips the row back to Add, after confirmation', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    let removed = false;
+    mockServer.addHandlers(
+      api.personalVocabularyItemSearch.mock(userVocabularyListId, () =>
+        HttpResponse.json({
+          success: true,
+          data: [{ ...item, vocabularyListItem: removed ? null : item.vocabularyListItem }],
+          pageInfo: { total: 1, count: 1 },
+        }),
+      ),
+    );
+
+    const removeHandler = vi.fn((userVocabularyItemId: string) => {
+      if (userVocabularyItemId !== item.userVocabularyItem?.id) throw new Error('unexpected user vocabulary item id');
+      removed = true;
+
+      return HttpResponse.json({ success: true, data: { userVocabularyItemId } });
+    });
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+
+    await screen.findByRole('button', { name: 'Add serendipity' });
+    expect(removeHandler).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Remove serendipity' })).toBeNull();
+  });
+
+  it('shows a reset checkbox unchecked by default in the remove dialog, and sends isReset: false', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    const removeHandler = vi.fn((userVocabularyItemId: string) =>
+      HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
+    );
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+
+    const checkbox = await screen.findByRole('checkbox', { name: /^reset$/i });
+    expect(checkbox.getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+
+    await vi.waitFor(() => expect(removeHandler).toHaveBeenCalledWith(item.userVocabularyItem?.id, false));
+  });
+
+  it('checking reset in the remove dialog sends isReset: true', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    const removeHandler = vi.fn((userVocabularyItemId: string) =>
+      HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
+    );
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+
+    const checkbox = await screen.findByRole('checkbox', { name: /^reset$/i });
+    fireEvent.click(checkbox);
+    expect(checkbox.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+
+    await vi.waitFor(() => expect(removeHandler).toHaveBeenCalledWith(item.userVocabularyItem?.id, true));
+  });
+
+  it('resets the checkbox to unchecked after cancelling the remove dialog', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', {
+      id: crypto.randomUUID(),
+      vocabularyListId: userVocabularyListId,
+      vocabularyItemId: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    });
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+    const checkbox = await screen.findByRole('checkbox', { name: /^reset$/i });
+    fireEvent.click(checkbox);
+    expect(checkbox.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
+
+    const reopenedCheckbox = await screen.findByRole('checkbox', { name: /^reset$/i });
+    expect(reopenedCheckbox.getAttribute('aria-checked')).toBe('false');
   });
 
   it('shows a generate fallback for zero results, and generating adds the word', async () => {
@@ -162,6 +338,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
                     vocabularyItemId: crypto.randomUUID(),
                     createdAt: new Date().toISOString(),
                   },
+                  userVocabularyItem: createUserVocabularyItemRow(),
                 },
               ]
             : [],
@@ -184,7 +361,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: `Generate "${value}" with AI & add` }));
 
-    await screen.findByRole('button', { name: 'Added' });
+    await screen.findByRole('button', { name: `Remove ${value}` });
     expect(generateHandler).toHaveBeenCalledOnce();
   });
 

@@ -13,6 +13,8 @@ import {
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
+import { addVocabularyItemToListDto } from './dtos/add-vocabulary-item-to-list.dto';
+import { removeVocabularyItemFromListDto } from './dtos/remove-vocabulary-item-from-list.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { personalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
 import { personalVocabularyItemSearchResultDto } from './dtos/personal-vocabulary-item-search-result.dto';
@@ -33,6 +35,7 @@ import {
   createVocabularyListLearnEvents,
   moveUserVocabularyItemToNextStep,
   discoverUserVocabularyItem,
+  resetUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from './user-vocabulary-item.service';
@@ -41,6 +44,7 @@ import {
   addVocabularyListToUser,
   generateVocabularyItem,
   getUserVocabularyListWithRelationsOrThrow,
+  removeVocabularyItemFromPersonalList,
   searchPersonalVocabularyListItems,
 } from './user-vocabulary-list.service';
 import { getUserAvailableVocabularyLists } from './user-vocabulary-list.repository';
@@ -171,7 +175,7 @@ export const userVocabularyRouter = new OpenAPIHono()
         body: {
           content: {
             'application/json': {
-              schema: z.object({ vocabularyItemId: z.uuidv7() }),
+              schema: addVocabularyItemToListDto,
             },
           },
         },
@@ -191,12 +195,61 @@ export const userVocabularyRouter = new OpenAPIHono()
     async (c) => {
       const user = c.get('user');
       const { userVocabularyListId } = c.req.valid('param');
-      const { vocabularyItemId } = c.req.valid('json');
+      const { vocabularyItemId, isResetToLearning } = c.req.valid('json');
 
       return c.json(
         ...toSuccessResponse({
           status: 201,
-          data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
+          data: await addVocabularyItemToPersonalList({
+            userId: user.id,
+            userVocabularyListId,
+            vocabularyItemId,
+            isResetToLearning,
+          }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'delete',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: removeVocabularyItemFromListDto,
+            },
+          },
+        },
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The word unlinked from the user's personal list; progress is preserved unless isReset was set",
+          schema: z.object({ userVocabularyItemId: z.uuidv7() }),
+        }),
+        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
+        ...errorNotFoundResponse({ description: 'The list, item, or link was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+      const { isReset } = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await removeVocabularyItemFromPersonalList({
+            userId: user.id,
+            userVocabularyListId,
+            userVocabularyItemId,
+            isReset,
+          }),
         }),
       );
     },
@@ -470,6 +523,36 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await undoUserVocabularyItemStatus({ userId: user.id, userVocabularyListId, userVocabularyItemId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{userVocabularyListId}/items/{userVocabularyItemId}/reset',
+      tags: ['Vocabulary'],
+      request: {
+        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: "The item's progress reset to waiting",
+          schema: userVocabularyItemWithRelationsDto,
+        }),
+        ...errorConflictResponse({ description: 'The item is already waiting' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await resetUserVocabularyItemStatus({ userId: user.id, userVocabularyListId, userVocabularyItemId }),
         }),
       );
     },

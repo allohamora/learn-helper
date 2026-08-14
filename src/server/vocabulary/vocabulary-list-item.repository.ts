@@ -38,6 +38,23 @@ export const createVocabularyListItemIfNotExist = async (
   return created;
 };
 
+export const deleteVocabularyListItem = async (
+  { vocabularyListId, vocabularyItemId }: { vocabularyListId: string; vocabularyItemId: string },
+  tx: Transaction = db,
+) => {
+  const [deleted] = await tx
+    .delete(vocabularyListItem)
+    .where(
+      and(
+        eq(vocabularyListItem.vocabularyListId, vocabularyListId),
+        eq(vocabularyListItem.vocabularyItemId, vocabularyItemId),
+      ),
+    )
+    .returning();
+
+  return deleted;
+};
+
 export const getVocabularyListItem = async (
   { vocabularyListId, vocabularyItemId }: { vocabularyListId: string; vocabularyItemId: string },
   tx: Transaction = db,

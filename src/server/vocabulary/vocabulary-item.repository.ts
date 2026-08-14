@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { and, asc, count, eq, getTableColumns, gte, ilike } from 'drizzle-orm';
 import { RequestType } from '@/const/request';
-import { vocabularyItem, vocabularyListItem } from '../db/db.schema';
+import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import { escapeLikePattern } from '../db/db.utils';
 import type { Transaction } from '../db/db.types';
@@ -43,18 +43,23 @@ export const updateVocabularyItemTranslation = async (
 };
 
 export const searchVocabularyItemsForList = async ({
+  userId,
   vocabularyListId,
   value,
   cursor,
   limit = 50,
   type = RequestType.All,
-}: { vocabularyListId: string } & PersonalVocabularyItemSearchFilterDto) => {
+}: { userId: string; vocabularyListId: string } & PersonalVocabularyItemSearchFilterDto) => {
   const searchFilter = ilike(vocabularyItem.value, `${escapeLikePattern(value)}%`);
   const cursorFilter = cursor ? gte(vocabularyItem.id, cursor) : undefined;
 
   const getItems = async () => {
     const items = await db
-      .select({ ...getTableColumns(vocabularyItem), vocabularyListItem })
+      .select({
+        ...getTableColumns(vocabularyItem),
+        vocabularyListItem,
+        userVocabularyItem,
+      })
       .from(vocabularyItem)
       .leftJoin(
         vocabularyListItem,
@@ -62,6 +67,10 @@ export const searchVocabularyItemsForList = async ({
           eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id),
           eq(vocabularyListItem.vocabularyListId, vocabularyListId),
         ),
+      )
+      .leftJoin(
+        userVocabularyItem,
+        and(eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id), eq(userVocabularyItem.userId, userId)),
       )
       .where(and(searchFilter, cursorFilter))
       .orderBy(asc(vocabularyItem.id))

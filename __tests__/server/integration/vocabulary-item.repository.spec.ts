@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 import { countItems } from '@/server/db/db.utils';
 import { db } from '@/server/db/db.service';
-import { vocabularyItem } from '@/server/db/db.schema';
+import { user, userVocabularyItem, vocabularyItem } from '@/server/db/db.schema';
 import {
   createMissingVocabularyItems,
   createVocabularyItemIfNotExist,
@@ -22,6 +22,16 @@ const buildItem = (overrides: Partial<typeof vocabularyItem.$inferInsert> = {}) 
   spelling: '/rʌn/',
   ...overrides,
 });
+
+const createTestUser = async (id: string) => {
+  const [row] = await db
+    .insert(user)
+    .values({ id, name: 'Test User', email: `${id}@example.com` })
+    .returning();
+  if (!row) throw new Error('expected user to be created');
+
+  return row;
+};
 
 describe('vocabularyItemRepository', () => {
   describe('createMissingVocabularyItems', () => {
@@ -95,36 +105,40 @@ describe('vocabularyItemRepository', () => {
 
   describe('searchVocabularyItemsForList', () => {
     it('matches values case-insensitively via ILIKE', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'Run' }), buildItem({ value: 'walk' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
 
       expect(result.items.map((item) => item.value)).toEqual(['Run']);
       expect(result.total).toBe(1);
     });
 
     it('matches values by prefix, not by substring', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' }), buildItem({ value: 'overrun' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
 
       expect(result.items.map((item) => item.value)).toEqual(['run']);
       expect(result.total).toBe(1);
     });
 
     it('returns an empty list and total 0 when nothing matches', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'xyz' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'xyz' });
 
       expect(result.items).toEqual([]);
       expect(result.total).toBe(0);
     });
 
     it('paginates with a cursor and returns nextCursor when more items remain', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([
         buildItem({ value: 'run1' }),
@@ -132,11 +146,17 @@ describe('vocabularyItemRepository', () => {
         buildItem({ value: 'run3' }),
       ]);
 
-      const firstPage = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run', limit: 2 });
+      const firstPage = await searchVocabularyItemsForList({
+        userId,
+        vocabularyListId: list.id,
+        value: 'run',
+        limit: 2,
+      });
       expect(firstPage.items).toHaveLength(2);
       expect(firstPage.nextCursor).toBeDefined();
 
       const secondPage = await searchVocabularyItemsForList({
+        userId,
         vocabularyListId: list.id,
         value: 'run',
         limit: 2,
@@ -150,10 +170,12 @@ describe('vocabularyItemRepository', () => {
     });
 
     it('skips the total count query and returns total: 0 when type is Data', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' })]);
 
       const result = await searchVocabularyItemsForList({
+        userId,
         vocabularyListId: list.id,
         value: 'run',
         type: RequestType.Data,
@@ -164,48 +186,53 @@ describe('vocabularyItemRepository', () => {
     });
 
     it('matches a literal % instead of treating it as a wildcard', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: '100%' }), buildItem({ value: '100' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: '100%' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: '100%' });
 
       expect(result.items.map((item) => item.value)).toEqual(['100%']);
     });
 
     it('matches a literal _ instead of treating it as a single-character wildcard', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'foo_bar' }), buildItem({ value: 'fooxbar' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'foo_bar' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'foo_bar' });
 
       expect(result.items.map((item) => item.value)).toEqual(['foo_bar']);
     });
 
     it('matches a literal backslash', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'a\\b' }), buildItem({ value: 'ab' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'a\\b' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'a\\b' });
 
       expect(result.items.map((item) => item.value)).toEqual(['a\\b']);
     });
 
     it('marks a matched item as null when it is not on the list', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       await createMissingVocabularyItems([buildItem({ value: 'run' })]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
 
       expect(result.items).toEqual([expect.objectContaining({ value: 'run', vocabularyListItem: null })]);
     });
 
     it('joins the list item when the matched item is on the list', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       const [item] = await createMissingVocabularyItems([buildItem({ value: 'run' })]);
       if (!item) throw new Error('expected item to be created');
       await createVocabularyListItemsIfNotExist([{ vocabularyListId: list.id, vocabularyItemId: item.id }]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
 
       expect(result.items).toEqual([
         expect.objectContaining({
@@ -216,15 +243,44 @@ describe('vocabularyItemRepository', () => {
     });
 
     it('scopes the join to the given list, leaving items on other lists null', async () => {
+      const { id: userId } = await createTestUser('user-1');
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       const otherList = await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
       const [item] = await createMissingVocabularyItems([buildItem({ value: 'run' })]);
       if (!item) throw new Error('expected item to be created');
       await createVocabularyListItemsIfNotExist([{ vocabularyListId: otherList.id, vocabularyItemId: item.id }]);
 
-      const result = await searchVocabularyItemsForList({ vocabularyListId: list.id, value: 'run' });
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
 
       expect(result.items).toEqual([expect.objectContaining({ value: 'run', vocabularyListItem: null })]);
+    });
+
+    it("includes the searching user's userVocabularyItem when they have progress on the matched item", async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const [item] = await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+      if (!item) throw new Error('expected item to be created');
+      const [userItem] = await db.insert(userVocabularyItem).values({ userId, vocabularyItemId: item.id }).returning();
+      if (!userItem) throw new Error('expected user vocabulary item to be created');
+
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
+
+      expect(result.items).toEqual([
+        expect.objectContaining({ value: 'run', userVocabularyItem: expect.objectContaining({ id: userItem.id }) }),
+      ]);
+    });
+
+    it('leaves userVocabularyItem null when only a different user has progress on the item', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
+      const [item] = await createMissingVocabularyItems([buildItem({ value: 'run' })]);
+      if (!item) throw new Error('expected item to be created');
+      await db.insert(userVocabularyItem).values({ userId: otherUserId, vocabularyItemId: item.id });
+
+      const result = await searchVocabularyItemsForList({ userId, vocabularyListId: list.id, value: 'run' });
+
+      expect(result.items).toEqual([expect.objectContaining({ value: 'run', userVocabularyItem: null })]);
     });
   });
 });

@@ -9,8 +9,10 @@ import {
   createUserVocabularyItem,
   createUserVocabularyItemIfNotExist,
   createUserVocabularyItemsFromList,
+  getUserVocabularyItemByIdForUpdate,
   getUserVocabularyItemByVocabularyItemIdForUpdate,
   getUserVocabularyItemWithRelationsByVocabularyItemId,
+  newWaitingProgress,
   updateUserVocabularyItemProgress,
 } from './user-vocabulary-item.repository';
 import {
@@ -28,6 +30,7 @@ import {
 import {
   createVocabularyListItem,
   createVocabularyListItemIfNotExist,
+  deleteVocabularyListItem,
   getVocabularyListItem,
 } from '../vocabulary/vocabulary-list-item.repository';
 import { createVocabularyItemIfNotExist, searchVocabularyItemsForList } from '../vocabulary/vocabulary-item.repository';
@@ -89,7 +92,8 @@ const addUserVocabularyItemInLearningStatus = async (
     userId,
     vocabularyItemId,
     userVocabularyListId,
-  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string },
+    isResetToLearning = true,
+  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string; isResetToLearning?: boolean },
   tx: Transaction,
 ) => {
   const createdUserItem = await createUserVocabularyItemIfNotExist(
@@ -97,6 +101,7 @@ const addUserVocabularyItemInLearningStatus = async (
     tx,
   );
   if (createdUserItem) return;
+  if (!isResetToLearning) return;
 
   const existingUserItem = await getUserVocabularyItemByVocabularyItemIdForUpdate({ userId, vocabularyItemId }, tx);
   if (!existingUserItem) {
@@ -126,10 +131,12 @@ export const addVocabularyItemToPersonalList = async ({
   userId,
   userVocabularyListId,
   vocabularyItemId,
+  isResetToLearning = true,
 }: {
   userId: string;
   userVocabularyListId: string;
   vocabularyItemId: string;
+  isResetToLearning?: boolean;
 }) => {
   return db.transaction(async (tx) => {
     const [{ vocabularyList }] = await Promise.all([
@@ -155,12 +162,82 @@ export const addVocabularyItemToPersonalList = async ({
       throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
-    await addUserVocabularyItemInLearningStatus({ userId, vocabularyItemId, userVocabularyListId }, tx);
+    await addUserVocabularyItemInLearningStatus(
+      { userId, vocabularyItemId, userVocabularyListId, isResetToLearning },
+      tx,
+    );
 
     const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
     if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);
 
     return userItem;
+  });
+};
+
+export const removeVocabularyItemFromPersonalList = async ({
+  userId,
+  userVocabularyListId,
+  userVocabularyItemId,
+  isReset = false,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+  userVocabularyItemId: string;
+  isReset?: boolean;
+}) => {
+  return db.transaction(async (tx) => {
+    const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx);
+    const vocabularyListId = vocabularyList.id;
+
+    if (vocabularyList.type !== VocabularyListType.Personal) {
+      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" is not a personal list`);
+    }
+    if (vocabularyList.ownerId !== userId) {
+      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
+    }
+
+    const userItem = await getUserVocabularyItemByIdForUpdate({ userId, userVocabularyItemId }, tx);
+    if (!userItem) throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+
+    const deletedListItem = await deleteVocabularyListItem(
+      { vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
+      tx,
+    );
+    if (!deletedListItem) {
+      throw Exception.notFound(`vocabulary item "${userItem.vocabularyItemId}" not in list "${vocabularyListId}"`);
+    }
+
+    await insertEvent(
+      {
+        type: EventType.UserVocabularyItemRemovedFromList,
+        userId,
+        userVocabularyItemId,
+        vocabularyItemId: userItem.vocabularyItemId,
+        userVocabularyListId,
+        status: userItem.status,
+        encounterCount: userItem.encounterCount,
+      },
+      tx,
+    );
+
+    if (isReset && userItem.status !== LearningStatus.Waiting) {
+      await Promise.all([
+        insertEvent(
+          {
+            type: EventType.UserVocabularyItemProgressReset,
+            userId,
+            userVocabularyItemId,
+            userVocabularyListId,
+            status: LearningStatus.Waiting,
+            encounterCount: userItem.encounterCount,
+          },
+          tx,
+        ),
+        updateUserVocabularyItemProgress({ userId, userVocabularyItemId, ...newWaitingProgress() }, tx),
+      ]);
+    }
+
+    return { userVocabularyItemId };
   });
 };
 
@@ -212,7 +289,7 @@ export const searchPersonalVocabularyListItems = async ({
     throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" does not belong to the user`);
   }
 
-  return searchVocabularyItemsForList({ vocabularyListId: vocabularyList.id, ...filter });
+  return searchVocabularyItemsForList({ userId, vocabularyListId: vocabularyList.id, ...filter });
 };
 
 export const createPersonalVocabularyListForUser = async (userId: string) => {

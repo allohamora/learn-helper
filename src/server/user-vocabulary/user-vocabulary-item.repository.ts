@@ -125,6 +125,12 @@ export const updateUserVocabularyItemStatus = async (
     .where(and(eq(userVocabularyItem.id, userVocabularyItemId), eq(userVocabularyItem.userId, userId)));
 };
 
+export const newWaitingProgress = () => ({
+  status: LearningStatus.Waiting,
+  encounterCount: 0,
+  enqueuedAt: null,
+});
+
 export const updateUserVocabularyItemProgress = async (
   {
     userId,

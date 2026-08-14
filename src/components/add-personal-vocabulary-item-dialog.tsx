@@ -3,13 +3,22 @@ import { useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { InferResponseType } from 'hono/client';
-import { Check, Plus, Sparkles } from 'lucide-react';
+import { Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader } from '@/components/ui/loader';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { appClient } from '@/services/api';
 import { formatPartOfSpeech } from '@/utils/vocabulary';
 
@@ -20,41 +29,68 @@ type SearchResult = Extract<SearchResponse, { success: true }>['data'][number];
 
 const LOAD_MORE_THRESHOLD_PX = 200;
 
-const ADDED_QUERY_KEYS = [
-  'vocabulary-list-items',
-  'vocabulary-list-discover-items',
-  'vocabulary-list-progress',
-  'vocabulary-list-learn-items',
-  'vocabulary-list-learn-tasks',
-];
-
 type ResultRowProps = {
   item: SearchResult;
   userVocabularyListId: string;
 };
 
 const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
+  const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
+  const [isResetToLearning, setIsResetToLearning] = useState(true);
+  const [isReset, setIsReset] = useState(false);
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
         param: { userVocabularyListId },
-        json: { vocabularyItemId: item.id },
+        json: { vocabularyItemId: item.id, isResetToLearning },
       });
       if (!res.ok) throw new Error('Failed to add item');
 
       return res.json();
     },
     onSuccess: () => {
-      ADDED_QUERY_KEYS.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey: [queryKey] }));
-      void queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
     },
     onError: () => toast.error('Failed to add item'),
   });
 
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      if (!item.userVocabularyItem) throw new Error('expected a userVocabularyItem for an added item');
+
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItem.id },
+        json: { isReset },
+      });
+      if (!res.ok) throw new Error('Failed to remove item');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsRemoveConfirmationOpen(false);
+      setIsReset(false);
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      toast.success('Item removed from list');
+    },
+    onError: () => toast.error('Failed to remove item'),
+  });
+
   return (
-    <div className="flex items-start justify-between gap-3 px-3 py-2.5">
+    <div className="space-y-2 px-3 py-2.5">
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-medium">{item.value}</span>
@@ -69,31 +105,90 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
         )}
       </div>
 
-      {item.vocabularyListItem ? (
-        <Button
-          size="sm"
-          variant="outline"
-          className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
-          disabled
-          title="Added"
-          aria-label="Added"
-        >
-          <Check />
-          <span className="hidden sm:inline">Added</span>
-        </Button>
-      ) : (
-        <Button
-          size="sm"
-          className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
-          disabled={addMutation.isPending}
-          onClick={() => addMutation.mutate()}
-          title={`Add ${item.value}`}
-          aria-label={`Add ${item.value}`}
-        >
-          <Plus />
-          <span className="hidden sm:inline">Add</span>
-        </Button>
-      )}
+      <div className="flex items-center justify-between gap-1.5">
+        {item.vocabularyListItem ? (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
+              disabled={removeMutation.isPending}
+              onClick={() => setIsRemoveConfirmationOpen(true)}
+              title={`Remove ${item.value}`}
+              aria-label={`Remove ${item.value}`}
+            >
+              {removeMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              <span className="hidden sm:inline">Remove</span>
+            </Button>
+
+            <Dialog
+              open={isRemoveConfirmationOpen}
+              onOpenChange={(nextOpen) => {
+                setIsRemoveConfirmationOpen(nextOpen);
+                if (!nextOpen) setIsReset(false);
+              }}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Remove &ldquo;{item.value}&rdquo; from your list?</DialogTitle>
+                  <DialogDescription>
+                    {isReset
+                      ? 'This word will be unlinked from your personal list, and its progress will be reset to waiting in every list that contains it.'
+                      : 'This word will be unlinked from your personal list. Your progress on it is preserved, and you can add it back at any time.'}
+                  </DialogDescription>
+                </DialogHeader>
+                <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset">
+                  <Checkbox checked={isReset} onCheckedChange={(v) => setIsReset(v === true)} aria-label="Reset" />
+                  Reset
+                </label>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsRemoveConfirmationOpen(false);
+                      setIsReset(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={removeMutation.isPending}
+                    onClick={() => removeMutation.mutate()}
+                  >
+                    {removeMutation.isPending && <Loader2 className="animate-spin" />}
+                    Remove
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        ) : (
+          <>
+            {item.userVocabularyItem && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Reset to learning">
+                <Checkbox
+                  checked={isResetToLearning}
+                  onCheckedChange={(v) => setIsResetToLearning(v === true)}
+                  aria-label="Reset to learning"
+                />
+                Reset to learning
+              </label>
+            )}
+            <Button
+              size="sm"
+              className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
+              disabled={addMutation.isPending}
+              onClick={() => addMutation.mutate()}
+              title={`Add ${item.value}`}
+              aria-label={`Add ${item.value}`}
+            >
+              <Plus />
+              <span className="hidden sm:inline">Add</span>
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -140,8 +235,12 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
       return res.json();
     },
     onSuccess: () => {
-      ADDED_QUERY_KEYS.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey: [queryKey] }));
-      void queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
     },
     onError: () => toast.error('Failed to generate item'),
   });
@@ -174,7 +273,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           <span className="hidden sm:inline">Add</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="flex max-h-[85dvh] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Add item</DialogTitle>
         </DialogHeader>
@@ -205,7 +304,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           </Button>
         </div>
 
-        <div className="h-[60vh] overflow-y-auto rounded-lg border" onScroll={handleScroll}>
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border" onScroll={handleScroll}>
           {debouncedValue.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">Start typing to search items.</p>
           ) : isPending ? (

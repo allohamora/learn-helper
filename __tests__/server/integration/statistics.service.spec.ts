@@ -63,6 +63,9 @@ describe('statisticsService', () => {
       totalHintsViewed: 0,
       totalItemsUpdated: 0,
       totalItemsGenerated: 0,
+      totalProgressResets: 0,
+      totalItemsRemovedFromList: 0,
+      totalReadingsUploaded: 0,
       totalAiCostsInNanoDollars: 0,
       totalInputTokens: 0,
       totalOutputTokens: 0,
@@ -192,6 +195,23 @@ describe('statisticsService', () => {
         inputTokens: 100,
         outputTokens: 200,
       },
+      ...Array.from({ length: 2 }, () => ({
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        type: EventType.UserVocabularyItemProgressReset,
+        status: LearningStatus.Learning,
+      })),
+      {
+        userId: USER_ID,
+        userVocabularyItemId: userItem.id,
+        vocabularyItemId: item.id,
+        type: EventType.UserVocabularyItemRemovedFromList,
+        status: LearningStatus.Waiting,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.ReadingUploaded,
+      },
     ]);
 
     const otherUserId = 'other-statistics-user';
@@ -217,6 +237,9 @@ describe('statisticsService', () => {
       totalHintsViewed: 3,
       totalItemsUpdated: 2,
       totalItemsGenerated: 2,
+      totalProgressResets: 2,
+      totalItemsRemovedFromList: 1,
+      totalReadingsUploaded: 1,
       totalAiCostsInNanoDollars: 6_000_000_000,
       totalInputTokens: 2400,
       totalOutputTokens: 4800,

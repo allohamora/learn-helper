@@ -4,9 +4,10 @@ import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ExternalLink, Loader2, Pencil, Undo2, Volume2 } from 'lucide-react';
+import { ExternalLink, Loader2, Pencil, Trash2, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import {
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
 import { appClient } from '@/services/api';
-import { LearningStatus } from '@/const/vocabulary';
+import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
 
@@ -27,30 +28,36 @@ type ItemsResponse = InferResponseType<
 >;
 type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
 
-export const requiresUndoConfirmation = (status: LearningStatus, encounterCount: number) =>
+export const requiresResetConfirmation = (status: LearningStatus, encounterCount: number) =>
   encounterCount > 0 || status === LearningStatus.Learned;
 
-const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = ({ item, userVocabularyListId }) => {
-  const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
+const ActionsCell: FC<{
+  item: VocabularyItem;
+  userVocabularyListId: string;
+  vocabularyListType: VocabularyListType;
+}> = ({ item, userVocabularyListId, vocabularyListType }) => {
+  const [isResetConfirmationOpen, setIsResetConfirmationOpen] = useState(false);
+  const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
+  const [isReset, setIsReset] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const { vocabularyItem } = item;
   const pronunciation = vocabularyItem.pronunciation;
 
   const queryClient = useQueryClient();
-  const undoMutation = useMutation({
+  const resetMutation = useMutation({
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].undo.$post({
+      ].reset.$post({
         param: { userVocabularyListId, userVocabularyItemId: item.id },
       });
-      if (!res.ok) throw new Error('Failed to undo discovery');
+      if (!res.ok) throw new Error('Failed to reset item progress');
 
       return res.json();
     },
     onSuccess: () => {
-      setIsUndoConfirmationOpen(false);
+      setIsResetConfirmationOpen(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
@@ -61,15 +68,41 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
     onError: () => toast.error('Failed to reset item progress'),
   });
 
-  const canUndo = item.status !== LearningStatus.Waiting;
-  const needsConfirmation = requiresUndoConfirmation(item.status, item.encounterCount);
-  const undo = () => {
+  const removeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+        ':userVocabularyItemId'
+      ].$delete({
+        param: { userVocabularyListId, userVocabularyItemId: item.id },
+        json: { isReset },
+      });
+      if (!res.ok) throw new Error('Failed to remove item from list');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsRemoveConfirmationOpen(false);
+      setIsReset(false);
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      toast.success('Item removed from list');
+    },
+    onError: () => toast.error('Failed to remove item from list'),
+  });
+
+  const canReset = item.status !== LearningStatus.Waiting;
+  const needsConfirmation = requiresResetConfirmation(item.status, item.encounterCount);
+  const reset = () => {
     if (needsConfirmation) {
-      setIsUndoConfirmationOpen(true);
+      setIsResetConfirmationOpen(true);
       return;
     }
 
-    undoMutation.mutate();
+    resetMutation.mutate();
   };
 
   return (
@@ -122,15 +155,28 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
         size="sm"
         variant="ghost"
         className="size-8 px-0"
-        disabled={!canUndo || undoMutation.isPending}
-        onClick={undo}
+        disabled={!canReset || resetMutation.isPending}
+        onClick={reset}
         title="Reset item progress"
         aria-label="Reset item progress"
       >
-        {undoMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
+        {resetMutation.isPending ? <Loader2 className="animate-spin" /> : <Undo2 />}
       </Button>
+      {vocabularyListType === VocabularyListType.Personal && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="size-8 px-0"
+          disabled={removeMutation.isPending}
+          onClick={() => setIsRemoveConfirmationOpen(true)}
+          title="Remove from list"
+          aria-label="Remove from list"
+        >
+          {removeMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+        </Button>
+      )}
 
-      <Dialog open={isUndoConfirmationOpen} onOpenChange={setIsUndoConfirmationOpen}>
+      <Dialog open={isResetConfirmationOpen} onOpenChange={setIsResetConfirmationOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset progress for “{vocabularyItem.value}”?</DialogTitle>
@@ -141,12 +187,50 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUndoConfirmationOpen(false)}>
+            <Button variant="outline" onClick={() => setIsResetConfirmationOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" disabled={undoMutation.isPending} onClick={() => undoMutation.mutate()}>
-              {undoMutation.isPending && <Loader2 className="animate-spin" />}
+            <Button variant="destructive" disabled={resetMutation.isPending} onClick={() => resetMutation.mutate()}>
+              {resetMutation.isPending && <Loader2 className="animate-spin" />}
               Reset progress
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isRemoveConfirmationOpen}
+        onOpenChange={(nextOpen) => {
+          setIsRemoveConfirmationOpen(nextOpen);
+          if (!nextOpen) setIsReset(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove &ldquo;{vocabularyItem.value}&rdquo; from your list?</DialogTitle>
+            <DialogDescription>
+              {isReset
+                ? 'This word will be unlinked from your personal list, and its progress will be reset to waiting in every list that contains it.'
+                : 'This word will be unlinked from your personal list. Your progress on it is preserved, and you can add it back at any time.'}
+            </DialogDescription>
+          </DialogHeader>
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset">
+            <Checkbox checked={isReset} onCheckedChange={(v) => setIsReset(v === true)} aria-label="Reset" />
+            Reset
+          </label>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsRemoveConfirmationOpen(false);
+                setIsReset(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={removeMutation.isPending} onClick={() => removeMutation.mutate()}>
+              {removeMutation.isPending && <Loader2 className="animate-spin" />}
+              Remove
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -157,7 +241,7 @@ const ActionsCell: FC<{ item: VocabularyItem; userVocabularyListId: string }> = 
 
 const columnHelper = createColumnHelper<VocabularyItem>();
 
-const buildColumns = (userVocabularyListId: string) => [
+const buildColumns = (userVocabularyListId: string, vocabularyListType: VocabularyListType) => [
   columnHelper.accessor('vocabularyItem.value', {
     header: 'Item',
     cell: (info) => {
@@ -187,16 +271,23 @@ const buildColumns = (userVocabularyListId: string) => [
   columnHelper.display({
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => <ActionsCell item={row.original} userVocabularyListId={userVocabularyListId} />,
+    cell: ({ row }) => (
+      <ActionsCell
+        item={row.original}
+        userVocabularyListId={userVocabularyListId}
+        vocabularyListType={vocabularyListType}
+      />
+    ),
   }),
 ];
 
 // one fixed template shared by the header and every row, so columns always line up (each row is
-// its own grid instance — virtualization renders them independently — so tracks must be sized
-// proportionally with a fixed-length floor, not to content, or a row's widths would depend on that
-// row's own content instead of matching the header and other rows). Narrow viewports scroll the
-// table horizontally (the container below is overflow-auto) rather than reflowing the columns.
-const GRID_COLS_CLASS = 'grid grid-cols-[minmax(9rem,1.3fr)_minmax(10rem,3fr)_minmax(5rem,1fr)_7rem_minmax(7rem,1fr)]';
+// its own grid instance — virtualization renders them independently — so tracks must be sized to
+// a static width, not to content, or a row's widths would depend on that row's own content instead
+// of matching the header and other rows). Widths are static on every screen size so columns never
+// reflow or squeeze; narrow viewports instead scroll the table horizontally (the container below is
+// overflow-auto).
+const GRID_COLS_CLASS = 'grid grid-cols-[15rem_24rem_10rem_7rem_13rem]';
 
 const ROW_HEIGHT_PX = 72;
 const LOAD_MORE_THRESHOLD_PX = 200;
@@ -207,6 +298,7 @@ type Props = {
   isFetchingNextPage: boolean;
   onLoadMore: () => void;
   userVocabularyListId: string;
+  vocabularyListType: VocabularyListType;
 };
 
 export const VocabularyItemsTable: FC<Props> = ({
@@ -215,9 +307,13 @@ export const VocabularyItemsTable: FC<Props> = ({
   isFetchingNextPage,
   onLoadMore,
   userVocabularyListId,
+  vocabularyListType,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const columns = useMemo(() => buildColumns(userVocabularyListId), [userVocabularyListId]);
+  const columns = useMemo(
+    () => buildColumns(userVocabularyListId, vocabularyListType),
+    [userVocabularyListId, vocabularyListType],
+  );
 
   const table = useReactTable({
     data: items,
@@ -252,7 +348,7 @@ export const VocabularyItemsTable: FC<Props> = ({
 
   return (
     <div ref={containerRef} onScroll={handleScroll} className="h-150 overflow-auto">
-      <div className={cn(GRID_COLS_CLASS, 'sticky top-0 z-10 border-b bg-background')}>
+      <div className={cn(GRID_COLS_CLASS, 'sticky top-0 z-10 w-max border-b bg-background')}>
         {table.getHeaderGroups()[0]?.headers.map((header) => (
           <div key={header.id} className="min-w-0 truncate px-3 py-2.5 text-left text-sm font-medium text-foreground">
             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -270,7 +366,7 @@ export const VocabularyItemsTable: FC<Props> = ({
               key={row.id}
               data-index={virtualRow.index}
               ref={rowVirtualizer.measureElement}
-              className={cn(GRID_COLS_CLASS, 'absolute top-0 left-0 w-full items-center border-b hover:bg-muted/40')}
+              className={cn(GRID_COLS_CLASS, 'absolute top-0 left-0 w-max items-center border-b hover:bg-muted/40')}
               style={{ minHeight: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
             >
               {row.getVisibleCells().map((cell) => (

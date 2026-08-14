@@ -184,6 +184,8 @@ erDiagram
 - user-vocabulary-item-task-hint-used
 - user-vocabulary-item-task-generated
 - user-vocabulary-item-moved-to-next-step
+- user-vocabulary-item-progress-reset
+- user-vocabulary-item-removed-from-list
 - vocabulary-item-updated
 - user-grammar-topic-discovered
 - user-grammar-topic-task-failed

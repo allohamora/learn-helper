@@ -15,6 +15,7 @@ import {
   getUserVocabularyListProgress,
   moveUserVocabularyItemToNextStep,
   discoverUserVocabularyItem,
+  resetUserVocabularyItemStatus,
   undoUserVocabularyItemStatus,
   updateUserVocabularyItemTranslation,
 } from '@/server/user-vocabulary/user-vocabulary-item.service';
@@ -477,6 +478,106 @@ describe('userVocabularyItemService', () => {
 
       const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
       expect(updated).toMatchObject({ status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null });
+    });
+  });
+
+  describe('resetUserVocabularyItemStatus', () => {
+    it('reverts the status to waiting, clears progress, and records a progress-reset event', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'reset-status' });
+
+      await discoverUserVocabularyItem({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+        status: LearningStatus.Known,
+        durationMs: 1000,
+      });
+
+      const result = await resetUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(result).toMatchObject({
+        id: userItem.id,
+        userId,
+        vocabularyItemId: userItem.vocabularyItemId,
+        status: LearningStatus.Waiting,
+        encounterCount: 0,
+        enqueuedAt: null,
+      });
+
+      const updated = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.id, userItem.id) });
+      expect(updated?.status).toBe(LearningStatus.Waiting);
+      expect(updated?.encounterCount).toBe(0);
+
+      const resetEvent = await db.query.event.findFirst({
+        where: and(
+          eq(event.userVocabularyItemId, userItem.id),
+          eq(event.type, EventType.UserVocabularyItemProgressReset),
+        ),
+      });
+      expect(resetEvent).toMatchObject({
+        userVocabularyListId: userList.id,
+        status: LearningStatus.Known,
+        encounterCount: 0,
+      });
+
+      const discoveredEvent = await db.query.event.findFirst({
+        where: and(eq(event.userVocabularyItemId, userItem.id), eq(event.type, EventType.UserVocabularyItemDiscovered)),
+      });
+      expect(discoveredEvent?.revertedAt).toBeNull();
+
+      const undoneEvent = await db.query.event.findFirst({
+        where: and(
+          eq(event.userVocabularyItemId, userItem.id),
+          eq(event.type, EventType.UserVocabularyItemDiscoveryUndone),
+        ),
+      });
+      expect(undoneEvent).toBeUndefined();
+    });
+
+    it('resets status to waiting when there is no discovery event (e.g. programmatically-added items)', async () => {
+      const { userId, userList } = await seedLearnUser({
+        userSuffix: 'reset-no-discovery-event',
+        values: [{ value: 'sprint', encounterCount: 2, offsetSeconds: 0 }],
+      });
+      const userItem = await db.query.userVocabularyItem.findFirst({ where: eq(userVocabularyItem.userId, userId) });
+      if (!userItem) throw new Error('expected user item to be created');
+
+      const result = await resetUserVocabularyItemStatus({
+        userId,
+        userVocabularyListId: userList.id,
+        userVocabularyItemId: userItem.id,
+      });
+
+      expect(result).toMatchObject({
+        id: userItem.id,
+        status: LearningStatus.Waiting,
+        encounterCount: 0,
+        enqueuedAt: null,
+      });
+
+      const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: EventType.UserVocabularyItemProgressReset,
+          userId,
+          userVocabularyItemId: userItem.id,
+          userVocabularyListId: userList.id,
+          status: LearningStatus.Learning,
+          encounterCount: 2,
+        }),
+      );
+    });
+
+    it('throws conflict when the item is already waiting', async () => {
+      const { userId, userList, userItem } = await seedUserItem({ userSuffix: 'reset-waiting' });
+
+      await expect(
+        resetUserVocabularyItemStatus({ userId, userVocabularyListId: userList.id, userVocabularyItemId: userItem.id }),
+      ).rejects.toThrow(Exception);
     });
   });
 

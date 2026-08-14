@@ -22,6 +22,7 @@ import {
   getUserVocabularyItemsByIds,
   getUserVocabularyListItems as getUserVocabularyListItemsFromRepository,
   getUserVocabularyListItemStatusCounts,
+  newWaitingProgress,
   updateUserVocabularyItemProgress,
   updateUserVocabularyItemStatus,
 } from './user-vocabulary-item.repository';
@@ -213,16 +214,44 @@ export const undoUserVocabularyItemStatus = async ({
         },
         tx,
       ),
-      updateUserVocabularyItemProgress(
+      updateUserVocabularyItemProgress({ userId, userVocabularyItemId, ...newWaitingProgress() }, tx),
+    ]);
+
+    return await getUserVocabularyItemWithRelationsOrThrow({ userId, userVocabularyItemId }, tx);
+  });
+};
+
+export const resetUserVocabularyItemStatus = async ({
+  userId,
+  userVocabularyListId,
+  userVocabularyItemId,
+}: {
+  userId: string;
+  userVocabularyListId: string;
+  userVocabularyItemId: string;
+}) => {
+  return db.transaction(async (tx) => {
+    const { userItem } = await getUserVocabularyItemInListForUpdateOrThrow(
+      { userId, userVocabularyListId, userVocabularyItemId },
+      tx,
+    );
+    if (userItem.status === LearningStatus.Waiting) {
+      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is already waiting`);
+    }
+
+    await Promise.all([
+      insertEvent(
         {
+          type: EventType.UserVocabularyItemProgressReset,
           userId,
           userVocabularyItemId,
-          status: LearningStatus.Waiting,
-          encounterCount: 0,
-          enqueuedAt: null,
+          userVocabularyListId,
+          status: userItem.status,
+          encounterCount: userItem.encounterCount,
         },
         tx,
       ),
+      updateUserVocabularyItemProgress({ userId, userVocabularyItemId, ...newWaitingProgress() }, tx),
     ]);
 
     return await getUserVocabularyItemWithRelationsOrThrow({ userId, userVocabularyItemId }, tx);
