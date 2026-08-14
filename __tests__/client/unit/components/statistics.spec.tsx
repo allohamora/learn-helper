@@ -26,6 +26,7 @@ const statisticsData = {
     totalProgressResets: 11,
     totalItemsRemovedFromList: 12,
     totalReadingsUploaded: 13,
+    totalReadingsDeleted: 1,
     totalAiCostsInNanoDollars: 1_500_000_000,
     totalInputTokens: 1_000,
     totalOutputTokens: 500,

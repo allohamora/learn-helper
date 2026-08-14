@@ -37,6 +37,20 @@ export const createReading = async (data: typeof reading.$inferInsert, tx: Trans
   return created;
 };
 
+export const getReadingWithFileByIdAndUserId = async (
+  { userId, readingId }: { userId: string; readingId: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.reading.findFirst({
+    where: and(eq(reading.id, readingId), eq(reading.userId, userId)),
+    with: { file: true },
+  });
+};
+
+export const deleteFile = async (fileId: string, tx: Transaction = db) => {
+  await tx.delete(file).where(eq(file.id, fileId));
+};
+
 export const getReadingsByUserId = async (
   { userId, cursor, limit = 20, type = RequestType.All }: ListReadingsFilterDto & { userId: string },
   tx: Transaction = db,

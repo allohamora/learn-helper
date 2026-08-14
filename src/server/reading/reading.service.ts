@@ -1,13 +1,20 @@
 import '@tanstack/react-start/server-only';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventType } from '@/const/event';
+import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
-import { createFile, createReading, getFileByUserIdAndHash } from './reading.repository';
+import {
+  createFile,
+  createReading,
+  deleteFile,
+  getFileByUserIdAndHash,
+  getReadingWithFileByIdAndUserId,
+} from './reading.repository';
 
 export const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
@@ -59,4 +66,28 @@ export const uploadReading = async ({ userId, file, title }: { userId: string; f
 
     return createdReading;
   });
+};
+
+export const getReadingWithFileByIdAndUserIdOrThrow = async (
+  { userId, readingId }: { userId: string; readingId: string },
+  tx: Transaction = db,
+) => {
+  const found = await getReadingWithFileByIdAndUserId({ userId, readingId }, tx);
+  if (!found) throw Exception.notFound('reading not found');
+
+  return found;
+};
+
+export const removeReading = async ({ userId, readingId }: { userId: string; readingId: string }) => {
+  const filePath = await db.transaction(async (tx) => {
+    const found = await getReadingWithFileByIdAndUserIdOrThrow({ userId, readingId }, tx);
+
+    await deleteFile(found.fileId, tx);
+    await insertEvent({ type: EventType.ReadingDeleted, userId }, tx);
+
+    return found.file.filePath;
+  });
+
+  // force: true so a missing/already-deleted file doesn't throw here after the DB transaction already committed
+  await rm(path.join(process.cwd(), filePath), { force: true });
 };

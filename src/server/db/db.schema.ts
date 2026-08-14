@@ -310,7 +310,7 @@ export const event = pgTable(
     userVocabularyListId: uuid('user_vocabulary_list_id').references(() => userVocabularyList.id, {
       onDelete: 'restrict',
     }),
-    readingId: uuid('reading_id').references(() => reading.id, { onDelete: 'restrict' }),
+    readingId: uuid('reading_id').references(() => reading.id, { onDelete: 'cascade' }),
     status: varchar('status', { length: 16 }).$type<LearningStatus>(),
     userVocabularyItemTaskType: varchar('user_vocabulary_item_task_type', {
       length: 48,

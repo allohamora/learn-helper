@@ -66,6 +66,7 @@ describe('statisticsService', () => {
       totalProgressResets: 0,
       totalItemsRemovedFromList: 0,
       totalReadingsUploaded: 0,
+      totalReadingsDeleted: 0,
       totalAiCostsInNanoDollars: 0,
       totalInputTokens: 0,
       totalOutputTokens: 0,
@@ -212,6 +213,10 @@ describe('statisticsService', () => {
         userId: USER_ID,
         type: EventType.ReadingUploaded,
       },
+      {
+        userId: USER_ID,
+        type: EventType.ReadingDeleted,
+      },
     ]);
 
     const otherUserId = 'other-statistics-user';
@@ -240,6 +245,7 @@ describe('statisticsService', () => {
       totalProgressResets: 2,
       totalItemsRemovedFromList: 1,
       totalReadingsUploaded: 1,
+      totalReadingsDeleted: 1,
       totalAiCostsInNanoDollars: 6_000_000_000,
       totalInputTokens: 2400,
       totalOutputTokens: 4800,

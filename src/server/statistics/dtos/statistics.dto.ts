@@ -31,6 +31,7 @@ const generalStatisticsDto = z.object({
   totalProgressResets: z.number().int(),
   totalItemsRemovedFromList: z.number().int(),
   totalReadingsUploaded: z.number().int(),
+  totalReadingsDeleted: z.number().int(),
   totalAiCostsInNanoDollars: z.number(),
   totalInputTokens: z.number().int(),
   totalOutputTokens: z.number().int(),
