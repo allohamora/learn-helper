@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader } from '@/components/ui/loader';
 import {
   Dialog,
@@ -35,13 +36,14 @@ type ResultRowProps = {
 
 const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
+  const [resetProgress, setResetProgress] = useState(true);
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
         param: { userVocabularyListId },
-        json: { vocabularyItemId: item.id },
+        json: { vocabularyItemId: item.id, resetProgress },
       });
       if (!res.ok) throw new Error('Failed to add item');
 
@@ -85,7 +87,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
   });
 
   return (
-    <div className="flex items-start justify-between gap-3 px-3 py-2.5">
+    <div className="space-y-2 px-3 py-2.5">
       <div className="min-w-0 space-y-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-medium">{item.value}</span>
@@ -100,59 +102,73 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
         )}
       </div>
 
-      {item.vocabularyListItem ? (
-        <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
-            disabled={removeMutation.isPending}
-            onClick={() => setIsRemoveConfirmationOpen(true)}
-            title={`Remove ${item.value}`}
-            aria-label={`Remove ${item.value}`}
-          >
-            {removeMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
-            <span className="hidden sm:inline">Remove</span>
-          </Button>
+      <div className="flex items-center justify-between gap-1.5">
+        {item.vocabularyListItem ? (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="ml-auto size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
+              disabled={removeMutation.isPending}
+              onClick={() => setIsRemoveConfirmationOpen(true)}
+              title={`Remove ${item.value}`}
+              aria-label={`Remove ${item.value}`}
+            >
+              {removeMutation.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              <span className="hidden sm:inline">Remove</span>
+            </Button>
 
-          <Dialog open={isRemoveConfirmationOpen} onOpenChange={setIsRemoveConfirmationOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Remove &ldquo;{item.value}&rdquo; from your list?</DialogTitle>
-                <DialogDescription>
-                  This word will be unlinked from your personal list. Your progress on it is preserved, and you can add
-                  it back at any time.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsRemoveConfirmationOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  disabled={removeMutation.isPending}
-                  onClick={() => removeMutation.mutate()}
-                >
-                  {removeMutation.isPending && <Loader2 className="animate-spin" />}
-                  Remove
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </>
-      ) : (
-        <Button
-          size="sm"
-          className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
-          disabled={addMutation.isPending}
-          onClick={() => addMutation.mutate()}
-          title={`Add ${item.value}`}
-          aria-label={`Add ${item.value}`}
-        >
-          <Plus />
-          <span className="hidden sm:inline">Add</span>
-        </Button>
-      )}
+            <Dialog open={isRemoveConfirmationOpen} onOpenChange={setIsRemoveConfirmationOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Remove &ldquo;{item.value}&rdquo; from your list?</DialogTitle>
+                  <DialogDescription>
+                    This word will be unlinked from your personal list. Your progress on it is preserved, and you can
+                    add it back at any time.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsRemoveConfirmationOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={removeMutation.isPending}
+                    onClick={() => removeMutation.mutate()}
+                  >
+                    {removeMutation.isPending && <Loader2 className="animate-spin" />}
+                    Remove
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        ) : (
+          <>
+            {item.userVocabularyItem && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Reset progress">
+                <Checkbox
+                  checked={resetProgress}
+                  onCheckedChange={(v) => setResetProgress(v === true)}
+                  aria-label="Reset progress"
+                />
+                Reset progress
+              </label>
+            )}
+            <Button
+              size="sm"
+              className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
+              disabled={addMutation.isPending}
+              onClick={() => addMutation.mutate()}
+              title={`Add ${item.value}`}
+              aria-label={`Add ${item.value}`}
+            >
+              <Plus />
+              <span className="hidden sm:inline">Add</span>
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -237,7 +253,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           <span className="hidden sm:inline">Add</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="flex max-h-[85dvh] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Add item</DialogTitle>
         </DialogHeader>
@@ -268,7 +284,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           </Button>
         </div>
 
-        <div className="h-[60vh] overflow-y-auto rounded-lg border" onScroll={handleScroll}>
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border" onScroll={handleScroll}>
           {debouncedValue.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">Start typing to search items.</p>
           ) : isPending ? (

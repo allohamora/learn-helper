@@ -295,6 +295,7 @@ describe('userVocabularyListService', () => {
         userId,
         userVocabularyListId: userVocabularyList.id,
         vocabularyItemId: item.id,
+        resetProgress: true,
       });
 
       expect(userItem.status).toBe(LearningStatus.Learning);
@@ -313,6 +314,39 @@ describe('userVocabularyListService', () => {
         status: LearningStatus.Learning,
         encounterCount: 3,
       });
+    });
+
+    it('does not reset the status when resetProgress is false', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { items } = await createTestList(['run']);
+      const [item] = items;
+      if (!item) throw new Error('expected an item');
+      await db
+        .insert(userVocabularyItem)
+        .values({ userId, vocabularyItemId: item.id, status: LearningStatus.Learned, encounterCount: 3 });
+      const personalList = await createPersonalVocabularyListForUser(userId);
+      const userVocabularyList = await getUserVocabularyListByVocabularyListIdOrThrow({
+        userId,
+        vocabularyListId: personalList.id,
+      });
+
+      const userItem = await addVocabularyItemToPersonalList({
+        userId,
+        userVocabularyListId: userVocabularyList.id,
+        vocabularyItemId: item.id,
+        resetProgress: false,
+      });
+
+      expect(userItem.status).toBe(LearningStatus.Learned);
+      expect(userItem.encounterCount).toBe(3);
+      expect(await countItems(userVocabularyItem)).toBe(1);
+
+      const resetEvents = await db
+        .select()
+        .from(event)
+        .where(and(eq(event.userId, userId), eq(event.type, EventType.UserVocabularyItemProgressReset)));
+
+      expect(resetEvents).toEqual([]);
     });
   });
 

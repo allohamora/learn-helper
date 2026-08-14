@@ -72,11 +72,14 @@ export const api = {
       ),
   },
   addVocabularyItemToPersonalList: {
-    mock: (userVocabularyListId: string, responseFactory: (vocabularyItemId: string) => HttpResponse<JsonBodyType>) => {
+    mock: (
+      userVocabularyListId: string,
+      responseFactory: (vocabularyItemId: string, resetProgress: boolean) => HttpResponse<JsonBodyType>,
+    ) => {
       return http.post(`/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items`, async ({ request }) => {
-        const body = (await request.json()) as { vocabularyItemId: string };
+        const body = (await request.json()) as { vocabularyItemId: string; resetProgress: boolean };
 
-        return responseFactory(body.vocabularyItemId);
+        return responseFactory(body.vocabularyItemId, body.resetProgress);
       });
     },
   },

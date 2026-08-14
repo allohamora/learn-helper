@@ -155,6 +155,46 @@ describe('AddPersonalVocabularyItemDialog', () => {
     expect(screen.queryByRole('button', { name: 'Add ubiquitous' })).toBeNull();
   });
 
+  it('does not show a reset progress checkbox for a brand-new word', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity');
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    await screen.findByRole('button', { name: 'Add serendipity' });
+    expect(screen.queryByRole('checkbox', { name: /reset progress/i })).toBeNull();
+  });
+
+  it('shows a reset progress checkbox checked by default for a previously removed word, and unchecking it sends resetProgress: false', async () => {
+    const userVocabularyListId = crypto.randomUUID();
+    const item = createSearchResult('serendipity', null, createUserVocabularyItemRow());
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+
+    const addHandler = vi.fn((vocabularyItemId: string) => {
+      if (vocabularyItemId !== item.id) throw new Error('unexpected vocabulary item id');
+
+      return HttpResponse.json({ success: true, data: createUserVocabularyItem(item.value) });
+    });
+    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(userVocabularyListId, addHandler));
+
+    renderDialog(userVocabularyListId);
+    await openDialogAndSearch('serendipity');
+
+    const checkbox = await screen.findByRole('checkbox', { name: /reset progress/i });
+    expect(checkbox.getAttribute('aria-checked')).toBe('true');
+
+    fireEvent.click(checkbox);
+    expect(checkbox.getAttribute('aria-checked')).toBe('false');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add serendipity' }));
+
+    await vi.waitFor(() => expect(addHandler).toHaveBeenCalledWith(item.id, false));
+  });
+
   it('removing a word unlinks it and flips the row back to Add, after confirmation', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {

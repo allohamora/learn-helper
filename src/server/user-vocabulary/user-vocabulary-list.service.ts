@@ -91,7 +91,8 @@ const addUserVocabularyItemInLearningStatus = async (
     userId,
     vocabularyItemId,
     userVocabularyListId,
-  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string },
+    resetProgress = true,
+  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string; resetProgress?: boolean },
   tx: Transaction,
 ) => {
   const createdUserItem = await createUserVocabularyItemIfNotExist(
@@ -99,6 +100,7 @@ const addUserVocabularyItemInLearningStatus = async (
     tx,
   );
   if (createdUserItem) return;
+  if (!resetProgress) return;
 
   const existingUserItem = await getUserVocabularyItemByVocabularyItemIdForUpdate({ userId, vocabularyItemId }, tx);
   if (!existingUserItem) {
@@ -128,10 +130,12 @@ export const addVocabularyItemToPersonalList = async ({
   userId,
   userVocabularyListId,
   vocabularyItemId,
+  resetProgress = true,
 }: {
   userId: string;
   userVocabularyListId: string;
   vocabularyItemId: string;
+  resetProgress?: boolean;
 }) => {
   return db.transaction(async (tx) => {
     const [{ vocabularyList }] = await Promise.all([
@@ -157,7 +161,7 @@ export const addVocabularyItemToPersonalList = async ({
       throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
-    await addUserVocabularyItemInLearningStatus({ userId, vocabularyItemId, userVocabularyListId }, tx);
+    await addUserVocabularyItemInLearningStatus({ userId, vocabularyItemId, userVocabularyListId, resetProgress }, tx);
 
     const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
     if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);

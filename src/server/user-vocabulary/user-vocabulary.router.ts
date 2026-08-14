@@ -13,6 +13,7 @@ import {
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { eventDto } from '../event/dtos/event.dto';
+import { addVocabularyItemToListDto } from './dtos/add-vocabulary-item-to-list.dto';
 import { userVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 import { personalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
 import { personalVocabularyItemSearchResultDto } from './dtos/personal-vocabulary-item-search-result.dto';
@@ -172,7 +173,7 @@ export const userVocabularyRouter = new OpenAPIHono()
         body: {
           content: {
             'application/json': {
-              schema: z.object({ vocabularyItemId: z.uuidv7() }),
+              schema: addVocabularyItemToListDto,
             },
           },
         },
@@ -192,12 +193,17 @@ export const userVocabularyRouter = new OpenAPIHono()
     async (c) => {
       const user = c.get('user');
       const { userVocabularyListId } = c.req.valid('param');
-      const { vocabularyItemId } = c.req.valid('json');
+      const { vocabularyItemId, resetProgress } = c.req.valid('json');
 
       return c.json(
         ...toSuccessResponse({
           status: 201,
-          data: await addVocabularyItemToPersonalList({ userId: user.id, userVocabularyListId, vocabularyItemId }),
+          data: await addVocabularyItemToPersonalList({
+            userId: user.id,
+            userVocabularyListId,
+            vocabularyItemId,
+            resetProgress,
+          }),
         }),
       );
     },
