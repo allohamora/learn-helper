@@ -13,6 +13,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as ErrorRouteImport } from './routes/error'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthIndexRouteImport } from './routes/_auth/index'
+import { Route as AuthReadingsRouteImport } from './routes/_auth/readings'
 import { Route as AuthStatisticsRouteImport } from './routes/_auth/statistics'
 import { Route as AuthVocabularyListsRouteImport } from './routes/_auth/vocabulary-lists'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
@@ -37,6 +38,11 @@ const LoginRoute = LoginRouteImport.update({
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthReadingsRoute = AuthReadingsRouteImport.update({
+  id: '/readings',
+  path: '/readings',
   getParentRoute: () => AuthRoute,
 } as any)
 const AuthStatisticsRoute = AuthStatisticsRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthIndexRoute
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
+  '/readings': typeof AuthReadingsRoute
   '/statistics': typeof AuthStatisticsRoute
   '/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
+  '/readings': typeof AuthReadingsRoute
   '/statistics': typeof AuthStatisticsRoute
   '/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/error': typeof ErrorRoute
   '/login': typeof LoginRoute
+  '/_auth/readings': typeof AuthReadingsRoute
   '/_auth/statistics': typeof AuthStatisticsRoute
   '/_auth/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/error'
     | '/login'
+    | '/readings'
     | '/statistics'
     | '/vocabulary-lists'
     | '/api/$'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   to:
     | '/error'
     | '/login'
+    | '/readings'
     | '/statistics'
     | '/vocabulary-lists'
     | '/api/$'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/error'
     | '/login'
+    | '/_auth/readings'
     | '/_auth/statistics'
     | '/_auth/vocabulary-lists'
     | '/api/$'
@@ -180,6 +192,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/readings': {
+      id: '/_auth/readings'
+      path: '/readings'
+      fullPath: '/readings'
+      preLoaderRoute: typeof AuthReadingsRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_auth/statistics': {
@@ -228,6 +247,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthRouteChildren {
+  AuthReadingsRoute: typeof AuthReadingsRoute
   AuthStatisticsRoute: typeof AuthStatisticsRoute
   AuthVocabularyListsRoute: typeof AuthVocabularyListsRoute
   AuthIndexRoute: typeof AuthIndexRoute
@@ -237,6 +257,7 @@ interface AuthRouteChildren {
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthReadingsRoute: AuthReadingsRoute,
   AuthStatisticsRoute: AuthStatisticsRoute,
   AuthVocabularyListsRoute: AuthVocabularyListsRoute,
   AuthIndexRoute: AuthIndexRoute,

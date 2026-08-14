@@ -11,6 +11,7 @@ export enum EventType {
   UserVocabularyItemProgressReset = 'user-vocabulary-item-progress-reset',
   VocabularyItemUpdated = 'vocabulary-item-updated',
   VocabularyItemGenerated = 'vocabulary-item-generated',
+  ReadingUploaded = 'reading-uploaded',
 }
 
 export enum UserVocabularyItemTaskType {

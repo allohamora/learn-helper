@@ -47,13 +47,18 @@ helm upgrade learn-helper helm \
 # Seed the database manually (one-off, run against the live app pod).
 kubectl exec -n learn-helper deploy/app -- npm run vocabulary:seed
 
-# Remove the release. The postgres-data PVC is kept (helm.sh/resource-policy: keep),
-# so postgresql data survives this step.
+# Remove the release. The postgres-data and app-uploads PVCs are kept
+# (helm.sh/resource-policy: keep), so postgresql data and uploaded files survive
+# this step.
 helm uninstall learn-helper --namespace learn-helper
 
 # Remove the postgres data volume. This permanently deletes the database - only
 # run it once you're sure you no longer need the data.
 kubectl delete pvc postgres-data --namespace learn-helper
+
+# Remove the uploaded files volume. This permanently deletes all uploaded PDFs -
+# only run it once you're sure you no longer need them.
+kubectl delete pvc app-uploads --namespace learn-helper
 
 # Remove the now-empty namespace.
 kubectl delete namespace learn-helper
@@ -117,15 +122,44 @@ k3d cluster delete learn-helper
 # Database backups
 
 ```bash
-# Back up the database to a local, timestamped, gzip-compressed SQL file. See scripts/backup.sh.
-./scripts/backup.sh
+# Back up the database to a local, timestamped, gzip-compressed SQL file. See scripts/backup-db.sh.
+sh scripts/backup-db.sh
 
-# Download the backups locally. See scripts/download-backups.sh.
-./scripts/download-backups.sh
+# Download the backups locally. See scripts/download-db-backups.sh.
+sh scripts/download-db-backups.sh
 
 # Restore the database from a backup made with the command above. Scale the
 # app down first so nothing is writing mid-restore, then scale it back up.
 kubectl scale -n learn-helper deploy/app --replicas=0
 gunzip -c .temp/backups/<date>-data.sql.gz | kubectl exec -i -n learn-helper deploy/postgres -- sh -c 'psql -1 -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+kubectl scale -n learn-helper deploy/app --replicas=1
+```
+
+# Uploads backups
+
+```bash
+# Back up the uploaded PDFs to a local, timestamped, gzip-compressed tarball. See scripts/backup-uploads.sh.
+sh scripts/backup-uploads.sh
+
+# Download the uploads backups locally. See scripts/download-uploads.sh.
+sh scripts/download-uploads.sh
+
+# Restore uploads from a backup made with the command above. The uploads volume is
+# ReadWriteOnce, so scale the app down first (it's the only pod mounting it), restore
+# through a temporary pod, then scale the app back up.
+kubectl scale -n learn-helper deploy/app --replicas=0
+gunzip -c .temp/uploads/<date>-uploads.tar.gz | kubectl run -n learn-helper uploads-restore --image=alpine --restart=Never --rm -i \
+  --overrides='{
+    "spec": {
+      "containers": [{
+        "name": "uploads-restore",
+        "image": "alpine",
+        "stdin": true,
+        "command": ["tar", "xf", "-", "-C", "/app/uploads"],
+        "volumeMounts": [{"name": "uploads", "mountPath": "/app/uploads"}]
+      }],
+      "volumes": [{"name": "uploads", "persistentVolumeClaim": {"claimName": "app-uploads"}}]
+    }
+  }'
 kubectl scale -n learn-helper deploy/app --replicas=1
 ```

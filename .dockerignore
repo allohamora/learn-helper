@@ -1,12 +1,30 @@
 .env
-helm/values.yaml
+helm
 
 node_modules
 dist
 build
+.output
+.tanstack
+.nitro
+
+.temp
+uploads
 
 .husky
 .git
+.github
+.devcontainer
+.vscode
+.claude
+.agents
+
+__tests__
+
+.DS_Store
+docs
+README.md
+CHANGELOG.md
 
 .dockerignore
 Dockerfile

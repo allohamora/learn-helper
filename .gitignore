@@ -16,3 +16,7 @@ todos.json
 # Temp files
 .temp/**/*
 !.temp/.gitkeep
+
+# Uploaded files
+uploads/**/*
+!uploads/.gitkeep

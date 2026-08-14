@@ -53,6 +53,9 @@ spec:
             preStop:
               exec:
                 command: ["sleep", "10"]
+          volumeMounts:
+            - name: app-uploads
+              mountPath: /app/uploads
           readinessProbe:
             httpGet:
               path: /
@@ -72,3 +75,7 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+      volumes:
+        - name: app-uploads
+          persistentVolumeClaim:
+            claimName: app-uploads
