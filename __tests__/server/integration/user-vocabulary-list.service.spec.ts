@@ -295,7 +295,7 @@ describe('userVocabularyListService', () => {
         userId,
         userVocabularyListId: userVocabularyList.id,
         vocabularyItemId: item.id,
-        resetProgress: true,
+        isResetToLearning: true,
       });
 
       expect(userItem.status).toBe(LearningStatus.Learning);
@@ -316,7 +316,7 @@ describe('userVocabularyListService', () => {
       });
     });
 
-    it('does not reset the status when resetProgress is false', async () => {
+    it('does not reset the status when isResetToLearning is false', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { items } = await createTestList(['run']);
       const [item] = items;
@@ -334,7 +334,7 @@ describe('userVocabularyListService', () => {
         userId,
         userVocabularyListId: userVocabularyList.id,
         vocabularyItemId: item.id,
-        resetProgress: false,
+        isResetToLearning: false,
       });
 
       expect(userItem.status).toBe(LearningStatus.Learned);
@@ -424,7 +424,7 @@ describe('userVocabularyListService', () => {
       });
     });
 
-    it('resets progress to waiting when resetProgress is true', async () => {
+    it('resets progress to waiting when isReset is true', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { items } = await createTestList(['run']);
       const [item] = items;
@@ -448,7 +448,7 @@ describe('userVocabularyListService', () => {
         userId,
         userVocabularyListId: userVocabularyList.id,
         userVocabularyItemId: addedItem.id,
-        resetProgress: true,
+        isReset: true,
       });
 
       const progressRow = await db.query.userVocabularyItem.findFirst({
@@ -474,7 +474,7 @@ describe('userVocabularyListService', () => {
       });
     });
 
-    it('does not reset progress when resetProgress is false', async () => {
+    it('does not reset progress when isReset is false', async () => {
       const { id: userId } = await createTestUser('user-1');
       const { items } = await createTestList(['run']);
       const [item] = items;
@@ -498,7 +498,7 @@ describe('userVocabularyListService', () => {
         userId,
         userVocabularyListId: userVocabularyList.id,
         userVocabularyItemId: addedItem.id,
-        resetProgress: false,
+        isReset: false,
       });
 
       const progressRow = await db.query.userVocabularyItem.findFirst({
@@ -537,7 +537,7 @@ describe('userVocabularyListService', () => {
         userId,
         userVocabularyListId: userVocabularyList.id,
         userVocabularyItemId: addedItem.id,
-        resetProgress: true,
+        isReset: true,
       });
 
       const resetEvents = await db

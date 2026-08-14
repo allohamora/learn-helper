@@ -194,7 +194,7 @@ export const userVocabularyRouter = new OpenAPIHono()
     async (c) => {
       const user = c.get('user');
       const { userVocabularyListId } = c.req.valid('param');
-      const { vocabularyItemId, resetProgress } = c.req.valid('json');
+      const { vocabularyItemId, isResetToLearning } = c.req.valid('json');
 
       return c.json(
         ...toSuccessResponse({
@@ -203,7 +203,7 @@ export const userVocabularyRouter = new OpenAPIHono()
             userId: user.id,
             userVocabularyListId,
             vocabularyItemId,
-            resetProgress,
+            isResetToLearning,
           }),
         }),
       );
@@ -226,8 +226,7 @@ export const userVocabularyRouter = new OpenAPIHono()
       },
       responses: {
         ...successOkResponse({
-          description:
-            "The word unlinked from the user's personal list; progress is preserved unless resetProgress was set",
+          description: "The word unlinked from the user's personal list; progress is preserved unless isReset was set",
           schema: z.object({ userVocabularyItemId: z.uuidv7() }),
         }),
         ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
@@ -239,7 +238,7 @@ export const userVocabularyRouter = new OpenAPIHono()
     async (c) => {
       const user = c.get('user');
       const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
-      const { resetProgress } = c.req.valid('json');
+      const { isReset } = c.req.valid('json');
 
       return c.json(
         ...toSuccessResponse({
@@ -248,7 +247,7 @@ export const userVocabularyRouter = new OpenAPIHono()
             userId: user.id,
             userVocabularyListId,
             userVocabularyItemId,
-            resetProgress,
+            isReset,
           }),
         }),
       );

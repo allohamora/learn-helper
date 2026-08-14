@@ -38,7 +38,7 @@ const ActionsCell: FC<{
 }> = ({ item, userVocabularyListId, vocabularyListType }) => {
   const [isUndoConfirmationOpen, setIsUndoConfirmationOpen] = useState(false);
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
-  const [removeResetProgress, setRemoveResetProgress] = useState(false);
+  const [isReset, setIsReset] = useState(false);
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const { vocabularyItem } = item;
@@ -74,7 +74,7 @@ const ActionsCell: FC<{
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId, userVocabularyItemId: item.id },
-        json: { resetProgress: removeResetProgress },
+        json: { isReset },
       });
       if (!res.ok) throw new Error('Failed to remove item from list');
 
@@ -82,7 +82,7 @@ const ActionsCell: FC<{
     },
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
-      setRemoveResetProgress(false);
+      setIsReset(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
@@ -202,7 +202,7 @@ const ActionsCell: FC<{
         open={isRemoveConfirmationOpen}
         onOpenChange={(nextOpen) => {
           setIsRemoveConfirmationOpen(nextOpen);
-          if (!nextOpen) setRemoveResetProgress(false);
+          if (!nextOpen) setIsReset(false);
         }}
       >
         <DialogContent>
@@ -213,20 +213,16 @@ const ActionsCell: FC<{
               back at any time.
             </DialogDescription>
           </DialogHeader>
-          <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset progress to waiting">
-            <Checkbox
-              checked={removeResetProgress}
-              onCheckedChange={(v) => setRemoveResetProgress(v === true)}
-              aria-label="Reset progress to waiting"
-            />
-            Reset progress to waiting
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset">
+            <Checkbox checked={isReset} onCheckedChange={(v) => setIsReset(v === true)} aria-label="Reset" />
+            Reset
           </label>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setIsRemoveConfirmationOpen(false);
-                setRemoveResetProgress(false);
+                setIsReset(false);
               }}
             >
               Cancel

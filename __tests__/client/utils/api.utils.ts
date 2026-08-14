@@ -74,26 +74,26 @@ export const api = {
   addVocabularyItemToPersonalList: {
     mock: (
       userVocabularyListId: string,
-      responseFactory: (vocabularyItemId: string, resetProgress: boolean) => HttpResponse<JsonBodyType>,
+      responseFactory: (vocabularyItemId: string, isResetToLearning: boolean) => HttpResponse<JsonBodyType>,
     ) => {
       return http.post(`/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items`, async ({ request }) => {
-        const body = (await request.json()) as { vocabularyItemId: string; resetProgress: boolean };
+        const body = (await request.json()) as { vocabularyItemId: string; isResetToLearning: boolean };
 
-        return responseFactory(body.vocabularyItemId, body.resetProgress);
+        return responseFactory(body.vocabularyItemId, body.isResetToLearning);
       });
     },
   },
   removeVocabularyItemFromPersonalList: {
     mock: (
       userVocabularyListId: string,
-      responseFactory: (userVocabularyItemId: string, resetProgress: boolean) => HttpResponse<JsonBodyType>,
+      responseFactory: (userVocabularyItemId: string, isReset: boolean) => HttpResponse<JsonBodyType>,
     ) => {
       return http.delete(
         `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId`,
         async ({ params: routeParams, request }) => {
-          const body = (await request.json()) as { resetProgress: boolean };
+          const body = (await request.json()) as { isReset: boolean };
 
-          return responseFactory(routeParams.userVocabularyItemId as string, body.resetProgress);
+          return responseFactory(routeParams.userVocabularyItemId as string, body.isReset);
         },
       );
     },

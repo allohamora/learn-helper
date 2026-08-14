@@ -309,7 +309,7 @@ describe('user-vocabulary.router', () => {
         .where(eq(userVocabularyItem.id, addedItem.id));
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[':userVocabularyItemId'].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
@@ -325,7 +325,7 @@ describe('user-vocabulary.router', () => {
       });
     });
 
-    it('preserves progress when resetProgress is false', async () => {
+    it('preserves progress when isResetToLearning is false', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { items } = await seedList();
@@ -348,12 +348,12 @@ describe('user-vocabulary.router', () => {
         .where(eq(userVocabularyItem.id, addedItem.id));
       await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[':userVocabularyItemId'].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
 
       const res = await client.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
         param: { userVocabularyListId: userVocabularyList.id },
-        json: { vocabularyItemId: item.id, resetProgress: false },
+        json: { vocabularyItemId: item.id, isResetToLearning: false },
       });
       expect(res.status).toBe(201);
 
@@ -397,7 +397,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
       expect(res.status).toBe(200);
 
@@ -431,7 +431,7 @@ describe('user-vocabulary.router', () => {
       expect(resetEvents).toEqual([]);
     });
 
-    it('resets progress to waiting when resetProgress is true', async () => {
+    it('resets progress to waiting when isReset is true', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const { items } = await seedList();
@@ -457,7 +457,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userVocabularyList.id, userVocabularyItemId: addedItem.id },
-        json: { resetProgress: true },
+        json: { isReset: true },
       });
       expect(res.status).toBe(200);
 
@@ -494,7 +494,7 @@ describe('user-vocabulary.router', () => {
           userVocabularyListId: '00000000-0000-7000-8000-000000000000',
           userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
         },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
       expect(res.status).toBe(401);
     });
@@ -510,7 +510,7 @@ describe('user-vocabulary.router', () => {
           userVocabularyListId: '00000000-0000-7000-8000-000000000000',
           userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
         },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
       expect(res.status).toBe(404);
     });
@@ -531,7 +531,7 @@ describe('user-vocabulary.router', () => {
           userVocabularyListId: userVocabularyList.id,
           userVocabularyItemId: '00000000-0000-7000-8000-000000000000',
         },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
       expect(res.status).toBe(404);
     });
@@ -547,7 +547,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: '00000000-0000-7000-8000-000000000000' },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
       expect(res.status).toBe(403);
     });
@@ -567,7 +567,7 @@ describe('user-vocabulary.router', () => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId: userList.id, userVocabularyItemId: '00000000-0000-7000-8000-000000000000' },
-        json: { resetProgress: false },
+        json: { isReset: false },
       });
       expect(res.status).toBe(403);
     });

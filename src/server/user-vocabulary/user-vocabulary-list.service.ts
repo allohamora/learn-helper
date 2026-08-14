@@ -91,8 +91,8 @@ const addUserVocabularyItemInLearningStatus = async (
     userId,
     vocabularyItemId,
     userVocabularyListId,
-    resetProgress = true,
-  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string; resetProgress?: boolean },
+    isResetToLearning = true,
+  }: { userId: string; vocabularyItemId: string; userVocabularyListId: string; isResetToLearning?: boolean },
   tx: Transaction,
 ) => {
   const createdUserItem = await createUserVocabularyItemIfNotExist(
@@ -100,7 +100,7 @@ const addUserVocabularyItemInLearningStatus = async (
     tx,
   );
   if (createdUserItem) return;
-  if (!resetProgress) return;
+  if (!isResetToLearning) return;
 
   const existingUserItem = await getUserVocabularyItemByVocabularyItemIdForUpdate({ userId, vocabularyItemId }, tx);
   if (!existingUserItem) {
@@ -130,12 +130,12 @@ export const addVocabularyItemToPersonalList = async ({
   userId,
   userVocabularyListId,
   vocabularyItemId,
-  resetProgress = true,
+  isResetToLearning = true,
 }: {
   userId: string;
   userVocabularyListId: string;
   vocabularyItemId: string;
-  resetProgress?: boolean;
+  isResetToLearning?: boolean;
 }) => {
   return db.transaction(async (tx) => {
     const [{ vocabularyList }] = await Promise.all([
@@ -161,7 +161,10 @@ export const addVocabularyItemToPersonalList = async ({
       throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
-    await addUserVocabularyItemInLearningStatus({ userId, vocabularyItemId, userVocabularyListId, resetProgress }, tx);
+    await addUserVocabularyItemInLearningStatus(
+      { userId, vocabularyItemId, userVocabularyListId, isResetToLearning },
+      tx,
+    );
 
     const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
     if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);
@@ -174,12 +177,12 @@ export const removeVocabularyItemFromPersonalList = async ({
   userId,
   userVocabularyListId,
   userVocabularyItemId,
-  resetProgress = false,
+  isReset = false,
 }: {
   userId: string;
   userVocabularyListId: string;
   userVocabularyItemId: string;
-  resetProgress?: boolean;
+  isReset?: boolean;
 }) => {
   return db.transaction(async (tx) => {
     const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx);
@@ -216,7 +219,7 @@ export const removeVocabularyItemFromPersonalList = async ({
       tx,
     );
 
-    if (resetProgress && userItem.status !== LearningStatus.Waiting) {
+    if (isReset && userItem.status !== LearningStatus.Waiting) {
       await Promise.all([
         insertEvent(
           {

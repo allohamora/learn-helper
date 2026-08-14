@@ -36,15 +36,15 @@ type ResultRowProps = {
 
 const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
-  const [resetProgress, setResetProgress] = useState(true);
-  const [removeResetProgress, setRemoveResetProgress] = useState(false);
+  const [isResetToLearning, setIsResetToLearning] = useState(true);
+  const [isReset, setIsReset] = useState(false);
   const queryClient = useQueryClient();
 
   const addMutation = useMutation({
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
         param: { userVocabularyListId },
-        json: { vocabularyItemId: item.id, resetProgress },
+        json: { vocabularyItemId: item.id, isResetToLearning },
       });
       if (!res.ok) throw new Error('Failed to add item');
 
@@ -69,7 +69,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
         ':userVocabularyItemId'
       ].$delete({
         param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItem.id },
-        json: { resetProgress: removeResetProgress },
+        json: { isReset },
       });
       if (!res.ok) throw new Error('Failed to remove item');
 
@@ -77,7 +77,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
     },
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
-      setRemoveResetProgress(false);
+      setIsReset(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
@@ -125,7 +125,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
               open={isRemoveConfirmationOpen}
               onOpenChange={(nextOpen) => {
                 setIsRemoveConfirmationOpen(nextOpen);
-                if (!nextOpen) setRemoveResetProgress(false);
+                if (!nextOpen) setIsReset(false);
               }}
             >
               <DialogContent>
@@ -136,23 +136,16 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
                     add it back at any time.
                   </DialogDescription>
                 </DialogHeader>
-                <label
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground"
-                  title="Reset progress to waiting"
-                >
-                  <Checkbox
-                    checked={removeResetProgress}
-                    onCheckedChange={(v) => setRemoveResetProgress(v === true)}
-                    aria-label="Reset progress to waiting"
-                  />
-                  Reset progress to waiting
+                <label className="flex items-center gap-1.5 text-sm text-muted-foreground" title="Reset">
+                  <Checkbox checked={isReset} onCheckedChange={(v) => setIsReset(v === true)} aria-label="Reset" />
+                  Reset
                 </label>
                 <DialogFooter>
                   <Button
                     variant="outline"
                     onClick={() => {
                       setIsRemoveConfirmationOpen(false);
-                      setRemoveResetProgress(false);
+                      setIsReset(false);
                     }}
                   >
                     Cancel
@@ -172,13 +165,13 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
         ) : (
           <>
             {item.userVocabularyItem && (
-              <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Reset progress">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground" title="Reset to learning">
                 <Checkbox
-                  checked={resetProgress}
-                  onCheckedChange={(v) => setResetProgress(v === true)}
-                  aria-label="Reset progress"
+                  checked={isResetToLearning}
+                  onCheckedChange={(v) => setIsResetToLearning(v === true)}
+                  aria-label="Reset to learning"
                 />
-                Reset progress
+                Reset to learning
               </label>
             )}
             <Button

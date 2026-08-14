@@ -155,7 +155,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
     expect(screen.queryByRole('button', { name: 'Add ubiquitous' })).toBeNull();
   });
 
-  it('does not show a reset progress checkbox for a brand-new word', async () => {
+  it('does not show a reset to learning checkbox for a brand-new word', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity');
 
@@ -165,10 +165,10 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await openDialogAndSearch('serendipity');
 
     await screen.findByRole('button', { name: 'Add serendipity' });
-    expect(screen.queryByRole('checkbox', { name: /reset progress/i })).toBeNull();
+    expect(screen.queryByRole('checkbox', { name: /reset to learning/i })).toBeNull();
   });
 
-  it('shows a reset progress checkbox checked by default for a previously removed word, and unchecking it sends resetProgress: false', async () => {
+  it('shows a reset to learning checkbox checked by default for a previously removed word, and unchecking it sends isResetToLearning: false', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', null, createUserVocabularyItemRow());
 
@@ -184,7 +184,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
     renderDialog(userVocabularyListId);
     await openDialogAndSearch('serendipity');
 
-    const checkbox = await screen.findByRole('checkbox', { name: /reset progress/i });
+    const checkbox = await screen.findByRole('checkbox', { name: /reset to learning/i });
     expect(checkbox.getAttribute('aria-checked')).toBe('true');
 
     fireEvent.click(checkbox);
@@ -234,7 +234,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
     expect(screen.queryByRole('button', { name: 'Remove serendipity' })).toBeNull();
   });
 
-  it('shows a reset progress checkbox unchecked by default in the remove dialog, and sends resetProgress: false', async () => {
+  it('shows a reset checkbox unchecked by default in the remove dialog, and sends isReset: false', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {
       id: crypto.randomUUID(),
@@ -255,7 +255,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
 
-    const checkbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    const checkbox = await screen.findByRole('checkbox', { name: /^reset$/i });
     expect(checkbox.getAttribute('aria-checked')).toBe('false');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
@@ -263,7 +263,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await vi.waitFor(() => expect(removeHandler).toHaveBeenCalledWith(item.userVocabularyItem?.id, false));
   });
 
-  it('checking reset progress in the remove dialog sends resetProgress: true', async () => {
+  it('checking reset in the remove dialog sends isReset: true', async () => {
     const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {
       id: crypto.randomUUID(),
@@ -284,7 +284,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
 
-    const checkbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    const checkbox = await screen.findByRole('checkbox', { name: /^reset$/i });
     fireEvent.click(checkbox);
     expect(checkbox.getAttribute('aria-checked')).toBe('true');
 
@@ -308,14 +308,14 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await openDialogAndSearch('serendipity');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
-    const checkbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    const checkbox = await screen.findByRole('checkbox', { name: /^reset$/i });
     fireEvent.click(checkbox);
     expect(checkbox.getAttribute('aria-checked')).toBe('true');
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
 
-    const reopenedCheckbox = await screen.findByRole('checkbox', { name: /reset progress to waiting/i });
+    const reopenedCheckbox = await screen.findByRole('checkbox', { name: /^reset$/i });
     expect(reopenedCheckbox.getAttribute('aria-checked')).toBe('false');
   });
 
