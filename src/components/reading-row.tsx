@@ -63,8 +63,8 @@ export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage }) =>
         </Button>
         <Button
           size="sm"
-          variant="ghost"
-          className="size-8 px-0"
+          variant="destructive"
+          className="size-8 shrink-0 px-0"
           disabled={removeMutation.isPending}
           onClick={() => setIsRemoveConfirmationOpen(true)}
           title="Delete reading"
