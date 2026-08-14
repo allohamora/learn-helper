@@ -106,8 +106,8 @@ type MetricCardProps = {
 };
 
 const MetricCard: FC<MetricCardProps> = ({ title, value, description, icon: Icon }) => (
-  <Card size="sm">
-    <CardHeader className="pb-2">
+  <Card size="sm" className="gap-0">
+    <CardHeader>
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
       <CardAction>
         <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
@@ -421,11 +421,13 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
 
   return (
     <div className="space-y-4 md:space-y-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {activityMetrics.map((metric) => (
           <MetricCard key={metric.title} {...metric} />
         ))}
+      </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         {costMetrics.map((metric) => (
           <MetricCard key={metric.title} {...metric} />
         ))}
