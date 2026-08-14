@@ -116,17 +116,19 @@ describe('reading.router', () => {
       ]);
     });
 
-    it('derives the title from the filename when no title is given', async () => {
+    it('returns 400 when no title is given, rejected by schema validation before it reaches the service', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const uploadReadingSpy = vi.spyOn(readingService, 'uploadReading');
 
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
+      // @ts-expect-error title is intentionally omitted to test schema validation
       const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(400);
+      expect(uploadReadingSpy).not.toHaveBeenCalled();
 
-      const body = await res.json();
-      expect(body).toMatchObject({ success: true, data: { title: 'My Book' } });
+      uploadReadingSpy.mockRestore();
     });
 
     it('returns 400 for a non-PDF mime type, rejected by schema validation before it reaches the service', async () => {
@@ -136,7 +138,7 @@ describe('reading.router', () => {
 
       const textFile = new File([Buffer.from('hello')], 'notes.txt', { type: 'text/plain' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: textFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: textFile, title: 'Notes' } });
       expect(res.status).toBe(400);
       expect(uploadReadingSpy).not.toHaveBeenCalled();
 
@@ -150,7 +152,7 @@ describe('reading.router', () => {
 
       const oversizedFile = new File([Buffer.alloc(21 * 1024 * 1024)], 'big.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: oversizedFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: oversizedFile, title: 'Big' } });
       expect(res.status).toBe(400);
       expect(uploadReadingSpy).not.toHaveBeenCalled();
 
@@ -164,7 +166,7 @@ describe('reading.router', () => {
 
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: 'My Book' } });
       expect(res.status).toBe(201);
       expect(uploadReadingSpy).toHaveBeenCalledOnce();
 
@@ -177,7 +179,7 @@ describe('reading.router', () => {
 
       const corruptFile = new File([Buffer.from('not a real pdf')], 'fake.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: corruptFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: corruptFile, title: 'Fake' } });
       expect(res.status).toBe(400);
     });
 
@@ -186,7 +188,7 @@ describe('reading.router', () => {
 
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: 'My Book' } });
       expect(res.status).toBe(401);
     });
 
@@ -196,13 +198,16 @@ describe('reading.router', () => {
 
       const pdfBytes = makeMinimalPdf();
       const firstRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(firstRes.status).toBe(201);
       expect(writeFileSpy).toHaveBeenCalledOnce();
 
       const secondRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }) },
+        form: {
+          file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }),
+          title: 'Copy of My Book',
+        },
       });
       expect(secondRes.status).toBe(409);
       expect(writeFileSpy).toHaveBeenCalledOnce();
@@ -218,13 +223,13 @@ describe('reading.router', () => {
 
       const pdfBytes = makeMinimalPdf();
       const firstRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(firstRes.status).toBe(201);
 
       auth.authorized({ user: { id: 'other-user' } });
       const secondRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(secondRes.status).toBe(201);
     });
@@ -242,7 +247,7 @@ describe('reading.router', () => {
         .mockResolvedValueOnce(undefined);
 
       const res = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(res.status).toBe(409);
 
@@ -263,10 +268,13 @@ describe('reading.router', () => {
 
       const [firstRes, secondRes] = await Promise.all([
         client.api.v1.users.me.readings.$post({
-          form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+          form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
         }),
         client.api.v1.users.me.readings.$post({
-          form: { file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }) },
+          form: {
+            file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }),
+            title: 'Copy of My Book',
+          },
         }),
       ]);
 

@@ -38,9 +38,7 @@ const writePdfFile = async ({ userId, hash, buffer }: { userId: string; hash: st
   return relativePath;
 };
 
-const stripPdfExtension = (fileName: string) => fileName.replace(/\.pdf$/i, '');
-
-export const uploadReading = async ({ userId, file, title }: { userId: string; file: File; title?: string }) => {
+export const uploadReading = async ({ userId, file, title }: { userId: string; file: File; title: string }) => {
   const buffer = Buffer.from(await file.arrayBuffer());
   const hash = createHash('sha256').update(buffer).digest('hex');
 
@@ -57,10 +55,7 @@ export const uploadReading = async ({ userId, file, title }: { userId: string; f
       tx,
     );
 
-    const createdReading = await createReading(
-      { userId, fileId: createdFile.id, title: title ?? stripPdfExtension(file.name), totalPages },
-      tx,
-    );
+    const createdReading = await createReading({ userId, fileId: createdFile.id, title, totalPages }, tx);
 
     await insertEvent({ type: EventType.ReadingUploaded, userId, readingId: createdReading.id }, tx);
 

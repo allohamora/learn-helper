@@ -13,15 +13,15 @@ import { appClient } from '@/services/api';
 const PDF_MIME_TYPE = 'application/pdf';
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
 
-const fileSchema = z
-  .instanceof(File, { message: 'Select a PDF file.' })
-  .refine((file) => file.type === PDF_MIME_TYPE, 'Only PDF files are supported.')
-  .refine((file) => file.size <= MAX_UPLOAD_SIZE_BYTES, 'File exceeds the 20MB limit.');
-
-type FormValues = {
-  file: File | null;
-  title: string;
-};
+const formSchema = z.object({
+  file: z
+    .union([z.instanceof(File), z.null()])
+    .refine((file) => file !== null, 'Select a PDF file.')
+    .refine((file) => file === null || file.type === PDF_MIME_TYPE, 'Only PDF files are supported.')
+    .refine((file) => file === null || file.size <= MAX_UPLOAD_SIZE_BYTES, 'File exceeds the 20MB limit.')
+    .transform((file) => file as File),
+  title: z.string().trim().min(1, 'Title is required.'),
+});
 
 export const UploadReadingDialog: FC = () => {
   const [open, setOpen] = useState(false);
@@ -30,7 +30,7 @@ export const UploadReadingDialog: FC = () => {
   const uploadMutation = useMutation({
     mutationFn: async ({ file, title }: { file: File; title: string }) => {
       const res = await appClient.api.v1.users.me.readings.$post({
-        form: { file, title: title.trim() || undefined },
+        form: { file, title: title.trim() },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -49,10 +49,11 @@ export const UploadReadingDialog: FC = () => {
   });
 
   const form = useForm({
-    defaultValues: { file: null, title: '' } as FormValues,
+    defaultValues: { file: null, title: '' } as z.input<typeof formSchema>,
+    validators: { onMount: formSchema, onChange: formSchema, onSubmit: formSchema },
     onSubmit: async ({ value }) => {
-      if (!value.file) return;
-      await uploadMutation.mutateAsync({ file: value.file, title: value.title });
+      const body = formSchema.parse(value);
+      await uploadMutation.mutateAsync(body);
     },
   });
 
@@ -61,7 +62,10 @@ export const UploadReadingDialog: FC = () => {
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) form.reset();
+        if (!nextOpen) {
+          form.reset();
+          form.validateSync('mount');
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -88,7 +92,7 @@ export const UploadReadingDialog: FC = () => {
             void form.handleSubmit();
           }}
         >
-          <form.Field name="file" validators={{ onChange: fileSchema, onSubmit: fileSchema }}>
+          <form.Field name="file">
             {(field) => (
               <div className="space-y-1">
                 <Input
@@ -97,8 +101,8 @@ export const UploadReadingDialog: FC = () => {
                   onChange={(e) => field.handleChange(e.target.files?.[0] ?? null)}
                   autoFocus
                 />
-                {field.state.meta.errors.length > 0 && (
-                  <p className="text-sm text-destructive">{String(field.state.meta.errors[0])}</p>
+                {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">{field.state.meta.errors[0]?.message}</p>
                 )}
               </div>
             )}
@@ -106,17 +110,22 @@ export const UploadReadingDialog: FC = () => {
 
           <form.Field name="title">
             {(field) => (
-              <Input
-                placeholder="Title"
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-              />
+              <div className="space-y-1">
+                <Input
+                  placeholder="Title"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+                {field.state.meta.isTouched && field.state.meta.errors.length > 0 && (
+                  <p className="text-sm text-destructive">{field.state.meta.errors[0]?.message}</p>
+                )}
+              </div>
             )}
           </form.Field>
 
-          <form.Subscribe selector={(state) => [state.isSubmitting] as const}>
-            {([isSubmitting]) => (
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit] as const}>
+            {([isSubmitting, canSubmit]) => (
+              <Button type="submit" className="w-full" disabled={isSubmitting || !canSubmit}>
                 {isSubmitting ? 'Uploading…' : 'Upload'}
               </Button>
             )}
