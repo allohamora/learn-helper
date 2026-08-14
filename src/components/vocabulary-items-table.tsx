@@ -49,10 +49,10 @@ const ActionsCell: FC<{
     mutationFn: async () => {
       const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
         ':userVocabularyItemId'
-      ].undo.$post({
+      ].reset.$post({
         param: { userVocabularyListId, userVocabularyItemId: item.id },
       });
-      if (!res.ok) throw new Error('Failed to undo discovery');
+      if (!res.ok) throw new Error('Failed to reset item progress');
 
       return res.json();
     },

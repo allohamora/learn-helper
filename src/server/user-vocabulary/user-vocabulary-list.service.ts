@@ -12,6 +12,7 @@ import {
   getUserVocabularyItemByVocabularyItemIdForUpdate,
   getUserVocabularyItemWithRelationsById,
   getUserVocabularyItemWithRelationsByVocabularyItemId,
+  newWaitingProgress,
   updateUserVocabularyItemProgress,
 } from './user-vocabulary-item.repository';
 import {
@@ -232,10 +233,7 @@ export const removeVocabularyItemFromPersonalList = async ({
           },
           tx,
         ),
-        updateUserVocabularyItemProgress(
-          { userId, userVocabularyItemId, status: LearningStatus.Waiting, encounterCount: 0, enqueuedAt: null },
-          tx,
-        ),
+        updateUserVocabularyItemProgress({ userId, userVocabularyItemId, ...newWaitingProgress() }, tx),
       ]);
     }
 
