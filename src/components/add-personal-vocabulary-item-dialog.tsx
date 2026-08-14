@@ -28,14 +28,6 @@ type SearchResult = Extract<SearchResponse, { success: true }>['data'][number];
 
 const LOAD_MORE_THRESHOLD_PX = 200;
 
-const ADDED_QUERY_KEYS = [
-  'vocabulary-list-items',
-  'vocabulary-list-discover-items',
-  'vocabulary-list-progress',
-  'vocabulary-list-learn-items',
-  'vocabulary-list-learn-tasks',
-];
-
 type ResultRowProps = {
   item: SearchResult;
   userVocabularyListId: string;
@@ -56,8 +48,12 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
       return res.json();
     },
     onSuccess: () => {
-      ADDED_QUERY_KEYS.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey: [queryKey] }));
-      void queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
     },
     onError: () => toast.error('Failed to add item'),
   });
@@ -77,8 +73,12 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
     },
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
-      ADDED_QUERY_KEYS.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey: [queryKey] }));
-      void queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
       toast.success('Item removed from list');
     },
     onError: () => toast.error('Failed to remove item'),
@@ -199,8 +199,12 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
       return res.json();
     },
     onSuccess: () => {
-      ADDED_QUERY_KEYS.forEach((queryKey) => void queryClient.invalidateQueries({ queryKey: [queryKey] }));
-      void queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
     },
     onError: () => toast.error('Failed to generate item'),
   });
