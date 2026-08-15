@@ -131,6 +131,20 @@ describe('reading.router', () => {
       uploadReadingSpy.mockRestore();
     });
 
+    it('returns 400 when the title is whitespace only, rejected by schema validation before it reaches the service', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const uploadReadingSpy = vi.spyOn(readingService, 'uploadReading');
+
+      const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
+
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: '   ' } });
+      expect(res.status).toBe(400);
+      expect(uploadReadingSpy).not.toHaveBeenCalled();
+
+      uploadReadingSpy.mockRestore();
+    });
+
     it('returns 400 for a non-PDF mime type, rejected by schema validation before it reaches the service', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });

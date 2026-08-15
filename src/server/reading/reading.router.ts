@@ -65,7 +65,7 @@ export const readingRouter = new OpenAPIHono()
                 file: z.instanceof(File).refine((file) => file.type === MimeType.Pdf, {
                   message: 'only application/pdf files are supported',
                 }),
-                title: z.string().min(1, 'title is required'),
+                title: z.string().trim().min(1, 'title is required'),
               }),
             },
           },
