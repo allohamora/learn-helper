@@ -87,6 +87,7 @@ export const removeReading = async ({ userId, readingId }: { userId: string; rea
   });
 
   // best-effort: the DB transaction already committed, so a disk error here shouldn't fail the request
+  // TODO: a failure here leaves an orphan file on disk; add a reconciliation job to clean these up if this becomes a problem
   try {
     await rm(path.join(process.cwd(), filePath), { force: true });
   } catch (err) {
