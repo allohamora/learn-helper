@@ -2,6 +2,7 @@ import { type ComponentType, type FC, type ReactNode } from 'react';
 import {
   ArrowDownUp,
   BookOpen,
+  BookX,
   Calendar,
   CircleAlert,
   Clock,
@@ -344,6 +345,12 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
       value: general.totalReadingsUploaded.toLocaleString(),
       description: 'readings uploaded',
       icon: Upload,
+    },
+    {
+      title: 'Readings Deleted',
+      value: general.totalReadingsDeleted.toLocaleString(),
+      description: 'readings deleted',
+      icon: BookX,
     },
   ];
 

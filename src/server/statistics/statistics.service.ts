@@ -48,6 +48,7 @@ const getGeneralStatistics = async (userId: string) => {
     totalProgressResets: 0,
     totalItemsRemovedFromList: 0,
     totalReadingsUploaded: 0,
+    totalReadingsDeleted: 0,
     totalAiCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -137,6 +138,9 @@ const getGeneralStatistics = async (userId: string) => {
         continue;
       case EventType.ReadingUploaded:
         result.totalReadingsUploaded = item.count;
+        continue;
+      case EventType.ReadingDeleted:
+        result.totalReadingsDeleted = item.count;
         continue;
       default: {
         const exhaustiveCheck: never = item.type;

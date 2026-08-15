@@ -4,7 +4,9 @@ import { bodyLimit } from 'hono/body-limit';
 import {
   errorBadRequestResponse,
   errorConflictResponse,
+  errorNotFoundResponse,
   successCreatedResponse,
+  successOkResponse,
   successPaginatedResponse,
   toPaginatedResponse,
   toSuccessResponse,
@@ -16,7 +18,7 @@ import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
 import { readingDto } from './dtos/reading.dto';
 import { getReadingsByUserId } from './reading.repository';
-import { uploadReading } from './reading.service';
+import { removeReading, uploadReading } from './reading.service';
 
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -63,7 +65,7 @@ export const readingRouter = new OpenAPIHono()
                 file: z.instanceof(File).refine((file) => file.type === MimeType.Pdf, {
                   message: 'only application/pdf files are supported',
                 }),
-                title: z.string().optional(),
+                title: z.string().trim().min(1, 'title is required'),
               }),
             },
           },
@@ -101,5 +103,32 @@ export const readingRouter = new OpenAPIHono()
           data: await uploadReading({ userId: user.id, file, title }),
         }),
       );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'delete',
+      path: '/{readingId}',
+      tags: ['Readings'],
+      request: {
+        params: z.object({ readingId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({
+          description: 'The reading was deleted',
+          schema: z.object({ readingId: z.uuidv7() }),
+        }),
+        ...errorNotFoundResponse({ description: 'The reading was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { readingId } = c.req.valid('param');
+
+      await removeReading({ userId: user.id, readingId });
+
+      return c.json(...toSuccessResponse({ status: 200, data: { readingId } }));
     },
   );

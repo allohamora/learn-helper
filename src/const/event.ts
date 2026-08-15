@@ -13,6 +13,7 @@ export enum EventType {
   VocabularyItemUpdated = 'vocabulary-item-updated',
   VocabularyItemGenerated = 'vocabulary-item-generated',
   ReadingUploaded = 'reading-uploaded',
+  ReadingDeleted = 'reading-deleted',
 }
 
 export enum UserVocabularyItemTaskType {

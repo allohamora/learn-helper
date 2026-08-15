@@ -3,6 +3,7 @@ import type { JsonBodyType } from 'msw';
 import type { Statistics } from '@/server/statistics/dtos/statistics.dto';
 import type { userVocabularyItemWithRelationsDto } from '@/server/user-vocabulary/dtos/user-vocabulary-item-with-relations.dto';
 import type { personalVocabularyItemSearchResultDto } from '@/server/user-vocabulary/dtos/personal-vocabulary-item-search-result.dto';
+import type { readingDto } from '@/server/reading/dtos/reading.dto';
 import type { z } from '@hono/zod-openapi';
 
 type StatisticsResponse = {
@@ -12,6 +13,7 @@ type StatisticsResponse = {
 
 type UserVocabularyItemWithRelations = z.infer<typeof userVocabularyItemWithRelationsDto>;
 type PersonalVocabularyItemSearchResult = z.infer<typeof personalVocabularyItemSearchResultDto>;
+type Reading = z.infer<typeof readingDto>;
 
 type PaginatedResponse<T> = {
   success: true;
@@ -97,6 +99,16 @@ export const api = {
         },
       );
     },
+  },
+  uploadReading: {
+    mock: (responseFactory: (file: File, title: string) => HttpResponse<JsonBodyType>) => {
+      return http.post('/api/v1/users/me/readings', async ({ request }) => {
+        const form = await request.formData();
+
+        return responseFactory(form.get('file') as File, form.get('title') as string);
+      });
+    },
+    ok: (data: Reading) => api.uploadReading.mock(() => HttpResponse.json({ success: true, data }, { status: 201 })),
   },
   generateVocabularyItem: {
     mock: (

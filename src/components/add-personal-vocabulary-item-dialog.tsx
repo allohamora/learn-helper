@@ -110,7 +110,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
           <>
             <Button
               size="sm"
-              variant="outline"
+              variant="destructive"
               className="ml-auto size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
               disabled={removeMutation.isPending}
               onClick={() => setIsRemoveConfirmationOpen(true)}

@@ -10,6 +10,7 @@ import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
 import { event, file, reading, user } from '@/server/db/db.schema';
 import { createFile, createReading } from '@/server/reading/reading.repository';
+import { insertEvent } from '@/server/event/event.repository';
 import { EventType } from '@/const/event';
 
 const USER_ID = 'e2e-test-user';
@@ -63,15 +64,18 @@ const makeMinimalPdf = () => {
 describe('reading.router', () => {
   let mkdirSpy: MockInstance<typeof fsp.mkdir>;
   let writeFileSpy: MockInstance<typeof fsp.writeFile>;
+  let rmSpy: MockInstance<typeof fsp.rm>;
 
   beforeEach(() => {
     mkdirSpy = vi.spyOn(fsp, 'mkdir').mockResolvedValue(undefined);
     writeFileSpy = vi.spyOn(fsp, 'writeFile').mockResolvedValue(undefined);
+    rmSpy = vi.spyOn(fsp, 'rm').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
     mkdirSpy.mockRestore();
     writeFileSpy.mockRestore();
+    rmSpy.mockRestore();
   });
 
   describe('POST /api/v1/users/me/readings', () => {
@@ -112,17 +116,33 @@ describe('reading.router', () => {
       ]);
     });
 
-    it('derives the title from the filename when no title is given', async () => {
+    it('returns 400 when no title is given, rejected by schema validation before it reaches the service', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const uploadReadingSpy = vi.spyOn(readingService, 'uploadReading');
 
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
+      // @ts-expect-error title is intentionally omitted to test schema validation
       const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(400);
+      expect(uploadReadingSpy).not.toHaveBeenCalled();
 
-      const body = await res.json();
-      expect(body).toMatchObject({ success: true, data: { title: 'My Book' } });
+      uploadReadingSpy.mockRestore();
+    });
+
+    it('returns 400 when the title is whitespace only, rejected by schema validation before it reaches the service', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const uploadReadingSpy = vi.spyOn(readingService, 'uploadReading');
+
+      const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
+
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: '   ' } });
+      expect(res.status).toBe(400);
+      expect(uploadReadingSpy).not.toHaveBeenCalled();
+
+      uploadReadingSpy.mockRestore();
     });
 
     it('returns 400 for a non-PDF mime type, rejected by schema validation before it reaches the service', async () => {
@@ -132,7 +152,7 @@ describe('reading.router', () => {
 
       const textFile = new File([Buffer.from('hello')], 'notes.txt', { type: 'text/plain' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: textFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: textFile, title: 'Notes' } });
       expect(res.status).toBe(400);
       expect(uploadReadingSpy).not.toHaveBeenCalled();
 
@@ -146,7 +166,7 @@ describe('reading.router', () => {
 
       const oversizedFile = new File([Buffer.alloc(21 * 1024 * 1024)], 'big.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: oversizedFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: oversizedFile, title: 'Big' } });
       expect(res.status).toBe(400);
       expect(uploadReadingSpy).not.toHaveBeenCalled();
 
@@ -160,7 +180,7 @@ describe('reading.router', () => {
 
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: 'My Book' } });
       expect(res.status).toBe(201);
       expect(uploadReadingSpy).toHaveBeenCalledOnce();
 
@@ -173,7 +193,7 @@ describe('reading.router', () => {
 
       const corruptFile = new File([Buffer.from('not a real pdf')], 'fake.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: corruptFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: corruptFile, title: 'Fake' } });
       expect(res.status).toBe(400);
     });
 
@@ -182,7 +202,7 @@ describe('reading.router', () => {
 
       const pdfFile = new File([makeMinimalPdf()], 'My Book.pdf', { type: 'application/pdf' });
 
-      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile } });
+      const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: 'My Book' } });
       expect(res.status).toBe(401);
     });
 
@@ -192,13 +212,16 @@ describe('reading.router', () => {
 
       const pdfBytes = makeMinimalPdf();
       const firstRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(firstRes.status).toBe(201);
       expect(writeFileSpy).toHaveBeenCalledOnce();
 
       const secondRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }) },
+        form: {
+          file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }),
+          title: 'Copy of My Book',
+        },
       });
       expect(secondRes.status).toBe(409);
       expect(writeFileSpy).toHaveBeenCalledOnce();
@@ -214,13 +237,13 @@ describe('reading.router', () => {
 
       const pdfBytes = makeMinimalPdf();
       const firstRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(firstRes.status).toBe(201);
 
       auth.authorized({ user: { id: 'other-user' } });
       const secondRes = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(secondRes.status).toBe(201);
     });
@@ -238,7 +261,7 @@ describe('reading.router', () => {
         .mockResolvedValueOnce(undefined);
 
       const res = await client.api.v1.users.me.readings.$post({
-        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+        form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
       });
       expect(res.status).toBe(409);
 
@@ -259,10 +282,13 @@ describe('reading.router', () => {
 
       const [firstRes, secondRes] = await Promise.all([
         client.api.v1.users.me.readings.$post({
-          form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }) },
+          form: { file: new File([pdfBytes], 'My Book.pdf', { type: 'application/pdf' }), title: 'My Book' },
         }),
         client.api.v1.users.me.readings.$post({
-          form: { file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }) },
+          form: {
+            file: new File([pdfBytes], 'Copy of My Book.pdf', { type: 'application/pdf' }),
+            title: 'Copy of My Book',
+          },
         }),
       ]);
 
@@ -370,6 +396,90 @@ describe('reading.router', () => {
       auth.unauthorized();
 
       const res = await client.api.v1.users.me.readings.$get({ query: {} });
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('DELETE /api/v1/users/me/readings/:readingId', () => {
+    it('deletes the reading, its file, unlinks the disk file, and records a delete event', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      const createdFile = await db.query.file.findFirst({ where: eq(file.id, created.fileId) });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: created.id } });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ success: true, data: { readingId: created.id } });
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toBeUndefined();
+
+      const foundFile = await db.query.file.findFirst({ where: eq(file.id, created.fileId) });
+      expect(foundFile).toBeUndefined();
+
+      expect(rmSpy).toHaveBeenCalledWith(path.join(process.cwd(), createdFile!.filePath), { force: true });
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toMatchObject([{ type: EventType.ReadingDeleted, userId: USER_ID, readingId: null }]);
+    });
+
+    it('still returns 200 when removing the disk file fails', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      rmSpy.mockRejectedValueOnce(new Error('EACCES: permission denied'));
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: created.id } });
+      expect(res.status).toBe(200);
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toBeUndefined();
+    });
+
+    it('cascade-deletes events tied to the reading', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      await insertEvent({ type: EventType.ReadingUploaded, userId: USER_ID, readingId: created.id });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: created.id } });
+      expect(res.status).toBe(200);
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toMatchObject([{ type: EventType.ReadingDeleted, userId: USER_ID, readingId: null }]);
+    });
+
+    it("returns 404 for another user's reading", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: created.id } });
+      expect(res.status).toBe(404);
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toBeDefined();
+    });
+
+    it('returns 404 for an unknown reading id', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
       expect(res.status).toBe(401);
     });
   });

@@ -21,6 +21,7 @@ const statisticsData = {
     totalProgressResets: 11,
     totalItemsRemovedFromList: 12,
     totalReadingsUploaded: 13,
+    totalReadingsDeleted: 1,
     totalAiCostsInNanoDollars: 1_500_000_000,
     totalInputTokens: 1_000,
     totalOutputTokens: 500,
@@ -80,6 +81,7 @@ describe('StatisticsDashboard', () => {
     expect(screen.getByText('Learning Activity')).toBeTruthy();
     expect(screen.getAllByText('AI Cost')).toHaveLength(2);
     expect(screen.getByText('Items Generated')).toBeTruthy();
+    expect(screen.getByText('Readings Deleted')).toBeTruthy();
     expect(screen.getByText('Most Mistaken Items')).toBeTruthy();
     expect(screen.getByText('example')).toBeTruthy();
     expect(screen.getByText('Most Hinted Items')).toBeTruthy();

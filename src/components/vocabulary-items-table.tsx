@@ -165,7 +165,7 @@ const ActionsCell: FC<{
       {vocabularyListType === VocabularyListType.Personal && (
         <Button
           size="sm"
-          variant="ghost"
+          variant="destructive"
           className="size-8 px-0"
           disabled={removeMutation.isPending}
           onClick={() => setIsRemoveConfirmationOpen(true)}

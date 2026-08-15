@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { db } from '@/server/db/db.service';
-import { user } from '@/server/db/db.schema';
+import { reading, user } from '@/server/db/db.schema';
 import {
   createFile,
   createReading,
+  deleteFile,
   getFileByUserIdAndHash,
+  getReadingWithFileByIdAndUserId,
   getReadingsByUserId,
 } from '@/server/reading/reading.repository';
 import { RequestType } from '@/const/request';
@@ -123,6 +126,51 @@ describe('reading.repository', () => {
       const result = await getFileByUserIdAndHash({ userId: USER_ID, hash: 'missing' });
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getReadingWithFileByIdAndUserId', () => {
+    it('returns the reading with its joined file when owned by the user', async () => {
+      await seedUser(USER_ID);
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const result = await getReadingWithFileByIdAndUserId({ userId: USER_ID, readingId: created.id });
+
+      expect(result).toMatchObject({ id: created.id, title: 'Book' });
+      expect(result?.file).toMatchObject({ id: created.fileId, hash: 'Book' });
+    });
+
+    it("returns undefined for another user's reading", async () => {
+      await seedUser(USER_ID);
+      await seedUser('other-user');
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const result = await getReadingWithFileByIdAndUserId({ userId: USER_ID, readingId: created.id });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined for an unknown reading id', async () => {
+      await seedUser(USER_ID);
+
+      const result = await getReadingWithFileByIdAndUserId({
+        userId: USER_ID,
+        readingId: '00000000-0000-0000-0000-000000000000',
+      });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('deleteFile', () => {
+    it('deletes the file row and cascades to delete the reading', async () => {
+      await seedUser(USER_ID);
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      await deleteFile(created.fileId);
+
+      const found = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(found).toBeUndefined();
     });
   });
 });
