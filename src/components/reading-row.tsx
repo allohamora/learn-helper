@@ -79,8 +79,8 @@ export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage }) =>
           <DialogHeader>
             <DialogTitle>Delete &ldquo;{title}&rdquo;?</DialogTitle>
             <DialogDescription>
-              This permanently deletes the reading, its file, and all related events, including its upload history. Use
-              this only if you uploaded the wrong file — this action cannot be undone.
+              This permanently deletes the reading, its file, and all related events, including its upload history. This
+              action cannot be undone, so only use it if you uploaded the wrong file.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
