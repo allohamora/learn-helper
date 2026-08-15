@@ -12,6 +12,7 @@ import {
   createReading,
   deleteFile,
   getFileByUserIdAndHash,
+  getReadingByIdAndUserId,
   getReadingWithFileByIdAndUserId,
 } from './reading.repository';
 
@@ -50,6 +51,16 @@ export const uploadReading = async ({ userId, file, title }: { userId: string; f
 
     return createdReading;
   });
+};
+
+export const getReadingByIdAndUserIdOrThrow = async (
+  { userId, readingId }: { userId: string; readingId: string },
+  tx: Transaction = db,
+) => {
+  const found = await getReadingByIdAndUserId({ userId, readingId }, tx);
+  if (!found) throw Exception.notFound('reading not found');
+
+  return found;
 };
 
 export const getReadingWithFileByIdAndUserIdOrThrow = async (

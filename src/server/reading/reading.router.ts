@@ -18,7 +18,7 @@ import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
 import { readingDto } from './dtos/reading.dto';
 import { getReadingsByUserId } from './reading.repository';
-import { downloadReading, removeReading, uploadReading } from './reading.service';
+import { downloadReading, getReadingByIdAndUserIdOrThrow, removeReading, uploadReading } from './reading.service';
 
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -105,6 +105,30 @@ export const readingRouter = new OpenAPIHono()
           data: await uploadReading({ userId: user.id, file, title }),
         }),
       );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{readingId}',
+      tags: ['Readings'],
+      request: {
+        params: z.object({ readingId: z.uuidv7() }),
+      },
+      responses: {
+        ...successOkResponse({ description: 'The reading', schema: readingDto }),
+        ...errorNotFoundResponse({ description: 'The reading was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { readingId } = c.req.valid('param');
+
+      const found = await getReadingByIdAndUserIdOrThrow({ userId: user.id, readingId });
+
+      return c.json(...toSuccessResponse({ status: 200, data: found }));
     },
   )
   .openapi(

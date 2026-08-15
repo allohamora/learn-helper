@@ -37,6 +37,15 @@ export const createReading = async (data: typeof reading.$inferInsert, tx: Trans
   return created;
 };
 
+export const getReadingByIdAndUserId = async (
+  { userId, readingId }: { userId: string; readingId: string },
+  tx: Transaction = db,
+) => {
+  return tx.query.reading.findFirst({
+    where: and(eq(reading.id, readingId), eq(reading.userId, userId)),
+  });
+};
+
 export const getReadingWithFileByIdAndUserId = async (
   { userId, readingId }: { userId: string; readingId: string },
   tx: Transaction = db,

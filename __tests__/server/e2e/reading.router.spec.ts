@@ -403,6 +403,50 @@ describe('reading.router', () => {
     });
   });
 
+  describe('GET /api/v1/users/me/readings/:readingId', () => {
+    it("returns 200 with the reading's data and no file field", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({ param: { readingId: created.id } });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ success: true, data: { id: created.id, userId: USER_ID, title: 'Book' } });
+      expect(body).not.toHaveProperty('data.file');
+    });
+
+    it("returns 404 for another user's reading", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({ param: { readingId: created.id } });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for an unknown reading id', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(401);
+    });
+  });
+
   describe('DELETE /api/v1/users/me/readings/:readingId', () => {
     it('deletes the reading, its file, unlinks the disk file, and records a delete event', async () => {
       auth.authorized({ user: { id: USER_ID } });
