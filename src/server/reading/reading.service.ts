@@ -8,6 +8,7 @@ import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
+import { createLogger } from '../utils/logger.utils';
 import {
   createFile,
   createReading,
@@ -15,6 +16,8 @@ import {
   getFileByUserIdAndHash,
   getReadingWithFileByIdAndUserId,
 } from './reading.repository';
+
+const logger = createLogger('reading.service');
 
 export const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
@@ -83,6 +86,10 @@ export const removeReading = async ({ userId, readingId }: { userId: string; rea
     return found.file.filePath;
   });
 
-  // force: true so a missing/already-deleted file doesn't throw here after the DB transaction already committed
-  await rm(path.join(process.cwd(), filePath), { force: true });
+  // best-effort: the DB transaction already committed, so a disk error here shouldn't fail the request
+  try {
+    await rm(path.join(process.cwd(), filePath), { force: true });
+  } catch (err) {
+    logger.error({ msg: 'failed to remove reading file from disk', err, filePath });
+  }
 };

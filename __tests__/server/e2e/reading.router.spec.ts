@@ -411,6 +411,19 @@ describe('reading.router', () => {
       expect(events).toMatchObject([{ type: EventType.ReadingDeleted, userId: USER_ID, readingId: null }]);
     });
 
+    it('still returns 200 when removing the disk file fails', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      rmSpy.mockRejectedValueOnce(new Error('EACCES: permission denied'));
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: created.id } });
+      expect(res.status).toBe(200);
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toBeUndefined();
+    });
+
     it('cascade-deletes events tied to the reading', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
