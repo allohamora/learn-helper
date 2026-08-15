@@ -58,6 +58,8 @@ export const readingRouter = new OpenAPIHono()
       path: '/',
       tags: ['Readings'],
       request: {
+        // TODO: Hono has no streaming multipart parser: the form validator buffers the whole body into memory
+        // (via c.req.arrayBuffer()) before this schema runs, so `file` below is already fully loaded, not a stream.
         body: {
           content: {
             'multipart/form-data': {
