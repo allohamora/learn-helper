@@ -18,7 +18,7 @@ import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
 import { readingDto } from './dtos/reading.dto';
 import { getReadingsByUserId } from './reading.repository';
-import { removeReading, uploadReading } from './reading.service';
+import { downloadReading, removeReading, uploadReading } from './reading.service';
 
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -130,5 +130,52 @@ export const readingRouter = new OpenAPIHono()
       await removeReading({ userId: user.id, readingId });
 
       return c.json(...toSuccessResponse({ status: 200, data: { readingId } }));
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'get',
+      path: '/{readingId}/download',
+      tags: ['Readings'],
+      request: {
+        params: z.object({ readingId: z.uuidv7() }),
+      },
+      responses: {
+        200: {
+          description: 'The reading PDF file',
+          content: { 'application/pdf': { schema: { type: 'string', format: 'binary' } } },
+        },
+        304: {
+          description: 'Not modified — the cached copy (matched by If-None-Match) is still current',
+        },
+        ...errorNotFoundResponse({ description: 'The reading was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { readingId } = c.req.valid('param');
+
+      const { hash, fileName, mimeType, sizeBytes, getStream } = await downloadReading({
+        userId: user.id,
+        readingId,
+      });
+
+      // ETag values must be double-quoted per RFC 7232 for clients to send them back correctly in If-None-Match
+      const etag = `"${hash}"`;
+
+      c.header('ETag', etag);
+      c.header('Cache-Control', 'private, no-cache');
+
+      if (c.req.header('If-None-Match') === etag) {
+        return c.newResponse(null, 304);
+      }
+
+      c.header('Content-Type', mimeType);
+      c.header('Content-Length', String(sizeBytes));
+      c.header('Content-Disposition', `inline; filename="${fileName}"`);
+
+      return c.newResponse(getStream(), 200);
     },
   );
