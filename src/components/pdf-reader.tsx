@@ -1,7 +1,7 @@
 import { type FC, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { WindowVirtualizer, type WindowVirtualizerHandle } from 'virtua';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
@@ -17,7 +17,7 @@ type Props = {
   totalPages: number;
 };
 
-const BUFFER_SIZE_PX = 800;
+const OVERSCAN_PAGES = 2; // approximates the old 800px pixel buffer, biased generous for short/landscape pages
 const PAGE_GAP_PX = 16;
 
 export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
@@ -25,20 +25,20 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   const [containerWidth, setContainerWidth] = useState(0);
 
   const [headerHeight, setHeaderHeight] = useState(0);
+  // The virtualized content's offset from the top of the document. Tanstack's window virtualizer
+  // needs this explicitly (unlike virtua, which auto-detects it), to translate between document
+  // scroll coordinates and item positions.
+  const [scrollMargin, setScrollMargin] = useState(0);
 
-  const virtualizerRef = useRef<WindowVirtualizerHandle>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
   // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
   // sample. getPage() only reads already-parsed page metadata, no rendering involved, so it's cheap.
-  // Virtua estimates unmeasured item heights from already-measured ones; without this, every page
-  // starts at the tiny loading-spinner height and jumps to its real height once rendered, which
-  // throws off virtua's size cache and makes scrollbar dragging jump around.
   const [pageSizes, setPageSizes] = useState<{ width: number; height: number }[] | null>(null);
 
   const onDocumentLoadSuccess = async (pdf: PDFDocumentProxy) => {
-    const sizes = await Promise.all(
+    const dimensions = await Promise.all(
       Array.from({ length: pdf.numPages }, async (_, index) => {
         const page = await pdf.getPage(index + 1);
         const { width, height } = page.getViewport({ scale: 1 });
@@ -46,7 +46,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
       }),
     );
 
-    setPageSizes(sizes);
+    setPageSizes(dimensions);
   };
 
   useEffect(() => {
@@ -62,13 +62,16 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   }, []);
 
   useEffect(() => {
-    // The sticky site header visually covers the top of the scroll area, so the page counted as
-    // "current", and the page landed on after a jump, should sit just below it, not at y=0.
+    // The sticky header occupies real layout space above the page list (position: sticky, not
+    // fixed), so its height affects both where pages should land once scrolled below it
+    // (headerHeight) and where the page list itself starts in the document (scrollMargin) - both
+    // are recomputed together whenever the header resizes.
     const header = document.querySelector<HTMLElement>('[data-slot="header"]');
     if (!header) return;
 
     const observer = new ResizeObserver(([entry]) => {
       if (entry) setHeaderHeight(entry.contentRect.height);
+      setScrollMargin(containerRef.current?.offsetTop ?? 0);
     });
     observer.observe(header);
 
@@ -77,15 +80,44 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
 
   const downloadUrl = appClient.api.v1.users.me.readings[':readingId'].download.$path({ param: { readingId } });
 
-  const goToPage = (page: number) =>
-    virtualizerRef.current?.scrollToIndex(page - 1, { align: 'start', offset: -headerHeight });
+  // Real page dimensions are known upfront (via pageSizes), so estimateSize is exact, not a guess.
+  // Sized from sizes.length rather than pageSizes so estimateSize is never called before load / out
+  // of bounds.
+  const sizes = pageSizes ?? [];
 
-  const updateCurrentPage = () => {
-    const handle = virtualizerRef.current;
-    if (!handle) return;
+  const virtualizer = useWindowVirtualizer({
+    count: sizes.length,
+    estimateSize: (index) => containerWidth * (sizes[index].height / sizes[index].width),
+    gap: PAGE_GAP_PX,
+    paddingEnd: PAGE_GAP_PX,
+    overscan: OVERSCAN_PAGES,
+    scrollMargin,
+    scrollPaddingStart: headerHeight,
+  });
 
-    setCurrentPage(handle.findItemIndex(handle.scrollOffset + headerHeight) + 1);
-  };
+  // estimateSize isn't part of the virtualizer's internal cache-invalidation deps, so a
+  // containerWidth change (resize) alone won't trigger remeasurement — force it explicitly.
+  useEffect(() => virtualizer.measure(), [containerWidth, virtualizer]);
+
+  const goToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
+
+  useEffect(() => {
+    const onScroll = () => {
+      // A short last page can mean the browser's max scroll offset never actually pushes
+      // scrollOffset + headerHeight past its start, so the offset lookup below would get stuck on
+      // the second-to-last page — isAtEnd() checks the real scrollHeight instead and catches it.
+      if (pageSizes && virtualizer.isAtEnd()) {
+        setCurrentPage(totalPages);
+        return;
+      }
+
+      const item = virtualizer.getVirtualItemForOffset(window.scrollY + headerHeight);
+      if (item) setCurrentPage(item.index + 1);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [virtualizer, headerHeight, pageSizes, totalPages]);
 
   return (
     <div className="flex flex-col gap-4 pt-4 pb-20">
@@ -108,20 +140,20 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
             onItemClick={({ pageIndex }) => goToPage(pageIndex + 1)}
           >
             {pageSizes ? (
-              <WindowVirtualizer
-                ref={virtualizerRef}
-                data={pageSizes}
-                bufferSize={BUFFER_SIZE_PX}
-                onScroll={updateCurrentPage}
-              >
-                {({ width, height }, index) => (
+              <div style={{ position: 'relative', width: '100%', height: virtualizer.getTotalSize() }}>
+                {virtualizer.getVirtualItems().map((item) => (
                   <div
-                    key={index}
-                    className="flex items-center justify-center"
-                    style={{ height: containerWidth * (height / width) + PAGE_GAP_PX, paddingBottom: PAGE_GAP_PX }}
+                    key={item.key}
+                    data-index={item.index}
+                    className="absolute top-0 left-0 flex w-full items-center justify-center"
+                    style={{
+                      height: item.size,
+                      transform: `translateY(${item.start - scrollMargin}px)`,
+                      willChange: 'transform',
+                    }}
                   >
                     <Page
-                      pageNumber={index + 1}
+                      pageNumber={item.index + 1}
                       width={containerWidth}
                       renderTextLayer
                       renderAnnotationLayer
@@ -129,8 +161,8 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
                       loading={<Loader />}
                     />
                   </div>
-                )}
-              </WindowVirtualizer>
+                ))}
+              </div>
             ) : (
               <div className="flex items-center justify-center py-16">
                 <Loader />

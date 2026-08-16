@@ -1,31 +1,53 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfReader } from '@/components/pdf-reader';
 import { mockServer } from '../../setup-unit-context';
 
+// This suite's fixtures always render 5 pages; the mock PDF below reports that many so
+// onDocumentLoadSuccess resolves pageSizes for real, matching real usage.
+const MOCK_PDF_PAGE_COUNT = 5;
+
 // react-pdf renders to a real <canvas> 2D context, which happy-dom doesn't provide; stub it with a
 // simple page indicator so this suite can cover loading/error states and the initial render. Actual
 // scroll-driven page tracking needs real layout, so it isn't covered here. Document's own fetch of
-// `file` is stood in for here so the "download fails" test exercises the real error path.
+// `file` is stood in for here so the "download fails" test exercises the real error path, and
+// onLoadSuccess is invoked with a fake PDFDocumentProxy so onDocumentLoadSuccess runs for real.
 vi.mock('react-pdf', () => ({
   Document: ({
     file,
     loading,
     error,
     children,
+    onLoadSuccess,
   }: {
     file: string;
     loading?: ReactNode;
     error?: ReactNode;
     children?: ReactNode;
+    onLoadSuccess?: (pdf: { numPages: number; getPage: (n: number) => Promise<unknown> }) => void;
   }) => {
     const [status, setStatus] = useState<'pending' | 'ready' | 'error'>('pending');
+    // PdfReader passes a new onLoadSuccess closure every render; reading it via a ref (rather than
+    // depending on it directly) keeps this fetch-on-mount effect from refiring on every re-render.
+    const onLoadSuccessRef = useRef(onLoadSuccess);
+    onLoadSuccessRef.current = onLoadSuccess;
 
     useEffect(() => {
       fetch(file)
-        .then((res) => setStatus(res.ok ? 'ready' : 'error'))
+        .then((res) => {
+          if (!res.ok) {
+            setStatus('error');
+            return;
+          }
+
+          onLoadSuccessRef.current?.({
+            numPages: MOCK_PDF_PAGE_COUNT,
+            getPage: async () => ({ getViewport: () => ({ width: 1, height: 1 }) }),
+          });
+          setStatus('ready');
+        })
         .catch(() => setStatus('error'));
     }, [file]);
 
@@ -37,22 +59,17 @@ vi.mock('react-pdf', () => ({
   pdfjs: { GlobalWorkerOptions: {} },
 }));
 
-// happy-dom reports zero layout, so virtua would otherwise render no pages; this replaces it with a
-// pass-through that renders every page, matching this suite's small page counts.
-vi.mock('virtua', () => ({
-  WindowVirtualizer: ({
-    ref,
-    data,
-    children,
-  }: {
-    ref?: { current: unknown };
-    data: readonly unknown[];
-    children: (item: unknown, index: number) => ReactNode;
-  }) => {
-    if (ref) ref.current = { scrollToIndex: () => {}, scrollOffset: 0, findItemIndex: () => 0 };
-
-    return <>{data.map((item, index) => children(item, index))}</>;
-  },
+// happy-dom reports zero layout, so the real virtualizer would otherwise render no pages; this
+// replaces it with a pass-through that renders every page, matching this suite's small page counts.
+vi.mock('@tanstack/react-virtual', () => ({
+  useWindowVirtualizer: ({ count }: { count: number }) => ({
+    getTotalSize: () => 0,
+    getVirtualItems: () => Array.from({ length: count }, (_, index) => ({ key: index, index, start: 0, size: 0 })),
+    scrollToIndex: () => {},
+    getVirtualItemForOffset: () => ({ index: 0 }),
+    isAtEnd: () => false,
+    measure: () => {},
+  }),
 }));
 
 class MockResizeObserver {
