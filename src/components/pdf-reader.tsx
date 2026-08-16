@@ -1,5 +1,6 @@
 import { type FC, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { WindowVirtualizer, type WindowVirtualizerHandle } from 'virtua';
 import { appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
@@ -27,6 +28,26 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
 
   const virtualizerRef = useRef<WindowVirtualizerHandle>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
+  // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
+  // sample. getPage() only reads already-parsed page metadata, no rendering involved, so it's cheap.
+  // Virtua estimates unmeasured item heights from already-measured ones; without this, every page
+  // starts at the tiny loading-spinner height and jumps to its real height once rendered, which
+  // throws off virtua's size cache and makes scrollbar dragging jump around.
+  const [pageSizes, setPageSizes] = useState<{ width: number; height: number }[] | null>(null);
+
+  const onDocumentLoadSuccess = async (pdf: PDFDocumentProxy) => {
+    const sizes = await Promise.all(
+      Array.from({ length: pdf.numPages }, async (_, index) => {
+        const page = await pdf.getPage(index + 1);
+        const { width, height } = page.getViewport({ scale: 1 });
+        return { width, height };
+      }),
+    );
+
+    setPageSizes(sizes);
+  };
 
   useEffect(() => {
     const element = containerRef.current;
@@ -83,27 +104,38 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
               </p>
             }
             className="contents"
+            onLoadSuccess={(pdf) => void onDocumentLoadSuccess(pdf)}
             onItemClick={({ pageIndex }) => goToPage(pageIndex + 1)}
           >
-            <WindowVirtualizer
-              ref={virtualizerRef}
-              data={Array.from({ length: totalPages })}
-              bufferSize={BUFFER_SIZE_PX}
-              onScroll={updateCurrentPage}
-            >
-              {(_, index) => (
-                <div key={index} className="flex items-center justify-center" style={{ paddingBottom: PAGE_GAP_PX }}>
-                  <Page
-                    pageNumber={index + 1}
-                    width={containerWidth}
-                    renderTextLayer
-                    renderAnnotationLayer
-                    className="overflow-hidden rounded-lg border shadow-sm"
-                    loading={<Loader />}
-                  />
-                </div>
-              )}
-            </WindowVirtualizer>
+            {pageSizes ? (
+              <WindowVirtualizer
+                ref={virtualizerRef}
+                data={pageSizes}
+                bufferSize={BUFFER_SIZE_PX}
+                onScroll={updateCurrentPage}
+              >
+                {({ width, height }, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-center"
+                    style={{ height: containerWidth * (height / width) + PAGE_GAP_PX, paddingBottom: PAGE_GAP_PX }}
+                  >
+                    <Page
+                      pageNumber={index + 1}
+                      width={containerWidth}
+                      renderTextLayer
+                      renderAnnotationLayer
+                      className="overflow-hidden rounded-lg border shadow-sm"
+                      loading={<Loader />}
+                    />
+                  </div>
+                )}
+              </WindowVirtualizer>
+            ) : (
+              <div className="flex items-center justify-center py-16">
+                <Loader />
+              </div>
+            )}
           </Document>
         ) : (
           <div className="flex items-center justify-center py-16">
