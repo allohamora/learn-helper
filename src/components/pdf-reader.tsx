@@ -2,9 +2,12 @@ import { type FC, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { toast } from 'sonner';
 import { appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
+import { useSelection } from '@/hooks/use-selection';
+import { getContext } from '@/utils/selection';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
@@ -31,6 +34,10 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   const [scrollMargin, setScrollMargin] = useState(0);
 
   const [currentPage, setCurrentPage] = useState(1);
+
+  useSelection((selection) => {
+    toast.success(selection.toString(), { description: getContext(selection) });
+  });
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
   // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
