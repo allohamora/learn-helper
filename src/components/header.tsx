@@ -24,7 +24,7 @@ export const Header: FC = () => {
   return (
     <nav
       data-slot="header"
-      className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"
+      className="sticky top-0 isolate z-40 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"
     >
       <div className="container flex h-14 justify-between md:justify-start">
         <div className="flex items-center space-x-2 md:space-x-6">

@@ -1,5 +1,6 @@
-import { type FC, useEffect, useRef, useState } from 'react';
+import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
@@ -16,16 +17,18 @@ type Props = {
   totalPages: number;
 };
 
+// Only used for the brief window before `reading` exists; the reader isn't rendered until then, so
+// this fallback is never actually visible - every real page has its exact ratio from pageAspectRatios.
+const FALLBACK_PAGE_ASPECT_RATIO = 1.294;
+const OVERSCAN_PAGES = 4;
+const PAGE_GAP_PX = 16;
+
 export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const [headerHeight, setHeaderHeight] = useState(0);
-
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const getPageElement = (page: number) =>
-    containerRef.current?.querySelector<HTMLDivElement>(`[data-page-number="${page}"]`);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [scrollMargin, setScrollMargin] = useState(0);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -41,69 +44,78 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
 
   useEffect(() => {
     // The sticky site header visually covers the top of the scroll area, so the page counted as
-    // "current" should be the one visible just below it, not whichever one touches y=0.
+    // "current", and the page landed on after a jump, should sit just below it, not at y=0. A header
+    // height change also shifts where the page list starts, so scrollMargin is recomputed alongside it.
     const header = document.querySelector<HTMLElement>('[data-slot="header"]');
     if (!header) return;
 
     const observer = new ResizeObserver(([entry]) => {
       if (entry) setHeaderHeight(entry.contentRect.height);
+      setScrollMargin(containerRef.current?.offsetTop ?? 0);
     });
     observer.observe(header);
 
     return () => observer.disconnect();
   }, []);
 
-  const { data, isPending, isError } = useQuery({
+  const {
+    data: reading,
+    isPending,
+    isError,
+  } = useQuery({
     queryKey: ['reading-download', readingId],
     queryFn: async () => {
       const res = await appClient.api.v1.users.me.readings[':readingId'].download.$get({ param: { readingId } });
       if (!res.ok) throw new Error('Failed to load reading');
 
-      return { data: await res.arrayBuffer() };
+      const buffer = await res.arrayBuffer();
+
+      // getDocument() transfers its buffer to the pdf.js worker, which detaches it - parse a
+      // throwaway copy for page-size metadata so the buffer returned below stays usable for the
+      // actual render below. Real sizes are fetched up front (rather than measured as pages render)
+      // so the virtualizer never has to guess-then-correct, which is what caused it to jump and
+      // misalign scrollToIndex.
+      const pdf = await pdfjs.getDocument({ data: buffer.slice(0) }).promise;
+      const pageAspectRatios = await Promise.all(
+        Array.from({ length: pdf.numPages }, async (_, index) => {
+          const page = await pdf.getPage(index + 1);
+          const viewport = page.getViewport({ scale: 1 });
+
+          return viewport.height / viewport.width;
+        }),
+      );
+
+      return { buffer, pageAspectRatios };
     },
   });
 
-  const isLoading = isPending;
-  const isReady = !isLoading && !isError && !!data && containerWidth > 0;
+  // pdf.js detaches whatever buffer it's given, so <Document> must never receive the same one twice
+  // (e.g. across a dev-mode StrictMode remount) - hand it a fresh slice, memoized per fetched reading.
+  const file = useMemo(() => (reading ? { data: reading.buffer.slice(0) } : null), [reading]);
 
-  useEffect(() => {
-    if (!isReady) return;
+  const isReady = !isPending && !isError && !!reading && !!file && containerWidth > 0;
 
-    // The current page is the last one whose top edge has scrolled up past the header line.
-    const updateCurrentPage = () => {
-      let page = 1;
+  const virtualizer = useWindowVirtualizer({
+    count: totalPages,
+    estimateSize: (index) => containerWidth * (reading?.pageAspectRatios[index] ?? FALLBACK_PAGE_ASPECT_RATIO),
+    overscan: OVERSCAN_PAGES,
+    gap: PAGE_GAP_PX,
+    scrollMargin,
+    scrollPaddingStart: headerHeight,
+  });
 
-      for (let candidate = 1; candidate <= totalPages; candidate++) {
-        const element = getPageElement(candidate);
-        if (!element || element.getBoundingClientRect().top > headerHeight) break;
+  const goToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
 
-        page = candidate;
-      }
-
-      setCurrentPage(page);
-    };
-
-    updateCurrentPage();
-
-    let scheduled = false;
-    const onScroll = () => {
-      if (scheduled) return;
-      scheduled = true;
-      requestAnimationFrame(() => {
-        scheduled = false;
-        updateCurrentPage();
-      });
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [isReady, totalPages, headerHeight]);
+  // The current page is the last one whose top has scrolled up past the header line.
+  const currentPageTarget = (virtualizer.scrollOffset ?? 0) - scrollMargin + headerHeight;
+  const currentPage = virtualizer
+    .getVirtualItems()
+    .reduce((page, item) => (item.start <= currentPageTarget ? item.index + 1 : page), 1);
 
   return (
     <div className="flex flex-col gap-4 pt-4 pb-20">
       <div ref={containerRef} className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4">
-        {isLoading ? (
+        {isPending ? (
           <div className="flex items-center justify-center py-16">
             <Loader />
           </div>
@@ -111,21 +123,35 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
           <p className="py-16 text-center text-sm text-muted-foreground">Failed to load the PDF. Please try again.</p>
         ) : (
           isReady &&
-          data && (
+          file && (
             <Document
-              file={data}
+              file={file}
               loading={null}
               error={null}
               className="contents"
-              onItemClick={({ pageIndex }) => getPageElement(pageIndex + 1)?.scrollIntoView({ block: 'start' })}
+              onItemClick={({ pageIndex }) => goToPage(pageIndex + 1)}
             >
-              {Array.from({ length: totalPages }, (_, index) => {
-                const page = index + 1;
-
-                return (
-                  <div key={page} data-page-number={page} style={{ scrollMarginTop: headerHeight }}>
+              <div
+                style={{
+                  height: virtualizer.getTotalSize(),
+                  width: '100%',
+                  position: 'relative',
+                  overflowAnchor: 'none',
+                }}
+              >
+                {virtualizer.getVirtualItems().map((item) => (
+                  <div
+                    key={item.key}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${item.start - scrollMargin}px)`,
+                    }}
+                  >
                     <Page
-                      pageNumber={page}
+                      pageNumber={item.index + 1}
                       width={containerWidth}
                       renderTextLayer
                       renderAnnotationLayer
@@ -137,8 +163,8 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
                       }
                     />
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </Document>
           )
         )}
@@ -147,9 +173,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
       <PdfReaderToolbar
         currentPage={currentPage}
         totalPages={totalPages}
-        onGoToPage={(page) =>
-          getPageElement(Math.min(totalPages, Math.max(1, page)))?.scrollIntoView({ block: 'start' })
-        }
+        onGoToPage={(page) => goToPage(Math.min(totalPages, Math.max(1, page)))}
       />
     </div>
   );

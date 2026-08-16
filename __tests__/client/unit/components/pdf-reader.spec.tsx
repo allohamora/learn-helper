@@ -12,7 +12,28 @@ import { mockServer } from '../../setup-unit-context';
 vi.mock('react-pdf', () => ({
   Document: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
   Page: ({ pageNumber }: { pageNumber: number }) => <div>Page {pageNumber}</div>,
-  pdfjs: { GlobalWorkerOptions: {} },
+  pdfjs: {
+    GlobalWorkerOptions: {},
+    // stands in for parsing the (fake) downloaded bytes to read each page's real size up front
+    getDocument: () => ({
+      promise: Promise.resolve({
+        numPages: 5,
+        getPage: async () => ({ getViewport: () => ({ width: 600, height: 800 }) }),
+      }),
+    }),
+  },
+}));
+
+// happy-dom reports zero layout, so react-virtual would otherwise render no pages; this replaces it
+// with a pass-through that renders every page, matching this suite's small page counts.
+vi.mock('@tanstack/react-virtual', () => ({
+  useWindowVirtualizer: ({ count, estimateSize }: { count: number; estimateSize: () => number }) => ({
+    getTotalSize: () => count * estimateSize(),
+    getVirtualItems: () =>
+      Array.from({ length: count }, (_, index) => ({ index, start: index * estimateSize(), key: index })),
+    scrollToIndex: () => {},
+    scrollOffset: 0,
+  }),
 }));
 
 class MockResizeObserver {
@@ -33,29 +54,9 @@ class MockResizeObserver {
   disconnect() {}
 }
 
-const PAGE_HEIGHT = 1000;
-
 describe('PdfReader', () => {
   beforeEach(() => {
     vi.stubGlobal('ResizeObserver', MockResizeObserver);
-
-    // happy-dom's getBoundingClientRect always returns zeros; stub it to simulate pages stacked
-    // top-to-bottom so the scroll-position page-tracking logic has something meaningful to read.
-    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-      const page = Number(this.getAttribute('data-page-number'));
-      const top = Number.isNaN(page) ? 0 : (page - 1) * PAGE_HEIGHT;
-
-      return {
-        top,
-        bottom: top + PAGE_HEIGHT,
-        left: 0,
-        right: 0,
-        width: 0,
-        height: PAGE_HEIGHT,
-        x: 0,
-        y: top,
-      } as DOMRect;
-    });
   });
 
   afterEach(() => {
