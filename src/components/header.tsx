@@ -22,7 +22,7 @@ export const Header: FC = () => {
   };
 
   return (
-    <nav data-slot="header" className="sticky top-0 z-40 w-full border-b bg-background backdrop-blur-sm">
+    <nav data-slot="header" className="sticky top-0 z-40 w-full border-b bg-background">
       <div className="container flex h-14 justify-between md:justify-start">
         <div className="flex items-center space-x-2 md:space-x-6">
           <Link to="/" className="flex items-center p-2 md:space-x-2 md:p-0">

@@ -25,7 +25,7 @@ export const PdfReaderToolbar: FC<Props> = ({ currentPage, totalPages, onGoToPag
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 isolate z-30 border-t bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background">
       <div className="container flex h-14 items-center justify-center gap-2">
         <Input
           value={pageInput}
