@@ -91,13 +91,15 @@ class MockResizeObserver {
 }
 
 describe('PdfReader', () => {
+  const originalResizeObserver = globalThis.ResizeObserver;
+
   beforeEach(() => {
-    vi.stubGlobal('ResizeObserver', MockResizeObserver);
+    globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
   });
 
   afterEach(() => {
+    globalThis.ResizeObserver = originalResizeObserver;
     cleanup();
-    vi.unstubAllGlobals();
   });
 
   const renderReader = (readingId: string, totalPages: number) =>
