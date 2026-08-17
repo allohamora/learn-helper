@@ -2,13 +2,10 @@ import { type FC, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { toast } from 'sonner';
 import { appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
-import { useSelection } from '@/hooks/use-selection';
-import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
-import { getContext } from '@/utils/selection';
+import { TranslationPopover } from '@/components/translation-popover';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
@@ -35,12 +32,6 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   const [scrollMargin, setScrollMargin] = useState(0);
 
   const [currentPage, setCurrentPage] = useState(1);
-
-  useSelection((selection) => {
-    toast.success(selection.toString(), { description: getContext(selection) });
-  });
-
-  useHideGoogleTranslateExtensionPopup();
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
   // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
@@ -131,6 +122,8 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
 
   return (
     <div className="flex flex-col gap-4 pt-4 pb-20">
+      <TranslationPopover />
+
       <div ref={containerRef} className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4">
         {containerWidth > 0 ? (
           <Document
