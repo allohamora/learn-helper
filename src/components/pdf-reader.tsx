@@ -7,6 +7,7 @@ import { appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
 import { useSelection } from '@/hooks/use-selection';
+import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
 import { getContext } from '@/utils/selection';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -38,6 +39,8 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   useSelection((selection) => {
     toast.success(selection.toString(), { description: getContext(selection) });
   });
+
+  useHideGoogleTranslateExtensionPopup();
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
   // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
