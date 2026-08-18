@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
@@ -33,16 +33,16 @@ const seedReading = async ({ userId, title }: { userId: string; title: string })
 
 describe('reading.service', () => {
   describe('downloadReading', () => {
-    let createReadStreamSpy: MockInstance<typeof fs.createReadStream>;
+    let openSpy: MockInstance<typeof fsp.open>;
 
     beforeEach(() => {
-      createReadStreamSpy = vi
-        .spyOn(fs, 'createReadStream')
-        .mockImplementation(() => Readable.from([Buffer.from('pdf-bytes')]) as unknown as fs.ReadStream);
+      openSpy = vi.spyOn(fsp, 'open').mockResolvedValue({
+        createReadStream: () => Readable.from([Buffer.from('pdf-bytes')]),
+      } as unknown as fsp.FileHandle);
     });
 
     afterEach(() => {
-      createReadStreamSpy.mockRestore();
+      openSpy.mockRestore();
     });
 
     it('resolves with the file metadata and a lazy stream getter', async () => {
@@ -52,10 +52,10 @@ describe('reading.service', () => {
       const result = await downloadReading({ userId: USER_ID, readingId: created.id });
 
       expect(result).toMatchObject({ hash: 'Book', fileName: 'Book.pdf', mimeType: 'application/pdf' });
-      expect(createReadStreamSpy).not.toHaveBeenCalled();
+      expect(openSpy).not.toHaveBeenCalled();
 
-      const stream = result.getStream();
-      expect(createReadStreamSpy).toHaveBeenCalledWith(path.join(process.cwd(), `uploads/${USER_ID}/Book.pdf`));
+      const stream = await result.getStream();
+      expect(openSpy).toHaveBeenCalledWith(path.join(process.cwd(), `uploads/${USER_ID}/Book.pdf`), 'r');
 
       const reader = stream.getReader();
       const chunks: Uint8Array[] = [];

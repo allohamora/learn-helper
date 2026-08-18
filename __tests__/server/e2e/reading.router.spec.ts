@@ -1,7 +1,6 @@
 import * as readingService from '@/server/reading/reading.service';
 import * as readingRepository from '@/server/reading/reading.repository';
 import * as fsp from 'node:fs/promises';
-import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { UPLOADS_DIR } from '@/server/uploads/uploads.service';
@@ -532,16 +531,16 @@ describe('reading.router', () => {
   });
 
   describe('GET /api/v1/users/me/readings/:readingId/download', () => {
-    let createReadStreamSpy: MockInstance<typeof fs.createReadStream>;
+    let openSpy: MockInstance<typeof fsp.open>;
 
     beforeEach(() => {
-      createReadStreamSpy = vi
-        .spyOn(fs, 'createReadStream')
-        .mockImplementation(() => Readable.from([Buffer.from('pdf-bytes')]) as unknown as fs.ReadStream);
+      openSpy = vi.spyOn(fsp, 'open').mockResolvedValue({
+        createReadStream: () => Readable.from([Buffer.from('pdf-bytes')]),
+      } as unknown as fsp.FileHandle);
     });
 
     afterEach(() => {
-      createReadStreamSpy.mockRestore();
+      openSpy.mockRestore();
     });
 
     it('returns 200 with the file bytes and caching headers', async () => {
@@ -576,7 +575,7 @@ describe('reading.router', () => {
       expect(res.status).toBe(304);
       expect(res.headers.get('ETag')).toBe(`"${createdFile!.hash}"`);
       expect(await res.text()).toBe('');
-      expect(createReadStreamSpy).not.toHaveBeenCalled();
+      expect(openSpy).not.toHaveBeenCalled();
     });
 
     it("returns 404 for another user's reading", async () => {

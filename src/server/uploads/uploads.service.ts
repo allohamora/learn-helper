@@ -1,7 +1,6 @@
 import '@tanstack/react-start/server-only';
 import path from 'node:path';
-import fs from 'node:fs';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, open, rm, writeFile } from 'node:fs/promises';
 import { Readable } from 'node:stream';
 import { createLogger } from '../utils/logger.utils';
 
@@ -37,6 +36,8 @@ export const removeUploadFile = async (filePath: string) => {
   }
 };
 
-export const getUploadFileWebStream = (filePath: string): ReadableStream => {
-  return Readable.toWeb(fs.createReadStream(path.join(process.cwd(), filePath))) as unknown as ReadableStream;
+export const getUploadFileWebStream = async (filePath: string): Promise<ReadableStream> => {
+  const handle = await open(path.join(process.cwd(), filePath), 'r');
+
+  return Readable.toWeb(handle.createReadStream()) as unknown as ReadableStream;
 };

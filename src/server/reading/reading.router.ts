@@ -202,6 +202,6 @@ export const readingRouter = new OpenAPIHono()
       c.header('Content-Length', String(sizeBytes));
       c.header('Content-Disposition', `inline; filename="${fileName}"`);
 
-      return c.newResponse(getStream(), 200);
+      return c.newResponse(await getStream(), 200);
     },
   );
