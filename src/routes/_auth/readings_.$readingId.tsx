@@ -19,5 +19,5 @@ export const Route = createFileRoute('/_auth/readings_/$readingId')({
 function ReadingPage() {
   const reading = Route.useLoaderData();
 
-  return <PdfReader readingId={reading.id} totalPages={reading.totalPages} />;
+  return <PdfReader key={reading.id} readingId={reading.id} totalPages={reading.totalPages} />;
 }
