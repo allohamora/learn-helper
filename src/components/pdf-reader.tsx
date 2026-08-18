@@ -179,11 +179,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
         )}
       </div>
 
-      <PdfReaderToolbar
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onGoToPage={(page) => goToPage(Math.min(totalPages, Math.max(1, page)))}
-      />
+      <PdfReaderToolbar currentPage={currentPage} totalPages={totalPages} onGoToPage={goToPage} />
     </div>
   );
 };

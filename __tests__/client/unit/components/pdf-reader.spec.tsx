@@ -142,6 +142,25 @@ describe('PdfReader', () => {
     expect(mockScrollToIndex).toHaveBeenCalledWith(2, { align: 'start' });
   });
 
+  it('clamps an out-of-range typed page to the last page', async () => {
+    const readingId = crypto.randomUUID();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+    );
+
+    renderReader(readingId, 5);
+    await screen.findByText('Page 1');
+
+    const input = screen.getByRole('textbox', { name: 'Page number' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '999' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(mockScrollToIndex).toHaveBeenCalledWith(4, { align: 'start' });
+    expect(input.value).toBe('5');
+  });
+
   it('shows an error message when the download fails', async () => {
     const readingId = crypto.randomUUID();
     mockServer.addHandlers(

@@ -20,8 +20,14 @@ export const PdfReaderToolbar: FC<Props> = ({ currentPage, totalPages, onGoToPag
     if (pageInput === '') return;
 
     const page = Number(pageInput);
-    if (Number.isInteger(page)) onGoToPage(page);
-    else setPageInput(String(currentPage));
+    if (!Number.isInteger(page)) {
+      setPageInput(String(currentPage));
+      return;
+    }
+
+    const normalizedPage = Math.min(totalPages, Math.max(1, page));
+    setPageInput(String(normalizedPage));
+    onGoToPage(normalizedPage);
   };
 
   return (
