@@ -59,13 +59,15 @@ vi.mock('react-pdf', () => ({
   pdfjs: { GlobalWorkerOptions: {} },
 }));
 
+const { mockScrollToIndex } = vi.hoisted(() => ({ mockScrollToIndex: vi.fn() }));
+
 // happy-dom reports zero layout, so the real virtualizer would otherwise render no pages; this
 // replaces it with a pass-through that renders every page, matching this suite's small page counts.
 vi.mock('@tanstack/react-virtual', () => ({
   useWindowVirtualizer: ({ count }: { count: number }) => ({
     getTotalSize: () => 0,
     getVirtualItems: () => Array.from({ length: count }, (_, index) => ({ key: index, index, start: 0, size: 0 })),
-    scrollToIndex: () => {},
+    scrollToIndex: mockScrollToIndex,
     getVirtualItemForOffset: () => ({ index: 0 }),
     isAtEnd: () => false,
     measure: () => {},
@@ -99,6 +101,7 @@ describe('PdfReader', () => {
 
   afterEach(() => {
     globalThis.ResizeObserver = originalResizeObserver;
+    mockScrollToIndex.mockClear();
     cleanup();
   });
 
@@ -135,6 +138,8 @@ describe('PdfReader', () => {
     const input = screen.getByRole('textbox', { name: 'Page number' });
     fireEvent.change(input, { target: { value: '3' } });
     fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(mockScrollToIndex).toHaveBeenCalledWith(2, { align: 'start' });
   });
 
   it('shows an error message when the download fails', async () => {
