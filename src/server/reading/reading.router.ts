@@ -126,9 +126,12 @@ export const readingRouter = new OpenAPIHono()
       const user = c.get('user');
       const { readingId } = c.req.valid('param');
 
-      const found = await getReadingByIdAndUserIdOrThrow({ userId: user.id, readingId });
-
-      return c.json(...toSuccessResponse({ status: 200, data: found }));
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await getReadingByIdAndUserIdOrThrow({ userId: user.id, readingId }),
+        }),
+      );
     },
   )
   .openapi(
