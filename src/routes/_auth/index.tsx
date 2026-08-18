@@ -19,6 +19,19 @@ function IndexPage() {
           Discover thousands of Oxford vocabulary items. Build your vocabulary with interactive lessons and track your
           progress.
         </p>
+
+        <p className="text-sm text-muted-foreground">
+          Data powered by{' '}
+          <a
+            href="https://www.oxfordlearnersdictionaries.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-foreground"
+            title="Oxford Learner's Dictionaries"
+          >
+            Oxford Learner&apos;s Dictionaries
+          </a>
+        </p>
       </div>
     </div>
   );

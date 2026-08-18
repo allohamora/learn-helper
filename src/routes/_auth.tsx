@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router';
-import { Footer } from '@/components/footer';
 import { Header } from '@/components/header';
 import { getIsomorphicSession } from '@/services/auth';
 
@@ -34,10 +33,9 @@ function AuthLayout() {
   return (
     <>
       <Header />
-      <main className="container">
+      <main className="container pb-6 md:pb-8">
         <Outlet />
       </main>
-      <Footer />
     </>
   );
 }

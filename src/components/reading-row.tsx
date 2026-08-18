@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
 import { BookOpen, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -50,16 +51,11 @@ export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage }) =>
       </div>
 
       <div className="flex shrink-0 items-center gap-1 justify-self-end">
-        <Button
-          size="sm"
-          variant="outline"
-          className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5"
-          disabled
-          title="Read"
-          aria-label="Read"
-        >
-          <BookOpen />
-          <span className="hidden sm:inline">Read</span>
+        <Button size="sm" variant="outline" className="size-8 shrink-0 px-0 sm:w-auto sm:px-2.5" asChild>
+          <Link to="/readings/$readingId" params={{ readingId: id }} title="Read" aria-label="Read">
+            <BookOpen />
+            <span className="hidden sm:inline">Read</span>
+          </Link>
         </Button>
         <Button
           size="sm"

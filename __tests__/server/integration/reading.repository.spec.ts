@@ -7,6 +7,7 @@ import {
   createReading,
   deleteFile,
   getFileByUserIdAndHash,
+  getReadingByIdAndUserId,
   getReadingWithFileByIdAndUserId,
   getReadingsByUserId,
 } from '@/server/reading/reading.repository';
@@ -124,6 +125,39 @@ describe('reading.repository', () => {
       await seedUser(USER_ID);
 
       const result = await getFileByUserIdAndHash({ userId: USER_ID, hash: 'missing' });
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getReadingByIdAndUserId', () => {
+    it('returns the reading without a file field when owned by the user', async () => {
+      await seedUser(USER_ID);
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const result = await getReadingByIdAndUserId({ userId: USER_ID, readingId: created.id });
+
+      expect(result).toMatchObject({ id: created.id, title: 'Book' });
+      expect(result).not.toHaveProperty('file');
+    });
+
+    it("returns undefined for another user's reading", async () => {
+      await seedUser(USER_ID);
+      await seedUser('other-user');
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const result = await getReadingByIdAndUserId({ userId: USER_ID, readingId: created.id });
+
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined for an unknown reading id', async () => {
+      await seedUser(USER_ID);
+
+      const result = await getReadingByIdAndUserId({
+        userId: USER_ID,
+        readingId: '00000000-0000-0000-0000-000000000000',
+      });
 
       expect(result).toBeUndefined();
     });

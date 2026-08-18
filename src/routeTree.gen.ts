@@ -17,6 +17,7 @@ import { Route as AuthReadingsRouteImport } from './routes/_auth/readings'
 import { Route as AuthStatisticsRouteImport } from './routes/_auth/statistics'
 import { Route as AuthVocabularyListsRouteImport } from './routes/_auth/vocabulary-lists'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as AuthReadingsReadingIdRouteImport } from './routes/_auth/readings_.$readingId'
 import { Route as AuthVocabularyListsUserVocabularyListIdRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId'
 import { Route as AuthVocabularyListsUserVocabularyListIdDiscoverRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId_.discover'
 import { Route as AuthVocabularyListsUserVocabularyListIdLearnRouteImport } from './routes/_auth/vocabulary-lists_.$userVocabularyListId_.learn'
@@ -60,6 +61,11 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthReadingsReadingIdRoute = AuthReadingsReadingIdRouteImport.update({
+  id: '/readings_/$readingId',
+  path: '/readings/$readingId',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthVocabularyListsUserVocabularyListIdRoute =
   AuthVocabularyListsUserVocabularyListIdRouteImport.update({
     id: '/vocabulary-lists_/$userVocabularyListId',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/statistics': typeof AuthStatisticsRoute
   '/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
+  '/readings/$readingId': typeof AuthReadingsReadingIdRoute
   '/vocabulary-lists/$userVocabularyListId': typeof AuthVocabularyListsUserVocabularyListIdRoute
   '/vocabulary-lists/$userVocabularyListId/discover': typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
   '/vocabulary-lists/$userVocabularyListId/learn': typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
   '/': typeof AuthIndexRoute
+  '/readings/$readingId': typeof AuthReadingsReadingIdRoute
   '/vocabulary-lists/$userVocabularyListId': typeof AuthVocabularyListsUserVocabularyListIdRoute
   '/vocabulary-lists/$userVocabularyListId/discover': typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
   '/vocabulary-lists/$userVocabularyListId/learn': typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/_auth/vocabulary-lists': typeof AuthVocabularyListsRoute
   '/api/$': typeof ApiSplatRoute
   '/_auth/': typeof AuthIndexRoute
+  '/_auth/readings_/$readingId': typeof AuthReadingsReadingIdRoute
   '/_auth/vocabulary-lists_/$userVocabularyListId': typeof AuthVocabularyListsUserVocabularyListIdRoute
   '/_auth/vocabulary-lists_/$userVocabularyListId_/discover': typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
   '/_auth/vocabulary-lists_/$userVocabularyListId_/learn': typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/statistics'
     | '/vocabulary-lists'
     | '/api/$'
+    | '/readings/$readingId'
     | '/vocabulary-lists/$userVocabularyListId'
     | '/vocabulary-lists/$userVocabularyListId/discover'
     | '/vocabulary-lists/$userVocabularyListId/learn'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/vocabulary-lists'
     | '/api/$'
     | '/'
+    | '/readings/$readingId'
     | '/vocabulary-lists/$userVocabularyListId'
     | '/vocabulary-lists/$userVocabularyListId/discover'
     | '/vocabulary-lists/$userVocabularyListId/learn'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/_auth/vocabulary-lists'
     | '/api/$'
     | '/_auth/'
+    | '/_auth/readings_/$readingId'
     | '/_auth/vocabulary-lists_/$userVocabularyListId'
     | '/_auth/vocabulary-lists_/$userVocabularyListId_/discover'
     | '/_auth/vocabulary-lists_/$userVocabularyListId_/learn'
@@ -222,6 +234,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/readings_/$readingId': {
+      id: '/_auth/readings_/$readingId'
+      path: '/readings/$readingId'
+      fullPath: '/readings/$readingId'
+      preLoaderRoute: typeof AuthReadingsReadingIdRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/vocabulary-lists_/$userVocabularyListId': {
       id: '/_auth/vocabulary-lists_/$userVocabularyListId'
       path: '/vocabulary-lists/$userVocabularyListId'
@@ -251,6 +270,7 @@ interface AuthRouteChildren {
   AuthStatisticsRoute: typeof AuthStatisticsRoute
   AuthVocabularyListsRoute: typeof AuthVocabularyListsRoute
   AuthIndexRoute: typeof AuthIndexRoute
+  AuthReadingsReadingIdRoute: typeof AuthReadingsReadingIdRoute
   AuthVocabularyListsUserVocabularyListIdRoute: typeof AuthVocabularyListsUserVocabularyListIdRoute
   AuthVocabularyListsUserVocabularyListIdDiscoverRoute: typeof AuthVocabularyListsUserVocabularyListIdDiscoverRoute
   AuthVocabularyListsUserVocabularyListIdLearnRoute: typeof AuthVocabularyListsUserVocabularyListIdLearnRoute
@@ -261,6 +281,7 @@ const AuthRouteChildren: AuthRouteChildren = {
   AuthStatisticsRoute: AuthStatisticsRoute,
   AuthVocabularyListsRoute: AuthVocabularyListsRoute,
   AuthIndexRoute: AuthIndexRoute,
+  AuthReadingsReadingIdRoute: AuthReadingsReadingIdRoute,
   AuthVocabularyListsUserVocabularyListIdRoute:
     AuthVocabularyListsUserVocabularyListIdRoute,
   AuthVocabularyListsUserVocabularyListIdDiscoverRoute:

@@ -2,6 +2,8 @@ import * as readingService from '@/server/reading/reading.service';
 import * as readingRepository from '@/server/reading/reading.repository';
 import * as fsp from 'node:fs/promises';
 import path from 'node:path';
+import { Readable } from 'node:stream';
+import { UPLOADS_DIR } from '@/server/uploads/uploads.service';
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { eq } from 'drizzle-orm';
@@ -106,7 +108,7 @@ describe('reading.router', () => {
       const createdFile = await db.query.file.findFirst({ where: eq(file.userId, USER_ID) });
       expect(createdFile).toBeDefined();
       expect(writeFileSpy).toHaveBeenCalledWith(
-        path.join(readingService.UPLOADS_DIR, USER_ID, `${createdFile!.hash}.pdf`),
+        path.join(UPLOADS_DIR, USER_ID, `${createdFile!.hash}.pdf`),
         expect.any(Buffer),
       );
 
@@ -400,6 +402,50 @@ describe('reading.router', () => {
     });
   });
 
+  describe('GET /api/v1/users/me/readings/:readingId', () => {
+    it("returns 200 with the reading's data and no file field", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({ param: { readingId: created.id } });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ success: true, data: { id: created.id, userId: USER_ID, title: 'Book' } });
+      expect(body).not.toHaveProperty('data.file');
+    });
+
+    it("returns 404 for another user's reading", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({ param: { readingId: created.id } });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for an unknown reading id', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings[':readingId'].$get({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(401);
+    });
+  });
+
   describe('DELETE /api/v1/users/me/readings/:readingId', () => {
     it('deletes the reading, its file, unlinks the disk file, and records a delete event', async () => {
       auth.authorized({ user: { id: USER_ID } });
@@ -478,6 +524,86 @@ describe('reading.router', () => {
       auth.unauthorized();
 
       const res = await client.api.v1.users.me.readings[':readingId'].$delete({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('GET /api/v1/users/me/readings/:readingId/download', () => {
+    let openSpy: MockInstance<typeof fsp.open>;
+
+    beforeEach(() => {
+      openSpy = vi.spyOn(fsp, 'open').mockResolvedValue({
+        createReadStream: () => Readable.from([Buffer.from('pdf-bytes')]),
+      } as unknown as fsp.FileHandle);
+    });
+
+    afterEach(() => {
+      openSpy.mockRestore();
+    });
+
+    it('returns 200 with the file bytes and caching headers', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      const createdFile = await db.query.file.findFirst({ where: eq(file.id, created.fileId) });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].download.$get({
+        param: { readingId: created.id },
+      });
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('ETag')).toBe(`"${createdFile!.hash}"`);
+      expect(res.headers.get('Cache-Control')).toBe('private, no-cache');
+      expect(res.headers.get('Content-Type')).toBe('application/pdf');
+      expect(res.headers.get('Content-Disposition')).toBe('inline; filename="Book.pdf"');
+      expect(await res.text()).toBe('pdf-bytes');
+    });
+
+    it('returns 304 with no body when If-None-Match matches the current ETag', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      const createdFile = await db.query.file.findFirst({ where: eq(file.id, created.fileId) });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].download.$get(
+        { param: { readingId: created.id } },
+        { headers: { 'If-None-Match': `"${createdFile!.hash}"` } },
+      );
+
+      expect(res.status).toBe(304);
+      expect(res.headers.get('ETag')).toBe(`"${createdFile!.hash}"`);
+      expect(await res.text()).toBe('');
+      expect(openSpy).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 for another user's reading", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].download.$get({
+        param: { readingId: created.id },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for an unknown reading id', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].download.$get({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings[':readingId'].download.$get({
         param: { readingId: '00000000-0000-7000-8000-000000000000' },
       });
       expect(res.status).toBe(401);
