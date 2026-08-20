@@ -311,9 +311,6 @@ describe('getContext', () => {
   });
 
   it('keeps an abbreviation attached to its sentence when the selection spans the dot', () => {
-    // Intl.Segmenter has no abbreviation dictionary, so it incorrectly treats "Mr." as its own
-    // sentence. A selection spanning the abbreviation and the text after it still joins both
-    // segments back together, since getContext includes every segment the selection overlaps.
     const p = document.createElement('p');
     p.textContent = 'Mr. Smith arrived late. He apologized to everyone.';
     document.body.appendChild(p);
@@ -333,55 +330,47 @@ describe('getContext', () => {
     p.remove();
   });
 
-  it('threads an explicit locale through to Intl.Segmenter', () => {
-    const p = document.createElement('p');
-    p.textContent = 'Only one sentence here.';
-    document.body.appendChild(p);
+  it('keeps a middle-initial abbreviation attached when the selection sits entirely before it', () => {
+    // mirrors the reported bug: a plain punctuation-based splitter misreads a single-capital-letter
+    // initial like "P." as ending a sentence. Unlike the "Mr. Smith" case above, this selection
+    // doesn't span the period at all - it's a single word entirely before it - so this only passes if
+    // the initial is recognized as an abbreviation up front, not rescued by an overlapping selection.
+    const heading = document.createElement('span');
+    heading.textContent = 'Jordan P. Ellis Files';
+    document.body.appendChild(heading);
 
-    const textNode = p.firstChild!;
+    const textNode = heading.firstChild!;
+    // selects "Jordan" only
     const selection = selectRange((range) => {
       range.setStart(textNode, 0);
-      range.setEnd(textNode, 4);
+      range.setEnd(textNode, 6);
     });
 
-    const mutableIntl = Intl as unknown as { Segmenter: typeof Intl.Segmenter };
-    const originalSegmenter = mutableIntl.Segmenter;
-    const usedLocales: unknown[] = [];
-    class TrackingSegmenter extends originalSegmenter {
-      constructor(...args: ConstructorParameters<typeof Intl.Segmenter>) {
-        super(...args);
-        usedLocales.push(args[0]);
-      }
-    }
-    mutableIntl.Segmenter = TrackingSegmenter;
+    expect(getContext(selection)).toBe('Jordan P. Ellis Files');
 
-    getContext(selection, 'fr');
-
-    mutableIntl.Segmenter = originalSegmenter;
-    p.remove();
-
-    expect(usedLocales).toContain('fr');
+    heading.remove();
   });
 
-  it('falls back to the raw selected text when Intl.Segmenter is unsupported', () => {
-    const p = document.createElement('p');
-    p.textContent = 'First sentence. Second sentence.';
-    document.body.appendChild(p);
+  it('keeps a middle-initial heading intact inside a real PDF text layer', () => {
+    // reproduces the exact reported bug: a book-series-style heading rendered inside react-pdf's
+    // `.textLayer`, selecting only the first name.
+    const textLayer = document.createElement('div');
+    textLayer.className = 'textLayer';
+    const heading = document.createElement('span');
+    heading.textContent = 'Jordan P. Ellis Files';
+    textLayer.append(heading);
+    document.body.appendChild(textLayer);
 
-    const textNode = p.firstChild!;
+    const textNode = heading.firstChild!;
+    // selects "Jordan" only
     const selection = selectRange((range) => {
       range.setStart(textNode, 0);
-      range.setEnd(textNode, 5);
+      range.setEnd(textNode, 6);
     });
 
-    const mutableIntl = Intl as unknown as { Segmenter?: typeof Intl.Segmenter };
-    const originalSegmenter = mutableIntl.Segmenter;
-    delete mutableIntl.Segmenter;
+    expect(getContext(selection)).toBe('Jordan P. Ellis Files');
 
-    expect(getContext(selection)).toBe(selection.toString().trim());
-
-    mutableIntl.Segmenter = originalSegmenter;
-    p.remove();
+    textLayer.remove();
   });
 
   it('returns an empty string for a selection with no ranges', () => {
@@ -389,5 +378,156 @@ describe('getContext', () => {
     selection.removeAllRanges();
 
     expect(getContext(selection)).toBe('');
+  });
+
+  it('bounds expansion to the enclosing .textLayer, not a neighboring page', () => {
+    // mirrors react-pdf's real output: each page gets its own `.textLayer` element, and multiple
+    // pages can be mounted as siblings at once (virtualized scrolling).
+    const root = document.createElement('div');
+
+    const pageOne = document.createElement('div');
+    pageOne.className = 'textLayer';
+    const heading = document.createElement('span');
+    heading.textContent = 'Appendix Three Glossary Index';
+    const line1 = document.createElement('span');
+    line1.textContent = 'This guide exists to help you learn faster. If a chapter feels dense, ';
+    const line2 = document.createElement('span');
+    line2.textContent = 'there are usually examples nearby ';
+    const line3 = document.createElement('span');
+    line3.textContent = 'that make it clearer.';
+    const br = () => document.createElement('br');
+    pageOne.append(heading, br(), line1, br(), line2, br(), line3);
+
+    const pageTwo = document.createElement('div');
+    pageTwo.className = 'textLayer';
+    const pageTwoLine = document.createElement('span');
+    pageTwoLine.textContent = 'Chapter Two starts here.';
+    pageTwo.append(pageTwoLine);
+
+    root.append(pageOne, pageTwo);
+    document.body.appendChild(root);
+
+    const textNode = line3.firstChild!;
+    // selects "that" only, on the sentence's final wrapped line
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, 4);
+    });
+
+    expect(getContext(selection)).toBe(
+      'If a chapter feels dense, there are usually examples nearby that make it clearer.',
+    );
+
+    root.remove();
+  });
+
+  it('reconstructs the same wrapped sentence without a .textLayer, plain-DOM setup', () => {
+    // same shape as the .textLayer test above, minus the class - the selection sits entirely inside
+    // one line of one page, so the generic scope-resolution path (climbing from the touched text node
+    // to its containing page div) bounds it the same way, with no .textLayer hint needed.
+    const root = document.createElement('div');
+
+    const pageOne = document.createElement('div');
+    const heading = document.createElement('span');
+    heading.textContent = 'Appendix Three Glossary Index';
+    const line1 = document.createElement('span');
+    line1.textContent = 'This guide exists to help you learn faster. If a chapter feels dense, ';
+    const line2 = document.createElement('span');
+    line2.textContent = 'there are usually examples nearby ';
+    const line3 = document.createElement('span');
+    line3.textContent = 'that make it clearer.';
+    const br = () => document.createElement('br');
+    pageOne.append(heading, br(), line1, br(), line2, br(), line3);
+
+    const pageTwo = document.createElement('div');
+    const pageTwoLine = document.createElement('span');
+    pageTwoLine.textContent = 'Chapter Two starts here.';
+    pageTwo.append(pageTwoLine);
+
+    root.append(pageOne, pageTwo);
+    document.body.appendChild(root);
+
+    const textNode = line3.firstChild!;
+    // selects "that" only, on the sentence's final wrapped line
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, 4);
+    });
+
+    expect(getContext(selection)).toBe(
+      'If a chapter feels dense, there are usually examples nearby that make it clearer.',
+    );
+
+    root.remove();
+  });
+
+  it('falls back to the raw selected text when the selection spans two different pages', () => {
+    // dragging a selection across the virtualized page boundary must not merge unrelated pages.
+    const root = document.createElement('div');
+
+    const pageOne = document.createElement('div');
+    pageOne.className = 'textLayer';
+    const pageOneLine = document.createElement('span');
+    pageOneLine.textContent = 'End of the first page.';
+    pageOne.append(pageOneLine);
+
+    const pageTwo = document.createElement('div');
+    pageTwo.className = 'textLayer';
+    const pageTwoLine = document.createElement('span');
+    pageTwoLine.textContent = 'Start of the second page.';
+    pageTwo.append(pageTwoLine);
+
+    root.append(pageOne, pageTwo);
+    document.body.appendChild(root);
+
+    const startNode = pageOneLine.firstChild!;
+    const startText = startNode.textContent!;
+    const endNode = pageTwoLine.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(startNode, startText.indexOf('first'));
+      range.setEnd(endNode, 'Start'.length);
+    });
+
+    expect(getContext(selection)).toBe(selection.toString().trim());
+
+    root.remove();
+  });
+
+  it('merges two adjacent blocks without a .textLayer hint, unlike the real react-pdf case above', () => {
+    // same shape as the .textLayer fallback test above, minus the class - and here it does NOT fall
+    // back. Without a .textLayer to bound against, findExpansionScope's generic path resolves to
+    // `root` directly (the selection's two ends sit in different elements, so commonAncestorContainer
+    // is already root, with no climbing needed), and each page-like div's own text already looks like
+    // a complete sentence on its own, so expansion never even looks past it - the two divs' full text
+    // ends up concatenated with no separator between them ("page.Start"), and since sentence-splitter
+    // needs a space after a period to treat it as a sentence break, it reads that as one sentence. This
+    // is exactly why .textLayer bounding exists for react-pdf specifically: real virtualized pages can
+    // sit exactly this adjacently, and nothing in plain DOM structure alone flags that boundary.
+    const root = document.createElement('div');
+
+    const pageOne = document.createElement('div');
+    const pageOneLine = document.createElement('span');
+    pageOneLine.textContent = 'End of the first page.';
+    pageOne.append(pageOneLine);
+
+    const pageTwo = document.createElement('div');
+    const pageTwoLine = document.createElement('span');
+    pageTwoLine.textContent = 'Start of the second page.';
+    pageTwo.append(pageTwoLine);
+
+    root.append(pageOne, pageTwo);
+    document.body.appendChild(root);
+
+    const startNode = pageOneLine.firstChild!;
+    const startText = startNode.textContent!;
+    const endNode = pageTwoLine.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(startNode, startText.indexOf('first'));
+      range.setEnd(endNode, 'Start'.length);
+    });
+
+    expect(getContext(selection)).toBe('End of the first page.Start of the second page.');
+
+    root.remove();
   });
 });

@@ -1,52 +1,29 @@
-// A selection's context starts from only the DOM nodes it actually touches, then cautiously grows
-// into neighboring siblings when there's a real signal the sentence continues there - never the
-// whole shared container. Text layouts like a PDF text layer put every line of the page as flat
-// sibling <span>s with no per-paragraph nesting, so blindly using the "nearest common ancestor"'s
-// full text can pull in every unrelated line, while never looking past the touched nodes at all
-// truncates any sentence that happens to wrap across more than one line.
-const resolveContainer = (range: Range): Element | null => {
-  const node = range.commonAncestorContainer;
-  if (node.nodeType === Node.ELEMENT_NODE) return node as Element;
+import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 
-  // A selection entirely within one text node has that node as its own commonAncestorContainer,
-  // whose immediate parent is often a single-child leaf (e.g. one line of a PDF text layer) with no
-  // siblings of its own to expand into. Climbing one more level exposes the real sibling lines/tags.
-  const leaf = node.parentElement;
+const TEXT_LAYER_SELECTOR = '.textLayer';
+
+const closestTextLayer = (node: Node): Element | null => {
+  const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  return element?.closest(TEXT_LAYER_SELECTOR) ?? null;
+};
+
+const findExpansionScope = (range: Range): Element | null => {
+  const startLayer = closestTextLayer(range.startContainer);
+  const endLayer = closestTextLayer(range.endContainer);
+  if (startLayer || endLayer) return startLayer === endLayer ? startLayer : null;
+
+  const commonAncestor = range.commonAncestorContainer;
+  if (commonAncestor.nodeType === Node.ELEMENT_NODE) return commonAncestor as Element;
+
+  const leaf = commonAncestor.parentElement;
   return leaf?.parentElement ?? leaf;
-};
-
-// Finds the direct child of `container` that (node, offset) falls under - i.e. the specific
-// sibling actually touched by that boundary point, no matter how deeply `node` is nested inside it.
-const getTouchedChild = (container: Element, node: Node, offset: number): Node | null => {
-  if (node === container) return container.childNodes[Math.min(offset, container.childNodes.length - 1)] ?? null;
-
-  let current = node;
-  while (current.parentNode && current.parentNode !== container) {
-    current = current.parentNode;
-  }
-
-  return current.parentNode === container ? current : null;
-};
-
-const getOffsetFrom = (boundaryNode: Node, node: Node, offset: number) => {
-  const preRange = document.createRange();
-  preRange.setStartBefore(boundaryNode);
-  preRange.setEnd(node, offset);
-  return preRange.toString().length;
 };
 
 const STARTS_LOWERCASE = /^\s*\p{Ll}/u;
 const ENDS_SENTENCE = /[.!?]\s*$/;
 const MAX_SIBLING_EXPAND = 20;
 
-// Walks backward through preceding siblings while the current leftmost node's own text starts with
-// a lowercase letter - a reliable signal (in ordinary prose) that it continues a sentence begun
-// earlier, e.g. a PDF text-layer line that got wrapped mid-sentence. A paragraph's real first line
-// is always capitalized, so this chain naturally stops there and never reaches an unrelated
-// preceding heading/title, even though headings often lack trailing punctuation of their own.
-// Content-less siblings (e.g. pdf.js inserts a bare <br> after every line) are skipped over rather
-// than treated as a stop signal, since they carry no text to judge either way.
-const expandBackward = (node: Node): Node => {
+const expandToSentenceStart = (node: Node): Node => {
   let current = node;
 
   for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
@@ -62,12 +39,7 @@ const expandBackward = (node: Node): Node => {
   return current;
 };
 
-// Mirrors expandBackward: walks forward while the current rightmost node's own text doesn't yet end
-// a sentence AND the next sibling looks like a continuation (starts lowercase) rather than a fresh,
-// capitalized start - so a heading/title lacking trailing punctuation never gets merged with
-// whatever unrelated content happens to follow it. Content-less siblings are skipped transparently,
-// same as expandBackward.
-const expandForward = (node: Node): Node => {
+const expandToSentenceEnd = (node: Node): Node => {
   let current = node;
 
   for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
@@ -86,50 +58,73 @@ const expandForward = (node: Node): Node => {
   return current;
 };
 
-const getSentences = (text: string, locale: string) => {
-  const segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
+const findTouchedChild = (scope: Element, node: Node, offset: number): Node | null => {
+  if (node === scope) return scope.childNodes[Math.min(offset, scope.childNodes.length - 1)] ?? null;
 
-  return Array.from(segmenter.segment(text), ({ segment, index }) => ({
-    text: segment,
-    start: index,
-    end: index + segment.length,
-  }));
+  let current = node;
+  while (current.parentNode && current.parentNode !== scope) {
+    current = current.parentNode;
+  }
+
+  return current.parentNode === scope ? current : null;
 };
 
-export const getContext = (selection: Selection, locale = navigator.language): string => {
-  const fallback = () => selection.toString().trim();
-  if (selection.rangeCount === 0) return '';
-  if (typeof Intl.Segmenter !== 'function') return fallback();
+const findSentenceStart = (scope: Element, range: Range): Node | null => {
+  const touched = findTouchedChild(scope, range.startContainer, range.startOffset);
+  return touched && expandToSentenceStart(touched);
+};
 
-  const range = selection.getRangeAt(0);
-  const container = resolveContainer(range);
-  if (!container) return fallback();
+const findSentenceEnd = (scope: Element, range: Range): Node | null => {
+  const touched = findTouchedChild(scope, range.endContainer, range.endOffset);
+  return touched && expandToSentenceEnd(touched);
+};
 
-  const firstTouched = getTouchedChild(container, range.startContainer, range.startOffset);
-  const lastTouched = getTouchedChild(container, range.endContainer, range.endOffset);
-  if (!firstTouched || !lastTouched) return fallback();
+const getOffsetFrom = (boundaryNode: Node, node: Node, offset: number) => {
+  const preRange = document.createRange();
+  preRange.setStartBefore(boundaryNode);
+  preRange.setEnd(node, offset);
+  return preRange.toString().length;
+};
 
-  const expandedFirst = expandBackward(firstTouched);
-  const expandedLast = expandForward(lastTouched);
+const getSentences = (text: string) => {
+  return split(text)
+    .filter((node) => node.type === SentenceSplitterSyntax.Sentence)
+    .map((node) => ({ start: node.range[0], end: node.range[1] }));
+};
 
+const extractOverlappingSentences = (start: Node, end: Node, range: Range): string => {
   const boundedRange = document.createRange();
-  boundedRange.setStartBefore(expandedFirst);
-  boundedRange.setEndAfter(expandedLast);
+  boundedRange.setStartBefore(start);
+  boundedRange.setEndAfter(end);
 
   const text = boundedRange.toString();
-  if (!text) return fallback();
+  if (!text) return '';
 
-  const startOffset = getOffsetFrom(expandedFirst, range.startContainer, range.startOffset);
-  const endOffset = getOffsetFrom(expandedFirst, range.endContainer, range.endOffset);
+  const selectionStart = getOffsetFrom(start, range.startContainer, range.startOffset);
+  const selectionEnd = getOffsetFrom(start, range.endContainer, range.endOffset);
 
-  const sentences = getSentences(text, locale).filter(
-    (sentence) => sentence.end > startOffset && sentence.start < endOffset,
+  const overlapping = getSentences(text).filter(
+    (sentence) => sentence.end > selectionStart && sentence.start < selectionEnd,
   );
+  if (overlapping.length === 0) return '';
 
-  return (
-    sentences
-      .map((sentence) => sentence.text)
-      .join('')
-      .trim() || fallback()
-  );
+  const contextStart = Math.min(...overlapping.map((sentence) => sentence.start));
+  const contextEnd = Math.max(...overlapping.map((sentence) => sentence.end));
+  return text.slice(contextStart, contextEnd).trim();
+};
+
+export const getContext = (selection: Selection): string => {
+  if (selection.rangeCount === 0) return '';
+
+  const range = selection.getRangeAt(0);
+  const getSelectedText = () => selection.toString().trim();
+
+  const scope = findExpansionScope(range);
+  if (!scope) return getSelectedText();
+
+  const start = findSentenceStart(scope, range);
+  const end = findSentenceEnd(scope, range);
+  if (!start || !end) return getSelectedText();
+
+  return extractOverlappingSentences(start, end, range) || getSelectedText();
 };
