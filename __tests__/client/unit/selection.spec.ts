@@ -148,26 +148,26 @@ describe('getContext', () => {
     // preceding heading with no trailing punctuation of its own must still not be pulled in.
     const container = document.createElement('div');
     const heading = document.createElement('span');
-    heading.textContent = 'Robert C. Martin Series';
+    heading.textContent = 'Appendix Three Glossary Index';
     const line1 = document.createElement('span');
-    line1.textContent = 'The mission of this series is to improve the craft. If the book is ';
+    line1.textContent = 'This guide exists to help you learn faster. If a chapter feels dense, ';
     const line2 = document.createElement('span');
-    line2.textContent = 'about managing, there ';
+    line2.textContent = 'there are usually examples nearby ';
     const line3 = document.createElement('span');
-    line3.textContent = 'will be lots of case studies from real projects.';
+    line3.textContent = 'that make it clearer.';
     const br = () => document.createElement('br');
     container.append(heading, br(), line1, br(), line2, br(), line3);
     document.body.appendChild(container);
 
     const textNode = line3.firstChild!;
-    // selects "will" only, on the sentence's final wrapped line
+    // selects "that" only, on the sentence's final wrapped line
     const selection = selectRange((range) => {
       range.setStart(textNode, 0);
       range.setEnd(textNode, 4);
     });
 
     expect(getContext(selection)).toBe(
-      'If the book is about managing, there will be lots of case studies from real projects.',
+      'If a chapter feels dense, there are usually examples nearby that make it clearer.',
     );
 
     container.remove();
@@ -177,23 +177,23 @@ describe('getContext', () => {
     // mirrors a real PDF text layer: each line is its own absolutely-positioned sibling <span>.
     const container = document.createElement('div');
     const heading = document.createElement('span');
-    heading.textContent = 'Robert C. Martin Series';
+    heading.textContent = 'Appendix Three Glossary Index';
     const paragraph = document.createElement('span');
-    paragraph.textContent = 'The mission of this series is to improve the state of the art of software craftsmanship.';
+    paragraph.textContent = 'This handbook exists to help new engineers write cleaner, more maintainable code.';
     container.append(heading, paragraph);
     document.body.appendChild(container);
 
     const textNode = paragraph.firstChild!;
     const text = textNode.textContent!;
-    const start = text.indexOf('mission');
-    const end = start + 'mission'.length;
+    const start = text.indexOf('handbook');
+    const end = start + 'handbook'.length;
     const selection = selectRange((range) => {
       range.setStart(textNode, start);
       range.setEnd(textNode, end);
     });
 
     expect(getContext(selection)).toBe(
-      'The mission of this series is to improve the state of the art of software craftsmanship.',
+      'This handbook exists to help new engineers write cleaner, more maintainable code.',
     );
 
     container.remove();
@@ -204,11 +204,11 @@ describe('getContext', () => {
     // must not pull in every other line sharing the same flat text-layer container.
     const container = document.createElement('div');
     const first = document.createElement('span');
-    first.textContent = 'If the book is about managing, there will be lots of case studies from real projects.';
+    first.textContent = 'If a project runs long, there will usually be extra notes about what went wrong.';
     const second = document.createElement('span');
-    second.textContent = 'These are the books that all serious practitioners will have on their bookshelves.';
+    second.textContent = 'These are the kinds of mistakes that every experienced developer eventually makes.';
     const unrelated = document.createElement('span');
-    unrelated.textContent = 'Managing Agile Projects Sanjiv Augustine.';
+    unrelated.textContent = 'Appendix Four Revision History.';
     container.append(first, second, unrelated);
     document.body.appendChild(container);
 
@@ -216,12 +216,12 @@ describe('getContext', () => {
     const startText = startNode.textContent!;
     const endNode = second.firstChild!;
     const selection = selectRange((range) => {
-      range.setStart(startNode, startText.indexOf('projects'));
+      range.setStart(startNode, startText.indexOf('wrong'));
       range.setEnd(endNode, 'These'.length);
     });
 
     expect(getContext(selection)).toBe(
-      'If the book is about managing, there will be lots of case studies from real projects.These are the books that all serious practitioners will have on their bookshelves.',
+      'If a project runs long, there will usually be extra notes about what went wrong.These are the kinds of mistakes that every experienced developer eventually makes.',
     );
 
     container.remove();
