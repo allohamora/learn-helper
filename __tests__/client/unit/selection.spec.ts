@@ -640,4 +640,45 @@ describe('getContext', () => {
 
     root.remove();
   });
+
+  it('falls back to the raw selected text when a sentence would continue past the cap, instead of truncating it', () => {
+    // the selection itself sits well inside the first 500 segments, but every word starts lowercase
+    // with no punctuation, so expansion never finds a real boundary and keeps trying to extend all the
+    // way to segment 600 - it must recognize that it only ran out of collected segments, not text, and
+    // fall back rather than silently return a sentence cut off at the cap.
+    const container = document.createElement('div');
+    for (let index = 0; index < 600; index++) {
+      const span = document.createElement('span');
+      span.textContent = `word${index}`;
+      container.appendChild(span);
+    }
+    document.body.appendChild(container);
+
+    const firstSpan = container.firstElementChild!;
+    const textNode = firstSpan.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, textNode.textContent!.length);
+    });
+
+    expect(getContext(selection)).toBe(selection.toString().trim());
+
+    container.remove();
+  });
+
+  it('returns an empty string for a collapsed selection instead of resolving context around the cursor', () => {
+    const p = document.createElement('p');
+    p.textContent = 'Hello world.';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 3);
+      range.setEnd(textNode, 3);
+    });
+
+    expect(getContext(selection)).toBe('');
+
+    p.remove();
+  });
 });

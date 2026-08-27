@@ -24,6 +24,8 @@ import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 //   raw selected text instead of the full sentence.
 // - Only Latin-script casing/punctuation is recognized by the underlying splitter; non-Latin scripts
 //   (e.g. CJK) aren't supported.
+// - Only the selection's first range is used (selection.getRangeAt(0)); a Firefox-only discontiguous
+//   multi-range selection (ctrl/cmd-click) is read as just that first range.
 
 const TEXT_LAYER_SELECTOR = '.textLayer';
 const MAX_TEXT_SEGMENTS = 500;
@@ -81,12 +83,9 @@ const ENDS_SENTENCE = /[.!?]\s*$/;
 // "Appendix" apart from a real mid-word join, and the real splitter needs a space after a period to
 // treat it as a break at all. Inserting one only for this check (never in the returned text) lets the
 // splitter judge it correctly either way, without misreading genuine sub-word joins like "some" +
-// "thing" as separate sentences.
-const joinWithSpace = (a: string, b: string): string => {
-  if (!a) return b;
-  if (!b) return a;
-  return /\s$/.test(a) || /^\s/.test(b) ? `${a}${b}` : `${a} ${b}`;
-};
+// "thing" as separate sentences. Segment text is always pre-trimmed (see collectSegments), so both
+// sides are guaranteed non-empty with no whitespace of their own to collide with the inserted space.
+const joinWithSpace = (a: string, b: string): string => `${a} ${b}`;
 
 // A lowercase start after `earlier` is always trusted as a continuation outright, since that signal
 // is never produced by an abbreviation. Otherwise, real terminal punctuation with nothing more to
@@ -108,7 +107,10 @@ type Segment = { start: number; end: number; fontSize: number; text: string };
 // nested HTML alike. Whitespace-only text nodes (e.g. pdf.js's bare <br> separators produce none,
 // but a real text gap between block siblings does) are skipped as segments but still counted towards
 // the running offset, so segment positions stay aligned with scope's own concatenated text.
-const collectSegments = (scope: Element): Segment[] => {
+// `truncated` tells the caller the cap actually cut off real text rather than the scope just running
+// out - resolveSentenceContext uses it to tell "expansion hit the true end of scope" (a real boundary)
+// apart from "expansion hit the cap" (an arbitrary one it shouldn't trust).
+const collectSegments = (scope: Element): { segments: Segment[]; truncated: boolean } => {
   const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
   const segments: Segment[] = [];
 
@@ -119,14 +121,14 @@ const collectSegments = (scope: Element): Segment[] => {
 
     const trimmed = text.trim();
     if (trimmed) {
-      if (segments.length >= MAX_TEXT_SEGMENTS) break;
+      if (segments.length >= MAX_TEXT_SEGMENTS) return { segments, truncated: true };
       segments.push({ start: cursor, end: cursor + text.length, fontSize: fontSizeOf(node), text: trimmed });
     }
 
     cursor += text.length;
   }
 
-  return segments;
+  return { segments, truncated: false };
 };
 
 // Finds every segment the selection overlaps, mirroring the overlap test used later to pick
@@ -165,7 +167,7 @@ const resolveSentenceContext = (range: Range): string => {
   const scope = findExpansionScope(range);
   if (!scope) return '';
 
-  const segments = collectSegments(scope);
+  const { segments, truncated } = collectSegments(scope);
   if (segments.length === 0) return '';
 
   const selectionStart = getOffsetFrom(scope, range.startContainer, range.startOffset);
@@ -176,6 +178,9 @@ const resolveSentenceContext = (range: Range): string => {
 
   const startIndex = expandIndex(segments, touched[0], -1);
   const endIndex = expandIndex(segments, touched[1], 1);
+  // Expansion ran off the end of what we collected, not off a real boundary - the true continuation
+  // past the cap is unknown, so don't return a sentence that might be silently cut short.
+  if (truncated && endIndex === segments.length - 1) return '';
 
   const windowStart = segments[startIndex].start;
   const windowEnd = segments[endIndex].end;
@@ -196,6 +201,8 @@ export const getContext = (selection: Selection): string => {
   if (selection.rangeCount === 0) return '';
 
   const range = selection.getRangeAt(0);
+  if (range.collapsed) return '';
+
   const selectedText = selection.toString().trim();
 
   try {
