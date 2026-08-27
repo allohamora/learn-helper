@@ -391,6 +391,28 @@ describe('getContext', () => {
     container.remove();
   });
 
+  it('gives up cleanly instead of scanning forever through a long run of empty separators', () => {
+    // guards the lookahead used to peek past pdf.js's <br> separators: it must stay bounded instead
+    // of walking arbitrarily far through a pathological run of empty nodes looking for real text.
+    const container = document.createElement('div');
+    const first = document.createElement('span');
+    first.textContent = 'This is the first sentence.';
+    const second = document.createElement('span');
+    second.textContent = 'and it never gets reached.';
+    container.append(first, ...Array.from({ length: 40 }, () => document.createElement('br')), second);
+    document.body.appendChild(container);
+
+    const textNode = first.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, 4); // "This"
+    });
+
+    expect(getContext(selection)).toBe('This is the first sentence.');
+
+    container.remove();
+  });
+
   it('keeps a middle-initial abbreviation attached when the selection sits entirely before it', () => {
     // mirrors the reported bug: a plain punctuation-based splitter misreads a single-capital-letter
     // initial like "P." as ending a sentence. Unlike the "Mr. Smith" case above, this selection

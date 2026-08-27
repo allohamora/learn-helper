@@ -42,34 +42,34 @@ const hasSentenceBreakAt = (before: string, after: string): boolean => {
   return !!firstSentence && firstSentence.end <= before.length;
 };
 
-// Peeks past empty separators (e.g. pdf.js's bare <br> between wrapped lines) to find the nearest
-// sibling with real text, without consuming them - the caller still walks one sibling at a time.
-const nearestSiblingText = (node: Node, direction: 'previousSibling' | 'nextSibling'): string => {
+// Walks past empty separators (e.g. pdf.js's bare <br> between wrapped lines) to the next sibling
+// that actually has text, capped so a run of empty nodes can't turn this into an unbounded search.
+// A sibling with real but unrelated text (not just an empty separator) still counts as "meaningful"
+// and stops the walk here - only pdf.js's own layout nodes are expected to carry no text at all.
+const nextMeaningfulSibling = (node: Node, direction: 'previousSibling' | 'nextSibling'): Node | null => {
   let sibling = node[direction];
 
-  while (sibling) {
-    const text = (sibling.textContent ?? '').trim();
-    if (text) return text;
-
+  for (let hops = 0; sibling && hops < MAX_SIBLING_EXPAND; hops++) {
+    if ((sibling.textContent ?? '').trim()) return sibling;
     sibling = sibling[direction];
   }
 
-  return '';
+  return null;
 };
 
 const expandToSentenceStart = (node: Node): Node | null => {
   let current = node;
 
   for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
+    const prev = nextMeaningfulSibling(current, 'previousSibling');
+    if (!prev) return current;
+
     const ownText = (current.textContent ?? '').trim();
     const looksLikeStart = ownText !== '' && !STARTS_LOWERCASE.test(ownText);
 
-    const prev = current.previousSibling;
-    if (!prev) return current;
-
     if (looksLikeStart) {
-      const prevText = nearestSiblingText(current, 'previousSibling');
-      const isAbbreviation = prevText !== '' && ENDS_SENTENCE.test(prevText) && !hasSentenceBreakAt(prevText, ownText);
+      const prevText = (prev.textContent ?? '').trim();
+      const isAbbreviation = ENDS_SENTENCE.test(prevText) && !hasSentenceBreakAt(prevText, ownText);
       if (!isAbbreviation) return current;
     }
 
@@ -83,20 +83,17 @@ const expandToSentenceEnd = (node: Node): Node | null => {
   let current = node;
 
   for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
-    const ownText = (current.textContent ?? '').trim();
-    const finished = ownText !== '' && ENDS_SENTENCE.test(ownText);
-
-    const next = current.nextSibling;
+    const next = nextMeaningfulSibling(current, 'nextSibling');
     if (!next) return current;
 
-    if (finished) {
-      const nextText = nearestSiblingText(current, 'nextSibling');
-      const isAbbreviation = nextText !== '' && !hasSentenceBreakAt(ownText, nextText);
-      if (!isAbbreviation) return current;
-    } else if (ownText !== '') {
-      const nextText = (next.textContent ?? '').trim();
-      if (nextText && !STARTS_LOWERCASE.test(nextText)) return current;
-    }
+    const ownText = (current.textContent ?? '').trim();
+    const nextText = (next.textContent ?? '').trim();
+    const finished = ownText !== '' && ENDS_SENTENCE.test(ownText);
+
+    const shouldStop = finished
+      ? hasSentenceBreakAt(ownText, nextText)
+      : ownText !== '' && !STARTS_LOWERCASE.test(nextText);
+    if (shouldStop) return current;
 
     current = next;
   }
