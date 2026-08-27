@@ -1,5 +1,31 @@
 import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 
+// Known limitations:
+// - Adjacent DOM blocks with no whitespace between them (e.g. two <span> "lines" glued together
+//   with nothing in between) can get concatenated with no separator, misreading two blocks as one
+//   run-on sentence. Only bounded by .textLayer scoping (real PDF pages each get their own layer);
+//   not fixable from DOM text alone - the identical shape (two adjacent <span>s, no space)
+//   legitimately needs no space when it's just styled sub-runs of one sentence, and needs a space
+//   when it's two separate paragraphs, and nothing in the markup tells them apart.
+// - The abbreviation check (hasSentenceBreakAt) is tested against the nearest sibling that has real
+//   text (see nextMeaningfulSibling), skipping only empty separators. If a real but irrelevant
+//   fragment sits between the two halves of a split abbreviation (e.g. "Mr." / decoy / "Smith..."),
+//   expansion can still truncate at the decoy. Not fixed because pdf.js only ever inserts empty
+//   <br> separators between wrapped lines, never unrelated text, so this shape doesn't occur in
+//   real PDF text layers.
+// - findExpansionScope has no upper bound on how broad a resolved scope can be (it can resolve to
+//   <body> for a very wide, non-.textLayer selection). Sibling expansion is still capped by
+//   MAX_SIBLING_EXPAND either way, so this can't hang - it only risks picking an imprecise boundary
+//   in unusual page layouts. A guard against this was tried and reverted: it broke the common case
+//   of a single paragraph sitting directly under <body>.
+// - Abbreviation handling is only as good as the sentence-splitter package's own abbreviation
+//   dictionary; domain-specific abbreviations it doesn't recognize (e.g. "Fig.", "approx.") won't
+//   get merged back into their sentence.
+// - MAX_SIBLING_EXPAND is a hard cap; an unusually dense text layer (e.g. one span per word) that
+//   needs more hops than that falls back to the raw selected text instead of the full sentence.
+// - Only Latin-script casing/punctuation is recognized (STARTS_LOWERCASE, ENDS_SENTENCE); non-Latin
+//   scripts (e.g. CJK) aren't supported.
+
 const TEXT_LAYER_SELECTOR = '.textLayer';
 
 const closestTextLayer = (node: Node): Element | null => {
