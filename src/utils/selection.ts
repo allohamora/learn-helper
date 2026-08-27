@@ -21,41 +21,87 @@ const findExpansionScope = (range: Range): Element | null => {
 
 const STARTS_LOWERCASE = /^\s*\p{Ll}/u;
 const ENDS_SENTENCE = /[.!?]\s*$/;
-const MAX_SIBLING_EXPAND = 20;
+const MAX_SIBLING_EXPAND = 30;
 
-const expandToSentenceStart = (node: Node): Node => {
-  let current = node;
-
-  for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
-    const ownText = current.textContent ?? '';
-    if (ownText.trim() && !STARTS_LOWERCASE.test(ownText)) break;
-
-    const prev = current.previousSibling;
-    if (!prev) break;
-
-    current = prev;
-  }
-
-  return current;
+const getSentences = (text: string) => {
+  return split(text)
+    .filter((node) => node.type === SentenceSplitterSyntax.Sentence)
+    .map((node) => ({ start: node.range[0], end: node.range[1] }));
 };
 
-const expandToSentenceEnd = (node: Node): Node => {
+const joinWithSpace = (a: string, b: string): string => {
+  if (!a) return b;
+  if (!b) return a;
+  return /\s$/.test(a) || /^\s/.test(b) ? `${a}${b}` : `${a} ${b}`;
+};
+
+// Own-text regexes can't tell an abbreviation ("Mr.") from a real sentence end. This asks the real
+// sentence splitter instead: given what follows, does `before` actually end a sentence there?
+const hasSentenceBreakAt = (before: string, after: string): boolean => {
+  const [firstSentence] = getSentences(joinWithSpace(before, after));
+  return !!firstSentence && firstSentence.end <= before.length;
+};
+
+// Peeks past empty separators (e.g. pdf.js's bare <br> between wrapped lines) to find the nearest
+// sibling with real text, without consuming them - the caller still walks one sibling at a time.
+const nearestSiblingText = (node: Node, direction: 'previousSibling' | 'nextSibling'): string => {
+  let sibling = node[direction];
+
+  while (sibling) {
+    const text = (sibling.textContent ?? '').trim();
+    if (text) return text;
+
+    sibling = sibling[direction];
+  }
+
+  return '';
+};
+
+const expandToSentenceStart = (node: Node): Node | null => {
   let current = node;
 
   for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
     const ownText = (current.textContent ?? '').trim();
-    if (ownText && ENDS_SENTENCE.test(ownText)) break;
+    const looksLikeStart = ownText !== '' && !STARTS_LOWERCASE.test(ownText);
+
+    const prev = current.previousSibling;
+    if (!prev) return current;
+
+    if (looksLikeStart) {
+      const prevText = nearestSiblingText(current, 'previousSibling');
+      const isAbbreviation = prevText !== '' && ENDS_SENTENCE.test(prevText) && !hasSentenceBreakAt(prevText, ownText);
+      if (!isAbbreviation) return current;
+    }
+
+    current = prev;
+  }
+
+  return null;
+};
+
+const expandToSentenceEnd = (node: Node): Node | null => {
+  let current = node;
+
+  for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
+    const ownText = (current.textContent ?? '').trim();
+    const finished = ownText !== '' && ENDS_SENTENCE.test(ownText);
 
     const next = current.nextSibling;
-    if (!next) break;
+    if (!next) return current;
 
-    const nextText = (next.textContent ?? '').trim();
-    if (nextText && !STARTS_LOWERCASE.test(nextText)) break;
+    if (finished) {
+      const nextText = nearestSiblingText(current, 'nextSibling');
+      const isAbbreviation = nextText !== '' && !hasSentenceBreakAt(ownText, nextText);
+      if (!isAbbreviation) return current;
+    } else if (ownText !== '') {
+      const nextText = (next.textContent ?? '').trim();
+      if (nextText && !STARTS_LOWERCASE.test(nextText)) return current;
+    }
 
     current = next;
   }
 
-  return current;
+  return null;
 };
 
 const findTouchedChild = (scope: Element, node: Node, offset: number): Node | null => {
@@ -84,12 +130,6 @@ const getOffsetFrom = (boundaryNode: Node, node: Node, offset: number) => {
   preRange.setStartBefore(boundaryNode);
   preRange.setEnd(node, offset);
   return preRange.toString().length;
-};
-
-const getSentences = (text: string) => {
-  return split(text)
-    .filter((node) => node.type === SentenceSplitterSyntax.Sentence)
-    .map((node) => ({ start: node.range[0], end: node.range[1] }));
 };
 
 const extractOverlappingSentences = (start: Node, end: Node, range: Range): string => {

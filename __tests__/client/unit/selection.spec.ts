@@ -330,6 +330,67 @@ describe('getContext', () => {
     p.remove();
   });
 
+  it('keeps an abbreviation attached when it and its sentence are split across sibling spans (forward)', () => {
+    // a naive own-text regex sees "Mr." end with a period and stops expanding right there; only
+    // asking the real sentence splitter (with "Smith arrived late." as context) knows it's not done.
+    const container = document.createElement('div');
+    container.innerHTML = '<span>Mr.</span><span> Smith arrived late.</span>';
+    document.body.appendChild(container);
+
+    const textNode = container.firstElementChild!.firstChild!; // "Mr."
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, 3);
+    });
+
+    expect(getContext(selection)).toBe('Mr. Smith arrived late.');
+
+    container.remove();
+  });
+
+  it('keeps an abbreviation attached when it and its sentence are split across sibling spans (backward)', () => {
+    // the mirror image of the forward case: "Smith" starts with a capital letter, so a naive check
+    // assumes it's a fresh sentence start and never looks back far enough to find "Mr.".
+    const container = document.createElement('div');
+    container.innerHTML = '<span>Mr.</span><span> Smith arrived late.</span>';
+    document.body.appendChild(container);
+
+    const textNode = container.lastElementChild!.firstChild!; // " Smith arrived late."
+    const text = textNode.textContent!;
+    const start = text.indexOf('arrived');
+    const end = start + 'arrived'.length;
+    const selection = selectRange((range) => {
+      range.setStart(textNode, start);
+      range.setEnd(textNode, end);
+    });
+
+    expect(getContext(selection)).toBe('Mr. Smith arrived late.');
+
+    container.remove();
+  });
+
+  it('keeps an abbreviation attached across a wrapped line, mirroring a real pdf.js line break', () => {
+    // same as the sibling-span case above, but with the bare <br> pdf.js inserts between lines
+    // sitting directly between the abbreviation and its continuation.
+    const container = document.createElement('div');
+    const abbreviation = document.createElement('span');
+    abbreviation.textContent = 'Mr. ';
+    const rest = document.createElement('span');
+    rest.textContent = 'Smith arrived late.';
+    container.append(abbreviation, document.createElement('br'), rest);
+    document.body.appendChild(container);
+
+    const textNode = rest.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, 5); // "Smith"
+    });
+
+    expect(getContext(selection)).toBe('Mr. Smith arrived late.');
+
+    container.remove();
+  });
+
   it('keeps a middle-initial abbreviation attached when the selection sits entirely before it', () => {
     // mirrors the reported bug: a plain punctuation-based splitter misreads a single-capital-letter
     // initial like "P." as ending a sentence. Unlike the "Mr. Smith" case above, this selection
