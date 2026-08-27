@@ -26,6 +26,13 @@ import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 //   (e.g. CJK) aren't supported.
 // - Only the selection's first range is used (selection.getRangeAt(0)); a Firefox-only discontiguous
 //   multi-range selection (ctrl/cmd-click) is read as just that first range.
+// - A segment with no trailing punctuation at all is always treated as a hard boundary when the next
+//   segment starts uppercase (see isSentenceBoundary) - this is what lets a heading or label without
+//   punctuation stop expansion. It can misfire the other way on a genuine mid-sentence line wrap that
+//   happens to break right before a capitalized proper noun (e.g. "...members of the United" /
+//   "Nations Security Council..." split across two lines), cutting the sentence short. Same class of
+//   problem as the "glued blocks" case above - nothing in the DOM text tells a wrapped proper noun
+//   apart from a real fresh block.
 
 const TEXT_LAYER_SELECTOR = '.textLayer';
 const MAX_TEXT_SEGMENTS = 500;
@@ -75,8 +82,8 @@ const hasStyleBreak = (a: number, b: number): boolean => {
   return Math.max(a, b) / Math.min(a, b) >= STYLE_MISMATCH_RATIO;
 };
 
-const STARTS_LOWERCASE = /^\s*\p{Ll}/u;
-const ENDS_SENTENCE = /[.!?]\s*$/;
+const STARTS_LOWERCASE = /^\p{Ll}/u;
+const ENDS_SENTENCE = /[.!?…]$/;
 
 // Two adjacent segments are almost always separate DOM nodes with no real whitespace between them
 // (see the "glued blocks" limitation above) - a plain punctuation regex can't tell "makes." glued to
@@ -99,7 +106,15 @@ const isSentenceBoundary = (earlier: string, later: string): boolean => {
   return !!firstSentence && firstSentence.end <= earlier.length;
 };
 
-type Segment = { start: number; end: number; fontSize: number; text: string };
+type Segment = { start: number; end: number; node: Node; text: string; fontSize?: number };
+
+// fontSize is read lazily (and cached here on first read) because getComputedStyle forces a style
+// recalculation - collectSegments can gather up to MAX_TEXT_SEGMENTS segments, but expandIndex only
+// ever needs the font size of the handful actually walked while expanding outward from the selection.
+const getFontSize = (segment: Segment): number => {
+  if (segment.fontSize === undefined) segment.fontSize = fontSizeOf(segment.node);
+  return segment.fontSize;
+};
 
 // Walks every text node under scope once, in document order, regardless of how deeply or unevenly
 // they're nested - unlike a sibling walk, this needs no assumptions about the surrounding markup
@@ -122,7 +137,7 @@ const collectSegments = (scope: Element): { segments: Segment[]; truncated: bool
     const trimmed = text.trim();
     if (trimmed) {
       if (segments.length >= MAX_TEXT_SEGMENTS) return { segments, truncated: true };
-      segments.push({ start: cursor, end: cursor + text.length, fontSize: fontSizeOf(node), text: trimmed });
+      segments.push({ start: cursor, end: cursor + text.length, node, text: trimmed });
     }
 
     cursor += text.length;
@@ -149,7 +164,7 @@ const expandIndex = (segments: Segment[], index: number, step: -1 | 1): number =
   while (segments[current + step]) {
     const next = segments[current + step];
     const [earlier, later] = step === -1 ? [next, segments[current]] : [segments[current], next];
-    if (hasStyleBreak(earlier.fontSize, later.fontSize) || isSentenceBoundary(earlier.text, later.text)) break;
+    if (hasStyleBreak(getFontSize(earlier), getFontSize(later)) || isSentenceBoundary(earlier.text, later.text)) break;
     current += step;
   }
 
