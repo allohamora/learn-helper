@@ -28,7 +28,7 @@ description: Walk through PR review comments one at a time with the author - ass
 
 Fixed with a commit:
 
-```
+```text
 <commit-url>
 ```
 
@@ -36,7 +36,7 @@ e.g. `https://github.com/<owner>/<repo>/commit/<sha>`
 
 Declined with a reason:
 
-```
+```text
 <Reason why this is not needed.>
 ```
 
@@ -64,6 +64,7 @@ gh api graphql -f query='{
           path
           line
           comments(first: 10) {
+            pageInfo { hasNextPage endCursor }
             nodes {
               url
               body
