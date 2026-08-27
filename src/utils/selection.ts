@@ -119,12 +119,17 @@ export const getContext = (selection: Selection): string => {
   const range = selection.getRangeAt(0);
   const getSelectedText = () => selection.toString().trim();
 
-  const scope = findExpansionScope(range);
-  if (!scope) return getSelectedText();
+  try {
+    const scope = findExpansionScope(range);
+    if (!scope) return getSelectedText();
 
-  const start = findSentenceStart(scope, range);
-  const end = findSentenceEnd(scope, range);
-  if (!start || !end) return getSelectedText();
+    const start = findSentenceStart(scope, range);
+    const end = findSentenceEnd(scope, range);
+    if (!start || !end) return getSelectedText();
 
-  return extractOverlappingSentences(start, end, range) || getSelectedText();
+    return extractOverlappingSentences(start, end, range) || getSelectedText();
+  } catch (err) {
+    console.error(err);
+    return getSelectedText();
+  }
 };
