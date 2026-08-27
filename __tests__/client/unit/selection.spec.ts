@@ -391,24 +391,26 @@ describe('getContext', () => {
     container.remove();
   });
 
-  it('gives up cleanly instead of scanning forever through a long run of empty separators', () => {
-    // guards the lookahead used to peek past pdf.js's <br> separators: it must stay bounded instead
-    // of walking arbitrarily far through a pathological run of empty nodes looking for real text.
+  it('falls back to the raw selected text once a scope has more text segments than the cap can track', () => {
+    // guards MAX_TEXT_SEGMENTS: a scope this text-dense must stay bounded instead of scanning every
+    // node in it. The selection sits well past the cap, so no collected segment ever overlaps it and
+    // expansion gives up cleanly rather than resolving an arbitrary or empty result.
     const container = document.createElement('div');
-    const first = document.createElement('span');
-    first.textContent = 'This is the first sentence.';
-    const second = document.createElement('span');
-    second.textContent = 'and it never gets reached.';
-    container.append(first, ...Array.from({ length: 40 }, () => document.createElement('br')), second);
+    for (let index = 0; index < 600; index++) {
+      const span = document.createElement('span');
+      span.textContent = `word${index}`;
+      container.appendChild(span);
+    }
     document.body.appendChild(container);
 
-    const textNode = first.firstChild!;
+    const lastSpan = container.lastElementChild!;
+    const textNode = lastSpan.firstChild!;
     const selection = selectRange((range) => {
       range.setStart(textNode, 0);
-      range.setEnd(textNode, 4); // "This"
+      range.setEnd(textNode, textNode.textContent!.length);
     });
 
-    expect(getContext(selection)).toBe('This is the first sentence.');
+    expect(getContext(selection)).toBe(selection.toString().trim());
 
     container.remove();
   });

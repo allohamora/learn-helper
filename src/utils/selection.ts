@@ -7,52 +7,50 @@ import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 //   not fixable from DOM text alone - the identical shape (two adjacent <span>s, no space)
 //   legitimately needs no space when it's just styled sub-runs of one sentence, and needs a space
 //   when it's two separate paragraphs, and nothing in the markup tells them apart.
-// - The abbreviation check (hasSentenceBreakAt) is tested against the nearest sibling that has real
-//   text (see nextMeaningfulSibling), skipping only empty separators. If a real but irrelevant
-//   fragment sits between the two halves of a split abbreviation (e.g. "Mr." / decoy / "Smith..."),
-//   expansion can still truncate at the decoy. Not fixed because pdf.js only ever inserts empty
-//   <br> separators between wrapped lines, never unrelated text, so this shape doesn't occur in
-//   real PDF text layers.
-// - The font-size guard (hasStyleBreakBetween) only catches a structural break when it's rendered
-//   with a distinctly different font size (>= 20% apart, STYLE_MISMATCH_RATIO). A heading styled
-//   only through font-weight/color at the same font-size, or with a smaller size gap than that,
-//   isn't caught and falls back to the text-only heuristics above. The 20% threshold is a guess,
-//   not validated against real PDF documents - tune it if it proves too strict or too loose.
+// - The font-size guard (hasStyleBreak) only catches a structural break when it's rendered with a
+//   distinctly different font size (>= 20% apart, STYLE_MISMATCH_RATIO). A heading styled only
+//   through font-weight/color at the same font-size isn't caught, and the expansion window can
+//   include it; the final sentence split then only rescues this if punctuation/casing happens to
+//   separate it anyway. The 20% threshold is a guess, not validated against real PDF documents.
 // - findExpansionScope has no upper bound on how broad a resolved scope can be (it can resolve to
-//   <body> for a very wide, non-.textLayer selection). Sibling expansion is still capped by
-//   MAX_SIBLING_EXPAND either way, so this can't hang - it only risks picking an imprecise boundary
-//   in unusual page layouts. A guard against this was tried and reverted: it broke the common case
-//   of a single paragraph sitting directly under <body>.
+//   <body> for a very wide, non-.textLayer selection). Segment collection is still capped by
+//   MAX_TEXT_SEGMENTS either way, so this can't hang - it only risks picking an imprecise boundary
+//   in unusual page layouts.
 // - Abbreviation handling is only as good as the sentence-splitter package's own abbreviation
 //   dictionary; domain-specific abbreviations it doesn't recognize (e.g. "Fig.", "approx.") won't
 //   get merged back into their sentence.
-// - MAX_SIBLING_EXPAND is a hard cap; an unusually dense text layer (e.g. one span per word) that
-//   needs more hops than that falls back to the raw selected text instead of the full sentence.
-// - Only Latin-script casing/punctuation is recognized (STARTS_LOWERCASE, ENDS_SENTENCE); non-Latin
-//   scripts (e.g. CJK) aren't supported.
+// - MAX_TEXT_SEGMENTS is a hard cap on how many text-bearing nodes a scope can contribute; an
+//   unusually dense text layer (e.g. one span per word) that needs more than that falls back to the
+//   raw selected text instead of the full sentence.
+// - Only Latin-script casing/punctuation is recognized by the underlying splitter; non-Latin scripts
+//   (e.g. CJK) aren't supported.
 
 const TEXT_LAYER_SELECTOR = '.textLayer';
+const MAX_TEXT_SEGMENTS = 500;
+const STYLE_MISMATCH_RATIO = 1.2;
 
 const closestTextLayer = (node: Node): Element | null => {
   const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
   return element?.closest(TEXT_LAYER_SELECTOR) ?? null;
 };
 
+// .textLayer is the one reliable signal for a real PDF page boundary (react-pdf and pdf.js both
+// render one per page, including when several pages are mounted as virtualized siblings at once) -
+// nothing in generic DOM structure can stand in for it, so a selection spanning two different layers
+// is rejected outright rather than risk merging unrelated pages. Outside of any .textLayer, the
+// scope is just the selection's nearest common element ancestor, bumped up one level when that
+// ancestor is a single text node so there's always at least one sibling to expand into.
 const findExpansionScope = (range: Range): Element | null => {
   const startLayer = closestTextLayer(range.startContainer);
   const endLayer = closestTextLayer(range.endContainer);
   if (startLayer || endLayer) return startLayer === endLayer ? startLayer : null;
 
-  const commonAncestor = range.commonAncestorContainer;
-  if (commonAncestor.nodeType === Node.ELEMENT_NODE) return commonAncestor as Element;
+  const { commonAncestorContainer } = range;
+  if (commonAncestorContainer.nodeType === Node.ELEMENT_NODE) return commonAncestorContainer as Element;
 
-  const leaf = commonAncestor.parentElement;
+  const leaf = commonAncestorContainer.parentElement;
   return leaf?.parentElement ?? leaf;
 };
-
-const STARTS_LOWERCASE = /^\s*\p{Ll}/u;
-const ENDS_SENTENCE = /[.!?]\s*$/;
-const MAX_SIBLING_EXPAND = 30;
 
 const getSentences = (text: string) => {
   return split(text)
@@ -60,165 +58,138 @@ const getSentences = (text: string) => {
     .map((node) => ({ start: node.range[0], end: node.range[1] }));
 };
 
+const fontSizeOf = (node: Node): number => {
+  const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  return element ? parseFloat(getComputedStyle(element).fontSize) : NaN;
+};
+
+// A heading is almost always rendered in a visually distinct font size from body text, even with no
+// punctuation of its own to signal that. This is a hard "different block" signal that overrides
+// everything else - even a segment that would otherwise read as a sentence continuation shouldn't
+// cross it. The ratio (not a flat px difference) tolerates the tiny floating-point font-size variance
+// pdf.js sometimes introduces between spans of the same line.
+const hasStyleBreak = (a: number, b: number): boolean => {
+  if (!a || !b) return false;
+  return Math.max(a, b) / Math.min(a, b) >= STYLE_MISMATCH_RATIO;
+};
+
+const STARTS_LOWERCASE = /^\s*\p{Ll}/u;
+const ENDS_SENTENCE = /[.!?]\s*$/;
+
+// Two adjacent segments are almost always separate DOM nodes with no real whitespace between them
+// (see the "glued blocks" limitation above) - a plain punctuation regex can't tell "makes." glued to
+// "Appendix" apart from a real mid-word join, and the real splitter needs a space after a period to
+// treat it as a break at all. Inserting one only for this check (never in the returned text) lets the
+// splitter judge it correctly either way, without misreading genuine sub-word joins like "some" +
+// "thing" as separate sentences.
 const joinWithSpace = (a: string, b: string): string => {
   if (!a) return b;
   if (!b) return a;
   return /\s$/.test(a) || /^\s/.test(b) ? `${a}${b}` : `${a} ${b}`;
 };
 
-// Own-text regexes can't tell an abbreviation ("Mr.") from a real sentence end. This asks the real
-// sentence splitter instead: given what follows, does `before` actually end a sentence there?
-const hasSentenceBreakAt = (before: string, after: string): boolean => {
-  const [firstSentence] = getSentences(joinWithSpace(before, after));
-  return !!firstSentence && firstSentence.end <= before.length;
+// A lowercase start after `earlier` is always trusted as a continuation outright, since that signal
+// is never produced by an abbreviation. Otherwise, real terminal punctuation with nothing more to
+// disambiguate would need the splitter to weigh in anyway, and its absence is itself decisive (a
+// heading or label with no trailing punctuation at all reads as a fresh block, not a continuation).
+const isSentenceBoundary = (earlier: string, later: string): boolean => {
+  if (STARTS_LOWERCASE.test(later)) return false;
+  if (!ENDS_SENTENCE.test(earlier)) return true;
+
+  const [firstSentence] = getSentences(joinWithSpace(earlier, later));
+  return !!firstSentence && firstSentence.end <= earlier.length;
 };
 
-// Walks past empty separators (e.g. pdf.js's bare <br> between wrapped lines) to the next sibling
-// that actually has text, capped so a run of empty nodes can't turn this into an unbounded search.
-// A sibling with real but unrelated text (not just an empty separator) still counts as "meaningful"
-// and stops the walk here - only pdf.js's own layout nodes are expected to carry no text at all.
-const nextMeaningfulSibling = (node: Node, direction: 'previousSibling' | 'nextSibling'): Node | null => {
-  let sibling = node[direction];
+type Segment = { start: number; end: number; fontSize: number; text: string };
 
-  for (let hops = 0; sibling && hops < MAX_SIBLING_EXPAND; hops++) {
-    if ((sibling.textContent ?? '').trim()) return sibling;
-    sibling = sibling[direction];
-  }
+// Walks every text node under scope once, in document order, regardless of how deeply or unevenly
+// they're nested - unlike a sibling walk, this needs no assumptions about the surrounding markup
+// shape, so the same pass works for pdf.js/react-pdf's flat wrapped-line spans and for ordinary
+// nested HTML alike. Whitespace-only text nodes (e.g. pdf.js's bare <br> separators produce none,
+// but a real text gap between block siblings does) are skipped as segments but still counted towards
+// the running offset, so segment positions stay aligned with scope's own concatenated text.
+const collectSegments = (scope: Element): Segment[] => {
+  const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+  const segments: Segment[] = [];
 
-  return null;
-};
+  let cursor = 0;
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    const text = node.textContent ?? '';
 
-// `before`'s own text ends with real punctuation, but is that punctuation actually sentence-final
-// (e.g. "end.") or just an abbreviation ("Mr.") that reads on into `after`? Real terminal punctuation
-// with nothing more to disambiguate is trusted as-is; anything else is confirmed against the real
-// sentence splitter.
-const isRealSentenceEnd = (before: string, after: string): boolean =>
-  ENDS_SENTENCE.test(before) ? hasSentenceBreakAt(before, after) : !STARTS_LOWERCASE.test(after);
-
-// Mirror of isRealSentenceEnd: `after`'s own text looks like a fresh sentence start, but is
-// `before` actually finished, or is `after` really the abbreviation-continuation of it ("Smith"
-// after "Mr.")? A lowercase-starting `after` is always trusted as a continuation outright - unlike
-// trailing punctuation, that signal is never produced by an abbreviation.
-const isRealSentenceStart = (before: string, after: string): boolean =>
-  STARTS_LOWERCASE.test(after) ? false : !ENDS_SENTENCE.test(before) || hasSentenceBreakAt(before, after);
-
-const fontSizeOf = (node: Node): number => {
-  const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
-  return element ? parseFloat(getComputedStyle(element).fontSize) : NaN;
-};
-
-// A heading is almost always rendered in a visually distinct font size from body text, even when it
-// has no punctuation of its own to signal that. Real pdf.js text-layer spans carry inline styles
-// matching the PDF's actual rendered fonts, so a large enough font-size gap is treated as a hard
-// "different block" signal that overrides the text-only checks above - even an abbreviation-looking
-// merge shouldn't cross it. The ratio (not a flat px difference) tolerates the tiny floating-point
-// font-size variance pdf.js sometimes introduces between spans of the same line.
-const STYLE_MISMATCH_RATIO = 1.2;
-
-const hasStyleBreakBetween = (a: Node, b: Node): boolean => {
-  const sizeA = fontSizeOf(a);
-  const sizeB = fontSizeOf(b);
-  if (!sizeA || !sizeB) return false;
-
-  return Math.max(sizeA, sizeB) / Math.min(sizeA, sizeB) >= STYLE_MISMATCH_RATIO;
-};
-
-const expandToSentenceStart = (node: Node): Node | null => {
-  let current = node;
-
-  for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
-    const prev = nextMeaningfulSibling(current, 'previousSibling');
-    if (!prev) return current;
-
-    const ownText = (current.textContent ?? '').trim();
-    const prevText = (prev.textContent ?? '').trim();
-    if (ownText !== '' && (isRealSentenceStart(prevText, ownText) || hasStyleBreakBetween(prev, current))) {
-      return current;
+    const trimmed = text.trim();
+    if (trimmed) {
+      if (segments.length >= MAX_TEXT_SEGMENTS) break;
+      segments.push({ start: cursor, end: cursor + text.length, fontSize: fontSizeOf(node), text: trimmed });
     }
 
-    current = prev;
+    cursor += text.length;
   }
 
-  return null;
+  return segments;
 };
 
-const expandToSentenceEnd = (node: Node): Node | null => {
-  let current = node;
+// Finds every segment the selection overlaps, mirroring the overlap test used later to pick
+// sentences out of the resolved window - the same "does this span touch that span" rule at both the
+// segment and the sentence level.
+const findTouchedRange = (segments: Segment[], from: number, to: number): [number, number] | null => {
+  const touched = segments.reduce<number[]>((indices, segment, index) => {
+    if (segment.end > from && segment.start < to) indices.push(index);
+    return indices;
+  }, []);
 
-  for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
-    const next = nextMeaningfulSibling(current, 'nextSibling');
-    if (!next) return current;
+  return touched.length ? [touched[0], touched[touched.length - 1]] : null;
+};
 
-    const ownText = (current.textContent ?? '').trim();
-    const nextText = (next.textContent ?? '').trim();
-    if (ownText !== '' && (isRealSentenceEnd(ownText, nextText) || hasStyleBreakBetween(current, next))) {
-      return current;
-    }
+const expandIndex = (segments: Segment[], index: number, step: -1 | 1): number => {
+  let current = index;
 
-    current = next;
+  while (segments[current + step]) {
+    const next = segments[current + step];
+    const [earlier, later] = step === -1 ? [next, segments[current]] : [segments[current], next];
+    if (hasStyleBreak(earlier.fontSize, later.fontSize) || isSentenceBoundary(earlier.text, later.text)) break;
+    current += step;
   }
 
-  return null;
+  return current;
 };
 
-const findTouchedChild = (scope: Element, node: Node, offset: number): Node | null => {
-  if (node === scope) return scope.childNodes[Math.min(offset, scope.childNodes.length - 1)] ?? null;
-
-  let current = node;
-  while (current.parentNode && current.parentNode !== scope) {
-    current = current.parentNode;
-  }
-
-  return current.parentNode === scope ? current : null;
-};
-
-const findSentenceStart = (scope: Element, range: Range): Node | null => {
-  const touched = findTouchedChild(scope, range.startContainer, range.startOffset);
-  return touched && expandToSentenceStart(touched);
-};
-
-const findSentenceEnd = (scope: Element, range: Range): Node | null => {
-  const touched = findTouchedChild(scope, range.endContainer, range.endOffset);
-  return touched && expandToSentenceEnd(touched);
-};
-
-const getOffsetFrom = (boundaryNode: Node, node: Node, offset: number) => {
+const getOffsetFrom = (boundary: Element, node: Node, offset: number) => {
   const preRange = document.createRange();
-  preRange.setStartBefore(boundaryNode);
+  preRange.setStart(boundary, 0);
   preRange.setEnd(node, offset);
   return preRange.toString().length;
-};
-
-const extractOverlappingSentences = (start: Node, end: Node, range: Range): string => {
-  const boundedRange = document.createRange();
-  boundedRange.setStartBefore(start);
-  boundedRange.setEndAfter(end);
-
-  const text = boundedRange.toString();
-  if (!text) return '';
-
-  const selectionStart = getOffsetFrom(start, range.startContainer, range.startOffset);
-  const selectionEnd = getOffsetFrom(start, range.endContainer, range.endOffset);
-
-  const overlapping = getSentences(text).filter(
-    (sentence) => sentence.end > selectionStart && sentence.start < selectionEnd,
-  );
-  if (overlapping.length === 0) return '';
-
-  const contextStart = Math.min(...overlapping.map((sentence) => sentence.start));
-  const contextEnd = Math.max(...overlapping.map((sentence) => sentence.end));
-  return text.slice(contextStart, contextEnd).trim();
 };
 
 const resolveSentenceContext = (range: Range): string => {
   const scope = findExpansionScope(range);
   if (!scope) return '';
 
-  const start = findSentenceStart(scope, range);
-  const end = findSentenceEnd(scope, range);
-  if (!start || !end) return '';
+  const segments = collectSegments(scope);
+  if (segments.length === 0) return '';
 
-  return extractOverlappingSentences(start, end, range);
+  const selectionStart = getOffsetFrom(scope, range.startContainer, range.startOffset);
+  const selectionEnd = getOffsetFrom(scope, range.endContainer, range.endOffset);
+
+  const touched = findTouchedRange(segments, selectionStart, selectionEnd);
+  if (!touched) return '';
+
+  const startIndex = expandIndex(segments, touched[0], -1);
+  const endIndex = expandIndex(segments, touched[1], 1);
+
+  const windowStart = segments[startIndex].start;
+  const windowEnd = segments[endIndex].end;
+  const windowText = (scope.textContent ?? '').slice(windowStart, windowEnd);
+  if (!windowText) return '';
+
+  const sentences = getSentences(windowText).filter(
+    (sentence) => sentence.end > selectionStart - windowStart && sentence.start < selectionEnd - windowStart,
+  );
+  if (sentences.length === 0) return '';
+
+  const contextStart = Math.min(...sentences.map((sentence) => sentence.start));
+  const contextEnd = Math.max(...sentences.map((sentence) => sentence.end));
+  return windowText.slice(contextStart, contextEnd).trim();
 };
 
 export const getContext = (selection: Selection): string => {
