@@ -13,6 +13,11 @@ import { split, SentenceSplitterSyntax } from 'sentence-splitter';
 //   expansion can still truncate at the decoy. Not fixed because pdf.js only ever inserts empty
 //   <br> separators between wrapped lines, never unrelated text, so this shape doesn't occur in
 //   real PDF text layers.
+// - The font-size guard (hasStyleBreakBetween) only catches a structural break when it's rendered
+//   with a distinctly different font size (>= 20% apart, STYLE_MISMATCH_RATIO). A heading styled
+//   only through font-weight/color at the same font-size, or with a smaller size gap than that,
+//   isn't caught and falls back to the text-only heuristics above. The 20% threshold is a guess,
+//   not validated against real PDF documents - tune it if it proves too strict or too loose.
 // - findExpansionScope has no upper bound on how broad a resolved scope can be (it can resolve to
 //   <body> for a very wide, non-.textLayer selection). Sibling expansion is still capped by
 //   MAX_SIBLING_EXPAND either way, so this can't hang - it only risks picking an imprecise boundary
