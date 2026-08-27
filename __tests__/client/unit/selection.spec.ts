@@ -413,6 +413,31 @@ describe('getContext', () => {
     container.remove();
   });
 
+  it('does not merge a differently-styled heading into body text even when the text alone looks continuable', () => {
+    // the heading has no ending punctuation, and the body text happens to start lowercase - by
+    // text alone that reads as "still mid-sentence, keep going", so only the font-size mismatch
+    // (mirroring real pdf.js headings rendered in a distinct font size) stops the merge.
+    const container = document.createElement('div');
+    const heading = document.createElement('span');
+    heading.style.fontSize = '24px';
+    heading.textContent = 'Special Notes';
+    const body = document.createElement('span');
+    body.style.fontSize = '14px';
+    body.textContent = 'continues on for some reason without a real break.';
+    container.append(heading, body);
+    document.body.appendChild(container);
+
+    const textNode = heading.firstChild!;
+    const selection = selectRange((range) => {
+      range.setStart(textNode, 0);
+      range.setEnd(textNode, 7); // "Special"
+    });
+
+    expect(getContext(selection)).toBe('Special Notes');
+
+    container.remove();
+  });
+
   it('keeps a middle-initial abbreviation attached when the selection sits entirely before it', () => {
     // mirrors the reported bug: a plain punctuation-based splitter misreads a single-capital-letter
     // initial like "P." as ending a sentence. Unlike the "Mr. Smith" case above, this selection

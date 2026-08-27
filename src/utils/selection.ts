@@ -83,6 +83,41 @@ const nextMeaningfulSibling = (node: Node, direction: 'previousSibling' | 'nextS
   return null;
 };
 
+// `before`'s own text ends with real punctuation, but is that punctuation actually sentence-final
+// (e.g. "end.") or just an abbreviation ("Mr.") that reads on into `after`? Real terminal punctuation
+// with nothing more to disambiguate is trusted as-is; anything else is confirmed against the real
+// sentence splitter.
+const isRealSentenceEnd = (before: string, after: string): boolean =>
+  ENDS_SENTENCE.test(before) ? hasSentenceBreakAt(before, after) : !STARTS_LOWERCASE.test(after);
+
+// Mirror of isRealSentenceEnd: `after`'s own text looks like a fresh sentence start, but is
+// `before` actually finished, or is `after` really the abbreviation-continuation of it ("Smith"
+// after "Mr.")? A lowercase-starting `after` is always trusted as a continuation outright - unlike
+// trailing punctuation, that signal is never produced by an abbreviation.
+const isRealSentenceStart = (before: string, after: string): boolean =>
+  STARTS_LOWERCASE.test(after) ? false : !ENDS_SENTENCE.test(before) || hasSentenceBreakAt(before, after);
+
+const fontSizeOf = (node: Node): number => {
+  const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  return element ? parseFloat(getComputedStyle(element).fontSize) : NaN;
+};
+
+// A heading is almost always rendered in a visually distinct font size from body text, even when it
+// has no punctuation of its own to signal that. Real pdf.js text-layer spans carry inline styles
+// matching the PDF's actual rendered fonts, so a large enough font-size gap is treated as a hard
+// "different block" signal that overrides the text-only checks above - even an abbreviation-looking
+// merge shouldn't cross it. The ratio (not a flat px difference) tolerates the tiny floating-point
+// font-size variance pdf.js sometimes introduces between spans of the same line.
+const STYLE_MISMATCH_RATIO = 1.2;
+
+const hasStyleBreakBetween = (a: Node, b: Node): boolean => {
+  const sizeA = fontSizeOf(a);
+  const sizeB = fontSizeOf(b);
+  if (!sizeA || !sizeB) return false;
+
+  return Math.max(sizeA, sizeB) / Math.min(sizeA, sizeB) >= STYLE_MISMATCH_RATIO;
+};
+
 const expandToSentenceStart = (node: Node): Node | null => {
   let current = node;
 
@@ -91,12 +126,9 @@ const expandToSentenceStart = (node: Node): Node | null => {
     if (!prev) return current;
 
     const ownText = (current.textContent ?? '').trim();
-    const looksLikeStart = ownText !== '' && !STARTS_LOWERCASE.test(ownText);
-
-    if (looksLikeStart) {
-      const prevText = (prev.textContent ?? '').trim();
-      const isAbbreviation = ENDS_SENTENCE.test(prevText) && !hasSentenceBreakAt(prevText, ownText);
-      if (!isAbbreviation) return current;
+    const prevText = (prev.textContent ?? '').trim();
+    if (ownText !== '' && (isRealSentenceStart(prevText, ownText) || hasStyleBreakBetween(prev, current))) {
+      return current;
     }
 
     current = prev;
@@ -114,12 +146,9 @@ const expandToSentenceEnd = (node: Node): Node | null => {
 
     const ownText = (current.textContent ?? '').trim();
     const nextText = (next.textContent ?? '').trim();
-    const finished = ownText !== '' && ENDS_SENTENCE.test(ownText);
-
-    const shouldStop = finished
-      ? hasSentenceBreakAt(ownText, nextText)
-      : ownText !== '' && !STARTS_LOWERCASE.test(nextText);
-    if (shouldStop) return current;
+    if (ownText !== '' && (isRealSentenceEnd(ownText, nextText) || hasStyleBreakBetween(current, next))) {
+      return current;
+    }
 
     current = next;
   }
@@ -176,23 +205,27 @@ const extractOverlappingSentences = (start: Node, end: Node, range: Range): stri
   return text.slice(contextStart, contextEnd).trim();
 };
 
+const resolveSentenceContext = (range: Range): string => {
+  const scope = findExpansionScope(range);
+  if (!scope) return '';
+
+  const start = findSentenceStart(scope, range);
+  const end = findSentenceEnd(scope, range);
+  if (!start || !end) return '';
+
+  return extractOverlappingSentences(start, end, range);
+};
+
 export const getContext = (selection: Selection): string => {
   if (selection.rangeCount === 0) return '';
 
   const range = selection.getRangeAt(0);
-  const getSelectedText = () => selection.toString().trim();
+  const selectedText = selection.toString().trim();
 
   try {
-    const scope = findExpansionScope(range);
-    if (!scope) return getSelectedText();
-
-    const start = findSentenceStart(scope, range);
-    const end = findSentenceEnd(scope, range);
-    if (!start || !end) return getSelectedText();
-
-    return extractOverlappingSentences(start, end, range) || getSelectedText();
+    return resolveSentenceContext(range) || selectedText;
   } catch (err) {
     console.error(err);
-    return getSelectedText();
+    return selectedText;
   }
 };
