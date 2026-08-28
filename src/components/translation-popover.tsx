@@ -14,6 +14,11 @@ type TranslationData = {
   after: string | null;
 };
 
+// Long selections (a paragraph or more) aren't practical to translate in a popover, and matching the
+// Google Translate extension's own behavior, the button simply doesn't appear rather than truncating.
+// ~400 chars covers a single word up to several sentences while excluding full paragraphs.
+const MAX_SELECTION_LENGTH = 400;
+
 // getBoundingClientRect() unions every line the selection spans, so its right edge can sit far past
 // where the selection actually ends (e.g. a longer first line in a multi-line selection). The last
 // rect in DOM order is usually the selection's final line, but a PDF text layer's spans aren't
@@ -36,14 +41,12 @@ export const TranslationPopover: FC = () => {
 
   useSelection((selection) => {
     const range = correctRange(selection.getRangeAt(0));
+    const text = range.toString().trim();
+    if (text.length > MAX_SELECTION_LENGTH) return;
+
     const { before, after } = getContext(range);
 
-    setData({
-      rect: getEndRect(range),
-      before,
-      text: range.toString().trim(),
-      after,
-    });
+    setData({ rect: getEndRect(range), before, text, after });
     setOpen(false);
   });
 
