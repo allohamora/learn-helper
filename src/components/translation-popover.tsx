@@ -100,7 +100,9 @@ export const TranslationPopover: FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{data?.text}</DialogTitle>
-            <DialogDescription>{[data?.before, data?.text, data?.after].filter(Boolean).join(' ')}</DialogDescription>
+            <DialogDescription>
+              {JSON.stringify({ before: data?.before, text: data?.text, after: data?.after }, null, 2)}
+            </DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>
