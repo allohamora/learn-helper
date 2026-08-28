@@ -1,7 +1,7 @@
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSelection } from '@/hooks/use-selection';
-import { getAfter, getBefore } from '@/utils/selection';
+import { getContext } from '@/utils/selection';
 
 const setSelection = (node: Node, startOffset: number, endOffset: number) => {
   const range = document.createRange();
@@ -148,14 +148,15 @@ describe('useSelection', () => {
     expect(second).toHaveBeenCalledTimes(1);
   });
 
-  it('combines with getBefore/getAfter to resolve the word window around a settled selection', () => {
+  it('combines with getContext to resolve the word window around a settled selection', () => {
     paragraph.textContent = 'First sentence here. Second sentence here. Third sentence here.';
 
     const contexts: (string | null)[] = [];
     renderHook(() =>
       useSelection((selection) => {
         const range = selection.getRangeAt(0);
-        contexts.push(getBefore(range), getAfter(range));
+        const { before, after } = getContext(range);
+        contexts.push(before, after);
       }),
     );
 

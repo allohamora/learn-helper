@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useSelection } from '@/hooks/use-selection';
 import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
-import { getBefore, getAfter } from '@/utils/selection';
+import { getContext } from '@/utils/selection';
 
 type TranslationData = {
   rect: DOMRect;
@@ -36,12 +36,13 @@ export const TranslationPopover: FC = () => {
 
   useSelection((selection) => {
     const range = selection.getRangeAt(0);
+    const { before, after } = getContext(range);
 
     setData({
       rect: getEndRect(range),
-      before: getBefore(range),
+      before,
       text: selection.toString().trim(),
-      after: getAfter(range),
+      after,
     });
     setOpen(false);
   });

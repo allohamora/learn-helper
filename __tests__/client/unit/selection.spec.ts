@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { getAfter, getBefore } from '@/utils/selection';
+import { describe, expect, it, vi } from 'vitest';
+import { getContext } from '@/utils/selection';
 
 const makeRange = (setup: (range: Range) => void): Range => {
   const range = document.createRange();
@@ -7,7 +7,7 @@ const makeRange = (setup: (range: Range) => void): Range => {
   return range;
 };
 
-describe('getBefore / getAfter', () => {
+describe('getContext', () => {
   it('returns null on a side with nothing left, and the real words on the other', () => {
     const p = document.createElement('p');
     p.textContent = 'hello my girlfriend';
@@ -20,8 +20,7 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, 5);
     });
 
-    expect(getBefore(range)).toBeNull();
-    expect(getAfter(range)).toBe('my girlfriend');
+    expect(getContext(range)).toEqual({ before: null, after: 'my girlfriend' });
 
     p.remove();
   });
@@ -40,8 +39,7 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, end);
     });
 
-    expect(getBefore(range)).toBe('one two three');
-    expect(getAfter(range)).toBe('five six seven');
+    expect(getContext(range)).toEqual({ before: 'one two three', after: 'five six seven' });
 
     p.remove();
   });
@@ -60,8 +58,7 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, end);
     });
 
-    expect(getBefore(range)).toBe('a b c');
-    expect(getAfter(range)).toBe('d e f');
+    expect(getContext(range)).toEqual({ before: 'a b c', after: 'd e f' });
 
     p.remove();
   });
@@ -82,8 +79,10 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, end);
     });
 
-    expect(getBefore(range)).toBe(before.slice(-15).join(' '));
-    expect(getAfter(range)).toBe(after.slice(0, 15).join(' '));
+    expect(getContext(range)).toEqual({
+      before: before.slice(-15).join(' '),
+      after: after.slice(0, 15).join(' '),
+    });
 
     p.remove();
   });
@@ -104,8 +103,7 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, start + 'dude'.length);
     });
 
-    expect(getBefore(range)).toBe('I found something');
-    expect(getAfter(range)).toBe('we gonna be rich');
+    expect(getContext(range)).toEqual({ before: 'I found something', after: 'we gonna be rich' });
 
     container.remove();
   });
@@ -122,9 +120,147 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, 'Hello world'.length);
     });
 
-    expect(getAfter(range)).toBeNull();
+    expect(getContext(range).after).toBeNull();
 
     p.remove();
+  });
+
+  it('does not let a lone punctuation token, separated by whitespace, consume a slot in the word budget', () => {
+    // 16 real words with a stray comma token wedged after the first one - the comma must not eat
+    // one of the 15 slots, or the 16th real word (`word15`) would wrongly survive the cap instead.
+    const words = Array.from({ length: 16 }, (_, index) => `word${index}`);
+    const p = document.createElement('p');
+    p.textContent = `target ${words[0]} , ${words.slice(1).join(' ')}`;
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const range = makeRange((r) => {
+      r.setStart(textNode, 0);
+      r.setEnd(textNode, 'target'.length);
+    });
+
+    expect(getContext(range).after).toBe(`${words[0]} , ${words.slice(1, 15).join(' ')}`);
+
+    p.remove();
+  });
+
+  it('counts real dictionary words in a script with no spaces between them (e.g. Chinese), and caps the window the same way', () => {
+    // 20 distinct 2-character words on each side, verified to round-trip exactly through
+    // Intl.Segmenter - a run this long has no whitespace at all, so the old \S+ tokenizer would
+    // have treated each entire side as a single "word" and never truncated it.
+    const before = [
+      '你好',
+      '世界',
+      '测试',
+      '中文',
+      '学习',
+      '句子',
+      '目标',
+      '汉字',
+      '阅读',
+      '翻译',
+      '词语',
+      '段落',
+      '文章',
+      '语言',
+      '文字',
+      '历史',
+      '未来',
+      '城市',
+      '朋友',
+      '家庭',
+    ];
+    const after = [
+      '厨房',
+      '窗户',
+      '桌子',
+      '椅子',
+      '杯子',
+      '电脑',
+      '手机',
+      '钥匙',
+      '雨伞',
+      '眼镜',
+      '钱包',
+      '地图',
+      '日记',
+      '花园',
+      '海洋',
+      '山脉',
+      '河流',
+      '森林',
+      '沙漠',
+      '岛屿',
+    ];
+    const p = document.createElement('p');
+    p.textContent = `${before.join('')}TARGET${after.join('')}`;
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const text = textNode.textContent!;
+    const start = text.indexOf('TARGET');
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, start + 'TARGET'.length);
+    });
+
+    expect(getContext(range)).toEqual({
+      before: before.slice(-15).join(''),
+      after: after.slice(0, 15).join(''),
+    });
+
+    p.remove();
+  });
+
+  it('treats a non-breaking space as a word separator, not as part of the surrounding word', () => {
+    const p = document.createElement('p');
+    p.textContent = 'foo bar target baz qux';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const text = textNode.textContent!;
+    const start = text.indexOf('target');
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, start + 'target'.length);
+    });
+
+    expect(getContext(range)).toEqual({ before: 'foo bar', after: 'baz qux' });
+
+    p.remove();
+  });
+
+  it('returns null on both sides when the selection spans the entire scope', () => {
+    const p = document.createElement('p');
+    p.textContent = 'only text here';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const range = makeRange((r) => {
+      r.setStart(textNode, 0);
+      r.setEnd(textNode, textNode.textContent!.length);
+    });
+
+    expect(getContext(range)).toEqual({ before: null, after: null });
+
+    p.remove();
+  });
+
+  it('resolves offsets from an element-boundary Range, not just text-node boundaries', () => {
+    const container = document.createElement('div');
+    container.innerHTML = '<span>alpha beta</span><span>gamma</span><span>delta epsilon</span>';
+    document.body.appendChild(container);
+
+    // selects the entire middle <span> via child-index offsets on the container, rather than a
+    // text-node offset
+    const range = makeRange((r) => {
+      r.setStart(container, 1);
+      r.setEnd(container, 2);
+    });
+
+    expect(getContext(range)).toEqual({ before: 'alpha beta', after: 'delta epsilon' });
+
+    container.remove();
   });
 
   it('scopes to the shared container, and the window can cross into a sibling block without a .textLayer hint', () => {
@@ -143,8 +279,10 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, 5); // "words"
     });
 
-    expect(getBefore(range)).toBeNull();
-    expect(getAfter(range)).toBe('in the first paragraph words in the second paragraph');
+    expect(getContext(range)).toEqual({
+      before: null,
+      after: 'in the first paragraph words in the second paragraph',
+    });
 
     container.remove();
   });
@@ -173,8 +311,7 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, start + 'first'.length);
     });
 
-    expect(getBefore(range)).toBe('end of the');
-    expect(getAfter(range)).toBe('page');
+    expect(getContext(range)).toEqual({ before: 'end of the', after: 'page' });
 
     root.remove();
   });
@@ -206,13 +343,12 @@ describe('getBefore / getAfter', () => {
       r.setEnd(endNode, 'start'.length);
     });
 
-    expect(getBefore(range)).toBeNull();
-    expect(getAfter(range)).toBeNull();
+    expect(getContext(range)).toEqual({ before: null, after: null });
 
     root.remove();
   });
 
-  it('resolves getBefore and getAfter independently on the same Range', () => {
+  it('resolves before and after together from a single Range', () => {
     const p = document.createElement('p');
     p.textContent = 'Hello my beautiful world';
     document.body.appendChild(p);
@@ -226,9 +362,31 @@ describe('getBefore / getAfter', () => {
       r.setEnd(textNode, end);
     });
 
-    expect(getBefore(range)).toBe('Hello');
-    expect(getAfter(range)).toBe('beautiful world');
+    expect(getContext(range)).toEqual({ before: 'Hello', after: 'beautiful world' });
 
+    p.remove();
+  });
+
+  it('returns null on both sides and logs the error when a DOM operation throws', () => {
+    const p = document.createElement('p');
+    p.textContent = 'hello world';
+    document.body.appendChild(p);
+
+    const range = makeRange((r) => {
+      r.setStart(p.firstChild!, 0);
+      r.setEnd(p.firstChild!, 5);
+    });
+
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const createRangeSpy = vi.spyOn(document, 'createRange').mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    expect(getContext(range)).toEqual({ before: null, after: null });
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+
+    createRangeSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
     p.remove();
   });
 });
