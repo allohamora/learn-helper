@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useSelection } from '@/hooks/use-selection';
 import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
-import { getContext } from '@/utils/selection';
+import { getBefore, getAfter } from '@/utils/selection';
 
 type TranslationData = {
   rect: DOMRect;
+  before: string | null;
   text: string;
-  context: string;
+  after: string | null;
 };
 
 // getBoundingClientRect() unions every line the selection spans, so its right edge can sit far past
@@ -36,7 +37,12 @@ export const TranslationPopover: FC = () => {
   useSelection((selection) => {
     const range = selection.getRangeAt(0);
 
-    setData({ rect: getEndRect(range), text: selection.toString().trim(), context: getContext(selection) });
+    setData({
+      rect: getEndRect(range),
+      before: getBefore(range),
+      text: selection.toString().trim(),
+      after: getAfter(range),
+    });
     setOpen(false);
   });
 
@@ -90,7 +96,7 @@ export const TranslationPopover: FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{data?.text}</DialogTitle>
-            <DialogDescription>{data?.context}</DialogDescription>
+            <DialogDescription>{[data?.before, data?.text, data?.after].filter(Boolean).join(' ')}</DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>

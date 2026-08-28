@@ -1,7 +1,7 @@
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSelection } from '@/hooks/use-selection';
-import { getContext } from '@/utils/selection';
+import { getAfter, getBefore } from '@/utils/selection';
 
 const setSelection = (node: Node, startOffset: number, endOffset: number) => {
   const range = document.createRange();
@@ -148,16 +148,23 @@ describe('useSelection', () => {
     expect(second).toHaveBeenCalledTimes(1);
   });
 
-  it('combines with getContext to resolve the full sentence around a settled selection', () => {
+  it('combines with getBefore/getAfter to resolve the word window around a settled selection', () => {
     paragraph.textContent = 'First sentence here. Second sentence here. Third sentence here.';
 
-    const contexts: string[] = [];
-    renderHook(() => useSelection((selection) => contexts.push(getContext(selection))));
+    const contexts: (string | null)[] = [];
+    renderHook(() =>
+      useSelection((selection) => {
+        const range = selection.getRangeAt(0);
+        contexts.push(getBefore(range), getAfter(range));
+      }),
+    );
 
     // selects "Second" only, inside the middle sentence
-    setSelection(paragraph.firstChild!, 22, 28);
+    const text = paragraph.textContent!;
+    const start = text.indexOf('Second');
+    setSelection(paragraph.firstChild!, start, start + 'Second'.length);
     endPointerSelection();
 
-    expect(contexts).toEqual(['Second sentence here.']);
+    expect(contexts).toEqual(['First sentence here.', 'sentence here. Third sentence here.']);
   });
 });
