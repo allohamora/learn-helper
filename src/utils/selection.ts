@@ -4,6 +4,9 @@
 //   in unusual page layouts, not a hang, since the word window itself is still capped.
 // - getContext takes a single Range - a Firefox-only discontiguous multi-range selection
 //   (ctrl/cmd-click) is only ever resolved for whichever range the caller passes in.
+// - The <br> handling below only patches <br> itself, the confirmed pdf.js line-wrap artifact.
+//   Adjacent block-level elements (e.g. <p><p>) with no text node between them could plausibly glue
+//   words together the same way, but that's unverified here and left unhandled.
 
 const TEXT_LAYER_SELECTOR = '.textLayer';
 
@@ -38,11 +41,28 @@ const findExpansionScope = (range: Range): Element | null => {
   return leaf?.parentElement ?? leaf;
 };
 
-const getOffsetFrom = (boundary: Element, node: Node, offset: number) => {
+// pdf.js's text layer inserts an empty <br role="presentation"> at every line wrap (confirmed in
+// pdfjs-dist's TextLayer#appendText, on hasEOL). It contributes no characters to textContent or
+// Range.toString(), so two words split only by a wrap would otherwise glue together with nothing for
+// Intl.Segmenter to split on. Read each <br> as a single space by working against a detached clone,
+// so nothing here ever touches the live DOM.
+const withBreaksAsSpaces = (scope: Element): Element => {
+  const clone = scope.cloneNode(true) as Element;
+  clone.querySelectorAll('br').forEach((br) => br.replaceWith(document.createTextNode(' ')));
+  return clone;
+};
+
+// Range.toString() resolves both text-node and element/child-index boundary points correctly on its
+// own, so it's kept as the source of truth for the offset - only <br>s need correcting for, since
+// they're absent from Range.toString() the same way they're absent from textContent. cloneContents()
+// gives an exact, still-detached count of how many sit before this boundary.
+const getOffsetFrom = (scope: Element, node: Node, offset: number) => {
   const preRange = document.createRange();
-  preRange.setStart(boundary, 0);
+  preRange.setStart(scope, 0);
   preRange.setEnd(node, offset);
-  return preRange.toString().length;
+
+  const breaksBefore = preRange.cloneContents().querySelectorAll('br').length;
+  return preRange.toString().length + breaksBefore;
 };
 
 const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'word' });
@@ -69,7 +89,7 @@ export const getContext = (range: Range): { before: string | null; after: string
     const scope = findExpansionScope(range);
     if (!scope) return { before: null, after: null };
 
-    const text = scope.textContent ?? '';
+    const text = withBreaksAsSpaces(scope).textContent ?? '';
     const start = getOffsetFrom(scope, range.startContainer, range.startOffset);
     const end = getOffsetFrom(scope, range.endContainer, range.endOffset);
 

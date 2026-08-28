@@ -429,6 +429,44 @@ describe('getContext', () => {
     p.remove();
   });
 
+  it('treats a pdf.js line-wrap <br> as a word separator, not as glue between the surrounding words', () => {
+    const layer = document.createElement('div');
+    layer.className = 'textLayer';
+    layer.innerHTML = '<span>final</span><br><span>word target here</span>';
+    document.body.appendChild(layer);
+
+    const textNode = layer.children[2].firstChild!;
+    const text = textNode.textContent!;
+    const start = text.indexOf('target');
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, start + 'target'.length);
+    });
+
+    expect(getContext(range)).toEqual({ before: 'final word', after: 'here' });
+
+    layer.remove();
+  });
+
+  it('handles multiple line-wrap <br>s in the same scope, not just one', () => {
+    const layer = document.createElement('div');
+    layer.className = 'textLayer';
+    layer.innerHTML = '<span>first line</span><br><span>second line</span><br><span>third target line</span>';
+    document.body.appendChild(layer);
+
+    const textNode = layer.children[4].firstChild!;
+    const text = textNode.textContent!;
+    const start = text.indexOf('target');
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, start + 'target'.length);
+    });
+
+    expect(getContext(range)).toEqual({ before: 'first line second line third', after: 'line' });
+
+    layer.remove();
+  });
+
   it('returns null on both sides and logs the error when a DOM operation throws', () => {
     const p = document.createElement('p');
     p.textContent = 'hello world';
