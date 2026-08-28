@@ -18,8 +18,14 @@ const TEXT_LAYER_SELECTOR = '.textLayer';
 // 15 clears the bar (reaching one sentence back) without the extra, less-relevant text 25 adds.
 const CONTEXT_WORDS = 15;
 
+// nodeType/tagName, not instanceof - a node can come from another window (e.g. an iframe), whose
+// Element/Text/HTMLBRElement constructors differ from this window's, so instanceof would miss it.
+const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMENT_NODE;
+const isText = (node: Node): node is Text => node.nodeType === Node.TEXT_NODE;
+const isBrElement = (node: Node): boolean => isElement(node) && node.tagName === 'BR';
+
 const closestTextLayer = (node: Node): Element | null => {
-  const element = node instanceof Element ? node : node.parentElement;
+  const element = isElement(node) ? node : node.parentElement;
   return element?.closest(TEXT_LAYER_SELECTOR) ?? null;
 };
 
@@ -35,7 +41,7 @@ const findExpansionScope = (range: Range): Element | null => {
   if (startLayer || endLayer) return startLayer === endLayer ? startLayer : null;
 
   const { commonAncestorContainer } = range;
-  if (commonAncestorContainer instanceof Element) return commonAncestorContainer;
+  if (isElement(commonAncestorContainer)) return commonAncestorContainer;
 
   const leaf = commonAncestorContainer.parentElement;
   return leaf?.parentElement ?? leaf;
@@ -43,7 +49,7 @@ const findExpansionScope = (range: Range): Element | null => {
 
 // pdf.js's text layer inserts an empty <br role="presentation"> at every line wrap (confirmed in
 // pdfjs-dist's TextLayer#appendText, on hasEOL). Read as a word separator, same as any other node.
-const isTextOrBreak = (node: Node): boolean => node instanceof Text || node instanceof HTMLBRElement;
+const isTextOrBreak = (node: Node): boolean => isText(node) || isBrElement(node);
 
 const createContextWalker = (scope: Element) =>
   document.createTreeWalker(scope, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, (node) =>
@@ -98,7 +104,7 @@ const collectWords = (scope: Element, node: Node, offset: number, side: 'before'
   let buffer: string;
   let current: Node | null;
 
-  if (node instanceof Text) {
+  if (isText(node)) {
     buffer = forward ? node.data.slice(offset) : node.data.slice(0, offset);
     current = advanceFrom(node);
   } else {
@@ -108,7 +114,7 @@ const collectWords = (scope: Element, node: Node, offset: number, side: 'before'
   }
 
   while (current && wordLikeSegments(buffer).length <= CONTEXT_WORDS) {
-    const chunk = current instanceof Text ? current.data : ' ';
+    const chunk = isText(current) ? current.data : ' ';
     buffer = forward ? buffer + chunk : chunk + buffer;
     current = step();
   }
