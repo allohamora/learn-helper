@@ -42,27 +42,23 @@ const findExpansionScope = (range: Range): Element | null => {
 };
 
 // pdf.js's text layer inserts an empty <br role="presentation"> at every line wrap (confirmed in
-// pdfjs-dist's TextLayer#appendText, on hasEOL). It contributes no characters to textContent or
-// Range.toString(), so two words split only by a wrap would otherwise glue together with nothing for
-// Intl.Segmenter to split on. Read each <br> as a single space by working against a detached clone,
-// so nothing here ever touches the live DOM.
-const withBreaksAsSpaces = (scope: Element): Element => {
-  const clone = scope.cloneNode(true) as Element;
-  clone.querySelectorAll('br').forEach((br) => br.replaceWith(document.createTextNode(' ')));
-  return clone;
-};
+// pdfjs-dist's TextLayer#appendText, on hasEOL). Read as a word separator, same as any other node.
+const isTextOrBreak = (node: Node): boolean => node.nodeType === Node.TEXT_NODE || (node as Element).tagName === 'BR';
 
-// Range.toString() resolves both text-node and element/child-index boundary points correctly on its
-// own, so it's kept as the source of truth for the offset - only <br>s need correcting for, since
-// they're absent from Range.toString() the same way they're absent from textContent. cloneContents()
-// gives an exact, still-detached count of how many sit before this boundary.
-const getOffsetFrom = (scope: Element, node: Node, offset: number) => {
-  const preRange = document.createRange();
-  preRange.setStart(scope, 0);
-  preRange.setEnd(node, offset);
+const createContextWalker = (scope: Element) =>
+  document.createTreeWalker(scope, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, (node) =>
+    isTextOrBreak(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
+  );
 
-  const breaksBefore = preRange.cloneContents().querySelectorAll('br').length;
-  return preRange.toString().length + breaksBefore;
+// `edge` is the child sitting right at a Range's element/child-index boundary - descend into it to
+// find the nearest text/br inside, falling back to edge itself, or to walking past it, when it holds
+// no text/br content of its own.
+const seekEdge = (walker: TreeWalker, edge: Node, forward: boolean): Node | null => {
+  walker.currentNode = edge;
+  const descended = forward ? walker.firstChild() : walker.lastChild();
+  if (descended) return descended;
+  if (isTextOrBreak(edge)) return edge;
+  return forward ? walker.nextNode() : walker.previousNode();
 };
 
 const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'word' });
@@ -84,18 +80,53 @@ const takeWords = (text: string, count: number, side: 'before' | 'after'): strin
   return (side === 'before' ? text.slice(index) : text.slice(0, index)).trim();
 };
 
+// Walks scope outward from a Range boundary, gathering text/br content one node at a time, stopping
+// as soon as there's enough for takeWords to resolve the cut - so a call only ever reads as much of
+// scope as CONTEXT_WORDS actually needs, not the whole thing.
+const collectWords = (scope: Element, node: Node, offset: number, side: 'before' | 'after'): string => {
+  const forward = side === 'after';
+  const walker = createContextWalker(scope);
+  const step = () => (forward ? walker.nextNode() : walker.previousNode());
+
+  let buffer: string;
+  let current: Node | null;
+
+  if (node.nodeType === Node.TEXT_NODE) {
+    const data = (node as Text).data;
+    buffer = forward ? data.slice(offset) : data.slice(0, offset);
+    walker.currentNode = node;
+    current = step();
+  } else {
+    const edge = forward ? node.childNodes[offset] : node.childNodes[offset - 1];
+    buffer = '';
+    if (edge) {
+      current = seekEdge(walker, edge, forward);
+    } else {
+      walker.currentNode = node;
+      current = step();
+    }
+  }
+
+  while (current && wordLikeSegments(buffer).length <= CONTEXT_WORDS) {
+    const chunk = current.nodeType === Node.TEXT_NODE ? (current as Text).data : ' ';
+    buffer = forward ? buffer + chunk : chunk + buffer;
+    current = step();
+  }
+
+  return buffer;
+};
+
 export const getContext = (range: Range): { before: string | null; after: string | null } => {
   try {
     const scope = findExpansionScope(range);
     if (!scope) return { before: null, after: null };
 
-    const text = withBreaksAsSpaces(scope).textContent ?? '';
-    const start = getOffsetFrom(scope, range.startContainer, range.startOffset);
-    const end = getOffsetFrom(scope, range.endContainer, range.endOffset);
+    const before = collectWords(scope, range.startContainer, range.startOffset, 'before');
+    const after = collectWords(scope, range.endContainer, range.endOffset, 'after');
 
     return {
-      before: takeWords(text.slice(0, start), CONTEXT_WORDS, 'before'),
-      after: takeWords(text.slice(end), CONTEXT_WORDS, 'after'),
+      before: takeWords(before, CONTEXT_WORDS, 'before'),
+      after: takeWords(after, CONTEXT_WORDS, 'after'),
     };
   } catch (err) {
     console.error(err);

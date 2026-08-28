@@ -478,14 +478,14 @@ describe('getContext', () => {
     });
 
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const createRangeSpy = vi.spyOn(document, 'createRange').mockImplementation(() => {
+    const createTreeWalkerSpy = vi.spyOn(document, 'createTreeWalker').mockImplementation(() => {
       throw new Error('boom');
     });
 
     expect(getContext(range)).toEqual({ before: null, after: null });
     expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
 
-    createRangeSpy.mockRestore();
+    createTreeWalkerSpy.mockRestore();
     consoleErrorSpy.mockRestore();
     p.remove();
   });
