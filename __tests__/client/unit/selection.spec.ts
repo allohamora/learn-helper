@@ -87,6 +87,25 @@ describe('getContext', () => {
     p.remove();
   });
 
+  it('returns every word, untruncated, when a side has exactly CONTEXT_WORDS words', () => {
+    const words = Array.from({ length: 15 }, (_, index) => `word${index}`);
+    const p = document.createElement('p');
+    p.textContent = `${words.join(' ')} target ${words.join(' ')}`;
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const text = textNode.textContent!;
+    const start = text.indexOf('target');
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, start + 'target'.length);
+    });
+
+    expect(getContext(range)).toEqual({ before: words.join(' '), after: words.join(' ') });
+
+    p.remove();
+  });
+
   it('flattens text split across arbitrarily nested and sibling tags', () => {
     // mirrors a PDF text-layer shape: many spans, some nested, forming one flowing line.
     const container = document.createElement('div');
@@ -121,6 +140,23 @@ describe('getContext', () => {
     });
 
     expect(getContext(range).after).toBeNull();
+
+    p.remove();
+  });
+
+  it('returns null when the only remaining content on the before side has no real word characters', () => {
+    const p = document.createElement('p');
+    p.textContent = ',Hello world';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    // selects "Hello world", leaving only the leading "," as would-be "before" content
+    const range = makeRange((r) => {
+      r.setStart(textNode, 1);
+      r.setEnd(textNode, textNode.textContent!.length);
+    });
+
+    expect(getContext(range).before).toBeNull();
 
     p.remove();
   });
@@ -341,6 +377,32 @@ describe('getContext', () => {
     const range = makeRange((r) => {
       r.setStart(startNode, startText.indexOf('first'));
       r.setEnd(endNode, 'start'.length);
+    });
+
+    expect(getContext(range)).toEqual({ before: null, after: null });
+
+    root.remove();
+  });
+
+  it('returns null on both sides when only one end of the selection is inside a .textLayer', () => {
+    // e.g. a selection dragged from PDF text out into the surrounding, non-.textLayer chrome.
+    const root = document.createElement('div');
+
+    const layer = document.createElement('div');
+    layer.className = 'textLayer';
+    layer.textContent = 'inside the text layer';
+
+    const outside = document.createElement('div');
+    outside.textContent = 'outside any layer';
+
+    root.append(layer, outside);
+    document.body.appendChild(root);
+
+    const startNode = layer.firstChild!;
+    const endNode = outside.firstChild!;
+    const range = makeRange((r) => {
+      r.setStart(startNode, 0);
+      r.setEnd(endNode, 'outside'.length);
     });
 
     expect(getContext(range)).toEqual({ before: null, after: null });
