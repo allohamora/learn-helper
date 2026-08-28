@@ -19,7 +19,7 @@ const TEXT_LAYER_SELECTOR = '.textLayer';
 const CONTEXT_WORDS = 15;
 
 const closestTextLayer = (node: Node): Element | null => {
-  const element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  const element = node instanceof Element ? node : node.parentElement;
   return element?.closest(TEXT_LAYER_SELECTOR) ?? null;
 };
 
@@ -35,7 +35,7 @@ const findExpansionScope = (range: Range): Element | null => {
   if (startLayer || endLayer) return startLayer === endLayer ? startLayer : null;
 
   const { commonAncestorContainer } = range;
-  if (commonAncestorContainer.nodeType === Node.ELEMENT_NODE) return commonAncestorContainer as Element;
+  if (commonAncestorContainer instanceof Element) return commonAncestorContainer;
 
   const leaf = commonAncestorContainer.parentElement;
   return leaf?.parentElement ?? leaf;
@@ -43,7 +43,7 @@ const findExpansionScope = (range: Range): Element | null => {
 
 // pdf.js's text layer inserts an empty <br role="presentation"> at every line wrap (confirmed in
 // pdfjs-dist's TextLayer#appendText, on hasEOL). Read as a word separator, same as any other node.
-const isTextOrBreak = (node: Node): boolean => node.nodeType === Node.TEXT_NODE || (node as Element).tagName === 'BR';
+const isTextOrBreak = (node: Node): boolean => node instanceof Text || node instanceof HTMLBRElement;
 
 const createContextWalker = (scope: Element) =>
   document.createTreeWalker(scope, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, (node) =>
@@ -74,10 +74,13 @@ const takeWords = (text: string, count: number, side: 'before' | 'after'): strin
   if (words.length === 0) return null;
   if (words.length <= count) return text.trim();
 
-  const cut = side === 'before' ? words[words.length - count - 1] : words[count];
-  const index = side === 'before' ? cut.index + cut.segment.length : cut.index;
+  if (side === 'before') {
+    const cut = words[words.length - count - 1];
+    return text.slice(cut.index + cut.segment.length).trim();
+  }
 
-  return (side === 'before' ? text.slice(index) : text.slice(0, index)).trim();
+  const cut = words[count];
+  return text.slice(0, cut.index).trim();
 };
 
 // Walks scope outward from a Range boundary, gathering text/br content one node at a time, stopping
@@ -87,28 +90,25 @@ const collectWords = (scope: Element, node: Node, offset: number, side: 'before'
   const forward = side === 'after';
   const walker = createContextWalker(scope);
   const step = () => (forward ? walker.nextNode() : walker.previousNode());
+  const advanceFrom = (from: Node) => {
+    walker.currentNode = from;
+    return step();
+  };
 
   let buffer: string;
   let current: Node | null;
 
-  if (node.nodeType === Node.TEXT_NODE) {
-    const data = (node as Text).data;
-    buffer = forward ? data.slice(offset) : data.slice(0, offset);
-    walker.currentNode = node;
-    current = step();
+  if (node instanceof Text) {
+    buffer = forward ? node.data.slice(offset) : node.data.slice(0, offset);
+    current = advanceFrom(node);
   } else {
     const edge = forward ? node.childNodes[offset] : node.childNodes[offset - 1];
     buffer = '';
-    if (edge) {
-      current = seekEdge(walker, edge, forward);
-    } else {
-      walker.currentNode = node;
-      current = step();
-    }
+    current = edge ? seekEdge(walker, edge, forward) : advanceFrom(node);
   }
 
   while (current && wordLikeSegments(buffer).length <= CONTEXT_WORDS) {
-    const chunk = current.nodeType === Node.TEXT_NODE ? (current as Text).data : ' ';
+    const chunk = current instanceof Text ? current.data : ' ';
     buffer = forward ? buffer + chunk : chunk + buffer;
     current = step();
   }
