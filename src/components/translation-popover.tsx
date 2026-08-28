@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ const getEndRect = (range: Range): DOMRect => {
 export const TranslationPopover: FC = () => {
   const [data, setData] = useState<TranslationData | null>(null);
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useSelection((selection) => {
     const range = correctRange(selection.getRangeAt(0));
@@ -54,16 +55,28 @@ export const TranslationPopover: FC = () => {
 
   // The button's position is captured once, at selection end, as viewport coordinates - it doesn't
   // track scroll. Rather than keep it glued to text that's since scrolled elsewhere, it's dismissed
-  // on scroll. (Not dismissed on selectionchange: tapping the button itself collapses the browser
-  // selection first, same as any other click/tap outside it - clearing on that would remove the
-  // button from the DOM before its own click/tap had a chance to fire.)
+  // on scroll.
+  //
+  // It's also dismissed on any pointerdown outside itself, so clicking/tapping elsewhere on the page
+  // - which collapses the current selection - closes the stale button instead of leaving it stuck.
+  // This has to be pointerdown-outside rather than "selection collapsed": tapping the button itself
+  // also collapses the browser selection (same as any other click), and clearing on that would remove
+  // the button from the DOM before its own click/tap had a chance to fire.
   useEffect(() => {
     if (!data || open) return;
 
     const clear = () => setData(null);
+    const clearIfOutside = (event: PointerEvent) => {
+      if (!buttonRef.current?.contains(event.target as Node)) clear();
+    };
 
     window.addEventListener('scroll', clear, { passive: true });
-    return () => window.removeEventListener('scroll', clear);
+    document.addEventListener('pointerdown', clearIfOutside);
+
+    return () => {
+      window.removeEventListener('scroll', clear);
+      document.removeEventListener('pointerdown', clearIfOutside);
+    };
   }, [data, open]);
 
   return (
@@ -72,6 +85,7 @@ export const TranslationPopover: FC = () => {
         !open &&
         createPortal(
           <Button
+            ref={buttonRef}
             type="button"
             size="icon-sm"
             onClick={() => {
