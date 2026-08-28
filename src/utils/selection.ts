@@ -7,6 +7,10 @@
 // - The <br> handling below only patches <br> itself, the confirmed pdf.js line-wrap artifact.
 //   Adjacent block-level elements (e.g. <p><p>) with no text node between them could plausibly glue
 //   words together the same way, but that's unverified here and left unhandled.
+// - correctRange only expands a boundary that falls inside a single Text node's own .data - a word
+//   split across two sibling text nodes (e.g. <b>fo</b>o, selecting just the "fo") has no single Text
+//   node whose data contains the whole word, so the boundary is left where it is instead of being
+//   expanded across the tag boundary.
 
 const TEXT_LAYER_SELECTOR = '.textLayer';
 
@@ -70,6 +74,35 @@ const seekEdge = (walker: TreeWalker, edge: Node, forward: boolean): Node | null
 const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'word' });
 
 const wordLikeSegments = (text: string) => Array.from(WORD_SEGMENTER.segment(text)).filter((s) => s.isWordLike);
+
+// Finds the word-like segment in `text` that strictly contains `offset` - i.e. offset sits inside the
+// segment, not at either edge. An offset already at a word boundary, or on punctuation/whitespace
+// between words (not word-like, so never in wordLikeSegments' output), has no such segment.
+const enclosingWord = (text: string, offset: number) =>
+  wordLikeSegments(text).find((s) => s.index < offset && offset < s.index + s.segment.length);
+
+// Expands a Range boundary that falls strictly inside a word out to that word's full edges - e.g. a
+// drag-selection of just "ll" out of "hello" becomes the whole word, so the selected text and the
+// context derived from it (getContext) don't fracture at an arbitrary mid-word cut. Only a Text-node
+// boundary can land mid-word in the first place - an element/child-index boundary sits between nodes,
+// never inside one, so it's left untouched, same as elsewhere in this file. Returns a new Range via
+// cloneRange() - the input range is never mutated.
+export const correctRange = (range: Range): Range => {
+  const corrected = range.cloneRange();
+  const { startContainer, startOffset, endContainer, endOffset } = range;
+
+  if (isText(startContainer)) {
+    const word = enclosingWord(startContainer.data, startOffset);
+    if (word) corrected.setStart(startContainer, word.index);
+  }
+
+  if (isText(endContainer)) {
+    const word = enclosingWord(endContainer.data, endOffset);
+    if (word) corrected.setEnd(endContainer, word.index + word.segment.length);
+  }
+
+  return corrected;
+};
 
 // Slices the last/first `count` words out of `text`. The cut point sits at the neighboring
 // *excluded* word's edge rather than the counted word's own edge, so punctuation/whitespace between

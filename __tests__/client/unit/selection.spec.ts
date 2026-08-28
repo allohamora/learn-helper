@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getContext } from '@/utils/selection';
+import { correctRange, getContext } from '@/utils/selection';
 
 const makeRange = (setup: (range: Range) => void): Range => {
   const range = document.createRange();
@@ -487,6 +487,175 @@ describe('getContext', () => {
 
     createTreeWalkerSpy.mockRestore();
     consoleErrorSpy.mockRestore();
+    p.remove();
+  });
+});
+
+describe('correctRange', () => {
+  it('expands a mid-word start boundary out to the start of the word', () => {
+    const p = document.createElement('p');
+    p.textContent = 'hello world';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    // selects "llo" - mid-word start, word-aligned end
+    const range = makeRange((r) => {
+      r.setStart(textNode, 2);
+      r.setEnd(textNode, 5);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected.toString()).toBe('hello');
+    expect(corrected.startContainer).toBe(textNode);
+    expect(corrected.startOffset).toBe(0);
+    expect(corrected.endOffset).toBe(5);
+
+    p.remove();
+  });
+
+  it('expands a mid-word end boundary out to the end of the word', () => {
+    const p = document.createElement('p');
+    p.textContent = 'hello world';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    // selects "hello wo" - word-aligned start, mid-word end
+    const range = makeRange((r) => {
+      r.setStart(textNode, 0);
+      r.setEnd(textNode, 8);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected.toString()).toBe('hello world');
+    expect(corrected.endContainer).toBe(textNode);
+    expect(corrected.endOffset).toBe(11);
+
+    p.remove();
+  });
+
+  it('expands both boundaries when the selection starts and ends mid-word', () => {
+    const p = document.createElement('p');
+    p.textContent = 'one two three four';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const text = textNode.textContent!;
+    // selects from inside "two" through inside "three"
+    const start = text.indexOf('two') + 1;
+    const end = text.indexOf('three') + 2;
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, end);
+    });
+
+    expect(correctRange(range).toString()).toBe('two three');
+
+    p.remove();
+  });
+
+  it('leaves an already word-aligned selection untouched', () => {
+    const p = document.createElement('p');
+    p.textContent = 'hello world';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const range = makeRange((r) => {
+      r.setStart(textNode, 0);
+      r.setEnd(textNode, 5);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected).not.toBe(range);
+    expect(corrected.startContainer).toBe(range.startContainer);
+    expect(corrected.startOffset).toBe(range.startOffset);
+    expect(corrected.endContainer).toBe(range.endContainer);
+    expect(corrected.endOffset).toBe(range.endOffset);
+
+    p.remove();
+  });
+
+  it('leaves a boundary sitting in a run of whitespace untouched', () => {
+    const p = document.createElement('p');
+    p.textContent = 'hello  world';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const range = makeRange((r) => {
+      r.setStart(textNode, 5);
+      r.setEnd(textNode, 6);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected.startOffset).toBe(5);
+    expect(corrected.endOffset).toBe(6);
+
+    p.remove();
+  });
+
+  it('leaves a boundary sitting in a run of punctuation untouched', () => {
+    const p = document.createElement('p');
+    p.textContent = 'wait... what';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const range = makeRange((r) => {
+      r.setStart(textNode, 4);
+      r.setEnd(textNode, 5);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected.startOffset).toBe(4);
+    expect(corrected.endOffset).toBe(5);
+
+    p.remove();
+  });
+
+  it('leaves an element-boundary Range untouched', () => {
+    const container = document.createElement('div');
+    container.innerHTML = '<span>alpha beta</span><span>gamma</span><span>delta epsilon</span>';
+    document.body.appendChild(container);
+
+    // selects the entire middle <span> via child-index offsets on the container, not a text-node offset
+    const range = makeRange((r) => {
+      r.setStart(container, 1);
+      r.setEnd(container, 2);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected.startContainer).toBe(range.startContainer);
+    expect(corrected.startOffset).toBe(range.startOffset);
+    expect(corrected.endContainer).toBe(range.endContainer);
+    expect(corrected.endOffset).toBe(range.endOffset);
+
+    container.remove();
+  });
+
+  it('feeds getContext clean words instead of the fractured fragments a mid-word selection would leave', () => {
+    const p = document.createElement('p');
+    p.textContent = 'he said hello to him yesterday';
+    document.body.appendChild(p);
+
+    const textNode = p.firstChild!;
+    const text = textNode.textContent!;
+    // selects just "ll" out of "hello"
+    const start = text.indexOf('hello') + 2;
+    const end = start + 2;
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, end);
+    });
+
+    const corrected = correctRange(range);
+
+    expect(corrected.toString()).toBe('hello');
+    expect(getContext(corrected)).toEqual({ before: 'he said', after: 'to him yesterday' });
+
     p.remove();
   });
 });
