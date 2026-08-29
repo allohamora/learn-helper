@@ -19,7 +19,7 @@ type Props = {
 };
 
 const OVERSCAN_PAGES = 2; // approximates the old 800px pixel buffer, biased generous for short/landscape pages
-const PAGE_GAP_PX = 16;
+const PAGE_GAP_PX = 8;
 
 export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -121,7 +121,10 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   }, [virtualizer, headerHeight, pageSizes, totalPages]);
 
   return (
-    <div className="flex flex-col gap-4 pt-4 pb-20">
+    // -mx-4 cancels the shared layout's `.container` side padding, so pages render full-width on
+    // mobile (matching mozilla's own pdf.js viewer) rather than losing ~32px of width, and thus text
+    // size, to a gutter around a "card" that doesn't earn its keep on a small screen.
+    <div className="-mx-4 flex flex-col gap-4 pt-4 pb-20 md:mx-0">
       <TranslationPopover />
 
       <div ref={containerRef} className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4">
@@ -160,7 +163,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
                       width={containerWidth}
                       renderTextLayer
                       renderAnnotationLayer
-                      className="overflow-hidden rounded-lg border shadow-sm"
+                      className="overflow-hidden md:rounded-lg md:border md:shadow-sm"
                       loading={<Loader />}
                     />
                   </div>
