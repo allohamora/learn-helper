@@ -6,6 +6,7 @@ import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
+import { createLogger } from '../utils/logger.utils';
 import { getUploadFileWebStream, removeUploadFile, writeUploadFile } from '../uploads/uploads.service';
 import {
   createFile,
@@ -16,12 +17,16 @@ import {
   getReadingWithFileByIdAndUserId,
 } from './reading.repository';
 
+const logger = createLogger('reading.service');
+
 const getPdfPageCount = async (buffer: Buffer) => {
   try {
     const document = await getDocument({ data: new Uint8Array(buffer), useWorkerFetch: false }).promise;
 
     return document.numPages;
-  } catch {
+  } catch (err) {
+    logger.error({ err });
+
     throw Exception.badRequest('invalid or corrupted PDF file');
   }
 };
