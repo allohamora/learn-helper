@@ -90,6 +90,7 @@
   --status-learning: oklch(62.3% 0.214 259.815deg);
   --status-learned: oklch(76.9% 0.188 70.08deg);
   --status-known: oklch(72.3% 0.219 149.579deg);
+  --selection: oklch(55% 0.25 264deg / 25%);
 
   color-scheme: light dark;
 }
@@ -132,6 +133,7 @@
     --status-learning: oklch(70.7% 0.165 254.624deg);
     --status-learned: oklch(82.8% 0.189 84.429deg);
     --status-known: oklch(79.2% 0.209 151.711deg);
+    --selection: oklch(75% 0.18 264deg / 35%);
   }
 }
 
@@ -152,6 +154,40 @@
   html {
     @apply font-sans;
   }
+
+  /* stylelint-disable selector-class-pattern -- .textLayer is pdf.js's own class name */
+
+  /* Some mobile browsers force selected text to a visible color, ignoring pdf.js's `color:
+     transparent` on its text layer (an invisible copy of the page text, in an approximated font,
+     sitting over the canvas for selection/search) - revealing it mid-selection as text doubled/offset
+     from the real canvas glyphs underneath (confirmed upstream: mozilla/pdf.js#5225). An explicit
+     background is required alongside `color: transparent`, not just the browser default - without
+     one, some mobile browsers skip painting the selection highlight entirely when the selected text
+     itself is transparent. Uses our own theme's `--selection` token (light/dark, see :root above)
+     rather than the system `AccentColor`, so it matches the rest of the app's palette. */
+  .textLayer ::selection {
+    color: transparent;
+    background: var(--selection);
+  }
+
+  /* stylelint-disable-next-line selector-no-vendor-prefix -- ::-moz-selection is required for
+     Firefox, which doesn't match ::selection */
+  .textLayer ::-moz-selection {
+    color: transparent;
+    background: var(--selection);
+  }
+
+  /* Avoids a stray highlighted rectangle at pdf.js's line-wrap <br> markers in Chrome, same upstream
+     source as above. */
+  .textLayer br::selection {
+    background: transparent;
+  }
+
+  /* stylelint-disable-next-line selector-no-vendor-prefix -- see ::-moz-selection above */
+  .textLayer br::-moz-selection {
+    background: transparent;
+  }
+  /* stylelint-enable selector-class-pattern */
 }
 
 @layer utilities {

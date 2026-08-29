@@ -1,5 +1,11 @@
 import { useEffectEvent, useLayoutEffect } from 'react';
 
+// Android Chrome's long-press-to-select and its selection-handle drags are native, OS-level
+// gestures that often never dispatch a pointerup back to the page, so selectionchange is the only
+// reliable signal there. It fires on every intermediate handle movement though, so it's debounced
+// to only act once the selection settles.
+const SELECTION_CHANGE_DEBOUNCE_MS = 1000;
+
 export const useSelection = (callback: (selection: Selection) => void) => {
   const onSelect = useEffectEvent(callback);
 
@@ -16,12 +22,21 @@ export const useSelection = (callback: (selection: Selection) => void) => {
       onSelect(selection);
     };
 
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+    const handleSelectionChange = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(handleSelectionEnd, SELECTION_CHANGE_DEBOUNCE_MS);
+    };
+
     document.addEventListener('pointerup', handleSelectionEnd);
     document.addEventListener('keyup', handleSelectionEnd);
+    document.addEventListener('selectionchange', handleSelectionChange);
 
     return () => {
+      clearTimeout(debounceTimer);
       document.removeEventListener('pointerup', handleSelectionEnd);
       document.removeEventListener('keyup', handleSelectionEnd);
+      document.removeEventListener('selectionchange', handleSelectionChange);
     };
   }, []);
 };
