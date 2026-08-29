@@ -106,7 +106,14 @@ export const TranslationPopover: FC = () => {
             size="icon-sm"
             onClick={() => {
               window.getSelection()?.removeAllRanges();
-              setOpen(true);
+              // Clearing the selection starts an animated OS transition on mobile (the native
+              // copy/paste toolbar fading out) that isn't instant even though this call returns
+              // immediately - opening the dialog in the same tick shows both at once, mid-transition,
+              // stacked on top of each other. One frame's delay lets that transition actually finish
+              // first. Hypothesis's client (see its `guest.ts`) sidesteps this the same way: it clears
+              // the selection and lets its own toolbar disappear reactively, later, rather than
+              // forcing both transitions into the same instant.
+              requestAnimationFrame(() => setOpen(true));
             }}
             // The outline variant relies on ambient text color and a near-white border, both fine
             // for buttons living in the app's own chrome - but this one floats over arbitrary PDF
