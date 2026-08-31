@@ -173,7 +173,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
                       width={getPageWidth(item.index)}
                       renderTextLayer
                       renderAnnotationLayer
-                      className="overflow-hidden md:rounded-lg md:border md:shadow-sm"
+                      className="overflow-hidden md:shadow-sm"
                       loading={<Loader />}
                     />
                   </div>
