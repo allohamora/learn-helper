@@ -10,6 +10,7 @@ import {
   useRole,
   useTransitionStyles,
 } from '@floating-ui/react';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 type Options = {
   open: boolean;
@@ -61,12 +62,25 @@ export const useSelectionFloating = ({ open, onOpenChange, range, gapPx }: Optio
   // No ancestorScroll dismiss either - the panel now stays put through a scroll instead of vanishing,
   // so closing it is only ever explicit (an outside press, or the panel's own close button).
   //
-  // outsidePressEvent: 'click' (not the default 'pointerdown') matters specifically for touch - a
-  // scroll starts with a touch/pointerdown outside the panel same as a dismiss tap does, and the
-  // default would treat starting to scroll the page as a press to dismiss, before any scrolling even
-  // happens. A drag suppresses the click a plain tap would otherwise fire at gesture-end, so waiting
-  // for that lets a scroll pass through untouched while a genuine outside tap still dismisses.
-  const dismiss = useDismiss(context, { outsidePress: true, outsidePressEvent: 'click', ancestorScroll: false });
+  // outsidePressEvent needs to be 'click' rather than the default 'pointerdown' on touch specifically:
+  // a scroll starts with the same touchstart a dismiss tap does, and dismissing on that would close the
+  // panel the instant you start scrolling past it, before any scrolling even happens - a drag suppresses
+  // the click a plain tap would otherwise fire at gesture-end, so waiting for that lets a scroll pass
+  // through untouched while a genuine outside tap still dismisses.
+  //
+  // A mouse has no equivalent problem: wheel-scrolling never fires a pointerdown at all, and dragging
+  // the scrollbar itself is separately exempted by useDismiss's own scrollbar check - so a fine pointer
+  // can just use the plain 'pointerdown' default, which also sidesteps a different desktop-only wrinkle
+  // for free: a mouse drag that selects new text elsewhere on the page still ends in a real click
+  // (unlike a touch drag), which 'click' can't tell apart from a genuine dismiss press without extra
+  // bookkeeping. Dismissing on pointerdown instead means that click never reaches this check to begin
+  // with - the old popover already closed the moment the new drag started, exactly as clicking away to
+  // start a new selection should.
+  const isCoarsePointer = useMediaQuery('(pointer: coarse)');
+  const dismiss = useDismiss(context, {
+    outsidePressEvent: isCoarsePointer ? 'click' : 'pointerdown',
+    ancestorScroll: false,
+  });
   const role = useRole(context, { role: 'dialog' });
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, role]);
 

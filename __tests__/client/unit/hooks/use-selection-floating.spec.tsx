@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSelectionFloating } from '@/hooks/use-selection-floating';
 
 // happy-dom has no real layout engine, so getBoundingClientRect() always resolves to zeros - actual
@@ -39,8 +39,19 @@ const makeRange = (text: string): Range => {
   return range;
 };
 
-describe('useSelectionFloating', () => {
+describe('useSelectionFloating (fine pointer / mouse)', () => {
+  let matchMediaSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    matchMediaSpy = vi.spyOn(window, 'matchMedia').mockReturnValue({
+      matches: false, // '(pointer: coarse)' doesn't match -> fine pointer branch
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+  });
+
   afterEach(() => {
+    matchMediaSpy.mockRestore();
     cleanup();
     document.body.innerHTML = '';
   });
@@ -73,38 +84,47 @@ describe('useSelectionFloating', () => {
     expect(secondRect).not.toHaveBeenCalled(); // not read until something actually asks for the rect
   });
 
-  it('stays mounted while open, and calls onOpenChange(false) on an outside click', () => {
+  it('stays mounted while open, and calls onOpenChange(false) on an outside pointerdown', () => {
     const range = makeRange('hello world');
     const onOpenChange = vi.fn();
 
     render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
     expect(screen.getByTestId('floating')).toBeTruthy();
 
-    fireEvent.click(document.body);
+    // A mouse dismisses on pointerdown (Floating UI's own default), not click - see the comment in
+    // use-selection-floating.ts on why fine pointers don't need the click-based workaround touch does.
+    fireEvent.pointerDown(document.body);
 
     expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything(), 'outside-press');
   });
 
-  it('does not dismiss on a bare outside pointerdown, so starting a touch-scroll outside the panel does not close it', () => {
+  it('dismisses immediately on the pointerdown that starts a fresh drag-selection elsewhere on the page', () => {
     const range = makeRange('hello world');
     const onOpenChange = vi.fn();
+    const other = document.createElement('p');
+    other.textContent = 'a different paragraph';
+    document.body.appendChild(other);
 
     render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
 
-    // A drag/scroll gesture starts with the same pointerdown a dismiss tap does, but - unlike a tap -
-    // it suppresses the click that would otherwise fire at gesture-end. Listening for outside click
-    // rather than outside pointerdown is what lets a scroll started outside the panel pass through.
-    fireEvent.pointerDown(document.body);
+    // Dismissing on pointerdown means a mouse drag-selection's own terminal click, wherever it ends up,
+    // never has to be told apart from a genuine dismiss press - the old popover is already gone before
+    // the drag even starts.
+    fireEvent.pointerDown(other);
+    fireEvent.click(other);
 
-    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything(), 'outside-press');
+
+    other.remove();
   });
 
-  it('does not close on a click inside the floating panel itself', () => {
+  it('does not close on a press inside the floating panel itself', () => {
     const range = makeRange('hello world');
     const onOpenChange = vi.fn();
 
     render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
-    fireEvent.click(screen.getByTestId('floating'));
+    fireEvent.pointerDown(screen.getByTestId('floating'));
 
     expect(onOpenChange).not.toHaveBeenCalled();
   });
@@ -132,5 +152,58 @@ describe('useSelectionFloating', () => {
     rerender(<TestPanel open={false} onOpenChange={vi.fn()} range={range} />);
 
     await waitFor(() => expect(screen.queryByTestId('floating')).toBeNull());
+  });
+});
+
+describe('useSelectionFloating (coarse pointer / touch)', () => {
+  let matchMediaSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    matchMediaSpy = vi.spyOn(window, 'matchMedia').mockReturnValue({
+      matches: true, // '(pointer: coarse)' matches -> touch branch
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+  });
+
+  afterEach(() => {
+    matchMediaSpy.mockRestore();
+    cleanup();
+    document.body.innerHTML = '';
+  });
+
+  it('does not dismiss on a bare outside pointerdown, so starting a touch-scroll outside the panel does not close it', () => {
+    const range = makeRange('hello world');
+    const onOpenChange = vi.fn();
+
+    render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
+
+    // A drag/scroll gesture starts with the same pointerdown a dismiss tap does, but - unlike a tap -
+    // it suppresses the click that would otherwise fire at gesture-end. Listening for outside click
+    // rather than outside pointerdown is what lets a scroll started outside the panel pass through.
+    fireEvent.pointerDown(document.body);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('dismisses on an outside click, e.g. a genuine tap that (unlike a scroll) does fire one', () => {
+    const range = makeRange('hello world');
+    const onOpenChange = vi.fn();
+
+    render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
+
+    fireEvent.click(document.body);
+
+    expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything(), 'outside-press');
+  });
+
+  it('does not close on a click inside the floating panel itself', () => {
+    const range = makeRange('hello world');
+    const onOpenChange = vi.fn();
+
+    render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
+    fireEvent.click(screen.getByTestId('floating'));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });

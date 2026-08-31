@@ -151,6 +151,25 @@ describe('TranslationPopover (desktop)', () => {
     expect(screen.getByText('Some')).toBeTruthy();
   });
 
+  it('keeps a slow drag intact when the debounce path already opened the panel mid-gesture, before release', async () => {
+    render(<TranslationPopover />);
+
+    // Simulates a slow mouse drag that pauses while still held down: the debounced selectionchange
+    // path settles and opens the panel before the mouse is ever released, with no pointerup involved.
+    setSelection(paragraph.firstChild!, 0, 4);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    await screen.findByRole('button', { name: 'Translate selection' });
+
+    // The drag now finally ends on the exact same, already-tracked range - since no pointerdown ever
+    // occurred elsewhere on the page in between, nothing should have dismissed the panel or cleared
+    // the selection along the way, even though isSameRange means the final pointerup is a no-op.
+    endPointerSelection();
+
+    expect(await screen.findByRole('button', { name: 'Translate selection' })).toBeTruthy();
+    expect(window.getSelection()?.isCollapsed).toBe(false);
+    expect(window.getSelection()?.toString()).toBe('Some');
+  });
+
   it('still replaces the panel when a genuinely different selection is made while it is open', async () => {
     const other = document.createElement('p');
     other.textContent = 'A different sentence entirely.';
@@ -175,6 +194,32 @@ describe('TranslationPopover (desktop)', () => {
     other.remove();
   });
 
+  it('keeps a fresh selection highlighted after dragging it elsewhere while a previous panel is open', async () => {
+    const other = document.createElement('p');
+    other.textContent = 'A different sentence entirely.';
+    document.body.appendChild(other);
+
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    await screen.findByRole('button', { name: 'Translate selection' });
+
+    // A real mouse drag-selection starts with a pointerdown on the page, which - on a fine pointer -
+    // dismisses the previous panel immediately (see use-selection-floating.ts), before the drag even
+    // begins. The rest of the gesture then proceeds exactly as any fresh selection would.
+    fireEvent.pointerDown(other);
+    setSelection(other.firstChild!, 2, 11); // "different"
+    endPointerSelection();
+
+    expect(await screen.findByRole('button', { name: 'Translate selection' })).toBeTruthy();
+    expect(screen.queryByText('Some')).toBeNull();
+    expect(window.getSelection()?.isCollapsed).toBe(false);
+    expect(window.getSelection()?.toString()).toBe('different');
+
+    other.remove();
+  });
+
   it('clears the selection once the panel is closed via its close button', async () => {
     render(<TranslationPopover />);
 
@@ -193,14 +238,14 @@ describe('TranslationPopover (desktop)', () => {
     await waitFor(() => expect(screen.queryByText('Some')).toBeNull());
   });
 
-  it('clears the selection when the panel is dismissed by an outside click', async () => {
+  it('clears the selection when the panel is dismissed by an outside pointerdown', async () => {
     render(<TranslationPopover />);
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
     await screen.findByRole('button', { name: 'Translate selection' });
 
-    fireEvent.click(document.body);
+    fireEvent.pointerDown(document.body);
 
     expect(window.getSelection()?.isCollapsed).toBe(true);
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull());
