@@ -39,18 +39,41 @@ const isSameRange = (a: Range, b: Range) =>
   a.endContainer === b.endContainer &&
   a.endOffset === b.endOffset;
 
+// On-device testing traced the horizontal-page-narrowing bug specifically to this panel's size jump
+// from the small trigger icon (32px) to this much wider result panel - a minimal, ~80px stand-in for
+// this panel didn't trigger it, the full ~288px one reliably did. The exact threshold between those
+// two sizes isn't confirmed, but reliably reproducing on real Android Chrome hardware only (never in
+// desktop DevTools' mobile emulation) points to native Android/Chrome-for-Android UI behavior outside
+// this app's own layout, which is why every DOM/CSS-level fix tried so far (see project history) had
+// no effect - shrinking the jump itself is the one thing that's actually worked. w-56 (224px) is a
+// judgment call, not a confirmed-safe threshold - the width most likely to still need retuning.
+// md: (not a touch-device query) since this is a plain viewport-width breakpoint, same convention
+// pdf-reader.tsx already uses.
 const ResultContent: FC<{ data: TranslationData; onClose?: () => void }> = ({ data, onClose }) => (
-  <div className="w-72 rounded-md bg-popover p-3 text-popover-foreground shadow-md">
+  <div className="w-56 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
     <div className="flex items-start justify-between gap-2">
-      <p className="text-sm font-semibold">{data.text}</p>
+      <p className="min-w-0 text-sm font-semibold break-words">{data.text}</p>
       {onClose && (
-        <Button type="button" size="icon-xs" variant="ghost" onClick={onClose} className="-mt-1 -mr-1 shrink-0">
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          onClick={onClose}
+          // The panel's own mousedown guard (preventDefault, to preserve the selection through a
+          // click) has no reason to apply here specifically - closing already clears the selection
+          // immediately via onClose. Left in place, it can suppress the synthesized click entirely on
+          // some mobile browsers, so the first tap doesn't register as a click at all (only visible
+          // side effects of the raw, un-clicked mousedown/touch happen) and it takes a second tap to
+          // actually close. Stopping propagation here keeps that guard from ever seeing this press.
+          onMouseDown={(event) => event.stopPropagation()}
+          className="-mt-1 -mr-1 shrink-0"
+        >
           <XIcon />
           <span className="sr-only">Close</span>
         </Button>
       )}
     </div>
-    <pre className="mt-2 text-xs whitespace-pre-wrap text-muted-foreground">
+    <pre className="mt-2 text-xs break-words whitespace-pre-wrap text-muted-foreground">
       {JSON.stringify({ before: data.before, text: data.text, after: data.after }, null, 2)}
     </pre>
   </div>
