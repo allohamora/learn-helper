@@ -10,6 +10,9 @@ export default defineConfig(({ mode }) => {
   const { SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN } = loadEnv(mode, process.cwd(), '');
 
   return {
+    server: {
+      allowedHosts: true,
+    },
     resolve: { tsconfigPaths: true },
     plugins: [
       devtools(),
