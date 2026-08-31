@@ -209,7 +209,20 @@ export const TranslationPopover: FC = () => {
   // Popover) instead of clearing it up front, so it's cleared here instead - once the panel actually
   // closes, whatever reason that was (outside click, Escape, the panel's own close button).
   const onClear = () => {
-    window.getSelection()?.removeAllRanges();
+    const selection = window.getSelection();
+
+    // Android's native selection toolbar (Copy/Search/Share) isn't reliably tied to the Selection
+    // object's state - removeAllRanges() alone can leave it stuck on screen (confirmed, still-open
+    // upstream: WordPress/gutenberg#35447, no clean web-only fix even from their own core team).
+    // What Android does respond to is some kind of "action" on the selection - re-applying the same
+    // range via setBaseAndExtent (rather than mutating it) is the one thing their investigation found
+    // that reliably registers as one, before the actual clear below.
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      selection.setBaseAndExtent(range.startContainer, range.startOffset, range.startContainer, range.startOffset);
+    }
+
+    selection?.removeAllRanges();
     setData(null);
   };
 
