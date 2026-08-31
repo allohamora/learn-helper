@@ -172,9 +172,9 @@ describe('useSelection', () => {
     renderHook(() => useSelection(callback));
 
     setSelection(paragraph.firstChild!, 0, 4);
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(50);
     setSelection(paragraph.firstChild!, 0, 9);
-    vi.advanceTimersByTime(100);
+    vi.advanceTimersByTime(50);
     setSelection(paragraph.firstChild!, 0, 15);
     vi.runAllTimers();
 
