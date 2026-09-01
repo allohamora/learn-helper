@@ -41,6 +41,8 @@ const makeRange = (text: string): Range => {
 
 describe('useSelectionFloating (fine pointer / mouse)', () => {
   let matchMediaSpy: ReturnType<typeof vi.spyOn>;
+  let originalIntersectionObserver: typeof IntersectionObserver;
+  let originalResizeObserver: typeof ResizeObserver;
 
   beforeEach(() => {
     matchMediaSpy = vi.spyOn(window, 'matchMedia').mockReturnValue({
@@ -48,10 +50,14 @@ describe('useSelectionFloating (fine pointer / mouse)', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     } as unknown as MediaQueryList);
+    originalIntersectionObserver = globalThis.IntersectionObserver;
+    originalResizeObserver = globalThis.ResizeObserver;
   });
 
   afterEach(() => {
     matchMediaSpy.mockRestore();
+    globalThis.IntersectionObserver = originalIntersectionObserver;
+    globalThis.ResizeObserver = originalResizeObserver;
     cleanup();
     document.body.innerHTML = '';
   });
@@ -156,7 +162,6 @@ describe('useSelectionFloating (fine pointer / mouse)', () => {
       disconnect = vi.fn();
       takeRecords = vi.fn(() => []);
     }
-    const OriginalIntersectionObserver = globalThis.IntersectionObserver;
     globalThis.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
 
     render(<TestPanel open={true} onOpenChange={vi.fn()} range={range} />);
@@ -166,7 +171,6 @@ describe('useSelectionFloating (fine pointer / mouse)', () => {
 
     expect(FakeIntersectionObserver.instances).toHaveLength(0);
 
-    globalThis.IntersectionObserver = OriginalIntersectionObserver;
     paragraph.remove();
   });
 
@@ -193,7 +197,6 @@ describe('useSelectionFloating (fine pointer / mouse)', () => {
       unobserve = vi.fn();
       disconnect = vi.fn();
     }
-    const OriginalResizeObserver = globalThis.ResizeObserver;
     globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
 
     const paragraph = document.createElement('p');
@@ -218,7 +221,6 @@ describe('useSelectionFloating (fine pointer / mouse)', () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
-    globalThis.ResizeObserver = OriginalResizeObserver;
     paragraph.remove();
   });
 
