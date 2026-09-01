@@ -49,6 +49,7 @@ const getGeneralStatistics = async (userId: string) => {
     totalItemsRemovedFromList: 0,
     totalReadingsUploaded: 0,
     totalReadingsDeleted: 0,
+    totalReadingSelectionTranslationsGenerated: 0,
     totalAiCostsInNanoDollars: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
@@ -141,6 +142,16 @@ const getGeneralStatistics = async (userId: string) => {
         continue;
       case EventType.ReadingDeleted:
         result.totalReadingsDeleted = item.count;
+        continue;
+      case EventType.ReadingSelectionTranslationGenerated:
+        if (item.costInNanoDollars === null) {
+          throw new Error(`CostInNanoDollars is null for translation generation events: ${JSON.stringify(item)}`);
+        }
+
+        result.totalReadingSelectionTranslationsGenerated = item.count;
+        result.totalAiCostsInNanoDollars += item.costInNanoDollars;
+        result.totalInputTokens += item.inputTokens ?? 0;
+        result.totalOutputTokens += item.outputTokens ?? 0;
         continue;
       default: {
         const exhaustiveCheck: never = item.type;

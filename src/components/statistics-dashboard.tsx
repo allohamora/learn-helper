@@ -9,6 +9,7 @@ import {
   Database,
   DollarSign,
   History,
+  Languages,
   Lightbulb,
   Pencil,
   RotateCcw,
@@ -351,6 +352,12 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
       value: general.totalReadingsDeleted.toLocaleString(),
       description: 'readings deleted',
       icon: BookX,
+    },
+    {
+      title: 'Reading Selections Translated',
+      value: general.totalReadingSelectionTranslationsGenerated.toLocaleString(),
+      description: 'reading selections translated by ai',
+      icon: Languages,
     },
   ];
 

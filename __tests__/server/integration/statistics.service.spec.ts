@@ -67,6 +67,7 @@ describe('statisticsService', () => {
       totalItemsRemovedFromList: 0,
       totalReadingsUploaded: 0,
       totalReadingsDeleted: 0,
+      totalReadingSelectionTranslationsGenerated: 0,
       totalAiCostsInNanoDollars: 0,
       totalInputTokens: 0,
       totalOutputTokens: 0,
@@ -217,6 +218,20 @@ describe('statisticsService', () => {
         userId: USER_ID,
         type: EventType.ReadingDeleted,
       },
+      {
+        userId: USER_ID,
+        type: EventType.ReadingSelectionTranslationGenerated,
+        costInNanoDollars: 200_000_000,
+        inputTokens: 80,
+        outputTokens: 160,
+      },
+      {
+        userId: USER_ID,
+        type: EventType.ReadingSelectionTranslationGenerated,
+        costInNanoDollars: 100_000_000,
+        inputTokens: 20,
+        outputTokens: 40,
+      },
     ]);
 
     const otherUserId = 'other-statistics-user';
@@ -246,9 +261,10 @@ describe('statisticsService', () => {
       totalItemsRemovedFromList: 1,
       totalReadingsUploaded: 1,
       totalReadingsDeleted: 1,
-      totalAiCostsInNanoDollars: 6_000_000_000,
-      totalInputTokens: 2400,
-      totalOutputTokens: 4800,
+      totalReadingSelectionTranslationsGenerated: 2,
+      totalAiCostsInNanoDollars: 6_300_000_000,
+      totalInputTokens: 2500,
+      totalOutputTokens: 5000,
       totalLearningDurationMs: 16000,
       totalDiscoveringDurationMs: 5000,
       averageTimePerTaskMs: 4000,
@@ -257,9 +273,9 @@ describe('statisticsService', () => {
     expect(result.costPerDay).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          costInNanoDollars: 6_000_000_000,
-          inputTokens: 2400,
-          outputTokens: 4800,
+          costInNanoDollars: 6_300_000_000,
+          inputTokens: 2500,
+          outputTokens: 5000,
         }),
       ]),
     );
