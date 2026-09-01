@@ -196,7 +196,13 @@ export const TranslationPopover: FC = () => {
       // translated text/context - nothing downstream needs the Range object itself, only these strings.
       const corrected = correctRange(range);
       const text = corrected.toString().trim();
-      if (text.length > MAX_SELECTION_LENGTH) return;
+      // Growing an already-tracked selection past the limit must actively clear `data`, not just skip
+      // setting it - otherwise the popover stays anchored to the old, now-stale range instead of
+      // disappearing, since nothing else re-renders it once this returns.
+      if (text.length > MAX_SELECTION_LENGTH) {
+        setData(null);
+        return;
+      }
 
       const { before, after } = getContext(corrected);
 

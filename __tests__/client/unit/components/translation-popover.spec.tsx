@@ -305,6 +305,21 @@ describe('TranslationPopover (desktop)', () => {
     expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
   });
 
+  it('hides an already-shown trigger when the selection grows past the max translatable length', async () => {
+    const longText = 'word '.repeat(90).trim(); // well over the 400-char cap
+    paragraph.textContent = longText;
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, 4); // "word" - short, well under the cap
+    endPointerSelection();
+    await screen.findByRole('button', { name: 'Translate selection' });
+
+    setSelection(paragraph.firstChild!, 0, longText.length); // extend to the whole, over-cap text
+    endPointerSelection();
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull());
+  });
+
   it('shows the surrounding context alongside the selected text in the result panel', async () => {
     paragraph.textContent = 'one two three four five six seven';
     render(<TranslationPopover />);
