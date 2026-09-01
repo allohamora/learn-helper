@@ -7,11 +7,11 @@ import { nitro } from 'nitro/vite';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
 
 export default defineConfig(({ mode }) => {
-  const { SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN } = loadEnv(mode, process.cwd(), '');
+  const { SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN, BETTER_AUTH_URL } = loadEnv(mode, process.cwd(), '');
 
   return {
     server: {
-      allowedHosts: true,
+      allowedHosts: BETTER_AUTH_URL ? [new URL(BETTER_AUTH_URL).hostname] : undefined,
     },
     resolve: { tsconfigPaths: true },
     plugins: [
