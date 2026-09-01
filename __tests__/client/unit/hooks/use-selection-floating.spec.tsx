@@ -129,6 +129,99 @@ describe('useSelectionFloating (fine pointer / mouse)', () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
+  it('never lets the real, unmocked autoUpdate set up IntersectionObserver-based move tracking on the reference, so ordinary scrolling cannot re-read a Range the PDF reader has since unmounted', async () => {
+    // Real @floating-ui/dom, untouched: `layoutShift`'s `observeMove` reads the reference's own
+    // getBoundingClientRect() first and bails out before constructing anything if width/height are
+    // zero - which happy-dom's contextElement always reports, having no real layout engine. Stubbing
+    // just that one rect to something non-zero is what actually lets the real, unmocked code reach
+    // `new IntersectionObserver(...)` in this environment, so this exercises the genuine code path
+    // rather than a hand-rolled substitute for it.
+    const paragraph = document.createElement('p');
+    paragraph.textContent = 'hello world';
+    document.body.appendChild(paragraph);
+    vi.spyOn(paragraph, 'getBoundingClientRect').mockReturnValue(
+      new DOMRect(0, 0, 100, 20), // real browsers report the same non-zero rect that triggers this
+    );
+    const range = document.createRange();
+    range.setStart(paragraph.firstChild!, 0);
+    range.setEnd(paragraph.firstChild!, 'hello world'.length);
+
+    class FakeIntersectionObserver {
+      static instances: FakeIntersectionObserver[] = [];
+      constructor() {
+        FakeIntersectionObserver.instances.push(this);
+      }
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+      takeRecords = vi.fn(() => []);
+    }
+    const OriginalIntersectionObserver = globalThis.IntersectionObserver;
+    globalThis.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
+
+    render(<TestPanel open={true} onOpenChange={vi.fn()} range={range} />);
+
+    // autoUpdate wires up its observers asynchronously once both elements are mounted.
+    await waitFor(() => expect(screen.getByTestId('floating')).toBeTruthy());
+
+    expect(FakeIntersectionObserver.instances).toHaveLength(0);
+
+    globalThis.IntersectionObserver = OriginalIntersectionObserver;
+    paragraph.remove();
+  });
+
+  it('closes the popover instead of repositioning once the reference goes stale (a zero rect), rather than anchoring to a reference that no longer means anything', async () => {
+    // A genuinely disconnected node reports a zero rect, but so does react-pdf's real text layer: its
+    // virtualized page slots get reused for a different page's content mid-scroll rather than
+    // unmounted, so the old Range's nodes stay attached (isConnected can't tell stale from live here)
+    // but still briefly report a zero rect while their content is swapped out - a real selection is
+    // never actually 0x0. Either way, this is what use-selection-floating.ts must catch.
+    //
+    // elementResize (left enabled - see the comment in use-selection-floating.ts) is what notifies the
+    // hook of this in the first place: happy-dom has no real ResizeObserver that fires on its own, so
+    // this stands in for the browser's ResizeObserver constructor - not for @floating-ui/react itself,
+    // which runs real and unmocked - and manually fires the notification a real one would send once the
+    // selection's page gets recycled, to exercise the genuine autoUpdate wiring around it.
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      callback: ResizeObserverCallback;
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        FakeResizeObserver.instances.push(this);
+      }
+      observe = vi.fn();
+      unobserve = vi.fn();
+      disconnect = vi.fn();
+    }
+    const OriginalResizeObserver = globalThis.ResizeObserver;
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+
+    const paragraph = document.createElement('p');
+    paragraph.textContent = 'hello world';
+    document.body.appendChild(paragraph);
+    const rectSpy = vi.spyOn(paragraph, 'getBoundingClientRect').mockReturnValue(new DOMRect(50, 100, 200, 20));
+
+    const range = document.createRange();
+    range.setStart(paragraph.firstChild!, 0);
+    range.setEnd(paragraph.firstChild!, 'hello world'.length);
+    vi.spyOn(range, 'getBoundingClientRect').mockImplementation(() => paragraph.getBoundingClientRect());
+
+    const onOpenChange = vi.fn();
+    render(<TestPanel open={true} onOpenChange={onOpenChange} range={range} />);
+    await waitFor(() => expect(FakeResizeObserver.instances.length).toBeGreaterThan(0));
+
+    // The reference goes stale (recycled for different content) and starts reporting a zero rect.
+    rectSpy.mockReturnValue(new DOMRect(0, 0, 0, 0));
+
+    // Simulate the browser notifying autoUpdate's real ResizeObserver callback of a resize.
+    FakeResizeObserver.instances.forEach((instance) => instance.callback([], instance as unknown as ResizeObserver));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+
+    globalThis.ResizeObserver = OriginalResizeObserver;
+    paragraph.remove();
+  });
+
   it('does not dismiss or re-read the reference rect on a scroll, so it survives the PDF reader scrolling past and back', () => {
     const range = makeRange('hello world');
     const onOpenChange = vi.fn();
