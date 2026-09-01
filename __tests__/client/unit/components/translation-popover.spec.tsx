@@ -15,6 +15,7 @@ const setSelection = (node: Node, startOffset: number, endOffset: number) => {
 };
 
 const endPointerSelection = () => document.dispatchEvent(new Event('pointerup'));
+const endKeySelection = () => document.dispatchEvent(new Event('keyup'));
 
 describe('TranslationPopover (desktop)', () => {
   let matchMediaSpy: ReturnType<typeof vi.spyOn>;
@@ -249,6 +250,109 @@ describe('TranslationPopover (desktop)', () => {
 
     expect(window.getSelection()?.isCollapsed).toBe(true);
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull());
+  });
+
+  it('also clears the selection when the open result panel is dismissed by an outside pointerdown', async () => {
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('Some');
+
+    fireEvent.pointerDown(document.body);
+
+    expect(window.getSelection()?.isCollapsed).toBe(true);
+    await waitFor(() => expect(screen.queryByText('Some')).toBeNull());
+  });
+
+  it("re-applies the selection range via setBaseAndExtent before clearing it, to dismiss Android's native selection toolbar", async () => {
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    const selection = window.getSelection()!;
+    const setBaseAndExtentSpy = vi.spyOn(selection, 'setBaseAndExtent');
+
+    const closeButton = await (async () => {
+      fireEvent.mouseDown(trigger);
+      fireEvent.click(trigger);
+      await screen.findByText('Some');
+      return screen.getByRole('button', { name: 'Close' });
+    })();
+    fireEvent.click(closeButton);
+
+    expect(setBaseAndExtentSpy).toHaveBeenCalledWith(paragraph.firstChild, 0, paragraph.firstChild, 0);
+    setBaseAndExtentSpy.mockRestore();
+  });
+
+  it('does not show a trigger for a selection longer than the max translatable length', async () => {
+    const longText = 'word '.repeat(90).trim(); // well over the 400-char cap
+    paragraph.textContent = longText;
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, longText.length);
+    endPointerSelection();
+
+    // No RAF/selection event ever resolves into a trigger here, so there's nothing to await -
+    // give the RAF-deferred handler a chance to run before asserting its absence.
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
+  });
+
+  it('shows the surrounding context alongside the selected text in the result panel', async () => {
+    paragraph.textContent = 'one two three four five six seven';
+    render(<TranslationPopover />);
+
+    const text = paragraph.firstChild!.textContent!;
+    const start = text.indexOf('four');
+    setSelection(paragraph.firstChild!, start, start + 'four'.length);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('four');
+
+    const contextText = document.querySelector('pre')!.textContent!;
+    expect(contextText).toContain('one two three');
+    expect(contextText).toContain('five six seven');
+  });
+
+  it('shows the trigger button once a keyboard-driven selection settles', async () => {
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endKeySelection();
+
+    expect(await screen.findByRole('button', { name: 'Translate selection' })).toBeTruthy();
+  });
+
+  it("keeps the later selection when two selections are made before the first one's RAF frame runs", async () => {
+    const other = document.createElement('p');
+    other.textContent = 'A different sentence entirely.';
+    document.body.appendChild(other);
+
+    render(<TranslationPopover />);
+
+    setSelection(paragraph.firstChild!, 0, 4); // "Some"
+    endPointerSelection();
+    setSelection(other.firstChild!, 2, 11); // "different"
+    endPointerSelection();
+
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+
+    expect(await screen.findByText('different')).toBeTruthy();
+    expect(screen.queryByText('Some')).toBeNull();
+
+    other.remove();
   });
 });
 
