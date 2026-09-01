@@ -39,18 +39,19 @@ const isSameRange = (a: Range, b: Range) =>
   a.endContainer === b.endContainer &&
   a.endOffset === b.endOffset;
 
-// On-device testing traced the horizontal-page-narrowing bug specifically to this panel's size jump
-// from the small trigger icon (32px) to this much wider result panel - a minimal, ~80px stand-in for
-// this panel didn't trigger it, the full ~288px one reliably did. The exact threshold between those
-// two sizes isn't confirmed, but reliably reproducing on real Android Chrome hardware only (never in
-// desktop DevTools' mobile emulation) points to native Android/Chrome-for-Android UI behavior outside
-// this app's own layout, which is why every DOM/CSS-level fix tried so far (see project history) had
-// no effect - shrinking the jump itself is the one thing that's actually worked. w-56 (224px) is a
-// judgment call, not a confirmed-safe threshold - the width most likely to still need retuning.
-// md: (not a touch-device query) since this is a plain viewport-width breakpoint, same convention
+// A small, bidirectional horizontal pan used to become available on real Android Chrome hardware
+// (never reproduced on desktop or in DevTools' mobile emulation) whenever this panel was open, gone
+// again the instant it closed - overflow-x: clip on html/body and removing every floating-ui
+// middleware both had zero effect, so it isn't page layout/overflow. The likely cause is the Popover
+// trigger's removeAllRanges()/addRange() dance re-poking the native Selection specifically to dismiss
+// Android's own selection toolbar (see that onClick below) reacting to this panel's size - i.e. native
+// browser chrome, not something CSS on this panel can reach. w-56 (and the original w-72) reproduced
+// it; w-54 and everything smaller tried (w-52, w-44) were confirmed on-device to not reproduce it - so
+// w-54 here is the largest confirmed-safe width. md: (not a touch-device query) since this is a plain
+// viewport-width breakpoint, same convention
 // pdf-reader.tsx already uses.
 const ResultContent: FC<{ data: TranslationData; onClose?: () => void }> = ({ data, onClose }) => (
-  <div className="w-56 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
+  <div className="w-54 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
     <div className="flex items-start justify-between gap-2">
       <p className="min-w-0 text-sm font-semibold break-words">{data.text}</p>
       {onClose && (
