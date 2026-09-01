@@ -200,6 +200,7 @@ erDiagram
 - reading-uploaded
 - reading-downloaded
 - reading-deleted
+- reading-selection-translation-generated
 
 ### user_vocabulary_item_task_type
 

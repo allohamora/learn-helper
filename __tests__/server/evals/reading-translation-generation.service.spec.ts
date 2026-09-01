@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { generateTranslationData } from '@/server/translation/translation-generation.service';
-import type { TranslatedSelectionDto } from '@/server/translation/dtos/translated-selection.dto';
+import {
+  generateTranslationData,
+  type TranslatedSelectionDto,
+} from '@/server/reading/reading-translation-generation.service';
 
-describe.concurrent('translation-generation.service', () => {
+describe.concurrent('reading-translation-generation.service', () => {
   const assertShape = (output: TranslatedSelectionDto) => {
     expect(typeof output.uaTranslation).toBe('string');
     expect(output.uaTranslation.length).toBeGreaterThan(0);

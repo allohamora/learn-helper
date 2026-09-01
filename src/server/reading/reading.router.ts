@@ -17,8 +17,16 @@ import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
 import { readingDto } from './dtos/reading.dto';
+import { translateSelectionDto } from './dtos/translate-selection.dto';
+import { translateSelectionResultDto } from './dtos/translate-selection-result.dto';
 import { getReadingsByUserId } from './reading.repository';
-import { downloadReading, getReadingByIdAndUserIdOrThrow, removeReading, uploadReading } from './reading.service';
+import {
+  downloadReading,
+  getReadingByIdAndUserIdOrThrow,
+  removeReading,
+  translateReadingSelection,
+  uploadReading,
+} from './reading.service';
 
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 
@@ -206,5 +214,43 @@ export const readingRouter = new OpenAPIHono()
       c.header('Content-Disposition', `inline; filename="${fileName}"`);
 
       return c.newResponse(await getStream(), 200);
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'post',
+      path: '/{readingId}/translations',
+      tags: ['Translation'],
+      request: {
+        params: z.object({ readingId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: translateSelectionDto,
+            },
+          },
+        },
+      },
+      responses: {
+        ...successOkResponse({
+          description: 'Translation of the selected text, and whether it is short enough to add to the learning list',
+          schema: translateSelectionResultDto,
+        }),
+        ...errorNotFoundResponse({ description: 'The reading was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware, rateLimit({ count: 30, durationSec: 60 })] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { readingId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await translateReadingSelection({ userId: user.id, readingId, ...body }),
+        }),
+      );
     },
   );

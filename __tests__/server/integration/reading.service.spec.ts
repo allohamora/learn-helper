@@ -1,16 +1,20 @@
+import * as readingTranslationGenerationService from '@/server/reading/reading-translation-generation.service';
 import * as fsp from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { db } from '@/server/db/db.service';
-import { user } from '@/server/db/db.schema';
+import { event, user } from '@/server/db/db.schema';
 import { createFile, createReading } from '@/server/reading/reading.repository';
 import {
   downloadReading,
   getReadingByIdAndUserIdOrThrow,
   getReadingWithFileByIdAndUserIdOrThrow,
+  translateReadingSelection,
 } from '@/server/reading/reading.service';
 import { Exception } from '@/server/utils/exception.utils';
+import { EventType } from '@/const/event';
 
 const USER_ID = 'reading-service-user';
 
@@ -139,6 +143,104 @@ describe('reading.service', () => {
       await expect(
         getReadingWithFileByIdAndUserIdOrThrow({ userId: USER_ID, readingId: '00000000-0000-0000-0000-000000000000' }),
       ).rejects.toThrow(Exception);
+    });
+  });
+
+  describe('translateReadingSelection', () => {
+    let generateSpy: MockInstance<typeof readingTranslationGenerationService.generateTranslationData>;
+
+    beforeEach(() => {
+      generateSpy = vi.spyOn(readingTranslationGenerationService, 'generateTranslationData');
+    });
+
+    afterEach(() => {
+      generateSpy.mockRestore();
+    });
+
+    it('returns the translation and logs a cost event tied to the reading', async () => {
+      await seedUser(USER_ID);
+      const reading = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'бігти', isLearnable: true },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      const result = await translateReadingSelection({ userId: USER_ID, readingId: reading.id, text: 'run' });
+
+      expect(result).toEqual({ uaTranslation: 'бігти', canAddToLearningList: true });
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: EventType.ReadingSelectionTranslationGenerated,
+          readingId: reading.id,
+          costInNanoDollars: 1_000_000,
+          inputTokens: 100,
+          outputTokens: 200,
+        }),
+      ]);
+    });
+
+    it('disallows adding to the learning list when the model marks the selection as not learnable', async () => {
+      await seedUser(USER_ID);
+      const reading = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'переклад речення', isLearnable: false },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      const result = await translateReadingSelection({
+        userId: USER_ID,
+        readingId: reading.id,
+        text: 'a full sentence',
+      });
+
+      expect(result.canAddToLearningList).toBe(false);
+    });
+
+    it('disallows adding to the learning list once the selection exceeds the learnable length, even when the model marks it learnable', async () => {
+      await seedUser(USER_ID);
+      const reading = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'переклад', isLearnable: true },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      // MAX_LEARNABLE_TEXT_LENGTH in reading.service.ts is 255, one over it
+      const result = await translateReadingSelection({
+        userId: USER_ID,
+        readingId: reading.id,
+        text: 'a'.repeat(256),
+      });
+
+      expect(result.canAddToLearningList).toBe(false);
+    });
+
+    it('allows adding to the learning list at exactly the max learnable length', async () => {
+      await seedUser(USER_ID);
+      const reading = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'переклад', isLearnable: true },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      const result = await translateReadingSelection({
+        userId: USER_ID,
+        readingId: reading.id,
+        text: 'a'.repeat(255),
+      });
+
+      expect(result.canAddToLearningList).toBe(true);
+    });
+
+    it("throws not found for another user's reading", async () => {
+      await seedUser(USER_ID);
+      await seedUser('other-user');
+      const reading = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      await expect(translateReadingSelection({ userId: USER_ID, readingId: reading.id, text: 'run' })).rejects.toThrow(
+        Exception,
+      );
     });
   });
 });
