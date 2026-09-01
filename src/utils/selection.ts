@@ -22,6 +22,14 @@ const TEXT_LAYER_SELECTOR = '.textLayer';
 // 15 clears the bar (reaching one sentence back) without the extra, less-relevant text 25 adds.
 const CONTEXT_WORDS = 15;
 
+// Backstop against dense non-word filler (e.g. a PDF table-of-contents dot leader like
+// "...................") that contains no word-like segments and so never trips the CONTEXT_WORDS
+// check on its own - without this, collectWords would keep walking through an arbitrarily long run
+// of such filler before finding enough real words, dragging in unrelated content (e.g. a
+// neighboring TOC entry's title) along the way. ~200 chars is roughly 25 plain-English words,
+// comfortably above the ~85-90 chars CONTEXT_WORDS(15) normally produces.
+const CONTEXT_CHARS = 200;
+
 // nodeType/tagName, not instanceof - a node can come from another window (e.g. an iframe), whose
 // Element/Text/HTMLBRElement constructors differ from this window's, so instanceof would miss it.
 const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMENT_NODE;
@@ -146,7 +154,7 @@ const collectWords = (scope: Element, node: Node, offset: number, side: 'before'
     current = edge ? seekEdge(walker, edge, forward) : advanceFrom(node);
   }
 
-  while (current && wordLikeSegments(buffer).length <= CONTEXT_WORDS) {
+  while (current && wordLikeSegments(buffer).length <= CONTEXT_WORDS && buffer.length <= CONTEXT_CHARS) {
     const chunk = isText(current) ? current.data : ' ';
     buffer = forward ? buffer + chunk : chunk + buffer;
     current = step();

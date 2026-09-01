@@ -87,6 +87,33 @@ describe('getContext', () => {
     p.remove();
   });
 
+  it('caps the window by character length, not just word count, so dense non-word filler (e.g. a PDF table-of-contents dot leader) cannot pull in an unrelated neighboring entry', () => {
+    const layer = document.createElement('div');
+    layer.className = 'textLayer';
+
+    // mirrors a real PDF TOC: alternating title/dot-leader spans, none individually long enough to
+    // trip the cap on its own, but the run as a whole is - and it has no word-like content, so it
+    // never trips CONTEXT_WORDS either.
+    const leaderSpans = Array.from({ length: 12 }, () => `<span>${'.'.repeat(20)}</span>`).join('');
+    layer.innerHTML = `<span>Foreword</span>${leaderSpans}<span>xix Introduction target</span>`;
+    document.body.appendChild(layer);
+
+    const textNode = layer.lastElementChild!.firstChild!;
+    const text = textNode.textContent!;
+    const start = text.indexOf('target');
+    const range = makeRange((r) => {
+      r.setStart(textNode, start);
+      r.setEnd(textNode, start + 'target'.length);
+    });
+
+    const { before } = getContext(range);
+
+    expect(before).toContain('Introduction');
+    expect(before).not.toContain('Foreword');
+
+    layer.remove();
+  });
+
   it('returns every word, untruncated, when a side has exactly CONTEXT_WORDS words', () => {
     const words = Array.from({ length: 15 }, (_, index) => `word${index}`);
     const p = document.createElement('p');
