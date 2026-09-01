@@ -95,11 +95,11 @@ describe('TranslationPopover (desktop)', () => {
     expect(window.getSelection()?.toString()).toBe('Some');
   });
 
-  it('restores the original, un-expanded selection on trigger click, not the word-corrected one used for translation', async () => {
+  it('restores the word-corrected selection on trigger click, not the exact drag', async () => {
     renderPopover();
 
     // "om" sits strictly inside "Some" - correctRange expands this to the whole word for translation
-    // purposes, but a native Copy afterward should still copy exactly what was dragged over.
+    // purposes, and clicking the trigger should highlight that same expanded word, not just "om".
     setSelection(paragraph.firstChild!, 1, 3);
     endPointerSelection();
     const trigger = await screen.findByRole('button', { name: 'Translate selection' });
@@ -107,8 +107,35 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('translated Some')).toBeTruthy(); // translation still uses the corrected word
-    await waitFor(() => expect(window.getSelection()?.toString()).toBe('om'));
+    expect(await screen.findByText('translated Some')).toBeTruthy();
+    await waitFor(() => expect(window.getSelection()?.toString()).toBe('Some'));
+  });
+
+  it('keeps showing the result after a trigger click, even though re-adding the corrected selection fires its own selectionchange', async () => {
+    paragraph.textContent = 'Code review';
+    renderPopover();
+
+    // "Co" sits strictly inside "Code" - the trigger's onClick re-adds the word-corrected range to the
+    // live selection (see the previous test), which itself fires a real selectionchange event. That
+    // used to race back into this component's own selectionchange handling and get misread as a brand
+    // new selection - "Co" vs "Code" don't compare equal - resetting the panel right back to the
+    // trigger the instant it was clicked.
+    setSelection(paragraph.firstChild!, 0, 2); // "Co"
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+
+    expect(await screen.findByText('translated Code')).toBeTruthy();
+
+    // Give the debounced selectionchange handler (150ms) and its own follow-up RAF a full chance to
+    // run and misfire before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
+    expect(screen.getByText('translated Code')).toBeTruthy();
   });
 
   it('still registers a shrunk selection even when correctRange maps both onto the same word', async () => {
@@ -133,8 +160,8 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('translated selectable')).toBeTruthy(); // translation still uses the whole word
-    await waitFor(() => expect(window.getSelection()?.toString()).toBe('s'));
+    expect(await screen.findByText('translated selectable')).toBeTruthy();
+    await waitFor(() => expect(window.getSelection()?.toString()).toBe('selectable'));
   });
 
   it('does not fall back to the trigger when a pointerup bubbles from inside the open result panel', async () => {

@@ -11,12 +11,17 @@ import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-tr
 import { correctRange, getContext } from '@/utils/selection';
 
 type TranslationData = {
-  // The exact selection the user made - not correctRange()'s word-expanded version of it, which only
-  // ever exists as a local value used to derive `text`/`before`/`after` below. Everything that needs
-  // to reflect what's actually selected on screen uses this instead: anchoring the trigger/panel
-  // position, telling one selection apart from another, and restoring the selection (see Popover's
-  // trigger onClick) so a native Copy still copies exactly what was selected.
+  // The exact selection the user made. Anchors the trigger/panel position and tells one selection
+  // apart from another (isSameRange) - correctRange()'s word-expanded version of it can map two
+  // different selections (e.g. "Martin" and just "M" inside it) onto the same range, so comparing
+  // that instead would wrongly treat a genuine shrink/extension as "nothing changed".
   range: Range;
+  // correctRange()'s word-expanded version of `range`, computed once up front since translation
+  // already needs it to derive `text`/`before`/`after` below. Reused here to restore the on-screen
+  // selection when the trigger is clicked (see Popover's onClick) - so e.g. selecting "ell" inside
+  // "hello" and clicking the trigger highlights the whole word "hello", matching what gets translated,
+  // while also still dismissing Android's native selection toolbar the same way.
+  correctedRange: Range;
   before: string | null;
   text: string;
   after: string | null;
@@ -218,13 +223,13 @@ const Popover: FC<PanelProps> = ({ readingId, data, onClear }) => {
               // The OS's native selection menu (Copy/Search/Share) is tied to the touch gesture that
               // created the selection, not to whether a selection currently exists - our mousedown
               // guard keeps the selection alive, but leaves that menu open on top of the result.
-              // Collapsing it dismisses that menu, but re-adding the identical range in the very same
-              // tick doesn't give the browser a chance to actually register the collapse first, so
-              // the menu never visibly goes away. One frame's gap is enough for the dismissal to land
-              // before the highlight comes back.
+              // Collapsing it dismisses that menu, but re-adding a range in the very same tick doesn't
+              // give the browser a chance to actually register the collapse first, so the menu never
+              // visibly goes away. One frame's gap is enough for the dismissal to land before the
+              // highlight comes back - as the word-corrected range, matching what's actually translated.
               const selection = window.getSelection();
               selection?.removeAllRanges();
-              requestAnimationFrame(() => selection?.addRange(renderData.range.cloneRange()));
+              requestAnimationFrame(() => selection?.addRange(renderData.correctedRange.cloneRange()));
 
               setShowResult(true);
             }}
@@ -260,15 +265,20 @@ export const TranslationPopover: FC<{ readingId: string }> = ({ readingId }) => 
       // trigger included) re-detects the very same selection, not a new one - without this check, that
       // resets the panel back to the trigger, flickering it open and shut.
       //
-      // Compared on the un-corrected range: correctRange (below) can map two different selections
-      // (e.g. "Martin" and just "M" inside it) onto the exact same corrected range, and comparing that
-      // would wrongly treat a genuine shrink/extension as "nothing changed" and drop it.
-      if (data && isSameRange(range, data.range)) return;
+      // Checked against `data.range`, not just `data.correctedRange`: correctRange (below) can map two
+      // different selections (e.g. "Martin" and just "M" inside it) onto the exact same corrected
+      // range, and comparing only that would wrongly treat a genuine shrink/extension as "nothing
+      // changed" and drop it.
+      //
+      // Also checked against `data.correctedRange`: the trigger's onClick (below) programmatically
+      // replaces the live DOM selection with the word-corrected range, which fires this same
+      // selectionchange path right back - comparing only `data.range` there would miss it (the DOM
+      // selection is no longer the exact range the user dragged) and read it as a brand new selection,
+      // which reset the panel back to the trigger the instant it was clicked.
+      if (data && (isSameRange(range, data.range) || isSameRange(range, data.correctedRange))) return;
 
-      // correctRange's word-expanded range only ever exists here, as a local value used to derive the
-      // translated text/context - nothing downstream needs the Range object itself, only these strings.
-      const corrected = correctRange(range);
-      const text = corrected.toString().trim();
+      const correctedRange = correctRange(range);
+      const text = correctedRange.toString().trim();
       // Growing an already-tracked selection past the limit must actively clear `data`, not just skip
       // setting it - otherwise the popover stays anchored to the old, now-stale range instead of
       // disappearing, since nothing else re-renders it once this returns.
@@ -277,9 +287,9 @@ export const TranslationPopover: FC<{ readingId: string }> = ({ readingId }) => 
         return;
       }
 
-      const { before, after } = getContext(corrected);
+      const { before, after } = getContext(correctedRange);
 
-      setData({ range: range.cloneRange(), before, text, after });
+      setData({ range: range.cloneRange(), correctedRange, before, text, after });
     });
   });
 
