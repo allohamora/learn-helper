@@ -44,7 +44,7 @@ function RootDocument({ children }: PropsWithChildren) {
         <HeadContent />
       </head>
 
-      <body className="flex min-h-screen min-w-full flex-col" suppressHydrationWarning>
+      <body className="flex min-h-dvh min-w-full flex-col" suppressHydrationWarning>
         {children}
 
         <Toaster />

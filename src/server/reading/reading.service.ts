@@ -1,11 +1,13 @@
 import '@tanstack/react-start/server-only';
 import { createHash } from 'node:crypto';
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createRequire } from 'node:module';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { EventType } from '@/const/event';
 import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
+import { createLogger } from '../utils/logger.utils';
 import { getUploadFileWebStream, removeUploadFile, writeUploadFile } from '../uploads/uploads.service';
 import {
   createFile,
@@ -16,12 +18,21 @@ import {
   getReadingWithFileByIdAndUserId,
 } from './reading.repository';
 
+const logger = createLogger('reading.service');
+
+// pdfjs-dist always runs its "fake worker" in Node, which dynamically imports its default
+// workerSrc ("./pdf.worker.mjs") relative to the bundled pdfjs-dist module - a path our SSR
+// build doesn't emit. Point it at the real file shipped in node_modules instead.
+GlobalWorkerOptions.workerSrc = createRequire(import.meta.url).resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
+
 const getPdfPageCount = async (buffer: Buffer) => {
   try {
     const document = await getDocument({ data: new Uint8Array(buffer), useWorkerFetch: false }).promise;
 
     return document.numPages;
-  } catch {
+  } catch (err) {
+    logger.error({ err });
+
     throw Exception.badRequest('invalid or corrupted PDF file');
   }
 };

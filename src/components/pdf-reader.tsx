@@ -19,7 +19,11 @@ type Props = {
 };
 
 const OVERSCAN_PAGES = 2; // approximates the old 800px pixel buffer, biased generous for short/landscape pages
-const PAGE_GAP_PX = 16;
+const PAGE_GAP_PX = 8;
+const PDF_POINTS_TO_CSS_PX = 96 / 72;
+// Mirrors pdf.js's own "Automatic Zoom": never render a page above 125% of its native size, so pages
+// stop growing past a natural reading width on wide screens instead of stretching to fill them.
+const MAX_AUTO_SCALE = 1.25;
 
 export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -86,9 +90,15 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   // of bounds.
   const sizes = pageSizes ?? [];
 
+  // Caps each page independently at 125% of its own native size (rather than the shared container's
+  // width), so a document with mixed page sizes (e.g. a cover page scanned smaller than the rest)
+  // doesn't stretch every page to match whichever one happens to be widest.
+  const getPageWidth = (index: number) =>
+    Math.min(containerWidth, sizes[index].width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE);
+
   const virtualizer = useWindowVirtualizer({
     count: sizes.length,
-    estimateSize: (index) => containerWidth * (sizes[index].height / sizes[index].width),
+    estimateSize: (index) => getPageWidth(index) * (sizes[index].height / sizes[index].width),
     gap: PAGE_GAP_PX,
     paddingEnd: PAGE_GAP_PX,
     overscan: OVERSCAN_PAGES,
@@ -121,10 +131,13 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   }, [virtualizer, headerHeight, pageSizes, totalPages]);
 
   return (
-    <div className="flex flex-col gap-4 pt-4 pb-20">
+    // -mx-4 cancels the shared layout's `.container` side padding, so pages render full-width on
+    // mobile (matching mozilla's own pdf.js viewer) rather than losing ~32px of width, and thus text
+    // size, to a gutter around a "card" that doesn't earn its keep on a small screen.
+    <div className="-mx-4 flex flex-col gap-4 pt-4 pb-20 md:mx-0">
       <TranslationPopover />
 
-      <div ref={containerRef} className="mx-auto flex w-full max-w-3xl flex-col items-center gap-4">
+      <div ref={containerRef} className="mx-auto flex w-full flex-col items-center gap-4">
         {containerWidth > 0 ? (
           <Document
             file={downloadUrl}
@@ -157,10 +170,10 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
                   >
                     <Page
                       pageNumber={item.index + 1}
-                      width={containerWidth}
+                      width={getPageWidth(item.index)}
                       renderTextLayer
                       renderAnnotationLayer
-                      className="overflow-hidden rounded-lg border shadow-sm"
+                      className="overflow-hidden md:shadow-sm"
                       loading={<Loader />}
                     />
                   </div>

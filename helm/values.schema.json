@@ -70,7 +70,7 @@
       "properties": {
         "NODE_ENV": {
           "type": "string",
-          "const": "production"
+          "enum": ["production", "development"]
         },
         "BETTER_AUTH_SECRET": {
           "type": "string",
@@ -132,6 +132,10 @@
         "TUNNEL_TOKEN": {
           "type": "string",
           "minLength": 1
+        },
+        "TUNNEL_TRANSPORT_PROTOCOL": {
+          "type": "string",
+          "enum": ["auto", "http2", "quic"]
         }
       },
       "additionalProperties": {

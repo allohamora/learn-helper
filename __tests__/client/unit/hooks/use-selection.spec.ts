@@ -118,16 +118,17 @@ describe('useSelection', () => {
       initialProps: { callback: vi.fn() },
     });
 
-    expect(addSpy).toHaveBeenCalledTimes(2);
+    expect(addSpy).toHaveBeenCalledTimes(3);
     expect(addSpy).toHaveBeenCalledWith('pointerup', expect.any(Function));
     expect(addSpy).toHaveBeenCalledWith('keyup', expect.any(Function));
+    expect(addSpy).toHaveBeenCalledWith('selectionchange', expect.any(Function));
 
     rerender({ callback: vi.fn() });
-    expect(addSpy).toHaveBeenCalledTimes(2);
+    expect(addSpy).toHaveBeenCalledTimes(3);
     expect(removeSpy).not.toHaveBeenCalled();
 
     unmount();
-    expect(removeSpy).toHaveBeenCalledTimes(2);
+    expect(removeSpy).toHaveBeenCalledTimes(3);
 
     addSpy.mockRestore();
     removeSpy.mockRestore();
@@ -148,16 +149,58 @@ describe('useSelection', () => {
     expect(second).toHaveBeenCalledTimes(1);
   });
 
-  it('combines with getContext to resolve the full sentence around a settled selection', () => {
+  it('calls the callback once the selection settles via selectionchange alone, without a pointerup', () => {
+    // Simulates Android: dragging a selection handle updates the Selection via selectionchange but
+    // never dispatches a pointerup to the document.
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    renderHook(() => useSelection(callback));
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    expect(callback).not.toHaveBeenCalled();
+
+    vi.runAllTimers();
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback.mock.calls[0][0].toString()).toBe('Some');
+    vi.useRealTimers();
+  });
+
+  it('debounces rapid selectionchange events into a single callback call', () => {
+    vi.useFakeTimers();
+    const callback = vi.fn();
+    renderHook(() => useSelection(callback));
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    vi.advanceTimersByTime(50);
+    setSelection(paragraph.firstChild!, 0, 9);
+    vi.advanceTimersByTime(50);
+    setSelection(paragraph.firstChild!, 0, 15);
+    vi.runAllTimers();
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback.mock.calls[0][0].toString()).toBe('Some selectable');
+    vi.useRealTimers();
+  });
+
+  it('combines with getContext to resolve the word window around a settled selection', () => {
     paragraph.textContent = 'First sentence here. Second sentence here. Third sentence here.';
 
-    const contexts: string[] = [];
-    renderHook(() => useSelection((selection) => contexts.push(getContext(selection))));
+    const contexts: (string | null)[] = [];
+    renderHook(() =>
+      useSelection((selection) => {
+        const range = selection.getRangeAt(0);
+        const { before, after } = getContext(range);
+        contexts.push(before, after);
+      }),
+    );
 
     // selects "Second" only, inside the middle sentence
-    setSelection(paragraph.firstChild!, 22, 28);
+    const text = paragraph.textContent!;
+    const start = text.indexOf('Second');
+    setSelection(paragraph.firstChild!, start, start + 'Second'.length);
     endPointerSelection();
 
-    expect(contexts).toEqual(['Second sentence here.']);
+    expect(contexts).toEqual(['First sentence here.', 'sentence here. Third sentence here.']);
   });
 });

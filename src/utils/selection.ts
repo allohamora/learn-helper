@@ -1,135 +1,182 @@
-// A selection's context starts from only the DOM nodes it actually touches, then cautiously grows
-// into neighboring siblings when there's a real signal the sentence continues there - never the
-// whole shared container. Text layouts like a PDF text layer put every line of the page as flat
-// sibling <span>s with no per-paragraph nesting, so blindly using the "nearest common ancestor"'s
-// full text can pull in every unrelated line, while never looking past the touched nodes at all
-// truncates any sentence that happens to wrap across more than one line.
-const resolveContainer = (range: Range): Element | null => {
-  const node = range.commonAncestorContainer;
-  if (node.nodeType === Node.ELEMENT_NODE) return node as Element;
+// Known limitations:
+// - findExpansionScope has no upper bound on how broad a resolved scope can be (it can resolve to
+//   <body> for a very wide, non-.textLayer selection) - this only risks picking an imprecise boundary
+//   in unusual page layouts, not a hang, since the word window itself is still capped.
+// - getContext takes a single Range - a Firefox-only discontiguous multi-range selection
+//   (ctrl/cmd-click) is only ever resolved for whichever range the caller passes in.
+// - The <br> handling below only patches <br> itself, the confirmed pdf.js line-wrap artifact.
+//   Adjacent block-level elements (e.g. <p><p>) with no text node between them could plausibly glue
+//   words together the same way, but that's unverified here and left unhandled.
+// - correctRange only expands a boundary that falls inside a single Text node's own .data - a word
+//   split across two sibling text nodes (e.g. <b>fo</b>o, selecting just the "fo") has no single Text
+//   node whose data contains the whole word, so the boundary is left where it is instead of being
+//   expanded across the tag boundary.
 
-  // A selection entirely within one text node has that node as its own commonAncestorContainer,
-  // whose immediate parent is often a single-child leaf (e.g. one line of a PDF text layer) with no
-  // siblings of its own to expand into. Climbing one more level exposes the real sibling lines/tags.
-  const leaf = node.parentElement;
+const TEXT_LAYER_SELECTOR = '.textLayer';
+
+// Tried against a sample paragraph, selecting a word mid-sentence:
+// - 15: reaches back across a full sentence boundary (e.g. "...last audit. The manager explained
+//   that the increase covered a") - enough to resolve a reference to the prior sentence.
+// - 20: same prior sentence, just a little more of it - marginal gain over 15.
+// - 25: starts pulling in a second, more distant sentence - more text, but lower relevance per word.
+// 15 clears the bar (reaching one sentence back) without the extra, less-relevant text 25 adds.
+const CONTEXT_WORDS = 15;
+
+// Backstop against dense non-word filler (e.g. a PDF table-of-contents dot leader like
+// "...................") that contains no word-like segments and so never trips the CONTEXT_WORDS
+// check on its own - without this, collectWords would keep walking through an arbitrarily long run
+// of such filler before finding enough real words, dragging in unrelated content (e.g. a
+// neighboring TOC entry's title) along the way. ~200 chars is roughly 25 plain-English words,
+// comfortably above the ~85-90 chars CONTEXT_WORDS(15) normally produces.
+const CONTEXT_CHARS = 200;
+
+// nodeType/tagName, not instanceof - a node can come from another window (e.g. an iframe), whose
+// Element/Text/HTMLBRElement constructors differ from this window's, so instanceof would miss it.
+const isElement = (node: Node): node is Element => node.nodeType === Node.ELEMENT_NODE;
+const isText = (node: Node): node is Text => node.nodeType === Node.TEXT_NODE;
+const isBrElement = (node: Node): boolean => isElement(node) && node.tagName === 'BR';
+
+const closestTextLayer = (node: Node): Element | null => {
+  const element = isElement(node) ? node : node.parentElement;
+  return element?.closest(TEXT_LAYER_SELECTOR) ?? null;
+};
+
+// .textLayer is the one reliable signal for a real PDF page boundary (react-pdf and pdf.js both
+// render one per page, including when several pages are mounted as virtualized siblings at once) -
+// nothing in generic DOM structure can stand in for it, so a selection spanning two different layers
+// is rejected outright rather than risk merging unrelated pages. Outside of any .textLayer, the
+// scope is just the selection's nearest common element ancestor, bumped up one level when that
+// ancestor is a single text node so there's always at least one sibling to expand into.
+const findExpansionScope = (range: Range): Element | null => {
+  const startLayer = closestTextLayer(range.startContainer);
+  const endLayer = closestTextLayer(range.endContainer);
+  if (startLayer || endLayer) return startLayer === endLayer ? startLayer : null;
+
+  const { commonAncestorContainer } = range;
+  if (isElement(commonAncestorContainer)) return commonAncestorContainer;
+
+  const leaf = commonAncestorContainer.parentElement;
   return leaf?.parentElement ?? leaf;
 };
 
-// Finds the direct child of `container` that (node, offset) falls under - i.e. the specific
-// sibling actually touched by that boundary point, no matter how deeply `node` is nested inside it.
-const getTouchedChild = (container: Element, node: Node, offset: number): Node | null => {
-  if (node === container) return container.childNodes[Math.min(offset, container.childNodes.length - 1)] ?? null;
+// pdf.js's text layer inserts an empty <br role="presentation"> at every line wrap (confirmed in
+// pdfjs-dist's TextLayer#appendText, on hasEOL). Read as a word separator, same as any other node.
+const isTextOrBreak = (node: Node): boolean => isText(node) || isBrElement(node);
 
-  let current = node;
-  while (current.parentNode && current.parentNode !== container) {
-    current = current.parentNode;
-  }
-
-  return current.parentNode === container ? current : null;
-};
-
-const getOffsetFrom = (boundaryNode: Node, node: Node, offset: number) => {
-  const preRange = document.createRange();
-  preRange.setStartBefore(boundaryNode);
-  preRange.setEnd(node, offset);
-  return preRange.toString().length;
-};
-
-const STARTS_LOWERCASE = /^\s*\p{Ll}/u;
-const ENDS_SENTENCE = /[.!?]\s*$/;
-const MAX_SIBLING_EXPAND = 20;
-
-// Walks backward through preceding siblings while the current leftmost node's own text starts with
-// a lowercase letter - a reliable signal (in ordinary prose) that it continues a sentence begun
-// earlier, e.g. a PDF text-layer line that got wrapped mid-sentence. A paragraph's real first line
-// is always capitalized, so this chain naturally stops there and never reaches an unrelated
-// preceding heading/title, even though headings often lack trailing punctuation of their own.
-// Content-less siblings (e.g. pdf.js inserts a bare <br> after every line) are skipped over rather
-// than treated as a stop signal, since they carry no text to judge either way.
-const expandBackward = (node: Node): Node => {
-  let current = node;
-
-  for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
-    const ownText = current.textContent ?? '';
-    if (ownText.trim() && !STARTS_LOWERCASE.test(ownText)) break;
-
-    const prev = current.previousSibling;
-    if (!prev) break;
-
-    current = prev;
-  }
-
-  return current;
-};
-
-// Mirrors expandBackward: walks forward while the current rightmost node's own text doesn't yet end
-// a sentence AND the next sibling looks like a continuation (starts lowercase) rather than a fresh,
-// capitalized start - so a heading/title lacking trailing punctuation never gets merged with
-// whatever unrelated content happens to follow it. Content-less siblings are skipped transparently,
-// same as expandBackward.
-const expandForward = (node: Node): Node => {
-  let current = node;
-
-  for (let steps = 0; steps < MAX_SIBLING_EXPAND; steps++) {
-    const ownText = (current.textContent ?? '').trim();
-    if (ownText && ENDS_SENTENCE.test(ownText)) break;
-
-    const next = current.nextSibling;
-    if (!next) break;
-
-    const nextText = (next.textContent ?? '').trim();
-    if (nextText && !STARTS_LOWERCASE.test(nextText)) break;
-
-    current = next;
-  }
-
-  return current;
-};
-
-const getSentences = (text: string, locale: string) => {
-  const segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
-
-  return Array.from(segmenter.segment(text), ({ segment, index }) => ({
-    text: segment,
-    start: index,
-    end: index + segment.length,
-  }));
-};
-
-export const getContext = (selection: Selection, locale = navigator.language): string => {
-  const fallback = () => selection.toString().trim();
-  if (selection.rangeCount === 0) return '';
-  if (typeof Intl.Segmenter !== 'function') return fallback();
-
-  const range = selection.getRangeAt(0);
-  const container = resolveContainer(range);
-  if (!container) return fallback();
-
-  const firstTouched = getTouchedChild(container, range.startContainer, range.startOffset);
-  const lastTouched = getTouchedChild(container, range.endContainer, range.endOffset);
-  if (!firstTouched || !lastTouched) return fallback();
-
-  const expandedFirst = expandBackward(firstTouched);
-  const expandedLast = expandForward(lastTouched);
-
-  const boundedRange = document.createRange();
-  boundedRange.setStartBefore(expandedFirst);
-  boundedRange.setEndAfter(expandedLast);
-
-  const text = boundedRange.toString();
-  if (!text) return fallback();
-
-  const startOffset = getOffsetFrom(expandedFirst, range.startContainer, range.startOffset);
-  const endOffset = getOffsetFrom(expandedFirst, range.endContainer, range.endOffset);
-
-  const sentences = getSentences(text, locale).filter(
-    (sentence) => sentence.end > startOffset && sentence.start < endOffset,
+const createContextWalker = (scope: Element) =>
+  document.createTreeWalker(scope, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, (node) =>
+    isTextOrBreak(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
   );
 
-  return (
-    sentences
-      .map((sentence) => sentence.text)
-      .join('')
-      .trim() || fallback()
-  );
+// `edge` is the child sitting right at a Range's element/child-index boundary - descend into it to
+// find the nearest text/br inside, falling back to edge itself, or to walking past it, when it holds
+// no text/br content of its own.
+const seekEdge = (walker: TreeWalker, edge: Node, forward: boolean): Node | null => {
+  walker.currentNode = edge;
+  const descended = forward ? walker.firstChild() : walker.lastChild();
+  if (descended) return descended;
+  if (isTextOrBreak(edge)) return edge;
+  return forward ? walker.nextNode() : walker.previousNode();
+};
+
+const WORD_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'word' });
+
+const wordLikeSegments = (text: string) => Array.from(WORD_SEGMENTER.segment(text)).filter((s) => s.isWordLike);
+
+// Finds the word-like segment in `text` that strictly contains `offset` - i.e. offset sits inside the
+// segment, not at either edge. An offset already at a word boundary, or on punctuation/whitespace
+// between words (not word-like, so never in wordLikeSegments' output), has no such segment.
+const enclosingWord = (text: string, offset: number) =>
+  wordLikeSegments(text).find((s) => s.index < offset && offset < s.index + s.segment.length);
+
+// Expands a Range boundary that falls strictly inside a word out to that word's full edges - e.g. a
+// drag-selection of just "ll" out of "hello" becomes the whole word, so the selected text and the
+// context derived from it (getContext) don't fracture at an arbitrary mid-word cut. Only a Text-node
+// boundary can land mid-word in the first place - an element/child-index boundary sits between nodes,
+// never inside one, so it's left untouched, same as elsewhere in this file. Returns a new Range via
+// cloneRange() - the input range is never mutated.
+export const correctRange = (range: Range): Range => {
+  const corrected = range.cloneRange();
+  const { startContainer, startOffset, endContainer, endOffset } = range;
+
+  if (isText(startContainer)) {
+    const word = enclosingWord(startContainer.data, startOffset);
+    if (word) corrected.setStart(startContainer, word.index);
+  }
+
+  if (isText(endContainer)) {
+    const word = enclosingWord(endContainer.data, endOffset);
+    if (word) corrected.setEnd(endContainer, word.index + word.segment.length);
+  }
+
+  return corrected;
+};
+
+// Slices the last/first `count` words out of `text`. The cut point sits at the neighboring
+// *excluded* word's edge rather than the counted word's own edge, so punctuation/whitespace between
+// the last included word and the next word (e.g. a trailing ".") rides along naturally. Returns null
+// if there's no word-like content left on this side.
+const takeWords = (text: string, count: number, side: 'before' | 'after'): string | null => {
+  const words = wordLikeSegments(text);
+  if (words.length === 0) return null;
+  if (words.length <= count) return text.trim();
+
+  if (side === 'before') {
+    const cut = words[words.length - count - 1];
+    return text.slice(cut.index + cut.segment.length).trim();
+  }
+
+  const cut = words[count];
+  return text.slice(0, cut.index).trim();
+};
+
+// Walks scope outward from a Range boundary, gathering text/br content one node at a time, stopping
+// as soon as there's enough for takeWords to resolve the cut - so a call only ever reads as much of
+// scope as CONTEXT_WORDS actually needs, not the whole thing.
+const collectWords = (scope: Element, node: Node, offset: number, side: 'before' | 'after'): string => {
+  const forward = side === 'after';
+  const walker = createContextWalker(scope);
+  const step = () => (forward ? walker.nextNode() : walker.previousNode());
+  const advanceFrom = (from: Node) => {
+    walker.currentNode = from;
+    return step();
+  };
+
+  let buffer: string;
+  let current: Node | null;
+
+  if (isText(node)) {
+    buffer = forward ? node.data.slice(offset) : node.data.slice(0, offset);
+    current = advanceFrom(node);
+  } else {
+    const edge = forward ? node.childNodes[offset] : node.childNodes[offset - 1];
+    buffer = '';
+    current = edge ? seekEdge(walker, edge, forward) : advanceFrom(node);
+  }
+
+  while (current && wordLikeSegments(buffer).length <= CONTEXT_WORDS && buffer.length <= CONTEXT_CHARS) {
+    const chunk = isText(current) ? current.data : ' ';
+    buffer = forward ? buffer + chunk : chunk + buffer;
+    current = step();
+  }
+
+  return buffer;
+};
+
+export const getContext = (range: Range): { before: string | null; after: string | null } => {
+  try {
+    const scope = findExpansionScope(range);
+    if (!scope) return { before: null, after: null };
+
+    const before = collectWords(scope, range.startContainer, range.startOffset, 'before');
+    const after = collectWords(scope, range.endContainer, range.endOffset, 'after');
+
+    return {
+      before: takeWords(before, CONTEXT_WORDS, 'before'),
+      after: takeWords(after, CONTEXT_WORDS, 'after'),
+    };
+  } catch (err) {
+    console.error(err);
+    return { before: null, after: null };
+  }
 };
