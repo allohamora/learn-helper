@@ -54,6 +54,26 @@ const isSameRange = (a: Range, b: Range) =>
 // w-54 here is the largest confirmed-safe width. md: (not a touch-device query) since this is a plain
 // viewport-width breakpoint, same convention
 // pdf-reader.tsx already uses.
+//
+// This is a fixed width, not min-w/max-w, for a second, separate reason: a min-w/max-w pair (width:
+// auto, shrink-to-fit) was tried to size the panel to its content instead of always rendering at the
+// max - it worked everywhere except real Android Chrome, where a long translation made the panel
+// render far wider than max-w, confirmed unrelated to CSS specificity (adding !important to max-w had
+// zero effect) and unrelated to react-pdf's CSS (TextLayer.css/AnnotationLayer.css scope every rule
+// under .textLayer/.annotationLayer, no bare `p` selector to leak). The likely mechanism: this exact
+// node is both (a) the one whose width the browser has to shrink-to-fit-compute from its own content,
+// and (b) the one autoUpdate's elementResize ResizeObserver (above) is actively watching to reposition
+// on - Android Chrome's implementation of that combination is apparently unreliable in a way desktop
+// Chrome and DevTools' mobile emulation both fail to reproduce. Switching this back to a fixed width
+// (no shrink-to-fit computation at all) fixed it immediately and completely.
+//
+// A real fix for genuine per-content dynamic width - without going back through shrink-to-fit on this
+// exact watched/positioned node - would be to measure the content's natural width in a separate,
+// off-screen/unobserved element (position: fixed, visibility: hidden, width: fit-content - safe to
+// shrink-to-fit since nothing watches or repositions it), read it via getBoundingClientRect() in a
+// layout effect, clamp it, and apply it here as an explicit style={{ width: px }} - never `auto` - so
+// this node itself never has to resolve an auto width while autoUpdate is watching it. Not implemented
+// (adds a measuring ref + a layout effect + a measure-then-apply render pass) - fixed width for now.
 const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: () => void }> = ({
   readingId,
   data,
