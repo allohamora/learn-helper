@@ -142,6 +142,7 @@ erDiagram
         cost_in_nano_dollars bigint "optional"
         input_tokens integer "optional"
         output_tokens integer "optional"
+        metadata jsonb "optional"
         reverted_at timestamptz "optional"
         created_at timestamptz "default NOW"
     }
@@ -317,6 +318,16 @@ The event table is append-only: a discovery is never deleted when the user undoe
 ### `user_vocabulary_item_ids`
 
 Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
+
+### `metadata`
+
+Free-form per-event debug context; shape varies by `type`. Currently populated as `{ input, output }` for all three AI-generation events:
+
+- `reading-selection-translation-generated`: `input: { text, before, after }`, `output: { uaTranslation, isLearnable }`.
+- `vocabulary-item-generated`: `input: { value, context }`, `output: { ... }` (generated vocabulary item content).
+- `user-vocabulary-item-task-generated`: `input` is the `VocabularyItemData[]` batch (shared by both the English and Ukrainian sentence events), `output` is that event's generated tasks.
+
+Other event types leave it `null`; their debug-relevant data is already covered by existing columns (FKs, `status`, `field_name`, etc.).
 
 ### `cost_in_nano_dollars`
 

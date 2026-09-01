@@ -125,6 +125,7 @@ export const translateReadingSelection = async ({
     costInNanoDollars: cost.costInNanoDollars,
     inputTokens: cost.inputTokens,
     outputTokens: cost.outputTokens,
+    metadata: { input: data, output },
   });
 
   return {

@@ -177,6 +177,10 @@ describe('reading.service', () => {
           costInNanoDollars: 1_000_000,
           inputTokens: 100,
           outputTokens: 200,
+          metadata: {
+            input: { text: 'run' },
+            output: { uaTranslation: 'бігти', isLearnable: true },
+          },
         }),
       ]);
     });

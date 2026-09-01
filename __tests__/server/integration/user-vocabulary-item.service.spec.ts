@@ -874,6 +874,11 @@ describe('userVocabularyItemService', () => {
 
       const batch = await getUserVocabularyListLearnItems({ userId, userVocabularyListId: userList.id });
       const expectedIds = batch.map((item) => item.id);
+      const expectedInput = batch.map((item) => ({
+        id: item.id,
+        value: item.vocabularyItem.value,
+        partOfSpeech: item.vocabularyItem.partOfSpeech,
+      }));
 
       const result = await getUserVocabularyListLearnTasks({ userId, userVocabularyListId: userList.id });
 
@@ -900,6 +905,7 @@ describe('userVocabularyItemService', () => {
             costInNanoDollars: 100,
             inputTokens: 10,
             outputTokens: 5,
+            metadata: { input: expectedInput, output: result.translateEnglishSentenceTasks },
           }),
           expect.objectContaining({
             userId,
@@ -908,6 +914,7 @@ describe('userVocabularyItemService', () => {
             costInNanoDollars: 200,
             inputTokens: 20,
             outputTokens: 10,
+            metadata: { input: expectedInput, output: result.translateUkrainianSentenceTasks },
           }),
         ]),
       );
