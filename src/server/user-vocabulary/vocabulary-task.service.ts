@@ -1,22 +1,9 @@
 import '@tanstack/react-start/server-only';
-import { generateText, Output, type LanguageModelUsage } from 'ai';
+import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { openai } from '../utils/ai.utils';
+import { luna } from '../utils/ai.utils';
 import { UserVocabularyItemTaskType } from '@/const/event';
 import { Exception } from '../utils/exception.utils';
-
-const model = openai('gpt-5.6-luna');
-
-// gpt-5.6-luna standard-tier, short-context pricing: https://developers.openai.com/api/docs/pricing
-const INPUT_NANO_DOLLARS_PER_TOKEN = 200;
-const OUTPUT_NANO_DOLLARS_PER_TOKEN = 1200;
-
-const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: LanguageModelUsage) => {
-  const inputCostInNanoDollars = inputTokens * INPUT_NANO_DOLLARS_PER_TOKEN;
-  const outputCostInNanoDollars = outputTokens * OUTPUT_NANO_DOLLARS_PER_TOKEN;
-
-  return inputCostInNanoDollars + outputCostInNanoDollars;
-};
 
 export type VocabularyItemData = {
   id: string;
@@ -41,7 +28,7 @@ export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: Vocabula
 
 export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) => {
   const { output, usage } = await generateText({
-    model,
+    model: luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateEnglishSentence',
@@ -87,7 +74,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
+    costInNanoDollars: luna.calculateCostInNanoDollars(usage),
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
   };
@@ -97,7 +84,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
 
 export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) => {
   const { output, usage } = await generateText({
-    model,
+    model: luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateUkrainianSentence',
@@ -142,7 +129,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
-    costInNanoDollars: calculateCostInNanoDollars(usage),
+    costInNanoDollars: luna.calculateCostInNanoDollars(usage),
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
   };

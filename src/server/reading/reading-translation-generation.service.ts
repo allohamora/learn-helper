@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output } from 'ai';
 import { z } from '@hono/zod-openapi';
-import { model, calculateCostInNanoDollars } from '../utils/ai.utils';
+import { luna } from '../utils/ai.utils';
 import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
 
 const translatedSelectionDto = z.object({
@@ -18,7 +18,7 @@ export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { output, usage } = await generateText({
-    model,
+    model: luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateTranslationData',
@@ -49,7 +49,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
   return {
     output,
     cost: {
-      costInNanoDollars: calculateCostInNanoDollars(usage),
+      costInNanoDollars: luna.calculateCostInNanoDollars(usage),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
     },
