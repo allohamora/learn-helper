@@ -1,12 +1,12 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output } from 'ai';
-import { luna } from '../utils/ai.utils';
+import { gpt56Luna } from '../utils/ai.utils';
 import { generatedVocabularyItemDto } from './dtos/generated-vocabulary-item.dto';
 import type { GenerateVocabularyItemDto } from './dtos/generate-vocabulary-item.dto';
 
 export const generateVocabularyItemData = async ({ value, context }: GenerateVocabularyItemDto) => {
   const { output, usage } = await generateText({
-    model: luna.model,
+    model: gpt56Luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateVocabularyItemData',
@@ -54,7 +54,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
   return {
     output,
     cost: {
-      costInNanoDollars: luna.calculateCostInNanoDollars(usage),
+      costInNanoDollars: gpt56Luna.calculateCostInNanoDollars(usage),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
     },

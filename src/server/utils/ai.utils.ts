@@ -24,7 +24,7 @@ const createModel = ({ model, inputNanoDollarsPerToken, outputNanoDollarsPerToke
 });
 
 // gpt-5.6-luna standard-tier, short-context pricing: https://developers.openai.com/api/docs/pricing
-export const luna = createModel({
+export const gpt56Luna = createModel({
   model: openai('gpt-5.6-luna'),
   inputNanoDollarsPerToken: 200,
   outputNanoDollarsPerToken: 1200,

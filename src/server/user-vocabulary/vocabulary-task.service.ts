@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { luna } from '../utils/ai.utils';
+import { gpt56Luna } from '../utils/ai.utils';
 import { UserVocabularyItemTaskType } from '@/const/event';
 import { Exception } from '../utils/exception.utils';
 
@@ -28,7 +28,7 @@ export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: Vocabula
 
 export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) => {
   const { output, usage } = await generateText({
-    model: luna.model,
+    model: gpt56Luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateEnglishSentence',
@@ -74,7 +74,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
-    costInNanoDollars: luna.calculateCostInNanoDollars(usage),
+    costInNanoDollars: gpt56Luna.calculateCostInNanoDollars(usage),
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
   };
@@ -84,7 +84,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
 
 export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) => {
   const { output, usage } = await generateText({
-    model: luna.model,
+    model: gpt56Luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateUkrainianSentence',
@@ -129,7 +129,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
-    costInNanoDollars: luna.calculateCostInNanoDollars(usage),
+    costInNanoDollars: gpt56Luna.calculateCostInNanoDollars(usage),
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
   };
