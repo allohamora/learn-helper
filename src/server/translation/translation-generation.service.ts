@@ -1,11 +1,8 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output } from 'ai';
-import { openai } from '../utils/ai.utils';
-import { calculateCostInNanoDollars } from '../utils/ai-cost.utils';
+import { model, calculateCostInNanoDollars } from '../utils/ai.utils';
 import { translatedSelectionDto } from './dtos/translated-selection.dto';
 import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
-
-const model = openai('gpt-5.6-luna');
 
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { output, usage } = await generateText({
