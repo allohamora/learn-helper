@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output } from 'ai';
 import { z } from '@hono/zod-openapi';
-import { gpt56Luna } from '../utils/ai.utils';
+import { gemini25FlashLite } from '../utils/ai.utils';
 import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
 
 const translatedSelectionDto = z.object({
@@ -18,7 +18,7 @@ export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { output, usage } = await generateText({
-    model: gpt56Luna.model,
+    model: gemini25FlashLite.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateTranslationData',
@@ -31,6 +31,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
       '<task>Given a piece of text the user selected, and the text immediately before/after it (if any), translate the selected text and judge whether it is learnable.</task>',
       '<requirements>',
       'uaTranslation:',
+      '- Translate the selected text in full, start to end, exactly as given - never shrink it down to a single word or short extract from within it, even if that word looks like a familiar standalone term. A selection longer than a few words is virtually never just one word.',
       '- Natural Ukrainian translation of the selected text, exactly as a native Ukrainian speaker would actually say it (this includes translating idioms and fixed expressions idiomatically, not word-for-word).',
       '- A single translation - do not list multiple synonym options. The only exception is genuine grammatical variants (e.g. gender-dependent forms), where up to two forms separated by " / " are allowed; never use semicolons.',
       "- This is a live translation of exactly what the user selected, not a dictionary headword - preserve its surface form (casing, digits vs spelled-out numbers) rather than normalizing it, except where Ukrainian orthography inherently requires a specific form regardless of the source's casing.",
@@ -49,7 +50,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
   return {
     output,
     cost: {
-      costInNanoDollars: gpt56Luna.calculateCostInNanoDollars(usage),
+      costInNanoDollars: gemini25FlashLite.calculateCostInNanoDollars(usage),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
     },
