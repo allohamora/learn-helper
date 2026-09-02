@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 import type {
   DefinitionToVocabularyItemTask,
   LearnItem,
@@ -224,26 +224,28 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
 
   const learnItemsQuery = useQuery({
     queryKey: ['vocabulary-list-learn-items', userVocabularyListId],
-    queryFn: async () => {
-      const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
-        param: { userVocabularyListId },
-      });
-      if (!response.ok) throw new Error('Failed to load learn items');
-      return (await response.json()).data;
-    },
+    queryFn: () =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.items.$get({
+            param: { userVocabularyListId },
+          }),
+        'Failed to load learn items',
+      ),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 
   const learnTasksQuery = useQuery({
     queryKey: ['vocabulary-list-learn-tasks', userVocabularyListId],
-    queryFn: async () => {
-      const response = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
-        param: { userVocabularyListId },
-      });
-      if (!response.ok) throw new Error('Failed to load learn tasks');
-      return (await response.json()).data;
-    },
+    queryFn: () =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].learn.tasks.$get({
+            param: { userVocabularyListId },
+          }),
+        'Failed to load learn tasks',
+      ),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

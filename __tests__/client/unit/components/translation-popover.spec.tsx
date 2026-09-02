@@ -481,6 +481,36 @@ describe('TranslationPopover (desktop)', () => {
     expect(addButton.disabled).toBe(false);
   });
 
+  it("surfaces the server's real error message when adding conflicts", async () => {
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+    mockServer.addHandlers(
+      api.generateVocabularyItem.mock(() =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: { messages: ['Vocabulary item "word" (verb) already exists'], code: 'CONFLICT' },
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = (await screen.findByRole('button', { name: 'Add to learning list' })) as HTMLButtonElement;
+    fireEvent.click(addButton);
+
+    await vi.waitFor(() => expect(toastErrorSpy).toHaveBeenCalledWith('Vocabulary item "word" (verb) already exists'));
+  });
+
   it('shows the trigger button once a keyboard-driven selection settles', async () => {
     renderPopover();
 

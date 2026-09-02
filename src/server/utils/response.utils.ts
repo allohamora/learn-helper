@@ -1,26 +1,15 @@
 import '@tanstack/react-start/server-only';
 import { z, type ZodType } from 'zod';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { ErrorResponse, PaginatedResponse, SuccessResponse } from '@/types/response';
 
-export type SuccessResponse<T> = {
-  success: true;
-  data: T;
-};
+export type { ErrorResponse, PageInfo, PaginatedResponse, SuccessResponse } from '@/types/response';
 
 export const successResponseSchema = <T extends ZodType>(dataSchema: T) => {
   return z.object({
     success: z.literal(true),
     data: dataSchema,
   });
-};
-
-export type ErrorResponse = {
-  success: false;
-  error: {
-    messages: string[];
-    code?: string;
-    details?: Record<string, unknown>;
-  };
 };
 
 export const errorResponseSchema = () => {
@@ -32,18 +21,6 @@ export const errorResponseSchema = () => {
       details: z.record(z.string(), z.unknown()).optional(),
     }),
   });
-};
-
-export type PageInfo = {
-  total: number;
-  count: number;
-  nextCursor?: string;
-};
-
-export type PaginatedResponse<T> = {
-  success: true;
-  data: T[];
-  pageInfo: PageInfo;
 };
 
 export const paginatedResponseSchema = <T extends ZodType>(itemSchema: T) => {

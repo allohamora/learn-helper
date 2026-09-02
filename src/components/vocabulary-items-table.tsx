@@ -18,15 +18,14 @@ import {
 } from '@/components/ui/dialog';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient, type SuccessData } from '@/services/api';
 import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
 
-type ItemsResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']
->;
-type VocabularyItem = Extract<ItemsResponse, { success: true }>['data'][number];
+type VocabularyItem = SuccessData<
+  InferResponseType<(typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']>
+>[number];
 
 export const requiresResetConfirmation = (status: LearningStatus, encounterCount: number) =>
   encounterCount > 0 || status === LearningStatus.Learned;
@@ -46,16 +45,16 @@ const ActionsCell: FC<{
 
   const queryClient = useQueryClient();
   const resetMutation = useMutation({
-    mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
-        ':userVocabularyItemId'
-      ].reset.$post({
-        param: { userVocabularyListId, userVocabularyItemId: item.id },
-      });
-      if (!res.ok) throw new Error('Failed to reset item progress');
-
-      return res.json();
-    },
+    mutationFn: () =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+            ':userVocabularyItemId'
+          ].reset.$post({
+            param: { userVocabularyListId, userVocabularyItemId: item.id },
+          }),
+        'Failed to reset item progress',
+      ),
     onSuccess: () => {
       setIsResetConfirmationOpen(false);
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
@@ -65,19 +64,19 @@ const ActionsCell: FC<{
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
       toast.success('Item progress reset to waiting in all lists');
     },
-    onError: () => toast.error('Failed to reset item progress'),
+    onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to reset item progress'),
   });
 
   const removeMutation = useMutation({
-    mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.items[':userVocabularyItemId'].$delete({
-        param: { userVocabularyItemId: item.id },
-        json: { isReset },
-      });
-      if (!res.ok) throw new Error('Failed to remove item from list');
-
-      return res.json();
-    },
+    mutationFn: () =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'].personal.items[':userVocabularyItemId'].$delete({
+            param: { userVocabularyItemId: item.id },
+            json: { isReset },
+          }),
+        'Failed to remove item from list',
+      ),
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
       setIsReset(false);
@@ -89,7 +88,7 @@ const ActionsCell: FC<{
       queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
       toast.success('Item removed from list');
     },
-    onError: () => toast.error('Failed to remove item from list'),
+    onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to remove item from list'),
   });
 
   const canReset = item.status !== LearningStatus.Waiting;

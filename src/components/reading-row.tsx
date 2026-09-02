@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 
 type Props = {
   id: string;
@@ -27,18 +27,17 @@ export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage }) =>
   const queryClient = useQueryClient();
 
   const removeMutation = useMutation({
-    mutationFn: async () => {
-      const res = await appClient.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: id } });
-      if (!res.ok) throw new Error('Failed to delete reading');
-
-      return res.json();
-    },
+    mutationFn: () =>
+      apiRequest(
+        () => appClient.api.v1.users.me.readings[':readingId'].$delete({ param: { readingId: id } }),
+        'Failed to delete reading',
+      ),
     onSuccess: () => {
       setIsRemoveConfirmationOpen(false);
       queryClient.invalidateQueries({ queryKey: ['readings'] });
       toast.success('Reading deleted');
     },
-    onError: () => toast.error('Failed to delete reading'),
+    onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to delete reading'),
   });
 
   return (

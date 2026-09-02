@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { appClient } from '@/services/api';
+import { apiPaginationRequest, appClient } from '@/services/api';
 import { ReadingRow } from '@/components/reading-row';
 import { UploadReadingDialog } from '@/components/upload-reading-dialog';
 import { Button } from '@/components/ui/button';
@@ -16,19 +16,19 @@ export const Route = createFileRoute('/_auth/readings')({
 function ReadingsPage() {
   const { data, isPending, isError, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['readings'],
-    queryFn: async ({ pageParam }) => {
-      const res = await appClient.api.v1.users.me.readings.$get({
-        query: { cursor: pageParam, type: RequestType.Data },
-      });
-      if (!res.ok) throw new Error('Failed to load readings');
-
-      return res.json();
-    },
+    queryFn: ({ pageParam }) =>
+      apiPaginationRequest(
+        () =>
+          appClient.api.v1.users.me.readings.$get({
+            query: { cursor: pageParam, type: RequestType.Data },
+          }),
+        'Failed to load readings',
+      ),
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => (lastPage && 'data' in lastPage ? lastPage.pageInfo.nextCursor : undefined),
+    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor,
   });
 
-  const readings = data?.pages.flatMap((page) => ('data' in page ? page.data : [])) ?? [];
+  const readings = data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
     <>

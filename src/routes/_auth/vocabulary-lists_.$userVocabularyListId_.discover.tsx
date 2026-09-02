@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { appClient, getIsomorphicAppClient } from '@/services/api';
+import { apiRequest, apiPaginationRequest, appClient, getIsomorphicAppClient } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
@@ -18,13 +18,14 @@ const HISTORY_LIMIT = 5;
 export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/discover')({
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
-      param: { userVocabularyListId },
-    });
-    if (!res.ok) throw new Error('Failed to load vocabulary list');
 
-    const body = await res.json();
-    return body.data;
+    return apiRequest(
+      () =>
+        app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
+          param: { userVocabularyListId },
+        }),
+      'Failed to load vocabulary list',
+    );
   },
   head: ({ loaderData }) => pageHead(loaderData ? `Discover: ${loaderData.vocabularyList.title}` : 'Discover'),
   component: VocabularyListDiscoverPage,
@@ -56,15 +57,15 @@ function VocabularyListDiscoverPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['vocabulary-list-discover-items', userVocabularyListId],
-    queryFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
-        param: { userVocabularyListId },
-        query: { status: LearningStatus.Waiting, limit: String(BATCH_LIMIT) },
-      });
-      if (!res.ok) throw new Error('Failed to load waiting items');
-
-      return res.json();
-    },
+    queryFn: () =>
+      apiPaginationRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+            param: { userVocabularyListId },
+            query: { status: LearningStatus.Waiting, limit: String(BATCH_LIMIT) },
+          }),
+        'Failed to load waiting items',
+      ),
   });
 
   const items = data?.data ?? [];
@@ -72,7 +73,7 @@ function VocabularyListDiscoverPage() {
   const remaining = total - handled;
 
   const discoverItem = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       userVocabularyItemId,
       status,
       durationMs,
@@ -80,30 +81,30 @@ function VocabularyListDiscoverPage() {
       userVocabularyItemId: string;
       status: LearningStatus.Known | LearningStatus.Learning;
       durationMs: number;
-    }) => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
-        ':userVocabularyItemId'
-      ].discover.$post({
-        param: { userVocabularyListId, userVocabularyItemId },
-        json: { status, durationMs },
-      });
-      if (!res.ok) throw new Error('Failed to discover item');
-
-      return res.json();
-    },
+    }) =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+            ':userVocabularyItemId'
+          ].discover.$post({
+            param: { userVocabularyListId, userVocabularyItemId },
+            json: { status, durationMs },
+          }),
+        'Failed to discover item',
+      ),
   });
 
   const undoStatus = useMutation({
-    mutationFn: async ({ userVocabularyItemId }: { userVocabularyItemId: string }) => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
-        ':userVocabularyItemId'
-      ].undo.$post({
-        param: { userVocabularyListId, userVocabularyItemId },
-      });
-      if (!res.ok) throw new Error('Failed to undo item status');
-
-      return res.json();
-    },
+    mutationFn: ({ userVocabularyItemId }: { userVocabularyItemId: string }) =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+            ':userVocabularyItemId'
+          ].undo.$post({
+            param: { userVocabularyListId, userVocabularyItemId },
+          }),
+        'Failed to undo item status',
+      ),
   });
 
   const currentItem = items[currentIndex];
@@ -118,8 +119,8 @@ function VocabularyListDiscoverPage() {
           status,
           durationMs: Date.now() - startedAt.getTime(),
         });
-      } catch {
-        toast.error('Failed to discover item');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to discover item');
         return;
       }
 
@@ -145,8 +146,8 @@ function VocabularyListDiscoverPage() {
 
       try {
         await undoStatus.mutateAsync({ userVocabularyItemId: lastUserVocabularyItemId });
-      } catch {
-        toast.error('Failed to undo item status');
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to undo item status');
         return;
       }
 

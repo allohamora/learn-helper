@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { getIsomorphicAppClient } from '@/services/api';
+import { apiRequest, getIsomorphicAppClient } from '@/services/api';
 import { VocabularyListRow } from '@/components/vocabulary-list-row';
 import { pageHead } from '@/utils/page';
 
@@ -7,11 +7,11 @@ export const Route = createFileRoute('/_auth/vocabulary-lists')({
   head: () => pageHead('Vocabulary Lists'),
   loader: async () => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'].available.$get();
-    if (!res.ok) throw new Error('Failed to load vocabulary lists');
 
-    const body = await res.json();
-    return body.data;
+    return apiRequest(
+      () => app.api.v1.users.me['vocabulary-lists'].available.$get(),
+      'Failed to load vocabulary lists',
+    );
   },
   component: VocabularyListsPage,
 });

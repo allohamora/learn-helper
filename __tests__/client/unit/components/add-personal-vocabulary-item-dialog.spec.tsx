@@ -405,6 +405,35 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await vi.waitFor(() => expect(generateHandler).toHaveBeenCalledOnce());
   });
 
+  it("surfaces the server's real error message when generating is not learnable", async () => {
+    const value = 'asdkjh';
+
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([]));
+    mockServer.addHandlers(
+      api.generateVocabularyItem.mock(() =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: { messages: ['Value "asdkjh" is not a learnable word or fixed phrase'], code: 'BAD_REQUEST' },
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+
+    renderDialog();
+    await openDialogAndSearch(value);
+    await screen.findByText(`No matches for “${value}”.`);
+
+    fireEvent.click(await screen.findByRole('button', { name: `Generate "${value}" with AI & add` }));
+
+    await vi.waitFor(() =>
+      expect(toastErrorSpy).toHaveBeenCalledWith('Value "asdkjh" is not a learnable word or fixed phrase'),
+    );
+  });
+
   it('shows an error message when the search request fails', async () => {
     mockServer.addHandlers(api.personalVocabularyItemSearch.mock(() => HttpResponse.json({}, { status: 500 })));
 

@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { appClient, getIsomorphicAppClient } from '@/services/api';
+import { apiRequest, apiPaginationRequest, appClient, getIsomorphicAppClient } from '@/services/api';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { AddPersonalVocabularyItemDialog } from '@/components/add-personal-vocabulary-item-dialog';
@@ -23,13 +23,14 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
   validateSearch: vocabularyListSearchSchema,
   loader: async ({ params: { userVocabularyListId } }) => {
     const app = await getIsomorphicAppClient();
-    const res = await app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
-      param: { userVocabularyListId },
-    });
-    if (!res.ok) throw new Error('Failed to load vocabulary list');
 
-    const body = await res.json();
-    return body.data;
+    return apiRequest(
+      () =>
+        app.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].$get({
+          param: { userVocabularyListId },
+        }),
+      'Failed to load vocabulary list',
+    );
   },
   head: ({ loaderData }) =>
     pageHead(loaderData ? getVocabularyListTitle(loaderData.vocabularyList) : 'Vocabulary List'),
@@ -43,15 +44,15 @@ function VocabularyListPage() {
 
   const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey: ['vocabulary-list-items', userVocabularyListId, status, search],
-    queryFn: async ({ pageParam }) => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
-        param: { userVocabularyListId },
-        query: { status, search, cursor: pageParam, type: RequestType.All },
-      });
-      if (!res.ok) throw new Error('Failed to load vocabulary list items');
-
-      return res.json();
-    },
+    queryFn: ({ pageParam }) =>
+      apiPaginationRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
+            param: { userVocabularyListId },
+            query: { status, search, cursor: pageParam, type: RequestType.All },
+          }),
+        'Failed to load vocabulary list items',
+      ),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor,
   });
