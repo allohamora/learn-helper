@@ -24,7 +24,13 @@ declare module 'hono' {
 
 const logger = createLogger('api');
 
-const api = new OpenAPIHono().basePath('/api');
+const api = new OpenAPIHono({
+  defaultHook: (result) => {
+    if (!result.success) {
+      throw Exception.badRequest('Validation failed', { issues: result.error.issues });
+    }
+  },
+}).basePath('/api');
 
 api.use(secureHeaders());
 

@@ -5,7 +5,7 @@ import type { Transaction } from '../db/db.types';
 
 export const getUserForUpdateOrThrow = async (userId: string, tx: Transaction) => {
   const user = await getUserForUpdate(userId, tx);
-  if (!user) throw Exception.notFound(`user "${userId}" not found`);
+  if (!user) throw Exception.notFound(`User "${userId}" not found`);
 
   return user;
 };

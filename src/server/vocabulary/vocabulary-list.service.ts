@@ -13,14 +13,14 @@ export const findOrCreateVocabularyListByTitle = async (title: string) => {
   if (inserted) return inserted;
 
   const existing = await getVocabularyListByTitle(title);
-  if (!existing) throw Exception.internalServer(`failed to find or create vocabulary list "${title}"`);
+  if (!existing) throw Exception.internalServer(`Failed to find or create vocabulary list "${title}"`);
 
   return existing;
 };
 
 export const getVocabularyListByIdOrThrow = async (vocabularyListId: string, tx: Transaction = db) => {
   const list = await getVocabularyListById(vocabularyListId, tx);
-  if (!list) throw Exception.notFound(`vocabulary list "${vocabularyListId}" not found`);
+  if (!list) throw Exception.notFound(`Vocabulary list "${vocabularyListId}" not found`);
 
   return list;
 };

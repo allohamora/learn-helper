@@ -51,7 +51,7 @@ export const addVocabularyListToUser = async ({
       getVocabularyListByIdOrThrow(vocabularyListId, tx),
       getUserVocabularyListByVocabularyListId({ userId, vocabularyListId }, tx),
     ]);
-    if (userList) throw Exception.conflict(`vocabulary list "${vocabularyListId}" already added`);
+    if (userList) throw Exception.conflict(`Vocabulary list "${vocabularyListId}" already added`);
 
     const [, created] = await Promise.all([
       createUserVocabularyItemsFromList({ userId, vocabularyListId }, tx),
@@ -67,7 +67,7 @@ export const getUserVocabularyListOrThrow = async (
   tx: Transaction = db,
 ) => {
   const userList = await getUserVocabularyListById({ userId, userVocabularyListId }, tx);
-  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+  if (!userList) throw Exception.notFound(`Vocabulary list "${userVocabularyListId}" not found for user`);
 
   return userList;
 };
@@ -77,14 +77,14 @@ export const getUserVocabularyListWithRelationsOrThrow = async (
   tx: Transaction = db,
 ) => {
   const userList = await getUserVocabularyListWithRelations({ userId, userVocabularyListId }, tx);
-  if (!userList) throw Exception.notFound(`vocabulary list "${userVocabularyListId}" not found for user`);
+  if (!userList) throw Exception.notFound(`Vocabulary list "${userVocabularyListId}" not found for user`);
 
   return userList;
 };
 
 export const getUserPersonalVocabularyListWithRelationsOrThrow = async (userId: string, tx: Transaction = db) => {
   const userList = await getUserPersonalVocabularyListWithRelations(userId, tx);
-  if (!userList) throw Exception.internalServer(`personal vocabulary list not found for user "${userId}"`);
+  if (!userList) throw Exception.internalServer(`Personal vocabulary list not found for user "${userId}"`);
 
   return userList;
 };
@@ -113,7 +113,7 @@ const addUserVocabularyItemInLearningStatus = async (
 
   const existingUserItem = await getUserVocabularyItemByVocabularyItemIdForUpdate({ userId, vocabularyItemId }, tx);
   if (!existingUserItem) {
-    throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" for reset`);
+    throw Exception.internalServer(`Failed to load vocabulary item "${vocabularyItemId}" for reset`);
   }
 
   await Promise.all([
@@ -153,12 +153,12 @@ export const addVocabularyItemToPersonalList = async ({
 
     const existingListItem = await getVocabularyListItem({ vocabularyListId, vocabularyItemId }, tx);
     if (existingListItem) {
-      throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
+      throw Exception.conflict(`Vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
     const createdListItem = await createVocabularyListItemIfNotExist({ vocabularyListId, vocabularyItemId }, tx);
     if (!createdListItem) {
-      throw Exception.conflict(`vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
+      throw Exception.conflict(`Vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
     }
 
     await addUserVocabularyItemInLearningStatus(
@@ -167,7 +167,7 @@ export const addVocabularyItemToPersonalList = async ({
     );
 
     const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId({ userId, vocabularyItemId }, tx);
-    if (!userItem) throw Exception.internalServer(`failed to load vocabulary item "${vocabularyItemId}" after insert`);
+    if (!userItem) throw Exception.internalServer(`Failed to load vocabulary item "${vocabularyItemId}" after insert`);
 
     return userItem;
   });
@@ -190,14 +190,14 @@ export const removeVocabularyItemFromPersonalList = async ({
     const vocabularyListId = vocabularyList.id;
 
     const userItem = await getUserVocabularyItemByIdForUpdate({ userId, userVocabularyItemId }, tx);
-    if (!userItem) throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+    if (!userItem) throw Exception.notFound(`Vocabulary item "${userVocabularyItemId}" not found for user`);
 
     const deletedListItem = await deleteVocabularyListItem(
       { vocabularyListId, vocabularyItemId: userItem.vocabularyItemId },
       tx,
     );
     if (!deletedListItem) {
-      throw Exception.notFound(`vocabulary item "${userItem.vocabularyItemId}" not in list "${vocabularyListId}"`);
+      throw Exception.notFound(`Vocabulary item "${userItem.vocabularyItemId}" not in list "${vocabularyListId}"`);
     }
 
     await insertEvent(
@@ -243,7 +243,7 @@ export const generateVocabularyItem = async ({ userId, ...data }: GenerateVocabu
     const vocabularyItem = await createVocabularyItemIfNotExist(output, tx);
     if (!vocabularyItem) {
       throw Exception.conflict(
-        `vocabulary item "${output.value}" (${output.partOfSpeech ?? 'no part of speech'}) already exists`,
+        `Vocabulary item "${output.value}" (${output.partOfSpeech ?? 'no part of speech'}) already exists`,
       );
     }
 

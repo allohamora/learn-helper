@@ -10,7 +10,7 @@ import type { GenerateVocabularyItemDto } from './dtos/generate-vocabulary-item.
 
 export const getVocabularyItemByIdOrThrow = async (vocabularyItemId: string, tx: Transaction = db) => {
   const item = await getVocabularyItemById(vocabularyItemId, tx);
-  if (!item) throw Exception.notFound(`vocabulary item "${vocabularyItemId}" not found`);
+  if (!item) throw Exception.notFound(`Vocabulary item "${vocabularyItemId}" not found`);
 
   return item;
 };
@@ -32,7 +32,7 @@ export const generateVocabularyItemContent = async ({
 
   const { isLearnable, ...vocabularyItemData } = output;
   if (!isLearnable) {
-    throw Exception.badRequest(`value "${output.value}" is not a learnable word or fixed phrase`);
+    throw Exception.badRequest(`Value "${output.value}" is not a learnable word or fixed phrase`);
   }
 
   return vocabularyItemData;
