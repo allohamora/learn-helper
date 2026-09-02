@@ -45,6 +45,17 @@ export const getUserVocabularyListWithRelations = async (
   });
 };
 
+export const getUserPersonalVocabularyListWithRelations = async (userId: string, tx: Transaction = db) => {
+  const [row] = await tx
+    .select({ ...getTableColumns(userVocabularyList), vocabularyList: getTableColumns(vocabularyList) })
+    .from(userVocabularyList)
+    .innerJoin(vocabularyList, eq(userVocabularyList.vocabularyListId, vocabularyList.id))
+    .where(and(eq(userVocabularyList.userId, userId), eq(vocabularyList.type, VocabularyListType.Personal)))
+    .limit(1);
+
+  return row;
+};
+
 export const createUserVocabularyList = async (
   { userId, vocabularyListId }: { userId: string; vocabularyListId: string },
   tx: Transaction = db,

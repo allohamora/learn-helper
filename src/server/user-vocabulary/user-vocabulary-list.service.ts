@@ -1,6 +1,6 @@
 import '@tanstack/react-start/server-only';
 import { EventType } from '@/const/event';
-import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
+import { LearningStatus } from '@/const/vocabulary';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import { insertEvent } from '../event/event.repository';
@@ -17,6 +17,7 @@ import {
 } from './user-vocabulary-item.repository';
 import {
   createUserVocabularyList,
+  getUserPersonalVocabularyListWithRelations,
   getUserVocabularyListById,
   getUserVocabularyListByVocabularyListId,
   getUserVocabularyListWithRelations,
@@ -81,6 +82,13 @@ export const getUserVocabularyListWithRelationsOrThrow = async (
   return userList;
 };
 
+export const getUserPersonalVocabularyListWithRelationsOrThrow = async (userId: string, tx: Transaction = db) => {
+  const userList = await getUserPersonalVocabularyListWithRelations(userId, tx);
+  if (!userList) throw Exception.internalServer(`personal vocabulary list not found for user "${userId}"`);
+
+  return userList;
+};
+
 const newLearningProgress = () => ({
   status: LearningStatus.Learning,
   encounterCount: 0,
@@ -129,28 +137,19 @@ const addUserVocabularyItemInLearningStatus = async (
 
 export const addVocabularyItemToPersonalList = async ({
   userId,
-  userVocabularyListId,
   vocabularyItemId,
   isResetToLearning = true,
 }: {
   userId: string;
-  userVocabularyListId: string;
   vocabularyItemId: string;
   isResetToLearning?: boolean;
 }) => {
   return db.transaction(async (tx) => {
-    const [{ vocabularyList }] = await Promise.all([
-      getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx),
+    const [{ id: userVocabularyListId, vocabularyList }] = await Promise.all([
+      getUserPersonalVocabularyListWithRelationsOrThrow(userId, tx),
       getVocabularyItemByIdOrThrow(vocabularyItemId, tx),
     ]);
     const vocabularyListId = vocabularyList.id;
-
-    if (vocabularyList.type !== VocabularyListType.Personal) {
-      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" is not a personal list`);
-    }
-    if (vocabularyList.ownerId !== userId) {
-      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
-    }
 
     const existingListItem = await getVocabularyListItem({ vocabularyListId, vocabularyItemId }, tx);
     if (existingListItem) {
@@ -176,25 +175,19 @@ export const addVocabularyItemToPersonalList = async ({
 
 export const removeVocabularyItemFromPersonalList = async ({
   userId,
-  userVocabularyListId,
   userVocabularyItemId,
   isReset = false,
 }: {
   userId: string;
-  userVocabularyListId: string;
   userVocabularyItemId: string;
   isReset?: boolean;
 }) => {
   return db.transaction(async (tx) => {
-    const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId }, tx);
+    const { id: userVocabularyListId, vocabularyList } = await getUserPersonalVocabularyListWithRelationsOrThrow(
+      userId,
+      tx,
+    );
     const vocabularyListId = vocabularyList.id;
-
-    if (vocabularyList.type !== VocabularyListType.Personal) {
-      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" is not a personal list`);
-    }
-    if (vocabularyList.ownerId !== userId) {
-      throw Exception.forbidden(`vocabulary list "${vocabularyListId}" does not belong to the user`);
-    }
 
     const userItem = await getUserVocabularyItemByIdForUpdate({ userId, userVocabularyItemId }, tx);
     if (!userItem) throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
@@ -241,18 +234,8 @@ export const removeVocabularyItemFromPersonalList = async ({
   });
 };
 
-export const generateVocabularyItem = async ({
-  userId,
-  userVocabularyListId,
-  ...data
-}: GenerateVocabularyItemDto & { userId: string; userVocabularyListId: string }) => {
-  const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId });
-  if (vocabularyList.type !== VocabularyListType.Personal) {
-    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" is not a personal list`);
-  }
-  if (vocabularyList.ownerId !== userId) {
-    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" does not belong to the user`);
-  }
+export const generateVocabularyItem = async ({ userId, ...data }: GenerateVocabularyItemDto & { userId: string }) => {
+  const { vocabularyList } = await getUserPersonalVocabularyListWithRelationsOrThrow(userId);
 
   const output = await generateVocabularyItemContent({ userId, ...data });
 
@@ -277,17 +260,9 @@ export const generateVocabularyItem = async ({
 
 export const searchPersonalVocabularyListItems = async ({
   userId,
-  userVocabularyListId,
   ...filter
-}: { userId: string; userVocabularyListId: string } & PersonalVocabularyItemSearchFilterDto) => {
-  const { vocabularyList } = await getUserVocabularyListWithRelationsOrThrow({ userId, userVocabularyListId });
-
-  if (vocabularyList.type !== VocabularyListType.Personal) {
-    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" is not a personal list`);
-  }
-  if (vocabularyList.ownerId !== userId) {
-    throw Exception.forbidden(`vocabulary list "${vocabularyList.id}" does not belong to the user`);
-  }
+}: { userId: string } & PersonalVocabularyItemSearchFilterDto) => {
+  const { vocabularyList } = await getUserPersonalVocabularyListWithRelationsOrThrow(userId);
 
   return searchVocabularyItemsForList({ userId, vocabularyListId: vocabularyList.id, ...filter });
 };

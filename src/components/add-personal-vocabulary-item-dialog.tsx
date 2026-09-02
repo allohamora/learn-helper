@@ -23,7 +23,7 @@ import { appClient } from '@/services/api';
 import { formatPartOfSpeech } from '@/utils/vocabulary';
 
 type SearchResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['search']['$get']
+  (typeof appClient.api.v1.users.me)['vocabulary-lists']['personal']['search']['$get']
 >;
 type SearchResult = Extract<SearchResponse, { success: true }>['data'][number];
 
@@ -31,10 +31,9 @@ const LOAD_MORE_THRESHOLD_PX = 200;
 
 type ResultRowProps = {
   item: SearchResult;
-  userVocabularyListId: string;
 };
 
-const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
+const ResultRow: FC<ResultRowProps> = ({ item }) => {
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const [isResetToLearning, setIsResetToLearning] = useState(true);
   const [isReset, setIsReset] = useState(false);
@@ -42,8 +41,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$post({
-        param: { userVocabularyListId },
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.items.$post({
         json: { vocabularyItemId: item.id, isResetToLearning },
       });
       if (!res.ok) throw new Error('Failed to add item');
@@ -65,10 +63,8 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
     mutationFn: async () => {
       if (!item.userVocabularyItem) throw new Error('expected a userVocabularyItem for an added item');
 
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
-        ':userVocabularyItemId'
-      ].$delete({
-        param: { userVocabularyListId, userVocabularyItemId: item.userVocabularyItem.id },
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.items[':userVocabularyItemId'].$delete({
+        param: { userVocabularyItemId: item.userVocabularyItem.id },
         json: { isReset },
       });
       if (!res.ok) throw new Error('Failed to remove item');
@@ -193,11 +189,7 @@ const ResultRow: FC<ResultRowProps> = ({ item, userVocabularyListId }) => {
   );
 };
 
-type Props = {
-  userVocabularyListId: string;
-};
-
-export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListId }) => {
+export const AddPersonalVocabularyItemDialog: FC = () => {
   const [open, setOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [context, setContext] = useState('');
@@ -205,10 +197,9 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
   const [debouncedValue] = useDebounce(searchValue, 300);
 
   const { data, isPending, isError, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey: ['personal-vocabulary-search', userVocabularyListId, debouncedValue],
+    queryKey: ['personal-vocabulary-search', debouncedValue],
     queryFn: async ({ pageParam }) => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].search.$get({
-        param: { userVocabularyListId },
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.search.$get({
         query: { value: debouncedValue, cursor: pageParam },
       });
       if (!res.ok) throw new Error('Failed to search items');
@@ -226,10 +217,10 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.generate.$post({
-        param: { userVocabularyListId },
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.items.generate.$post({
         json: { value: searchValue, context: context.trim() || undefined },
       });
+      if (res.status === 400) throw new Error('NOT_LEARNABLE');
       if (!res.ok) throw new Error('Failed to generate item');
 
       return res.json();
@@ -242,7 +233,13 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
       queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
     },
-    onError: () => toast.error('Failed to generate item'),
+    onError: (error) => {
+      if (error instanceof Error && error.message === 'NOT_LEARNABLE') {
+        toast.error("This doesn't look like a learnable word or phrase");
+        return;
+      }
+      toast.error('Failed to generate item');
+    },
   });
 
   const handleScroll = (event: UIEvent<HTMLDivElement>) => {
@@ -323,7 +320,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           ) : (
             <div className="divide-y">
               {results.map((item) => (
-                <ResultRow key={item.id} item={item} userVocabularyListId={userVocabularyListId} />
+                <ResultRow key={item.id} item={item} />
               ))}
               {isFetchingNextPage && (
                 <div className="flex items-center justify-center py-3">

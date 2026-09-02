@@ -66,7 +66,7 @@ function VocabularyListPage() {
             {getVocabularyListTitle(userVocabularyList.vocabularyList)}
           </h1>
           {userVocabularyList.vocabularyList.type === VocabularyListType.Personal && (
-            <AddPersonalVocabularyItemDialog userVocabularyListId={userVocabularyListId} />
+            <AddPersonalVocabularyItemDialog />
           )}
         </div>
 

@@ -91,7 +91,7 @@ describe('VocabularyItemsTable remove dialog', () => {
     const removeHandler = vi.fn((userVocabularyItemId: string) =>
       HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
     );
-    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(removeHandler));
 
     renderTable(userVocabularyListId, item);
 
@@ -112,7 +112,7 @@ describe('VocabularyItemsTable remove dialog', () => {
     const removeHandler = vi.fn((userVocabularyItemId: string) =>
       HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
     );
-    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(removeHandler));
 
     renderTable(userVocabularyListId, item);
 

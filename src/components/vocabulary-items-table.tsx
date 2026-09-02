@@ -70,10 +70,8 @@ const ActionsCell: FC<{
 
   const removeMutation = useMutation({
     mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
-        ':userVocabularyItemId'
-      ].$delete({
-        param: { userVocabularyListId, userVocabularyItemId: item.id },
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.items[':userVocabularyItemId'].$delete({
+        param: { userVocabularyItemId: item.id },
         json: { isReset },
       });
       if (!res.ok) throw new Error('Failed to remove item from list');
