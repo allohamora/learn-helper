@@ -1,6 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
+  errorBadRequestResponse,
   errorConflictResponse,
   errorForbiddenResponse,
   errorNotFoundResponse,
@@ -279,6 +280,7 @@ export const userVocabularyRouter = new OpenAPIHono()
         ...errorConflictResponse({
           description: 'A vocabulary item with the generated value and part of speech already exists',
         }),
+        ...errorBadRequestResponse({ description: 'The value is not a learnable word or fixed phrase' }),
         ...errorNotFoundResponse({ description: 'The list was not found' }),
       },
       security: [{ cookieAuth: [] }],

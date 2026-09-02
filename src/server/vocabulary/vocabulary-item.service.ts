@@ -30,5 +30,10 @@ export const generateVocabularyItemContent = async ({
     metadata: { input: data, output },
   });
 
-  return output;
+  const { isLearnable, ...vocabularyItemData } = output;
+  if (!isLearnable) {
+    throw Exception.badRequest(`value "${output.value}" is not a learnable word or fixed phrase`);
+  }
+
+  return vocabularyItemData;
 };

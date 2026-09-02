@@ -586,6 +586,7 @@ describe('user-vocabulary.router', () => {
             uaTranslation: `переклад ${value}`,
             partOfSpeech: PartOfSpeech.Noun,
             spelling: `/${value}/`,
+            isLearnable: true,
           },
           cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
         }));
