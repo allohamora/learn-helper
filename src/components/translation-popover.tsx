@@ -1,7 +1,8 @@
 import { type FC, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FloatingPortal } from '@floating-ui/react';
-import { Languages, Plus, XIcon } from 'lucide-react';
+import { Check, Languages, Loader2, Plus, XIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
 import { appClient } from '@/services/api';
@@ -108,6 +109,45 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
     gcTime: 30 * 60 * 1000,
   });
 
+  const queryClient = useQueryClient();
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      const context =
+        data.before || data.after ? JSON.stringify({ before: data.before, after: data.after }) : undefined;
+
+      const res = await appClient.api.v1.users.me['vocabulary-lists'].personal.items.generate.$post({
+        json: { value: data.text, context },
+      });
+
+      if (res.status === 409) throw new Error('CONFLICT');
+      if (res.status === 400) throw new Error('NOT_LEARNABLE');
+      if (!res.ok) throw new Error('Failed to add item');
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      toast.success('Added to your vocabulary list');
+    },
+    onError: (error) => {
+      if (error instanceof Error && error.message === 'CONFLICT') {
+        toast.error('Already in your list');
+        return;
+      }
+      if (error instanceof Error && error.message === 'NOT_LEARNABLE') {
+        toast.error("This doesn't look like a learnable word or phrase");
+        return;
+      }
+      toast.error('Failed to add item');
+    },
+  });
+
   return (
     <div className="w-54 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
       <div className="flex items-center justify-between gap-2">
@@ -147,10 +187,22 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
 
       {result && (
         <div className="mt-2 flex justify-end">
-          {/* Add-to-learning-list wiring isn't implemented yet - this only reserves the spot. */}
-          <Button type="button" size="xs" disabled title="Add to learning list" aria-label="Add to learning list">
-            <Plus />
-            <span>Add</span>
+          <Button
+            type="button"
+            size="xs"
+            disabled={!result.canAddToLearningList || addMutation.isPending || addMutation.isSuccess}
+            onClick={() => addMutation.mutate()}
+            title={addMutation.isSuccess ? 'Added to learning list' : 'Add to learning list'}
+            aria-label={addMutation.isSuccess ? 'Added to learning list' : 'Add to learning list'}
+          >
+            {addMutation.isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : addMutation.isSuccess ? (
+              <Check />
+            ) : (
+              <Plus />
+            )}
+            <span>{addMutation.isSuccess ? 'Added' : 'Add'}</span>
           </Button>
         </div>
       )}
