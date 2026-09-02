@@ -3,6 +3,7 @@ import type { ClientResponse } from 'hono/client';
 import type { AppType } from '@/server/api';
 import type { ErrorResponse, PaginatedResponse, SuccessResponse } from '@/types/response';
 import { createIsomorphicFn } from '@tanstack/react-start';
+import { MimeType } from '@/const/mime-type';
 
 export const appClient = hc<AppType>('');
 
@@ -21,6 +22,9 @@ const fetchApiResponse = async <T extends { success: true }>(
   fallback = 'Something went wrong',
 ): Promise<T> => {
   const res = await fn();
+  const contentType = res.headers.get('content-type');
+  if (!contentType?.includes(MimeType.Json)) throw new Error(`Unexpected response content type: ${contentType}`);
+
   const json = await res.json();
 
   return unwrapApiResponse(json, fallback);

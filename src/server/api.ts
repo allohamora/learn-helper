@@ -10,7 +10,7 @@ import { toErrorResponse } from './utils/response.utils';
 import { userVocabularyRouter } from './user-vocabulary/user-vocabulary.router';
 import { createLogger } from './utils/logger.utils';
 import type { Context } from 'hono';
-import { MimeType } from './utils/mime-type.utils';
+import { MimeType } from '@/const/mime-type';
 import { statisticsRouter } from './statistics/statistics.router';
 import { readingRouter } from './reading/reading.router';
 import { setUser } from './instrument';

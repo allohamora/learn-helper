@@ -12,7 +12,7 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { Exception } from '../utils/exception.utils';
-import { MimeType } from '../utils/mime-type.utils';
+import { MimeType } from '@/const/mime-type';
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
