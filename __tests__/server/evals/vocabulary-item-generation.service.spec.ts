@@ -129,45 +129,45 @@ describe.concurrent('vocabulary-item-generation.service', () => {
     });
 
     it('assigns a part of speech to a fixed multi-word unit', async () => {
-      const { output } = await generateVocabularyItemData({ value: 'next to' });
+      const { output } = await generateVocabularyItemData({ value: 'instead of' });
       console.log('fixed-multi-word-unit', JSON.stringify(output, null, 2));
 
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Preposition);
 
       await expect(output).toSatisfyStatements([
-        'value is "next to".',
-        'definition explains it means positioned beside or adjacent to something.',
-        'uaTranslation is a single natural Ukrainian equivalent (e.g. "поруч з" or "біля", case-insensitive, or an equally natural single phrase with the same meaning) - not a list of several alternative phrasings.',
+        'value is "instead of".',
+        'definition explains it means in place of or as a substitute for something.',
+        'uaTranslation is a single natural Ukrainian equivalent (e.g. "замість", case-insensitive, or an equally natural single phrase with the same meaning) - not a list of several alternative phrasings.',
       ]);
     });
 
     it('handles a number value', async () => {
-      const { output } = await generateVocabularyItemData({ value: '42' });
+      const { output } = await generateVocabularyItemData({ value: '17' });
       console.log('number-value', JSON.stringify(output, null, 2));
 
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Number);
-      expect(output.value).toBe('forty-two');
-      expect(output.definition).toBe('42');
+      expect(output.value).toBe('seventeen');
+      expect(output.definition).toBe('17');
 
       await expect(output).toSatisfyStatements([
-        'uaTranslation is the spelled-out Ukrainian word for forty-two ("сорок два", case-insensitive) - a literal translation, not a joke, cultural reference, or trivia about the number.',
+        'uaTranslation is the spelled-out Ukrainian word for seventeen ("сімнадцять", case-insensitive) - a literal translation, not a joke, cultural reference, or trivia about the number.',
       ]);
     });
 
     it('corrects and interprets a full idiomatic sentence', async () => {
-      const { output } = await generateVocabularyItemData({ value: 'its raining cats and dogs' });
+      const { output } = await generateVocabularyItemData({ value: "the ball is in you're court" });
       console.log('idiomatic-sentence', JSON.stringify(output, null, 2));
 
       assertShape(output);
-      expect(output.value.toLowerCase()).toBe("it's raining cats and dogs");
+      expect(output.value.toLowerCase()).toBe('the ball is in your court');
       expect(output.partOfSpeech).toBeNull();
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toSatisfyStatements([
-        'definition explains the idiom means it is raining very heavily, not a literal description of animals falling from the sky.',
-        'uaTranslation is a natural Ukrainian idiom or phrase meaning heavy rain, not a literal word-for-word translation of "cats and dogs".',
+        'definition explains the idiom means it is now up to someone else to make the next move or decision, not a literal description of a ball and a court.',
+        'uaTranslation is a natural Ukrainian idiom or phrase meaning the decision/next move is now up to the other person, not a literal word-for-word translation of "ball" and "court".',
       ]);
     });
 
@@ -255,16 +255,16 @@ describe.concurrent('vocabulary-item-generation.service', () => {
     });
 
     it('does not capitalize a pronoun into an acronym-like abbreviation', async () => {
-      const { output } = await generateVocabularyItemData({ value: 'us' });
+      const { output } = await generateVocabularyItemData({ value: 'it' });
       console.log('pronoun-not-acronym', JSON.stringify(output, null, 2));
 
       assertShape(output);
-      expect(output.value).toBe('us');
+      expect(output.value).toBe('it');
       expect(output.partOfSpeech).toBe(PartOfSpeech.Pronoun);
 
       await expect(output).toSatisfyStatements([
-        'definition describes the object form of "we" (used as the object of a verb or preposition), not the country abbreviation "US"/"United States".',
-        'uaTranslation is the Ukrainian equivalent of the pronoun ("нас"/"нам", case-insensitive), not a translation of "United States".',
+        'definition describes the neuter third-person pronoun used for a thing, animal, or situation, not the abbreviation "IT"/"information technology".',
+        'uaTranslation is the Ukrainian equivalent of the pronoun (e.g. "воно" or "це", case-insensitive), not a translation of "information technology".',
       ]);
     });
 
@@ -297,11 +297,11 @@ describe.concurrent('vocabulary-item-generation.service', () => {
     });
 
     it('normalizes a specific object into a generic "(sth)" placeholder for a fixed prepositional verb', async () => {
-      const { output } = await generateVocabularyItemData({ value: 'ask for help' });
+      const { output } = await generateVocabularyItemData({ value: 'look for the keys' });
       console.log('placeholder-sth', JSON.stringify(output, null, 2));
 
       assertShape(output);
-      expect(output.value.toLowerCase()).toBe('ask for (sth)');
+      expect(output.value.toLowerCase()).toBe('look for (sth)');
     });
 
     it('corrects a wrong word choice within a fixed phrasal verb, normalizing the object to "(sb)"', async () => {
