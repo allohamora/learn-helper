@@ -282,6 +282,7 @@ export const AddPersonalVocabularyItemDialog: FC<Props> = ({ userVocabularyListI
           placeholder="Search items..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
+          maxLength={255}
           autoFocus
         />
 
