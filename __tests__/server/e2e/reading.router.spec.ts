@@ -1,5 +1,6 @@
 import * as readingService from '@/server/reading/reading.service';
 import * as readingRepository from '@/server/reading/reading.repository';
+import * as readingTranslationGenerationService from '@/server/reading/reading-translation-generation.service';
 import * as fsp from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -607,6 +608,159 @@ describe('reading.router', () => {
         param: { readingId: '00000000-0000-7000-8000-000000000000' },
       });
       expect(res.status).toBe(401);
+    });
+  });
+
+  describe('POST /api/v1/users/me/readings/:readingId/translations', () => {
+    let generateSpy: MockInstance<typeof readingTranslationGenerationService.generateTranslationData>;
+
+    beforeEach(() => {
+      generateSpy = vi.spyOn(readingTranslationGenerationService, 'generateTranslationData');
+    });
+
+    afterEach(() => {
+      generateSpy.mockRestore();
+    });
+
+    it('returns 200 with the translation and logs a cost event tied to the reading', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'бігти', isLearnable: true },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: created.id },
+        json: { text: 'run', before: 'I like to', after: 'every morning' },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toEqual({
+        success: true,
+        data: { uaTranslation: 'бігти', canAddToLearningList: true },
+      });
+
+      expect(generateSpy).toHaveBeenCalledWith({ text: 'run', before: 'I like to', after: 'every morning' });
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toEqual([
+        expect.objectContaining({
+          type: EventType.ReadingSelectionTranslationGenerated,
+          readingId: created.id,
+          costInNanoDollars: 1_000_000,
+          inputTokens: 100,
+          outputTokens: 200,
+        }),
+      ]);
+    });
+
+    it('returns canAddToLearningList false when the model marks the selection as not learnable', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'переклад речення', isLearnable: false },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: created.id },
+        json: { text: 'a full sentence' },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ data: { canAddToLearningList: false } });
+    });
+
+    it('returns canAddToLearningList false once text exceeds the learnable length, even when the model marks it learnable', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      generateSpy.mockResolvedValue({
+        output: { uaTranslation: 'переклад', isLearnable: true },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      });
+
+      // MAX_LEARNABLE_TEXT_LENGTH in reading.service.ts is 255, one over it, still within the dto's
+      // own 400-char max so it reaches the service instead of being rejected by validation
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: created.id },
+        json: { text: 'a'.repeat(256) },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ data: { canAddToLearningList: false } });
+    });
+
+    it('returns 400 when text is missing', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: created.id },
+        json: {} as never,
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 400 when text exceeds the max selection length', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: created.id },
+        json: { text: 'a'.repeat(401) },
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 for another user's reading", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: created.id },
+        json: { text: 'run' },
+      });
+
+      expect(res.status).toBe(404);
+      expect(generateSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns 404 for an unknown reading id', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+        json: { text: 'run' },
+      });
+
+      expect(res.status).toBe(404);
+      expect(generateSpy).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when unauthenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+        json: { text: 'run' },
+      });
+
+      expect(res.status).toBe(401);
+      expect(generateSpy).not.toHaveBeenCalled();
     });
   });
 });

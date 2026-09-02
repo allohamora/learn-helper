@@ -9,6 +9,7 @@ import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import { createLogger } from '../utils/logger.utils';
 import { getUploadFileWebStream, removeUploadFile, writeUploadFile } from '../uploads/uploads.service';
+import { generateTranslationData } from './reading-translation-generation.service';
 import {
   createFile,
   createReading,
@@ -17,6 +18,11 @@ import {
   getReadingByIdAndUserId,
   getReadingWithFileByIdAndUserId,
 } from './reading.repository';
+import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
+
+// Mirrors vocabularyItem.value's column length (src/server/db/db.schema.ts) - the largest a
+// selection can be and still become a stored learning item, independent of the translation's own length.
+const MAX_LEARNABLE_TEXT_LENGTH = 255;
 
 const logger = createLogger('reading.service');
 
@@ -101,4 +107,29 @@ export const removeReading = async ({ userId, readingId }: { userId: string; rea
   });
 
   await removeUploadFile(filePath);
+};
+
+export const translateReadingSelection = async ({
+  userId,
+  readingId,
+  ...data
+}: TranslateSelectionDto & { userId: string; readingId: string }) => {
+  await getReadingByIdAndUserIdOrThrow({ userId, readingId });
+
+  const { output, cost } = await generateTranslationData(data);
+
+  await insertEvent({
+    type: EventType.ReadingSelectionTranslationGenerated,
+    userId,
+    readingId,
+    costInNanoDollars: cost.costInNanoDollars,
+    inputTokens: cost.inputTokens,
+    outputTokens: cost.outputTokens,
+    metadata: { input: data, output },
+  });
+
+  return {
+    uaTranslation: output.uaTranslation,
+    canAddToLearningList: data.text.length <= MAX_LEARNABLE_TEXT_LENGTH && output.isLearnable,
+  };
 };

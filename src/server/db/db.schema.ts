@@ -322,6 +322,8 @@ export const event = pgTable(
     costInNanoDollars: bigint('cost_in_nano_dollars', { mode: 'number' }),
     inputTokens: integer('input_tokens'),
     outputTokens: integer('output_tokens'),
+    // free-form per-event debug context (e.g. AI input/output payloads); shape varies by event type
+    metadata: jsonb('metadata').$type<Record<string, unknown>>(),
     // marks a discovered event as later undone; generic across event types, not undo-specific
     revertedAt: timestamp('reverted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

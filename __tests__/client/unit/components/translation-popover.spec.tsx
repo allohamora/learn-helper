@@ -1,6 +1,35 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslationPopover } from '@/components/translation-popover';
+import { mockServer } from '../../setup-unit-context';
+
+const READING_ID = 'reading-1';
+
+const renderPopover = () => {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <TranslationPopover readingId={READING_ID} />
+    </QueryClientProvider>,
+  );
+};
+
+// Echoes the translated text back with the request's own selected text, rather than a fixed string -
+// the panel no longer renders the selected text itself (it's already highlighted in the document), so
+// this is what lets tests still tell which selection a given result panel belongs to.
+const mockTranslationResponse = () =>
+  mockServer.addHandlers(
+    http.post(`/api/v1/users/me/readings/${READING_ID}/translations`, async ({ request }) => {
+      const { text } = (await request.json()) as { text: string };
+      return HttpResponse.json({
+        success: true,
+        data: { uaTranslation: `translated ${text}`, canAddToLearningList: true },
+      });
+    }),
+  );
 
 const setSelection = (node: Node, startOffset: number, endOffset: number) => {
   const range = document.createRange();
@@ -31,6 +60,8 @@ describe('TranslationPopover (desktop)', () => {
     paragraph = document.createElement('p');
     paragraph.textContent = 'Some selectable text here.';
     document.body.appendChild(paragraph);
+
+    mockTranslationResponse();
   });
 
   afterEach(() => {
@@ -41,7 +72,7 @@ describe('TranslationPopover (desktop)', () => {
   });
 
   it('shows the trigger button once a selection settles', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -50,7 +81,7 @@ describe('TranslationPopover (desktop)', () => {
   });
 
   it('keeps the selection alive through a trigger click, and shows the result panel', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -59,16 +90,16 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('Some')).toBeTruthy();
+    expect(await screen.findByText('translated Some')).toBeTruthy();
     expect(window.getSelection()?.isCollapsed).toBe(false);
     expect(window.getSelection()?.toString()).toBe('Some');
   });
 
-  it('restores the original, un-expanded selection on trigger click, not the word-corrected one used for translation', async () => {
-    render(<TranslationPopover />);
+  it('restores the word-corrected selection on trigger click, not the exact drag', async () => {
+    renderPopover();
 
     // "om" sits strictly inside "Some" - correctRange expands this to the whole word for translation
-    // purposes, but a native Copy afterward should still copy exactly what was dragged over.
+    // purposes, and clicking the trigger should highlight that same expanded word, not just "om".
     setSelection(paragraph.firstChild!, 1, 3);
     endPointerSelection();
     const trigger = await screen.findByRole('button', { name: 'Translate selection' });
@@ -76,12 +107,39 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('Some')).toBeTruthy(); // translation still uses the corrected word
-    await waitFor(() => expect(window.getSelection()?.toString()).toBe('om'));
+    expect(await screen.findByText('translated Some')).toBeTruthy();
+    await waitFor(() => expect(window.getSelection()?.toString()).toBe('Some'));
+  });
+
+  it('keeps showing the result after a trigger click, even though re-adding the corrected selection fires its own selectionchange', async () => {
+    paragraph.textContent = 'Code review';
+    renderPopover();
+
+    // "Co" sits strictly inside "Code" - the trigger's onClick re-adds the word-corrected range to the
+    // live selection (see the previous test), which itself fires a real selectionchange event. That
+    // used to race back into this component's own selectionchange handling and get misread as a brand
+    // new selection - "Co" vs "Code" don't compare equal - resetting the panel right back to the
+    // trigger the instant it was clicked.
+    setSelection(paragraph.firstChild!, 0, 2); // "Co"
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+
+    expect(await screen.findByText('translated Code')).toBeTruthy();
+
+    // Give the debounced selectionchange handler (150ms) and its own follow-up RAF a full chance to
+    // run and misfire before asserting it didn't.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
+    expect(screen.getByText('translated Code')).toBeTruthy();
   });
 
   it('still registers a shrunk selection even when correctRange maps both onto the same word', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     // Selecting all of "selectable" (offsets 5-15) then shrinking to just its first letter "s"
     // (offsets 5-6) corrects to the same "selectable" range both times - its start already sits at
@@ -102,12 +160,12 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('selectable')).toBeTruthy(); // translation still uses the whole word
-    await waitFor(() => expect(window.getSelection()?.toString()).toBe('s'));
+    expect(await screen.findByText('translated selectable')).toBeTruthy();
+    await waitFor(() => expect(window.getSelection()?.toString()).toBe('selectable'));
   });
 
   it('does not fall back to the trigger when a pointerup bubbles from inside the open result panel', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -115,7 +173,7 @@ describe('TranslationPopover (desktop)', () => {
 
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
-    const resultText = await screen.findByText('Some');
+    const resultText = await screen.findByText('translated Some');
 
     // The underlying selection is still live at this point (previous test), so without the panel
     // stopping this from reaching useSelection's document-wide listener, this would read as a fresh
@@ -123,11 +181,11 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.pointerUp(resultText);
 
     expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
-    expect(screen.getByText('Some')).toBeTruthy();
+    expect(screen.getByText('translated Some')).toBeTruthy();
   });
 
   it('ignores a re-detection of the same still-active selection while the result panel is open', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -135,7 +193,7 @@ describe('TranslationPopover (desktop)', () => {
 
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
-    await screen.findByText('Some');
+    await screen.findByText('translated Some');
 
     // Simulates the real-browser bug directly: something (a click inside the panel that a browser's
     // stopPropagation quirk lets through, a focus-triggered selectionchange, ...) causes useSelection
@@ -149,11 +207,11 @@ describe('TranslationPopover (desktop)', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
-    expect(screen.getByText('Some')).toBeTruthy();
+    expect(screen.getByText('translated Some')).toBeTruthy();
   });
 
   it('keeps a slow drag intact when the debounce path already opened the panel mid-gesture, before release', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     // Simulates a slow mouse drag that pauses while still held down: the debounced selectionchange
     // path settles and opens the panel before the mouse is ever released, with no pointerup involved.
@@ -176,7 +234,7 @@ describe('TranslationPopover (desktop)', () => {
     other.textContent = 'A different sentence entirely.';
     document.body.appendChild(other);
 
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -184,13 +242,13 @@ describe('TranslationPopover (desktop)', () => {
 
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
-    await screen.findByText('Some');
+    await screen.findByText('translated Some');
 
     setSelection(other.firstChild!, 2, 11); // "different"
     endPointerSelection();
 
     expect(await screen.findByRole('button', { name: 'Translate selection' })).toBeTruthy();
-    expect(screen.queryByText('Some')).toBeNull();
+    expect(screen.queryByText('translated Some')).toBeNull();
 
     other.remove();
   });
@@ -200,7 +258,7 @@ describe('TranslationPopover (desktop)', () => {
     other.textContent = 'A different sentence entirely.';
     document.body.appendChild(other);
 
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -222,7 +280,7 @@ describe('TranslationPopover (desktop)', () => {
   });
 
   it('clears the selection once the panel is closed via its close button', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -230,17 +288,17 @@ describe('TranslationPopover (desktop)', () => {
 
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
-    await screen.findByText('Some');
+    await screen.findByText('translated Some');
 
     const closeButton = screen.getByRole('button', { name: 'Close' });
     fireEvent.click(closeButton);
 
     expect(window.getSelection()?.isCollapsed).toBe(true);
-    await waitFor(() => expect(screen.queryByText('Some')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('translated Some')).toBeNull());
   });
 
   it('clears the selection when the panel is dismissed by an outside pointerdown', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -253,7 +311,7 @@ describe('TranslationPopover (desktop)', () => {
   });
 
   it('also clears the selection when the open result panel is dismissed by an outside pointerdown', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -261,16 +319,16 @@ describe('TranslationPopover (desktop)', () => {
 
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
-    await screen.findByText('Some');
+    await screen.findByText('translated Some');
 
     fireEvent.pointerDown(document.body);
 
     expect(window.getSelection()?.isCollapsed).toBe(true);
-    await waitFor(() => expect(screen.queryByText('Some')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('translated Some')).toBeNull());
   });
 
   it("re-applies the selection range via setBaseAndExtent before clearing it, to dismiss Android's native selection toolbar", async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -282,7 +340,7 @@ describe('TranslationPopover (desktop)', () => {
     const closeButton = await (async () => {
       fireEvent.mouseDown(trigger);
       fireEvent.click(trigger);
-      await screen.findByText('Some');
+      await screen.findByText('translated Some');
       return screen.getByRole('button', { name: 'Close' });
     })();
     fireEvent.click(closeButton);
@@ -294,7 +352,7 @@ describe('TranslationPopover (desktop)', () => {
   it('does not show a trigger for a selection longer than the max translatable length', async () => {
     const longText = 'word '.repeat(90).trim(); // well over the 400-char cap
     paragraph.textContent = longText;
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, longText.length);
     endPointerSelection();
@@ -305,9 +363,32 @@ describe('TranslationPopover (desktop)', () => {
     expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull();
   });
 
-  it('shows the surrounding context alongside the selected text in the result panel', async () => {
+  it('hides an already-shown trigger when the selection grows past the max translatable length', async () => {
+    const longText = 'word '.repeat(90).trim(); // well over the 400-char cap
+    paragraph.textContent = longText;
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4); // "word" - short, well under the cap
+    endPointerSelection();
+    await screen.findByRole('button', { name: 'Translate selection' });
+
+    setSelection(paragraph.firstChild!, 0, longText.length); // extend to the whole, over-cap text
+    endPointerSelection();
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Translate selection' })).toBeNull());
+  });
+
+  it('sends the surrounding context alongside the selected text, and renders the translation result', async () => {
     paragraph.textContent = 'one two three four five six seven';
-    render(<TranslationPopover />);
+    renderPopover();
+
+    let requestBody: unknown;
+    mockServer.addHandlers(
+      http.post(`/api/v1/users/me/readings/${READING_ID}/translations`, async ({ request }) => {
+        requestBody = await request.json();
+        return HttpResponse.json({ success: true, data: { uaTranslation: 'чотири', canAddToLearningList: true } });
+      }),
+    );
 
     const text = paragraph.firstChild!.textContent!;
     const start = text.indexOf('four');
@@ -317,15 +398,28 @@ describe('TranslationPopover (desktop)', () => {
 
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
-    await screen.findByText('four');
 
-    const contextText = document.querySelector('pre')!.textContent!;
-    expect(contextText).toContain('one two three');
-    expect(contextText).toContain('five six seven');
+    expect(await screen.findByText('чотири')).toBeTruthy();
+    expect(requestBody).toEqual({ text: 'four', before: 'one two three', after: 'five six seven' });
+  });
+
+  it('reserves a disabled "add to learning list" spot next to the translation result', async () => {
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = screen.getByRole('button', { name: 'Add to learning list' }) as HTMLButtonElement;
+    expect(addButton.disabled).toBe(true);
   });
 
   it('shows the trigger button once a keyboard-driven selection settles', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endKeySelection();
@@ -338,7 +432,7 @@ describe('TranslationPopover (desktop)', () => {
     other.textContent = 'A different sentence entirely.';
     document.body.appendChild(other);
 
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4); // "Some"
     endPointerSelection();
@@ -349,8 +443,8 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('different')).toBeTruthy();
-    expect(screen.queryByText('Some')).toBeNull();
+    expect(await screen.findByText('translated different')).toBeTruthy();
+    expect(screen.queryByText('translated Some')).toBeNull();
 
     other.remove();
   });
@@ -370,6 +464,8 @@ describe('TranslationPopover (mobile)', () => {
     paragraph = document.createElement('p');
     paragraph.textContent = 'Some selectable text here.';
     document.body.appendChild(paragraph);
+
+    mockTranslationResponse();
   });
 
   afterEach(() => {
@@ -380,7 +476,7 @@ describe('TranslationPopover (mobile)', () => {
   });
 
   it('shows the trigger button anchored to the selection, not pinned to the bottom of the screen', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -393,7 +489,7 @@ describe('TranslationPopover (mobile)', () => {
   });
 
   it('keeps the selection alive through a trigger tap, same as desktop, and shows the result panel', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();
@@ -402,12 +498,12 @@ describe('TranslationPopover (mobile)', () => {
     fireEvent.mouseDown(trigger);
     fireEvent.click(trigger);
 
-    expect(await screen.findByText('Some')).toBeTruthy();
+    expect(await screen.findByText('translated Some')).toBeTruthy();
     expect(window.getSelection()?.isCollapsed).toBe(false);
   });
 
   it('dismisses on an outside tap', async () => {
-    render(<TranslationPopover />);
+    renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
     endPointerSelection();

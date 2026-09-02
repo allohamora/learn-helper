@@ -411,7 +411,7 @@ export const getUserVocabularyListLearnTasks = async ({
   const userVocabularyItemIds = data.map(({ id }) => id);
 
   await Promise.all(
-    [translateEnglishSentence.cost, translateUkrainianSentence.cost].map((cost) =>
+    [translateEnglishSentence, translateUkrainianSentence].map(({ cost, tasks }) =>
       insertEvent({
         type: EventType.UserVocabularyItemTaskGenerated,
         userId,
@@ -421,6 +421,7 @@ export const getUserVocabularyListLearnTasks = async ({
         costInNanoDollars: cost.costInNanoDollars,
         inputTokens: cost.inputTokens,
         outputTokens: cost.outputTokens,
+        metadata: { input: data, output: tasks },
       }),
     ),
   );

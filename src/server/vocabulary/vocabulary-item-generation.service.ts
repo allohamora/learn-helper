@@ -1,25 +1,12 @@
 import '@tanstack/react-start/server-only';
-import { generateText, Output, type LanguageModelUsage } from 'ai';
-import { openai } from '../utils/ai.utils';
+import { generateText, Output } from 'ai';
+import { gpt56Luna } from '../utils/ai.utils';
 import { generatedVocabularyItemDto } from './dtos/generated-vocabulary-item.dto';
 import type { GenerateVocabularyItemDto } from './dtos/generate-vocabulary-item.dto';
 
-const model = openai('gpt-5.6-luna');
-
-// gpt-5.6-luna standard-tier, short-context pricing: https://developers.openai.com/api/docs/pricing
-const INPUT_NANO_DOLLARS_PER_TOKEN = 200;
-const OUTPUT_NANO_DOLLARS_PER_TOKEN = 1200;
-
-const calculateCostInNanoDollars = ({ inputTokens = 0, outputTokens = 0 }: LanguageModelUsage) => {
-  const inputCostInNanoDollars = inputTokens * INPUT_NANO_DOLLARS_PER_TOKEN;
-  const outputCostInNanoDollars = outputTokens * OUTPUT_NANO_DOLLARS_PER_TOKEN;
-
-  return inputCostInNanoDollars + outputCostInNanoDollars;
-};
-
 export const generateVocabularyItemData = async ({ value, context }: GenerateVocabularyItemDto) => {
   const { output, usage } = await generateText({
-    model,
+    model: gpt56Luna.model,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateVocabularyItemData',
@@ -67,7 +54,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
   return {
     output,
     cost: {
-      costInNanoDollars: calculateCostInNanoDollars(usage),
+      costInNanoDollars: gpt56Luna.calculateCostInNanoDollars(usage),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
     },

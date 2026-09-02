@@ -1,19 +1,27 @@
 import { type FC, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FloatingPortal } from '@floating-ui/react';
-import { Languages, XIcon } from 'lucide-react';
+import { Languages, Plus, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Loader } from '@/components/ui/loader';
+import { appClient } from '@/services/api';
 import { useSelection } from '@/hooks/use-selection';
 import { useSelectionFloating } from '@/hooks/use-selection-floating';
 import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
 import { correctRange, getContext } from '@/utils/selection';
 
 type TranslationData = {
-  // The exact selection the user made - not correctRange()'s word-expanded version of it, which only
-  // ever exists as a local value used to derive `text`/`before`/`after` below. Everything that needs
-  // to reflect what's actually selected on screen uses this instead: anchoring the trigger/panel
-  // position, telling one selection apart from another, and restoring the selection (see Popover's
-  // trigger onClick) so a native Copy still copies exactly what was selected.
+  // The exact selection the user made. Anchors the trigger/panel position and tells one selection
+  // apart from another (isSameRange) - correctRange()'s word-expanded version of it can map two
+  // different selections (e.g. "Martin" and just "M" inside it) onto the same range, so comparing
+  // that instead would wrongly treat a genuine shrink/extension as "nothing changed".
   range: Range;
+  // correctRange()'s word-expanded version of `range`, computed once up front since translation
+  // already needs it to derive `text`/`before`/`after` below. Reused here to restore the on-screen
+  // selection when the trigger is clicked (see Popover's onClick) - so e.g. selecting "ell" inside
+  // "hello" and clicking the trigger highlights the whole word "hello", matching what gets translated,
+  // while also still dismissing Android's native selection toolbar the same way.
+  correctedRange: Range;
   before: string | null;
   text: string;
   after: string | null;
@@ -27,6 +35,7 @@ const MAX_SELECTION_LENGTH = 400;
 const GAP_PX = 8;
 
 type PanelProps = {
+  readingId: string;
   data: TranslationData | null;
   onClear: () => void;
 };
@@ -50,35 +59,104 @@ const isSameRange = (a: Range, b: Range) =>
 // w-54 here is the largest confirmed-safe width. md: (not a touch-device query) since this is a plain
 // viewport-width breakpoint, same convention
 // pdf-reader.tsx already uses.
-const ResultContent: FC<{ data: TranslationData; onClose?: () => void }> = ({ data, onClose }) => (
-  <div className="w-54 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
-    <div className="flex items-start justify-between gap-2">
-      <p className="min-w-0 text-sm font-semibold break-words">{data.text}</p>
-      {onClose && (
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          onClick={onClose}
-          // The panel's own mousedown guard (preventDefault, to preserve the selection through a
-          // click) has no reason to apply here specifically - closing already clears the selection
-          // immediately via onClose. Left in place, it can suppress the synthesized click entirely on
-          // some mobile browsers, so the first tap doesn't register as a click at all (only visible
-          // side effects of the raw, un-clicked mousedown/touch happen) and it takes a second tap to
-          // actually close. Stopping propagation here keeps that guard from ever seeing this press.
-          onMouseDown={(event) => event.stopPropagation()}
-          className="-mt-1 -mr-1 shrink-0"
-        >
-          <XIcon />
-          <span className="sr-only">Close</span>
-        </Button>
+//
+// This is a fixed width, not min-w/max-w, for a second, separate reason: a min-w/max-w pair (width:
+// auto, shrink-to-fit) was tried to size the panel to its content instead of always rendering at the
+// max - it worked everywhere except real Android Chrome, where a long translation made the panel
+// render far wider than max-w, confirmed unrelated to CSS specificity (adding !important to max-w had
+// zero effect) and unrelated to react-pdf's CSS (TextLayer.css/AnnotationLayer.css scope every rule
+// under .textLayer/.annotationLayer, no bare `p` selector to leak). The likely mechanism: this exact
+// node is both (a) the one whose width the browser has to shrink-to-fit-compute from its own content,
+// and (b) the one autoUpdate's elementResize ResizeObserver (above) is actively watching to reposition
+// on - Android Chrome's implementation of that combination is apparently unreliable in a way desktop
+// Chrome and DevTools' mobile emulation both fail to reproduce. Switching this back to a fixed width
+// (no shrink-to-fit computation at all) fixed it immediately and completely.
+//
+// A real fix for genuine per-content dynamic width - without going back through shrink-to-fit on this
+// exact watched/positioned node - would be to measure the content's natural width in a separate,
+// off-screen/unobserved element (position: fixed, visibility: hidden, width: fit-content - safe to
+// shrink-to-fit since nothing watches or repositions it), read it via getBoundingClientRect() in a
+// layout effect, clamp it, and apply it here as an explicit style={{ width: px }} - never `auto` - so
+// this node itself never has to resolve an auto width while autoUpdate is watching it. Not implemented
+// (adds a measuring ref + a layout effect + a measure-then-apply render pass) - fixed width for now.
+const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: () => void }> = ({
+  readingId,
+  data,
+  onClose,
+}) => {
+  const {
+    data: result,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ['translation', readingId, data.text, data.before, data.after],
+    queryFn: async () => {
+      const res = await appClient.api.v1.users.me.readings[':readingId'].translations.$post({
+        param: { readingId },
+        json: { text: data.text, before: data.before, after: data.after },
+      });
+      if (!res.ok) throw new Error('Failed to translate selection');
+
+      const body = await res.json();
+      return body.data;
+    },
+    // A given (text, before, after) selection always translates the same way - never refetch it,
+    // so re-selecting the same word/phrase later in the same reading session (the popover unmounts
+    // ResultContent on close, so this is what a plain useQuery would otherwise redo) reuses the
+    // cached result instead of hitting the AI endpoint again.
+    staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+  });
+
+  return (
+    <div className="w-54 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold md:text-sm">Translation</p>
+        {onClose && (
+          <Button
+            type="button"
+            size="icon-xs"
+            variant="ghost"
+            onClick={onClose}
+            // The panel's own mousedown guard (preventDefault, to preserve the selection through a
+            // click) has no reason to apply here specifically - closing already clears the selection
+            // immediately via onClose. Left in place, it can suppress the synthesized click entirely on
+            // some mobile browsers, so the first tap doesn't register as a click at all (only visible
+            // side effects of the raw, un-clicked mousedown/touch happen) and it takes a second tap to
+            // actually close. Stopping propagation here keeps that guard from ever seeing this press.
+            onMouseDown={(event) => event.stopPropagation()}
+            className="-mt-1 -mr-1 shrink-0"
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </Button>
+        )}
+      </div>
+
+      <div className="mt-2">
+        {isPending && (
+          <div className="flex justify-center">
+            <Loader className="items-center text-xs md:text-sm [&_svg]:size-3 md:[&_svg]:size-4" />
+          </div>
+        )}
+
+        {isError && <p className="text-xs text-destructive md:text-sm">Failed to translate selection</p>}
+
+        {result && <p className="text-xs break-words md:text-sm">{result.uaTranslation}</p>}
+      </div>
+
+      {result && (
+        <div className="mt-2 flex justify-end">
+          {/* Add-to-learning-list wiring isn't implemented yet - this only reserves the spot. */}
+          <Button type="button" size="xs" disabled title="Add to learning list" aria-label="Add to learning list">
+            <Plus />
+            <span>Add</span>
+          </Button>
+        </div>
       )}
     </div>
-    <pre className="mt-2 text-xs break-words whitespace-pre-wrap text-muted-foreground">
-      {JSON.stringify({ before: data.before, text: data.text, after: data.after }, null, 2)}
-    </pre>
-  </div>
-);
+  );
+};
 
 // Kept mounted at all times (not conditionally rendered by the parent on `data`), so it can retain
 // the last selection's content and play its own exit transition once `data` clears - the parent
@@ -89,7 +167,7 @@ const ResultContent: FC<{ data: TranslationData; onClose?: () => void }> = ({ da
 // for..." bar mobile browsers show under a selection, which can cover it entirely. Anchoring to the
 // selection instead - with flip() falling back above when there's no room below - keeps clear of
 // that the same way it already keeps clear of desktop's own edge cases.
-const Popover: FC<PanelProps> = ({ data, onClear }) => {
+const Popover: FC<PanelProps> = ({ readingId, data, onClear }) => {
   const [renderData, setRenderData] = useState(data);
   const [showResult, setShowResult] = useState(false);
 
@@ -136,7 +214,7 @@ const Popover: FC<PanelProps> = ({ data, onClear }) => {
         onKeyUp={(event) => event.stopPropagation()}
       >
         {showResult ? (
-          <ResultContent data={renderData} onClose={onClear} />
+          <ResultContent readingId={readingId} data={renderData} onClose={onClear} />
         ) : (
           <Button
             type="button"
@@ -145,13 +223,13 @@ const Popover: FC<PanelProps> = ({ data, onClear }) => {
               // The OS's native selection menu (Copy/Search/Share) is tied to the touch gesture that
               // created the selection, not to whether a selection currently exists - our mousedown
               // guard keeps the selection alive, but leaves that menu open on top of the result.
-              // Collapsing it dismisses that menu, but re-adding the identical range in the very same
-              // tick doesn't give the browser a chance to actually register the collapse first, so
-              // the menu never visibly goes away. One frame's gap is enough for the dismissal to land
-              // before the highlight comes back.
+              // Collapsing it dismisses that menu, but re-adding a range in the very same tick doesn't
+              // give the browser a chance to actually register the collapse first, so the menu never
+              // visibly goes away. One frame's gap is enough for the dismissal to land before the
+              // highlight comes back - as the word-corrected range, matching what's actually translated.
               const selection = window.getSelection();
               selection?.removeAllRanges();
-              requestAnimationFrame(() => selection?.addRange(renderData.range.cloneRange()));
+              requestAnimationFrame(() => selection?.addRange(renderData.correctedRange.cloneRange()));
 
               setShowResult(true);
             }}
@@ -170,7 +248,7 @@ const Popover: FC<PanelProps> = ({ data, onClear }) => {
   );
 };
 
-export const TranslationPopover: FC = () => {
+export const TranslationPopover: FC<{ readingId: string }> = ({ readingId }) => {
   const [data, setData] = useState<TranslationData | null>(null);
 
   useSelection((selection) => {
@@ -187,20 +265,31 @@ export const TranslationPopover: FC = () => {
       // trigger included) re-detects the very same selection, not a new one - without this check, that
       // resets the panel back to the trigger, flickering it open and shut.
       //
-      // Compared on the un-corrected range: correctRange (below) can map two different selections
-      // (e.g. "Martin" and just "M" inside it) onto the exact same corrected range, and comparing that
-      // would wrongly treat a genuine shrink/extension as "nothing changed" and drop it.
-      if (data && isSameRange(range, data.range)) return;
+      // Checked against `data.range`, not just `data.correctedRange`: correctRange (below) can map two
+      // different selections (e.g. "Martin" and just "M" inside it) onto the exact same corrected
+      // range, and comparing only that would wrongly treat a genuine shrink/extension as "nothing
+      // changed" and drop it.
+      //
+      // Also checked against `data.correctedRange`: the trigger's onClick (below) programmatically
+      // replaces the live DOM selection with the word-corrected range, which fires this same
+      // selectionchange path right back - comparing only `data.range` there would miss it (the DOM
+      // selection is no longer the exact range the user dragged) and read it as a brand new selection,
+      // which reset the panel back to the trigger the instant it was clicked.
+      if (data && (isSameRange(range, data.range) || isSameRange(range, data.correctedRange))) return;
 
-      // correctRange's word-expanded range only ever exists here, as a local value used to derive the
-      // translated text/context - nothing downstream needs the Range object itself, only these strings.
-      const corrected = correctRange(range);
-      const text = corrected.toString().trim();
-      if (text.length > MAX_SELECTION_LENGTH) return;
+      const correctedRange = correctRange(range);
+      const text = correctedRange.toString().trim();
+      // Growing an already-tracked selection past the limit must actively clear `data`, not just skip
+      // setting it - otherwise the popover stays anchored to the old, now-stale range instead of
+      // disappearing, since nothing else re-renders it once this returns.
+      if (!text || text.length > MAX_SELECTION_LENGTH) {
+        setData(null);
+        return;
+      }
 
-      const { before, after } = getContext(corrected);
+      const { before, after } = getContext(correctedRange);
 
-      setData({ range: range.cloneRange(), before, text, after });
+      setData({ range: range.cloneRange(), correctedRange, before, text, after });
     });
   });
 
@@ -227,5 +316,5 @@ export const TranslationPopover: FC = () => {
     setData(null);
   };
 
-  return <Popover data={data} onClear={onClear} />;
+  return <Popover readingId={readingId} data={data} onClear={onClear} />;
 };

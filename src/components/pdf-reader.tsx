@@ -135,7 +135,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
     // mobile (matching mozilla's own pdf.js viewer) rather than losing ~32px of width, and thus text
     // size, to a gutter around a "card" that doesn't earn its keep on a small screen.
     <div className="-mx-4 flex flex-col gap-4 pt-4 pb-20 md:mx-0">
-      <TranslationPopover />
+      <TranslationPopover readingId={readingId} />
 
       <div ref={containerRef} className="mx-auto flex w-full flex-col items-center gap-4">
         {containerWidth > 0 ? (

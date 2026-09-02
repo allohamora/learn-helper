@@ -129,7 +129,11 @@ export const getCostEventsGroupedByDay = async ({ userId, dateFrom, dateTo, time
     .where(
       and(
         eq(event.userId, userId),
-        inArray(event.type, [EventType.UserVocabularyItemTaskGenerated, EventType.VocabularyItemGenerated]),
+        inArray(event.type, [
+          EventType.UserVocabularyItemTaskGenerated,
+          EventType.VocabularyItemGenerated,
+          EventType.ReadingSelectionTranslationGenerated,
+        ]),
         gte(event.createdAt, dateFrom),
         lte(event.createdAt, dateTo),
       ),

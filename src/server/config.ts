@@ -24,6 +24,7 @@ export const {
   BETTER_AUTH_GOOGLE_CLIENT_SECRET,
   BETTER_AUTH_ALLOWED_USERS,
 
+  GEMINI_API_KEY,
   OPENAI_API_KEY,
 } = z
   .object({
@@ -42,6 +43,7 @@ export const {
     BETTER_AUTH_GOOGLE_CLIENT_SECRET: z.string(),
     BETTER_AUTH_ALLOWED_USERS: json(z.array(z.string())),
 
+    GEMINI_API_KEY: z.string(),
     OPENAI_API_KEY: z.string(),
   })
   .parse(process.env);

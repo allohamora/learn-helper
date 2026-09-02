@@ -27,6 +27,7 @@ export const generateVocabularyItemContent = async ({
     costInNanoDollars: cost.costInNanoDollars,
     inputTokens: cost.inputTokens,
     outputTokens: cost.outputTokens,
+    metadata: { input: data, output },
   });
 
   return output;

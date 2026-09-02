@@ -59,6 +59,16 @@ describe('vocabularyItemService', () => {
           costInNanoDollars: 1_000_000,
           inputTokens: 100,
           outputTokens: 200,
+          metadata: {
+            input: { value: 'run' },
+            output: {
+              value: 'run',
+              definition: 'definition of run',
+              uaTranslation: 'переклад run',
+              partOfSpeech: PartOfSpeech.Noun,
+              spelling: '/run/',
+            },
+          },
         }),
       ]);
     });
