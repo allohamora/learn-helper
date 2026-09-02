@@ -16,7 +16,7 @@ import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabular
 import { createPersonalVocabularyListForUser } from '@/server/user-vocabulary/user-vocabulary-list.service';
 import { getUserVocabularyListByVocabularyListId } from '@/server/user-vocabulary/user-vocabulary-list.repository';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
-import type { ErrorResponse } from '@/server/utils/response.utils';
+import type { ErrorResponse } from '@/types/response';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
 const USER_ID = 'e2e-test-user';

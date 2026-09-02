@@ -3,8 +3,6 @@ import { z, type ZodType } from 'zod';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import type { ErrorResponse, PaginatedResponse, SuccessResponse } from '@/types/response';
 
-export type { ErrorResponse, PageInfo, PaginatedResponse, SuccessResponse } from '@/types/response';
-
 export const successResponseSchema = <T extends ZodType>(dataSchema: T) => {
   return z.object({
     success: z.literal(true),
