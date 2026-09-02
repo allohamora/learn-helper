@@ -16,25 +16,29 @@ const unwrapApiResponse = <T extends { success: true }>(json: T | ErrorResponse,
   return json;
 };
 
-export const apiRequest = async <T>(
-  fn: () => Promise<ClientResponse<SuccessResponse<T> | ErrorResponse, number, 'json'>>,
-  fallback = 'Something went wrong',
+const fetchApiResponse = async <T extends { success: true }>(
+  fn: () => Promise<ClientResponse<T | ErrorResponse, number, 'json'>>,
+  fallback: string,
 ): Promise<T> => {
-  const res = await fn();
-  const json = await res.json();
-
-  return unwrapApiResponse(json, fallback).data;
-};
-
-export const apiPaginationRequest = async <T>(
-  fn: () => Promise<ClientResponse<PaginatedResponse<T> | ErrorResponse, number, 'json'>>,
-  fallback = 'Something went wrong',
-): Promise<PaginatedResponse<T>> => {
   const res = await fn();
   const json = await res.json();
 
   return unwrapApiResponse(json, fallback);
 };
+
+export const apiRequest = async <T>(
+  fn: () => Promise<ClientResponse<SuccessResponse<T> | ErrorResponse, number, 'json'>>,
+  fallback = 'Something went wrong',
+): Promise<T> => {
+  const json = await fetchApiResponse(fn, fallback);
+
+  return json.data;
+};
+
+export const apiPaginationRequest = <T>(
+  fn: () => Promise<ClientResponse<PaginatedResponse<T> | ErrorResponse, number, 'json'>>,
+  fallback = 'Something went wrong',
+): Promise<PaginatedResponse<T>> => fetchApiResponse(fn, fallback);
 
 export const getIsomorphicAppClient = createIsomorphicFn()
   .server(async () => {
