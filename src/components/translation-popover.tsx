@@ -200,7 +200,7 @@ const Popover: FC<PanelProps> = ({ readingId, data, onClear }) => {
         // eslint-disable-next-line react-hooks/refs
         ref={refs.setFloating}
         style={{ ...floatingStyles, ...transitionStyles }}
-        className="z-30"
+        className="z-30 select-none"
         {...getFloatingProps()}
         // A mousedown's default action is what collapses the page's text selection (the trigger and
         // the result panel are otherwise unrelated to that selection) - preventing it here keeps the
