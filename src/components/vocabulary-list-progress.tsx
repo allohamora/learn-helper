@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Progress } from '@/components/ui/progress';
 import { Loader } from '@/components/ui/loader';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 
 type Props = {
   userVocabularyListId: string;
@@ -11,15 +11,14 @@ type Props = {
 export const VocabularyListProgress: FC<Props> = ({ userVocabularyListId }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['vocabulary-list-progress', userVocabularyListId],
-    queryFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
-        param: { userVocabularyListId },
-      });
-      if (!res.ok) throw new Error('Failed to load vocabulary list progress');
-
-      const body = await res.json();
-      return body.data;
-    },
+    queryFn: () =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].progress.$get({
+            param: { userVocabularyListId },
+          }),
+        'Failed to load vocabulary list progress',
+      ),
   });
 
   if (isLoading) {

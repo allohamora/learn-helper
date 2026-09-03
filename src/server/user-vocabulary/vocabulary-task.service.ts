@@ -68,7 +68,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
 
   if (!tasksMatchRequestedItems(output, items)) {
     throw Exception.internalServer(
-      `generated ${UserVocabularyItemTaskType.TranslateEnglishSentence} tasks do not match the requested vocabulary items`,
+      `Generated ${UserVocabularyItemTaskType.TranslateEnglishSentence} tasks do not match the requested vocabulary items`,
     );
   }
 
@@ -123,7 +123,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
 
   if (!tasksMatchRequestedItems(output, items)) {
     throw Exception.internalServer(
-      `generated ${UserVocabularyItemTaskType.TranslateUkrainianSentence} tasks do not match the requested vocabulary items`,
+      `Generated ${UserVocabularyItemTaskType.TranslateUkrainianSentence} tasks do not match the requested vocabulary items`,
     );
   }
 

@@ -36,6 +36,7 @@ describe('vocabularyItemService', () => {
             uaTranslation: `переклад ${value}`,
             partOfSpeech: PartOfSpeech.Noun,
             spelling: `/${value}/`,
+            isLearnable: true,
           },
           cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
         }));
@@ -67,10 +68,32 @@ describe('vocabularyItemService', () => {
               uaTranslation: 'переклад run',
               partOfSpeech: PartOfSpeech.Noun,
               spelling: '/run/',
+              isLearnable: true,
             },
           },
         }),
       ]);
+    });
+
+    it('throws and does not persist when the generated content is not learnable', async () => {
+      const { id: userId } = await createTestUser('user-2');
+
+      generateSpy.mockImplementation(async ({ value }) => ({
+        output: {
+          value,
+          definition: `definition of ${value}`,
+          uaTranslation: `переклад ${value}`,
+          partOfSpeech: null,
+          spelling: `/${value}/`,
+          isLearnable: false,
+        },
+        cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
+      }));
+
+      await expect(generateVocabularyItemContent({ userId, value: 'she dont like it' })).rejects.toThrow(Exception);
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, userId) });
+      expect(events).toHaveLength(1);
     });
   });
 

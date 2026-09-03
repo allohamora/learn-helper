@@ -1,8 +1,8 @@
 import '@tanstack/react-start/server-only';
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
+  errorBadRequestResponse,
   errorConflictResponse,
-  errorForbiddenResponse,
   errorNotFoundResponse,
   successCreatedResponse,
   successOkResponse,
@@ -168,10 +168,9 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'post',
-      path: '/{userVocabularyListId}/items',
+      path: '/personal/items',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ userVocabularyListId: z.uuidv7() }),
         body: {
           content: {
             'application/json': {
@@ -185,16 +184,14 @@ export const userVocabularyRouter = new OpenAPIHono()
           description: "The word linked to the user's personal list, with the user's progress on it",
           schema: userVocabularyItemWithRelationsDto,
         }),
-        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
         ...errorConflictResponse({ description: 'The word is already in the list' }),
-        ...errorNotFoundResponse({ description: 'The list or word was not found' }),
+        ...errorNotFoundResponse({ description: 'The word was not found' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
     }),
     async (c) => {
       const user = c.get('user');
-      const { userVocabularyListId } = c.req.valid('param');
       const { vocabularyItemId, isResetToLearning } = c.req.valid('json');
 
       return c.json(
@@ -202,7 +199,6 @@ export const userVocabularyRouter = new OpenAPIHono()
           status: 201,
           data: await addVocabularyItemToPersonalList({
             userId: user.id,
-            userVocabularyListId,
             vocabularyItemId,
             isResetToLearning,
           }),
@@ -213,10 +209,10 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'delete',
-      path: '/{userVocabularyListId}/items/{userVocabularyItemId}',
+      path: '/personal/items/{userVocabularyItemId}',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ userVocabularyListId: z.uuidv7(), userVocabularyItemId: z.uuidv7() }),
+        params: z.object({ userVocabularyItemId: z.uuidv7() }),
         body: {
           content: {
             'application/json': {
@@ -230,15 +226,14 @@ export const userVocabularyRouter = new OpenAPIHono()
           description: "The word unlinked from the user's personal list; progress is preserved unless isReset was set",
           schema: z.object({ userVocabularyItemId: z.uuidv7() }),
         }),
-        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
-        ...errorNotFoundResponse({ description: 'The list, item, or link was not found' }),
+        ...errorNotFoundResponse({ description: 'The item or link was not found' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
     }),
     async (c) => {
       const user = c.get('user');
-      const { userVocabularyListId, userVocabularyItemId } = c.req.valid('param');
+      const { userVocabularyItemId } = c.req.valid('param');
       const { isReset } = c.req.valid('json');
 
       return c.json(
@@ -246,7 +241,6 @@ export const userVocabularyRouter = new OpenAPIHono()
           status: 200,
           data: await removeVocabularyItemFromPersonalList({
             userId: user.id,
-            userVocabularyListId,
             userVocabularyItemId,
             isReset,
           }),
@@ -257,10 +251,9 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'post',
-      path: '/{userVocabularyListId}/items/generate',
+      path: '/personal/items/generate',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ userVocabularyListId: z.uuidv7() }),
         body: {
           content: {
             'application/json': {
@@ -275,24 +268,22 @@ export const userVocabularyRouter = new OpenAPIHono()
             "The AI-generated word, persisted and linked to the user's personal list, with the user's progress on it",
           schema: userVocabularyItemWithRelationsDto,
         }),
-        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
         ...errorConflictResponse({
           description: 'A vocabulary item with the generated value and part of speech already exists',
         }),
-        ...errorNotFoundResponse({ description: 'The list was not found' }),
+        ...errorBadRequestResponse({ description: 'The value is not a learnable word or fixed phrase' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware, rateLimit({ count: 20, durationSec: 60 })] as const,
     }),
     async (c) => {
       const user = c.get('user');
-      const { userVocabularyListId } = c.req.valid('param');
       const body = c.req.valid('json');
 
       return c.json(
         ...toSuccessResponse({
           status: 201,
-          data: await generateVocabularyItem({ userId: user.id, userVocabularyListId, ...body }),
+          data: await generateVocabularyItem({ userId: user.id, ...body }),
         }),
       );
     },
@@ -300,10 +291,9 @@ export const userVocabularyRouter = new OpenAPIHono()
   .openapi(
     createRoute({
       method: 'get',
-      path: '/{userVocabularyListId}/search',
+      path: '/personal/search',
       tags: ['Vocabulary'],
       request: {
-        params: z.object({ userVocabularyListId: z.uuidv7() }),
         query: personalVocabularyItemSearchFilterDto,
       },
       responses: {
@@ -311,21 +301,18 @@ export const userVocabularyRouter = new OpenAPIHono()
           description: "Vocabulary items matching the search value, with the personal list's join state",
           schema: personalVocabularyItemSearchResultDto,
         }),
-        ...errorForbiddenResponse({ description: 'The list is not personal or does not belong to the user' }),
-        ...errorNotFoundResponse({ description: 'The list was not found' }),
       },
       security: [{ cookieAuth: [] }],
       middleware: [authMiddleware] as const,
     }),
     async (c) => {
       const user = c.get('user');
-      const { userVocabularyListId } = c.req.valid('param');
       const query = c.req.valid('query');
 
       return c.json(
         ...toPaginatedResponse({
           status: 200,
-          data: await searchPersonalVocabularyListItems({ userId: user.id, userVocabularyListId, ...query }),
+          data: await searchPersonalVocabularyListItems({ userId: user.id, ...query }),
         }),
       );
     },

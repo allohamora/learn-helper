@@ -3,7 +3,7 @@ import { BookOpen, Compass, List, Plus } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 import { VocabularyListType } from '@/const/vocabulary';
 import { getVocabularyListTitle } from '@/utils/vocabulary';
 
@@ -20,10 +20,11 @@ export const VocabularyListRow: FC<Props> = ({ id, title, type, userVocabularyLi
   const router = useRouter();
 
   const addMutation = useMutation({
-    mutationFn: async () => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: id } });
-      if (!res.ok) throw new Error('Failed to add vocabulary list');
-    },
+    mutationFn: () =>
+      apiRequest(
+        () => appClient.api.v1.users.me['vocabulary-lists'].$post({ json: { vocabularyListId: id } }),
+        'Failed to add vocabulary list',
+      ),
     onSuccess: () => router.invalidate(),
   });
 

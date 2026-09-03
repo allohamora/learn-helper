@@ -2,7 +2,7 @@ import type { FC, PropsWithChildren } from 'react';
 import { createContext, use, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 
 type EditableVocabularyItem = {
   userVocabularyItemId: string;
@@ -28,23 +28,17 @@ export const EditVocabularyItemTranslationProvider: FC<Props> = ({ userVocabular
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async ({
-      userVocabularyItemId,
-      uaTranslation,
-    }: {
-      userVocabularyItemId: string;
-      uaTranslation: string;
-    }) => {
-      const res = await appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
-        ':userVocabularyItemId'
-      ].translation.$patch({
-        param: { userVocabularyListId, userVocabularyItemId },
-        json: { uaTranslation },
-      });
-      if (!res.ok) throw new Error('Failed to update translation');
-
-      return res.json();
-    },
+    mutationFn: ({ userVocabularyItemId, uaTranslation }: { userVocabularyItemId: string; uaTranslation: string }) =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items[
+            ':userVocabularyItemId'
+          ].translation.$patch({
+            param: { userVocabularyListId, userVocabularyItemId },
+            json: { uaTranslation },
+          }),
+        'Failed to update translation',
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items', userVocabularyListId] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items', userVocabularyListId] });
@@ -52,7 +46,7 @@ export const EditVocabularyItemTranslationProvider: FC<Props> = ({ userVocabular
       setEditingItem(null);
       toast.success('Translation updated');
     },
-    onError: () => toast.error('Failed to update translation'),
+    onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to update translation'),
   });
 
   const saveTranslation = (uaTranslation: string) => {

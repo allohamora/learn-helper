@@ -73,12 +73,12 @@ const createUserVocabularyItem = (value: string): UserVocabularyItem => {
 };
 
 describe('AddPersonalVocabularyItemDialog', () => {
-  const renderDialog = (userVocabularyListId: string) => {
+  const renderDialog = () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
     return render(
       <QueryClientProvider client={queryClient}>
-        <AddPersonalVocabularyItemDialog userVocabularyListId={userVocabularyListId} />
+        <AddPersonalVocabularyItemDialog />
       </QueryClientProvider>,
     );
   };
@@ -91,13 +91,12 @@ describe('AddPersonalVocabularyItemDialog', () => {
   afterEach(() => cleanup());
 
   it('shows Add for an unadded word, and adding it flips the row to Already added', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity');
     const addedUserVocabularyItem = createUserVocabularyItemRow();
 
     let added = false;
     mockServer.addHandlers(
-      api.personalVocabularyItemSearch.mock(userVocabularyListId, () =>
+      api.personalVocabularyItemSearch.mock(() =>
         HttpResponse.json({
           success: true,
           data: [
@@ -106,7 +105,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
               vocabularyListItem: added
                 ? {
                     id: crypto.randomUUID(),
-                    vocabularyListId: userVocabularyListId,
+                    vocabularyListId: crypto.randomUUID(),
                     vocabularyItemId: item.id,
                     createdAt: item.createdAt,
                   }
@@ -125,9 +124,9 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
       return HttpResponse.json({ success: true, data: createUserVocabularyItem(item.value) });
     });
-    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(userVocabularyListId, addHandler));
+    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(addHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Add serendipity' }));
@@ -138,17 +137,16 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('renders a Remove button directly when the word is already in the list', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('ubiquitous', {
       id: crypto.randomUUID(),
-      vocabularyListId: userVocabularyListId,
+      vocabularyListId: crypto.randomUUID(),
       vocabularyItemId: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     });
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('ubiquitous');
 
     await screen.findByRole('button', { name: 'Remove ubiquitous' });
@@ -156,12 +154,11 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('does not show a reset to learning checkbox for a brand-new word', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity');
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     await screen.findByRole('button', { name: 'Add serendipity' });
@@ -169,19 +166,18 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('shows a reset to learning checkbox checked by default for a previously removed word, and unchecking it sends isResetToLearning: false', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', null, createUserVocabularyItemRow());
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
 
     const addHandler = vi.fn((vocabularyItemId: string) => {
       if (vocabularyItemId !== item.id) throw new Error('unexpected vocabulary item id');
 
       return HttpResponse.json({ success: true, data: createUserVocabularyItem(item.value) });
     });
-    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(userVocabularyListId, addHandler));
+    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(addHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     const checkbox = await screen.findByRole('checkbox', { name: /reset to learning/i });
@@ -196,17 +192,16 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('removing a word unlinks it and flips the row back to Add, after confirmation', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {
       id: crypto.randomUUID(),
-      vocabularyListId: userVocabularyListId,
+      vocabularyListId: crypto.randomUUID(),
       vocabularyItemId: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     });
 
     let removed = false;
     mockServer.addHandlers(
-      api.personalVocabularyItemSearch.mock(userVocabularyListId, () =>
+      api.personalVocabularyItemSearch.mock(() =>
         HttpResponse.json({
           success: true,
           data: [{ ...item, vocabularyListItem: removed ? null : item.vocabularyListItem }],
@@ -221,9 +216,9 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
       return HttpResponse.json({ success: true, data: { userVocabularyItemId } });
     });
-    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(removeHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
@@ -235,22 +230,21 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('shows a reset checkbox unchecked by default in the remove dialog, and sends isReset: false', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {
       id: crypto.randomUUID(),
-      vocabularyListId: userVocabularyListId,
+      vocabularyListId: crypto.randomUUID(),
       vocabularyItemId: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     });
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
 
     const removeHandler = vi.fn((userVocabularyItemId: string) =>
       HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
     );
-    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(removeHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
@@ -264,22 +258,21 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('checking reset in the remove dialog sends isReset: true', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {
       id: crypto.randomUUID(),
-      vocabularyListId: userVocabularyListId,
+      vocabularyListId: crypto.randomUUID(),
       vocabularyItemId: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     });
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
 
     const removeHandler = vi.fn((userVocabularyItemId: string) =>
       HttpResponse.json({ success: true, data: { userVocabularyItemId } }),
     );
-    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(userVocabularyListId, removeHandler));
+    mockServer.addHandlers(api.removeVocabularyItemFromPersonalList.mock(removeHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
@@ -294,17 +287,16 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('resets the checkbox to unchecked after cancelling the remove dialog', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('serendipity', {
       id: crypto.randomUUID(),
-      vocabularyListId: userVocabularyListId,
+      vocabularyListId: crypto.randomUUID(),
       vocabularyItemId: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     });
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('serendipity');
 
     fireEvent.click(await screen.findByRole('button', { name: 'Remove serendipity' }));
@@ -320,12 +312,11 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('shows a generate fallback for zero results, and generating adds the word', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const value = 'flibbertigibbet';
 
     let generated = false;
     mockServer.addHandlers(
-      api.personalVocabularyItemSearch.mock(userVocabularyListId, () =>
+      api.personalVocabularyItemSearch.mock(() =>
         HttpResponse.json({
           success: true,
           data: generated
@@ -334,7 +325,7 @@ describe('AddPersonalVocabularyItemDialog', () => {
                   ...createSearchResult(value),
                   vocabularyListItem: {
                     id: crypto.randomUUID(),
-                    vocabularyListId: userVocabularyListId,
+                    vocabularyListId: crypto.randomUUID(),
                     vocabularyItemId: crypto.randomUUID(),
                     createdAt: new Date().toISOString(),
                   },
@@ -353,9 +344,9 @@ describe('AddPersonalVocabularyItemDialog', () => {
 
       return HttpResponse.json({ success: true, data: createUserVocabularyItem(value) });
     });
-    mockServer.addHandlers(api.generateVocabularyItem.mock(userVocabularyListId, generateHandler));
+    mockServer.addHandlers(api.generateVocabularyItem.mock(generateHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch(value);
     await screen.findByText(`No matches for “${value}”.`);
 
@@ -366,20 +357,19 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('sends the context field to the generate endpoint when provided', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const value = 'gobbledygook';
     const context = 'The contract was full of gobbledygook nobody could parse.';
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, []));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([]));
 
     const generateHandler = vi.fn((requestedValue: string, requestedContext: string | undefined) => {
       if (requestedValue !== value || requestedContext !== context) throw new Error('unexpected request body');
 
       return HttpResponse.json({ success: true, data: createUserVocabularyItem(value) });
     });
-    mockServer.addHandlers(api.generateVocabularyItem.mock(userVocabularyListId, generateHandler));
+    mockServer.addHandlers(api.generateVocabularyItem.mock(generateHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch(value);
     await screen.findByText(`No matches for “${value}”.`);
 
@@ -392,19 +382,18 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('generates with the current input value even before the search debounce settles', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const value = 'perspicacious';
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, []));
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([]));
 
     const generateHandler = vi.fn((requestedValue: string) => {
       if (requestedValue !== value) throw new Error('unexpected value');
 
       return HttpResponse.json({ success: true, data: createUserVocabularyItem(value) });
     });
-    mockServer.addHandlers(api.generateVocabularyItem.mock(userVocabularyListId, generateHandler));
+    mockServer.addHandlers(api.generateVocabularyItem.mock(generateHandler));
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     fireEvent.click(screen.getByRole('button', { name: /add item/i }));
     const searchInput = await screen.findByPlaceholderText('Search items...');
 
@@ -416,14 +405,39 @@ describe('AddPersonalVocabularyItemDialog', () => {
     await vi.waitFor(() => expect(generateHandler).toHaveBeenCalledOnce());
   });
 
-  it('shows an error message when the search request fails', async () => {
-    const userVocabularyListId = crypto.randomUUID();
+  it("surfaces the server's real error message when generating is not learnable", async () => {
+    const value = 'asdkjh';
 
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([]));
     mockServer.addHandlers(
-      api.personalVocabularyItemSearch.mock(userVocabularyListId, () => HttpResponse.json({}, { status: 500 })),
+      api.generateVocabularyItem.mock(() =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: { messages: ['Value "asdkjh" is not a learnable word or fixed phrase'], code: 'BAD_REQUEST' },
+          },
+          { status: 400 },
+        ),
+      ),
     );
 
-    renderDialog(userVocabularyListId);
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+
+    renderDialog();
+    await openDialogAndSearch(value);
+    await screen.findByText(`No matches for “${value}”.`);
+
+    fireEvent.click(await screen.findByRole('button', { name: `Generate "${value}" with AI & add` }));
+
+    await vi.waitFor(() =>
+      expect(toastErrorSpy).toHaveBeenCalledWith('Value "asdkjh" is not a learnable word or fixed phrase'),
+    );
+  });
+
+  it('shows an error message when the search request fails', async () => {
+    mockServer.addHandlers(api.personalVocabularyItemSearch.mock(() => HttpResponse.json({}, { status: 500 })));
+
+    renderDialog();
     await openDialogAndSearch('whatever');
 
     await screen.findByText('Failed to search items. Please try again.');
@@ -431,17 +445,14 @@ describe('AddPersonalVocabularyItemDialog', () => {
   });
 
   it('surfaces a toast and keeps the Add button enabled when adding fails', async () => {
-    const userVocabularyListId = crypto.randomUUID();
     const item = createSearchResult('quixotic');
 
-    mockServer.addHandlers(api.personalVocabularyItemSearch.ok(userVocabularyListId, [item]));
-    mockServer.addHandlers(
-      api.addVocabularyItemToPersonalList.mock(userVocabularyListId, () => HttpResponse.json({}, { status: 500 })),
-    );
+    mockServer.addHandlers(api.personalVocabularyItemSearch.ok([item]));
+    mockServer.addHandlers(api.addVocabularyItemToPersonalList.mock(() => HttpResponse.json({}, { status: 500 })));
 
     const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
 
-    renderDialog(userVocabularyListId);
+    renderDialog();
     await openDialogAndSearch('quixotic');
 
     const addButton = (await screen.findByRole('button', { name: 'Add quixotic' })) as HTMLButtonElement;

@@ -39,7 +39,7 @@ export const getUserVocabularyItemOrThrow = async (
 ) => {
   const userItem = await getUserVocabularyItemById({ userId, userVocabularyItemId }, tx);
   if (!userItem) {
-    throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+    throw Exception.notFound(`Vocabulary item "${userVocabularyItemId}" not found for user`);
   }
 
   return userItem;
@@ -51,7 +51,7 @@ export const getUserVocabularyItemWithRelationsOrThrow = async (
 ) => {
   const userItem = await getUserVocabularyItemWithRelationsById({ userId, userVocabularyItemId }, tx);
   if (!userItem) {
-    throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+    throw Exception.notFound(`Vocabulary item "${userVocabularyItemId}" not found for user`);
   }
 
   return userItem;
@@ -65,7 +65,7 @@ const getUserVocabularyItemByIdForUpdateOrThrow = async (
 ) => {
   const userItem = await getUserVocabularyItemByIdForUpdate({ userId, userVocabularyItemId }, tx);
   if (!userItem) {
-    throw Exception.notFound(`vocabulary item "${userVocabularyItemId}" not found for user`);
+    throw Exception.notFound(`Vocabulary item "${userVocabularyItemId}" not found for user`);
   }
 
   return userItem;
@@ -117,13 +117,13 @@ export const createVocabularyListLearnEvents = async ({
       getUserVocabularyItemsByIds({ userId, userVocabularyItemIds }, tx),
     ]);
     if (userItems.length !== userVocabularyItemIds.length) {
-      throw Exception.notFound('one or more vocabulary items were not found for user');
+      throw Exception.notFound('One or more vocabulary items were not found for user');
     }
 
     const vocabularyItemIds = userItems.map(({ vocabularyItemId }) => vocabularyItemId);
     const listItems = await getVocabularyListItemsByVocabularyItemIds({ vocabularyListId, vocabularyItemIds }, tx);
     if (listItems.length !== vocabularyItemIds.length) {
-      throw Exception.notFound('one or more vocabulary items were not found in the user vocabulary list');
+      throw Exception.notFound('One or more vocabulary items were not found in the user vocabulary list');
     }
 
     return await insertEvents(
@@ -150,7 +150,7 @@ export const discoverUserVocabularyItem = async ({
     );
 
     if (userItem.status !== LearningStatus.Waiting) {
-      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" has already been discovered`);
+      throw Exception.conflict(`Vocabulary item "${userVocabularyItemId}" has already been discovered`);
     }
 
     await Promise.all([
@@ -195,7 +195,7 @@ export const undoUserVocabularyItemStatus = async ({
       tx,
     );
     if (userItem.status === LearningStatus.Waiting) {
-      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is already waiting`);
+      throw Exception.conflict(`Vocabulary item "${userVocabularyItemId}" is already waiting`);
     }
 
     // programmatically-added items skip the discovery phase, so there may be no event to revert
@@ -236,7 +236,7 @@ export const resetUserVocabularyItemStatus = async ({
       tx,
     );
     if (userItem.status === LearningStatus.Waiting) {
-      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is already waiting`);
+      throw Exception.conflict(`Vocabulary item "${userVocabularyItemId}" is already waiting`);
     }
 
     await Promise.all([
@@ -277,7 +277,7 @@ export const moveUserVocabularyItemToNextStep = async ({
     );
 
     if (userItem.status !== LearningStatus.Learning) {
-      throw Exception.conflict(`vocabulary item "${userVocabularyItemId}" is not in learning status`);
+      throw Exception.conflict(`Vocabulary item "${userVocabularyItemId}" is not in learning status`);
     }
 
     const encounterCount = userItem.encounterCount + 1;

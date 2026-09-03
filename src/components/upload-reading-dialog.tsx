@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 
 const PDF_MIME_TYPE = 'application/pdf';
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024;
@@ -28,17 +28,14 @@ export const UploadReadingDialog: FC = () => {
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
-    mutationFn: async ({ file, title }: { file: File; title: string }) => {
-      const res = await appClient.api.v1.users.me.readings.$post({
-        form: { file, title: title.trim() },
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body && 'error' in body ? body.error.messages.join(', ') : 'Failed to upload reading');
-      }
-
-      return res.json();
-    },
+    mutationFn: ({ file, title }: { file: File; title: string }) =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me.readings.$post({
+            form: { file, title: title.trim() },
+          }),
+        'Failed to upload reading',
+      ),
     onSuccess: () => {
       setOpen(false);
       form.reset();

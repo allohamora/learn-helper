@@ -12,7 +12,7 @@ import {
   toSuccessResponse,
 } from '../utils/response.utils';
 import { Exception } from '../utils/exception.utils';
-import { MimeType } from '../utils/mime-type.utils';
+import { MimeType } from '@/const/mime-type';
 import { authMiddleware } from '../auth/auth.middleware';
 import { rateLimit } from '../auth/rate-limit.middleware';
 import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
@@ -73,9 +73,9 @@ export const readingRouter = new OpenAPIHono()
             'multipart/form-data': {
               schema: z.object({
                 file: z.instanceof(File).refine((file) => file.type === MimeType.Pdf, {
-                  message: 'only application/pdf files are supported',
+                  message: 'Only application/pdf files are supported',
                 }),
-                title: z.string().trim().min(1, 'title is required'),
+                title: z.string().trim().min(1, 'Title is required'),
               }),
             },
           },
@@ -96,7 +96,7 @@ export const readingRouter = new OpenAPIHono()
         bodyLimit({
           maxSize: MAX_UPLOAD_SIZE_BYTES,
           onError: () => {
-            throw Exception.badRequest(`file exceeds the ${MAX_UPLOAD_SIZE_BYTES / (1024 * 1024)}MB limit`);
+            throw Exception.badRequest(`File exceeds the ${MAX_UPLOAD_SIZE_BYTES / (1024 * 1024)}MB limit`);
           },
         }),
         authMiddleware,

@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import type { InferResponseType } from 'hono/client';
-import { appClient } from '@/services/api';
+import { appClient, type SuccessData } from '@/services/api';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -96,8 +96,7 @@ const itemsUpdatedChartConfig = {
   },
 } satisfies ChartConfig;
 
-type StatisticsResponse = InferResponseType<(typeof appClient.api.v1.users.me.statistics)['$get'], 200>;
-type StatisticsData = StatisticsResponse['data'];
+type StatisticsData = SuccessData<InferResponseType<(typeof appClient.api.v1.users.me.statistics)['$get']>>;
 type TopVocabularyItem = StatisticsData['topMistakes'][number];
 
 type MetricCardProps = {

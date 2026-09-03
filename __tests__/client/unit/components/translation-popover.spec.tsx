@@ -1,8 +1,10 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HttpResponse, http } from 'msw';
+import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslationPopover } from '@/components/translation-popover';
+import { api } from '../../utils/api.utils';
 import { mockServer } from '../../setup-unit-context';
 
 const READING_ID = 'reading-1';
@@ -403,7 +405,16 @@ describe('TranslationPopover (desktop)', () => {
     expect(requestBody).toEqual({ text: 'four', before: 'one two three', after: 'five six seven' });
   });
 
-  it('reserves a disabled "add to learning list" spot next to the translation result', async () => {
+  it('enables the add button when the result is addable, and adding it shows a success state', async () => {
+    const toastSuccessSpy = vi.spyOn(toast, 'success').mockImplementation(() => '');
+    const generateHandler = vi.fn((value: string, context: string | undefined) => {
+      const expectedContext = JSON.stringify({ before: null, after: 'selectable text here.' });
+      if (value !== 'Some' || context !== expectedContext) throw new Error('unexpected request body');
+
+      return HttpResponse.json({ success: true, data: {} }, { status: 201 });
+    });
+    mockServer.addHandlers(api.generateVocabularyItem.mock(generateHandler));
+
     renderPopover();
 
     setSelection(paragraph.firstChild!, 0, 4);
@@ -414,8 +425,131 @@ describe('TranslationPopover (desktop)', () => {
     fireEvent.click(trigger);
     await screen.findByText('translated Some');
 
-    const addButton = screen.getByRole('button', { name: 'Add to learning list' }) as HTMLButtonElement;
+    const addButton = (await screen.findByRole('button', { name: 'Add to learning list' })) as HTMLButtonElement;
+    expect(addButton.disabled).toBe(false);
+
+    fireEvent.click(addButton);
+
+    await screen.findByRole('button', { name: 'Added to learning list' });
+    expect(generateHandler).toHaveBeenCalledOnce();
+    expect(toastSuccessSpy).toHaveBeenCalledWith('Added to your vocabulary list');
+  });
+
+  it('keeps a phrase marked as added after reselecting it later in the session, without re-adding it', async () => {
+    const toastSuccessSpy = vi.spyOn(toast, 'success').mockImplementation(() => '');
+    const generateHandler = vi.fn(() => HttpResponse.json({ success: true, data: {} }, { status: 201 }));
+    mockServer.addHandlers(api.generateVocabularyItem.mock(generateHandler));
+
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    let trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = await screen.findByRole('button', { name: 'Add to learning list' });
+    fireEvent.click(addButton);
+    await screen.findByRole('button', { name: 'Added to learning list' });
+    expect(generateHandler).toHaveBeenCalledOnce();
+    const toastCallsAfterAdding = toastSuccessSpy.mock.calls.length;
+
+    const closeButton = screen.getByRole('button', { name: 'Close' });
+    fireEvent.click(closeButton);
+    await waitFor(() => expect(screen.queryByText('translated Some')).toBeNull());
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const reopenedAddButton = (await screen.findByRole('button', {
+      name: 'Added to learning list',
+    })) as HTMLButtonElement;
+    expect(reopenedAddButton.disabled).toBe(true);
+    expect(generateHandler).toHaveBeenCalledOnce();
+    expect(toastSuccessSpy.mock.calls.length).toBe(toastCallsAfterAdding);
+  });
+
+  it('keeps the add button disabled when the result is not addable', async () => {
+    mockServer.addHandlers(
+      http.post(`/api/v1/users/me/readings/${READING_ID}/translations`, async ({ request }) => {
+        const { text } = (await request.json()) as { text: string };
+        return HttpResponse.json({
+          success: true,
+          data: { uaTranslation: `translated ${text}`, canAddToLearningList: false },
+        });
+      }),
+    );
+
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = (await screen.findByRole('button', { name: 'Add to learning list' })) as HTMLButtonElement;
     expect(addButton.disabled).toBe(true);
+  });
+
+  it('surfaces a toast and keeps the add button enabled when adding fails', async () => {
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+    mockServer.addHandlers(api.generateVocabularyItem.mock(() => HttpResponse.json({}, { status: 500 })));
+
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = (await screen.findByRole('button', { name: 'Add to learning list' })) as HTMLButtonElement;
+    fireEvent.click(addButton);
+
+    await vi.waitFor(() => expect(toastErrorSpy).toHaveBeenCalledWith('Failed to add item'));
+    expect(addButton.disabled).toBe(false);
+  });
+
+  it("surfaces the server's real error message when adding conflicts", async () => {
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+    mockServer.addHandlers(
+      api.generateVocabularyItem.mock(() =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: { messages: ['Vocabulary item "word" (verb) already exists'], code: 'CONFLICT' },
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    const trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = (await screen.findByRole('button', { name: 'Add to learning list' })) as HTMLButtonElement;
+    fireEvent.click(addButton);
+
+    await vi.waitFor(() => expect(toastErrorSpy).toHaveBeenCalledWith('Vocabulary item "word" (verb) already exists'));
   });
 
   it('shows the trigger button once a keyboard-driven selection settles', async () => {

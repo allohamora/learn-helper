@@ -1,18 +1,18 @@
 import type { InferResponseType } from 'hono/client';
 import { UserVocabularyItemTaskType } from '@/const/event';
-import { appClient } from '@/services/api';
+import { appClient, type SuccessData } from '@/services/api';
 
-type LearnItemsResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learn']['items']['$get']
+export type LearnItem = SuccessData<
+  InferResponseType<
+    (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learn']['items']['$get']
+  >
+>[number];
+
+export type LearnTasksData = SuccessData<
+  InferResponseType<
+    (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learn']['tasks']['$get']
+  >
 >;
-
-export type LearnItem = Extract<LearnItemsResponse, { success: true }>['data'][number];
-
-type LearnTasksResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['learn']['tasks']['$get']
->;
-
-export type LearnTasksData = Extract<LearnTasksResponse, { success: true }>['data'];
 
 export type ToVocabularyItemData = {
   id: string;

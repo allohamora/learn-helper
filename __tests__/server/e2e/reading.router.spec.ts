@@ -134,7 +134,7 @@ describe('reading.router', () => {
       uploadReadingSpy.mockRestore();
     });
 
-    it('returns 400 when the title is whitespace only, rejected by schema validation before it reaches the service', async () => {
+    it('returns 400 when the title is whitespace only, rejected by schema validation before it reaches the service, in our unified error format', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const uploadReadingSpy = vi.spyOn(readingService, 'uploadReading');
@@ -144,6 +144,15 @@ describe('reading.router', () => {
       const res = await client.api.v1.users.me.readings.$post({ form: { file: pdfFile, title: '   ' } });
       expect(res.status).toBe(400);
       expect(uploadReadingSpy).not.toHaveBeenCalled();
+
+      const body = await res.json();
+      if (body.success) throw new Error('expected a failure response');
+
+      expect(body).toMatchObject({
+        success: false,
+        error: { messages: ['Validation failed'], code: 'BAD_REQUEST' },
+      });
+      expect(body.error.details?.issues).toContainEqual(expect.objectContaining({ message: 'Title is required' }));
 
       uploadReadingSpy.mockRestore();
     });

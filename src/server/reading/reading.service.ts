@@ -7,7 +7,6 @@ import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
-import { createLogger } from '../utils/logger.utils';
 import { getUploadFileWebStream, removeUploadFile, writeUploadFile } from '../uploads/uploads.service';
 import { generateTranslationData } from './reading-translation-generation.service';
 import {
@@ -24,8 +23,6 @@ import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
 // selection can be and still become a stored learning item, independent of the translation's own length.
 const MAX_LEARNABLE_TEXT_LENGTH = 255;
 
-const logger = createLogger('reading.service');
-
 // pdfjs-dist always runs its "fake worker" in Node, which dynamically imports its default
 // workerSrc ("./pdf.worker.mjs") relative to the bundled pdfjs-dist module - a path our SSR
 // build doesn't emit. Point it at the real file shipped in node_modules instead.
@@ -37,9 +34,7 @@ const getPdfPageCount = async (buffer: Buffer) => {
 
     return document.numPages;
   } catch (err) {
-    logger.error({ err });
-
-    throw Exception.badRequest('invalid or corrupted PDF file');
+    throw Exception.badRequest('Invalid or corrupted PDF file', { cause: err });
   }
 };
 
@@ -48,7 +43,7 @@ export const uploadReading = async ({ userId, file, title }: { userId: string; f
   const hash = createHash('sha256').update(buffer).digest('hex');
 
   if (await getFileByUserIdAndHash({ userId, hash })) {
-    throw Exception.conflict('this file was already uploaded');
+    throw Exception.conflict('This file was already uploaded');
   }
 
   const totalPages = await getPdfPageCount(buffer);
@@ -75,7 +70,7 @@ export const getReadingByIdAndUserIdOrThrow = async (
   tx: Transaction = db,
 ) => {
   const found = await getReadingByIdAndUserId({ userId, readingId }, tx);
-  if (!found) throw Exception.notFound('reading not found');
+  if (!found) throw Exception.notFound('Reading not found');
 
   return found;
 };
@@ -85,7 +80,7 @@ export const getReadingWithFileByIdAndUserIdOrThrow = async (
   tx: Transaction = db,
 ) => {
   const found = await getReadingWithFileByIdAndUserId({ userId, readingId }, tx);
-  if (!found) throw Exception.notFound('reading not found');
+  if (!found) throw Exception.notFound('Reading not found');
 
   return found;
 };

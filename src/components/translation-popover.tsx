@@ -1,10 +1,11 @@
 import { type FC, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FloatingPortal } from '@floating-ui/react';
-import { Languages, Plus, XIcon } from 'lucide-react';
+import { Check, Languages, Loader2, Plus, XIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
-import { appClient } from '@/services/api';
+import { apiRequest, appClient } from '@/services/api';
 import { useSelection } from '@/hooks/use-selection';
 import { useSelectionFloating } from '@/hooks/use-selection-floating';
 import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
@@ -90,16 +91,15 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
     isError,
   } = useQuery({
     queryKey: ['translation', readingId, data.text, data.before, data.after],
-    queryFn: async () => {
-      const res = await appClient.api.v1.users.me.readings[':readingId'].translations.$post({
-        param: { readingId },
-        json: { text: data.text, before: data.before, after: data.after },
-      });
-      if (!res.ok) throw new Error('Failed to translate selection');
-
-      const body = await res.json();
-      return body.data;
-    },
+    queryFn: () =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me.readings[':readingId'].translations.$post({
+            param: { readingId },
+            json: { text: data.text, before: data.before, after: data.after },
+          }),
+        'Failed to translate selection',
+      ),
     // A given (text, before, after) selection always translates the same way - never refetch it,
     // so re-selecting the same word/phrase later in the same reading session (the popover unmounts
     // ResultContent on close, so this is what a plain useQuery would otherwise redo) reuses the
@@ -107,6 +107,44 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
     staleTime: Infinity,
     gcTime: 30 * 60 * 1000,
   });
+
+  const queryClient = useQueryClient();
+
+  const addMutationKey = ['add-vocabulary-item', data.text, data.before, data.after];
+
+  const addMutation = useMutation({
+    mutationKey: addMutationKey,
+    mutationFn: () => {
+      const context =
+        data.before || data.after ? JSON.stringify({ before: data.before, after: data.after }) : undefined;
+
+      return apiRequest(
+        () =>
+          appClient.api.v1.users.me['vocabulary-lists'].personal.items.generate.$post({
+            json: { value: data.text, context },
+          }),
+        'Failed to add item',
+      );
+    },
+    // Same lifetime as the translation cache above, so re-selecting the same phrase later in the
+    // reading session still finds this mutation's success in the cache (see wasAddedBefore).
+    gcTime: 30 * 60 * 1000,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-items'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-list-learn-tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['personal-vocabulary-search'] });
+      toast.success('Added to your vocabulary list');
+    },
+    onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to add item'),
+  });
+
+  // addMutation.isSuccess only reflects this render's own mutation instance, reset on every reopen
+  // of the popover - reading the mutation cache by key instead survives that, so a phrase already
+  // added earlier in the session stays disabled/"Added" without re-hitting the endpoint.
+  const wasAddedBefore = useMutationState({ filters: { mutationKey: addMutationKey, status: 'success' } }).length > 0;
 
   return (
     <div className="w-54 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
@@ -147,10 +185,16 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
 
       {result && (
         <div className="mt-2 flex justify-end">
-          {/* Add-to-learning-list wiring isn't implemented yet - this only reserves the spot. */}
-          <Button type="button" size="xs" disabled title="Add to learning list" aria-label="Add to learning list">
-            <Plus />
-            <span>Add</span>
+          <Button
+            type="button"
+            size="xs"
+            disabled={!result.canAddToLearningList || wasAddedBefore || addMutation.isPending}
+            onClick={() => addMutation.mutate()}
+            title={wasAddedBefore ? 'Added to learning list' : 'Add to learning list'}
+            aria-label={wasAddedBefore ? 'Added to learning list' : 'Add to learning list'}
+          >
+            {addMutation.isPending ? <Loader2 className="animate-spin" /> : wasAddedBefore ? <Check /> : <Plus />}
+            <span>{wasAddedBefore ? 'Added' : 'Add'}</span>
           </Button>
         </div>
       )}
@@ -200,7 +244,7 @@ const Popover: FC<PanelProps> = ({ readingId, data, onClear }) => {
         // eslint-disable-next-line react-hooks/refs
         ref={refs.setFloating}
         style={{ ...floatingStyles, ...transitionStyles }}
-        className="z-30"
+        className="z-30 select-none"
         {...getFloatingProps()}
         // A mousedown's default action is what collapses the page's text selection (the trigger and
         // the result panel are otherwise unrelated to that selection) - preventing it here keeps the

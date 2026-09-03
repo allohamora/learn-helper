@@ -59,13 +59,13 @@ export const api = {
     },
   },
   personalVocabularyItemSearch: {
-    mock: (userVocabularyListId: string, fn: (searchParams: URLSearchParams) => HttpResponse<JsonBodyType>) => {
-      return http.get(`/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/search`, ({ request }) => {
+    mock: (fn: (searchParams: URLSearchParams) => HttpResponse<JsonBodyType>) => {
+      return http.get(`/api/v1/users/me/vocabulary-lists/personal/search`, ({ request }) => {
         return fn(new URL(request.url).searchParams);
       });
     },
-    ok: (userVocabularyListId: string, results: PersonalVocabularyItemSearchResult[]) =>
-      api.personalVocabularyItemSearch.mock(userVocabularyListId, () =>
+    ok: (results: PersonalVocabularyItemSearchResult[]) =>
+      api.personalVocabularyItemSearch.mock(() =>
         HttpResponse.json<PaginatedResponse<PersonalVocabularyItemSearchResult>>({
           success: true,
           data: results,
@@ -74,11 +74,8 @@ export const api = {
       ),
   },
   addVocabularyItemToPersonalList: {
-    mock: (
-      userVocabularyListId: string,
-      responseFactory: (vocabularyItemId: string, isResetToLearning: boolean) => HttpResponse<JsonBodyType>,
-    ) => {
-      return http.post(`/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items`, async ({ request }) => {
+    mock: (responseFactory: (vocabularyItemId: string, isResetToLearning: boolean) => HttpResponse<JsonBodyType>) => {
+      return http.post(`/api/v1/users/me/vocabulary-lists/personal/items`, async ({ request }) => {
         const body = (await request.json()) as { vocabularyItemId: string; isResetToLearning: boolean };
 
         return responseFactory(body.vocabularyItemId, body.isResetToLearning);
@@ -86,12 +83,9 @@ export const api = {
     },
   },
   removeVocabularyItemFromPersonalList: {
-    mock: (
-      userVocabularyListId: string,
-      responseFactory: (userVocabularyItemId: string, isReset: boolean) => HttpResponse<JsonBodyType>,
-    ) => {
+    mock: (responseFactory: (userVocabularyItemId: string, isReset: boolean) => HttpResponse<JsonBodyType>) => {
       return http.delete(
-        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId`,
+        `/api/v1/users/me/vocabulary-lists/personal/items/:userVocabularyItemId`,
         async ({ params: routeParams, request }) => {
           const body = (await request.json()) as { isReset: boolean };
 
@@ -111,18 +105,12 @@ export const api = {
     ok: (data: Reading) => api.uploadReading.mock(() => HttpResponse.json({ success: true, data }, { status: 201 })),
   },
   generateVocabularyItem: {
-    mock: (
-      userVocabularyListId: string,
-      responseFactory: (value: string, context: string | undefined) => HttpResponse<JsonBodyType>,
-    ) => {
-      return http.post(
-        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/generate`,
-        async ({ request }) => {
-          const body = (await request.json()) as { value: string; context?: string };
+    mock: (responseFactory: (value: string, context: string | undefined) => HttpResponse<JsonBodyType>) => {
+      return http.post(`/api/v1/users/me/vocabulary-lists/personal/items/generate`, async ({ request }) => {
+        const body = (await request.json()) as { value: string; context?: string };
 
-          return responseFactory(body.value, body.context);
-        },
-      );
+        return responseFactory(body.value, body.context);
+      });
     },
   },
 };

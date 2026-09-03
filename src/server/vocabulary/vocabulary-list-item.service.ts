@@ -10,7 +10,7 @@ export const getVocabularyListItemOrThrow = async (
 ) => {
   const listItem = await getVocabularyListItem({ vocabularyListId, vocabularyItemId }, tx);
   if (!listItem) {
-    throw Exception.notFound(`vocabulary item "${vocabularyItemId}" is not linked to list "${vocabularyListId}"`);
+    throw Exception.notFound(`Vocabulary item "${vocabularyItemId}" is not linked to list "${vocabularyListId}"`);
   }
 
   return listItem;

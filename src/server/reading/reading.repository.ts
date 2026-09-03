@@ -15,7 +15,7 @@ export const createFile = async (data: typeof file.$inferInsert, tx: Transaction
     return created;
   } catch (err) {
     if (isUniqueConstraintViolation(err, 'file_user_id_hash_idx')) {
-      throw Exception.conflict('this file was already uploaded');
+      throw Exception.conflict('This file was already uploaded', { cause: err });
     }
 
     throw err;

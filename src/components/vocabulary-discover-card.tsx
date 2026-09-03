@@ -5,15 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
-import { appClient } from '@/services/api';
+import { appClient, type SuccessData } from '@/services/api';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
 import { formatPartOfSpeech } from '@/utils/vocabulary';
 
-type ItemsResponse = InferResponseType<
-  (typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']
->;
-export type VocabularyDiscoverItem = Extract<ItemsResponse, { success: true }>['data'][number];
+export type VocabularyDiscoverItem = SuccessData<
+  InferResponseType<(typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']>
+>[number];
 
 type Props = {
   item: VocabularyDiscoverItem;
