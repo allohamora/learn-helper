@@ -117,6 +117,19 @@ describe('userVocabularyListService', () => {
         addVocabularyListToUser({ userId, vocabularyListId: '00000000-0000-0000-0000-000000000000' }),
       ).rejects.toThrow(Exception);
     });
+
+    it("throws not found when the list is another user's personal list", async () => {
+      const { id: userId } = await createTestUser('user-1');
+      const { id: otherUserId } = await createTestUser('user-2');
+      const otherPersonalList = await createPersonalVocabularyListForUser(otherUserId);
+
+      await expect(addVocabularyListToUser({ userId, vocabularyListId: otherPersonalList.id })).rejects.toThrow(
+        Exception,
+      );
+      await expect(
+        getUserVocabularyListByVocabularyListId({ userId, vocabularyListId: otherPersonalList.id }),
+      ).resolves.toBeUndefined();
+    });
   });
 
   describe('addVocabularyItemToPersonalList', () => {

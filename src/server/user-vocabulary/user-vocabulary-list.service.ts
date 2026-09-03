@@ -1,6 +1,6 @@
 import '@tanstack/react-start/server-only';
 import { EventType } from '@/const/event';
-import { LearningStatus } from '@/const/vocabulary';
+import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
 import { insertEvent } from '../event/event.repository';
@@ -51,6 +51,9 @@ export const addVocabularyListToUser = async ({
       getVocabularyListByIdOrThrow(vocabularyListId, tx),
       getUserVocabularyListByVocabularyListId({ userId, vocabularyListId }, tx),
     ]);
+    if (vocabularyList.type !== VocabularyListType.Public) {
+      throw Exception.notFound(`Vocabulary list "${vocabularyListId}" not found`);
+    }
     if (userList) throw Exception.conflict(`Vocabulary list "${vocabularyListId}" already added`);
 
     const [, created] = await Promise.all([
