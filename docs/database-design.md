@@ -321,11 +321,13 @@ Stores the list of `user_vocabulary_item` ids included in a single AI generation
 
 ### `metadata`
 
-Free-form per-event debug context; shape varies by `type`. Currently populated as `{ input, output }` for all three AI-generation events:
+Free-form per-event context; shape varies by `type`. Populated as `{ input, output }` debug context for the three AI-generation events:
 
 - `reading-selection-translation-generated`: `input: { text, before, after }`, `output: { uaTranslation, isLearnable }`.
 - `vocabulary-item-generated`: `input: { value, context }`, `output: { ... }` (generated vocabulary item content).
 - `user-vocabulary-item-task-generated`: `input` is the `VocabularyItemData[]` batch (shared by both the English and Ukrainian sentence events), `output` is that event's generated tasks.
+
+`reading-time-spent` instead stores `{ currentPage }`: the page the reading was on at that heartbeat. Not currently rendered anywhere (scrolling isn't monotonic, so a raw timeline of it doesn't plot as clean progress), but kept for potential future analysis (e.g. per-page-range dwell time).
 
 Other event types leave it `null`; their debug-relevant data is already covered by existing columns (FKs, `status`, `field_name`, etc.).
 

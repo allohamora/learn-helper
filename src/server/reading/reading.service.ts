@@ -117,7 +117,10 @@ export const updateReadingState = async ({
 
     const [updated] = await Promise.all([
       updateReadingStateInDb({ userId, readingId, currentPage, addDurationMs }, tx),
-      insertEvent({ type: EventType.ReadingTimeSpent, userId, readingId, durationMs: addDurationMs }, tx),
+      insertEvent(
+        { type: EventType.ReadingTimeSpent, userId, readingId, durationMs: addDurationMs, metadata: { currentPage } },
+        tx,
+      ),
     ]);
 
     return updated;

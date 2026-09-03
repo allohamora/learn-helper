@@ -479,7 +479,13 @@ describe('reading.router', () => {
 
       const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
       expect(events).toMatchObject([
-        { type: EventType.ReadingTimeSpent, userId: USER_ID, readingId: created.id, durationMs: 300_000 },
+        {
+          type: EventType.ReadingTimeSpent,
+          userId: USER_ID,
+          readingId: created.id,
+          durationMs: 300_000,
+          metadata: { currentPage: 3 },
+        },
       ]);
     });
 
@@ -506,8 +512,20 @@ describe('reading.router', () => {
 
       const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
       expect(events).toMatchObject([
-        { type: EventType.ReadingTimeSpent, userId: USER_ID, readingId: created.id, durationMs: 300_000 },
-        { type: EventType.ReadingTimeSpent, userId: USER_ID, readingId: created.id, durationMs: 300_000 },
+        {
+          type: EventType.ReadingTimeSpent,
+          userId: USER_ID,
+          readingId: created.id,
+          durationMs: 300_000,
+          metadata: { currentPage: 2 },
+        },
+        {
+          type: EventType.ReadingTimeSpent,
+          userId: USER_ID,
+          readingId: created.id,
+          durationMs: 300_000,
+          metadata: { currentPage: 4 },
+        },
       ]);
     });
 
