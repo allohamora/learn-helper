@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -166,8 +167,15 @@ describe('PdfReader', () => {
     cleanup();
   });
 
-  const renderReader = (readingId: string, totalPages: number) =>
-    render(<PdfReader readingId={readingId} totalPages={totalPages} />);
+  const renderReader = (readingId: string, totalPages: number, initialPage = 1) => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <PdfReader readingId={readingId} totalPages={totalPages} initialPage={initialPage} />
+      </QueryClientProvider>,
+    );
+  };
 
   it('shows page 1 and the total page count once loaded', async () => {
     const readingId = crypto.randomUUID();
@@ -369,5 +377,76 @@ describe('PdfReader', () => {
     expect(await screen.findByRole('button', { name: 'Translate selection' })).toBeTruthy();
 
     selection.removeAllRanges();
+  });
+
+  it('resumes at the last read page on mount', async () => {
+    const readingId = crypto.randomUUID();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+    );
+
+    renderReader(readingId, 5, 3);
+    await screen.findByText('Page 1');
+
+    expect(mockScrollToIndex).toHaveBeenCalledWith(2, { align: 'start' });
+    // Shows the resumed page immediately, rather than starting at 1 and flashing to 3 once the
+    // scroll triggered above lands.
+    expect((screen.getByRole('textbox', { name: 'Page number' }) as HTMLInputElement).value).toBe('3');
+  });
+
+  it('does not jump on mount when the reading was never opened before', async () => {
+    const readingId = crypto.randomUUID();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+    );
+
+    renderReader(readingId, 5, 1);
+    await screen.findByText('Page 1');
+
+    expect(mockScrollToIndex).not.toHaveBeenCalled();
+  });
+
+  it('reports the current page and 5 minutes of duration on each heartbeat', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    // The 5-minute interval is set up during mount, so spying on setInterval and invoking the
+    // captured callback directly (rather than actually waiting, or faking timers from before the
+    // async mount/load completes) is the reliable way to simulate a tick.
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+
+    renderReader(readingId, 5);
+    await screen.findByText('Page 1');
+
+    // Scrolling ahead before the heartbeat fires proves it reads the latest page via a ref, not
+    // whatever the page was when the interval was first created.
+    mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
+    fireEvent.scroll(window);
+
+    try {
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
+      const callback = call?.[0] as (() => void) | undefined;
+      expect(callback).toBeTypeOf('function');
+      callback!();
+
+      await waitFor(() =>
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 5 * 60_000 }),
+      );
+    } finally {
+      setIntervalSpy.mockRestore();
+    }
   });
 });

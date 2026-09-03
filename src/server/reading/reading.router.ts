@@ -19,12 +19,14 @@ import { listReadingsFilterDto } from './dtos/list-readings-filter.dto';
 import { readingDto } from './dtos/reading.dto';
 import { translateSelectionDto } from './dtos/translate-selection.dto';
 import { translateSelectionResultDto } from './dtos/translate-selection-result.dto';
+import { updateReadingStateDto } from './dtos/update-reading-state.dto';
 import { getReadingsByUserId } from './reading.repository';
 import {
   downloadReading,
   getReadingByIdAndUserIdOrThrow,
   removeReading,
   translateReadingSelection,
+  updateReadingState,
   uploadReading,
 } from './reading.service';
 
@@ -138,6 +140,42 @@ export const readingRouter = new OpenAPIHono()
         ...toSuccessResponse({
           status: 200,
           data: await getReadingByIdAndUserIdOrThrow({ userId: user.id, readingId }),
+        }),
+      );
+    },
+  )
+  .openapi(
+    createRoute({
+      method: 'patch',
+      path: '/{readingId}/state',
+      tags: ['Readings'],
+      request: {
+        params: z.object({ readingId: z.uuidv7() }),
+        body: {
+          content: {
+            'application/json': {
+              schema: updateReadingStateDto,
+            },
+          },
+        },
+      },
+      responses: {
+        ...successOkResponse({ description: 'The reading with its updated state', schema: readingDto }),
+        ...errorBadRequestResponse({ description: 'currentPage or addDurationMs failed validation' }),
+        ...errorNotFoundResponse({ description: 'The reading was not found' }),
+      },
+      security: [{ cookieAuth: [] }],
+      middleware: [authMiddleware, rateLimit({ count: 30, durationSec: 60 })] as const,
+    }),
+    async (c) => {
+      const user = c.get('user');
+      const { readingId } = c.req.valid('param');
+      const body = c.req.valid('json');
+
+      return c.json(
+        ...toSuccessResponse({
+          status: 200,
+          data: await updateReadingState({ userId: user.id, readingId, ...body }),
         }),
       );
     },

@@ -16,8 +16,10 @@ import {
   getFileByUserIdAndHash,
   getReadingByIdAndUserId,
   getReadingWithFileByIdAndUserId,
+  updateReadingState as updateReadingStateInDb,
 } from './reading.repository';
 import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
+import type { UpdateReadingStateDto } from './dtos/update-reading-state.dto';
 
 // Mirrors vocabularyItem.value's column length (src/server/db/db.schema.ts) - the largest a
 // selection can be and still become a stored learning item, independent of the translation's own length.
@@ -102,6 +104,24 @@ export const removeReading = async ({ userId, readingId }: { userId: string; rea
   });
 
   await removeUploadFile(filePath);
+};
+
+export const updateReadingState = async ({
+  userId,
+  readingId,
+  currentPage,
+  addDurationMs,
+}: UpdateReadingStateDto & { userId: string; readingId: string }) => {
+  return db.transaction(async (tx) => {
+    await getReadingByIdAndUserIdOrThrow({ userId, readingId }, tx);
+
+    const [updated] = await Promise.all([
+      updateReadingStateInDb({ userId, readingId, currentPage, addDurationMs }, tx),
+      insertEvent({ type: EventType.ReadingTimeSpent, userId, readingId, durationMs: addDurationMs }, tx),
+    ]);
+
+    return updated;
+  });
 };
 
 export const translateReadingSelection = async ({

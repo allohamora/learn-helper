@@ -1,5 +1,5 @@
 import '@tanstack/react-start/server-only';
-import { and, count, desc, eq, lte } from 'drizzle-orm';
+import { and, count, desc, eq, lte, sql } from 'drizzle-orm';
 import { RequestType } from '@/const/request';
 import { file, reading } from '../db/db.schema';
 import { db } from '../db/db.service';
@@ -44,6 +44,24 @@ export const getReadingByIdAndUserId = async (
   return tx.query.reading.findFirst({
     where: and(eq(reading.id, readingId), eq(reading.userId, userId)),
   });
+};
+
+export const updateReadingState = async (
+  {
+    userId,
+    readingId,
+    currentPage,
+    addDurationMs,
+  }: { userId: string; readingId: string; currentPage: number; addDurationMs: number },
+  tx: Transaction = db,
+) => {
+  const [updated] = await tx
+    .update(reading)
+    .set({ currentPage, durationMs: sql`${reading.durationMs} + ${addDurationMs}` })
+    .where(and(eq(reading.id, readingId), eq(reading.userId, userId)))
+    .returning();
+
+  return updated;
 };
 
 export const getReadingWithFileByIdAndUserId = async (

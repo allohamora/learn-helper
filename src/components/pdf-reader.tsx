@@ -2,7 +2,9 @@ import { type FC, useEffect, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { appClient } from '@/services/api';
+import { useMutation } from '@tanstack/react-query';
+import { useInterval } from 'react-use';
+import { apiRequest, appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
 import { TranslationPopover } from '@/components/translation-popover';
@@ -16,6 +18,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.m
 type Props = {
   readingId: string;
   totalPages: number;
+  initialPage: number;
 };
 
 const OVERSCAN_PAGES = 2; // approximates the old 800px pixel buffer, biased generous for short/landscape pages
@@ -25,7 +28,9 @@ const PDF_POINTS_TO_CSS_PX = 96 / 72;
 // stop growing past a natural reading width on wide screens instead of stretching to fill them.
 const MAX_AUTO_SCALE = 1.25;
 
-export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
+const TIME_SPENT_FLUSH_INTERVAL_MS = 5 * 60_000;
+
+export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -35,7 +40,23 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   // scroll coordinates and item positions.
   const [scrollMargin, setScrollMargin] = useState(0);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // Seeded from initialPage (guarded against the reading's default of 0, "never opened") so the
+  // toolbar shows the resumed page immediately, instead of flashing "Page 1" until the scroll
+  // triggered by the resume effect below lands.
+  const [currentPage, setCurrentPage] = useState(initialPage > 1 ? initialPage : 1);
+  const hasResumedRef = useRef(false);
+
+  const { mutate: updateReadingState } = useMutation({
+    mutationFn: ({ currentPage, addDurationMs }: { currentPage: number; addDurationMs: number }) =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me.readings[':readingId'].state.$patch({
+            param: { readingId },
+            json: { currentPage, addDurationMs },
+          }),
+        'Failed to update reading state',
+      ),
+  });
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
   // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
@@ -111,6 +132,26 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   useEffect(() => virtualizer.measure(), [containerWidth, virtualizer]);
 
   const goToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
+
+  // Resumes reading where the user last left off, once the document has loaded and the
+  // virtualizer knows about every page. Guarded to fire only once per mount, so it doesn't
+  // fight the user's own scrolling afterward.
+  useEffect(() => {
+    if (!pageSizes || hasResumedRef.current) return;
+    hasResumedRef.current = true;
+
+    if (initialPage > 1) goToPage(initialPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSizes]);
+
+  // A single heartbeat, every 5 minutes, reports both the latest page and the duration since the
+  // last heartbeat - one call that both bookmarks progress and records reading-time-spent, rather
+  // than separate save-on-scroll and time-tracking mechanisms. useInterval (unlike a hand-rolled
+  // setInterval) keeps its callback fresh across renders on its own, so this reads currentPage
+  // directly without needing a ref to dodge a stale closure.
+  useInterval(() => {
+    updateReadingState({ currentPage, addDurationMs: TIME_SPENT_FLUSH_INTERVAL_MS });
+  }, TIME_SPENT_FLUSH_INTERVAL_MS);
 
   useEffect(() => {
     const onScroll = () => {
