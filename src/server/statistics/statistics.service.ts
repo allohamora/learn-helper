@@ -55,6 +55,7 @@ const getGeneralStatistics = async (userId: string) => {
     totalOutputTokens: 0,
     totalLearningDurationMs: 0,
     totalDiscoveringDurationMs: 0,
+    totalReadingDurationMs: 0,
     averageTimePerTaskMs: 0,
     averageTimePerDiscoveryMs: 0,
   };
@@ -152,6 +153,13 @@ const getGeneralStatistics = async (userId: string) => {
         result.totalAiCostsInNanoDollars += item.costInNanoDollars;
         result.totalInputTokens += item.inputTokens ?? 0;
         result.totalOutputTokens += item.outputTokens ?? 0;
+        continue;
+      case EventType.ReadingTimeSpent:
+        if (item.durationMs === null) {
+          throw new Error(`DurationMs is null for reading-time-spent events: ${JSON.stringify(item)}`);
+        }
+
+        result.totalReadingDurationMs = item.durationMs;
         continue;
       default: {
         const exhaustiveCheck: never = item.type;

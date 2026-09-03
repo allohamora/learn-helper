@@ -73,6 +73,7 @@ describe('statisticsService', () => {
       totalOutputTokens: 0,
       totalLearningDurationMs: 0,
       totalDiscoveringDurationMs: 0,
+      totalReadingDurationMs: 0,
       averageTimePerTaskMs: 0,
       averageTimePerDiscoveryMs: 0,
     });
@@ -232,6 +233,11 @@ describe('statisticsService', () => {
         inputTokens: 20,
         outputTokens: 40,
       },
+      ...[300_000, 300_000].map((durationMs) => ({
+        userId: USER_ID,
+        type: EventType.ReadingTimeSpent,
+        durationMs,
+      })),
     ]);
 
     const otherUserId = 'other-statistics-user';
@@ -267,6 +273,7 @@ describe('statisticsService', () => {
       totalOutputTokens: 5000,
       totalLearningDurationMs: 16000,
       totalDiscoveringDurationMs: 5000,
+      totalReadingDurationMs: 600_000,
       averageTimePerTaskMs: 4000,
       averageTimePerDiscoveryMs: 2500,
     });

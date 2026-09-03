@@ -28,6 +28,7 @@ const statisticsData = {
     totalOutputTokens: 500,
     totalLearningDurationMs: 3_661_000,
     totalDiscoveringDurationMs: 120_000,
+    totalReadingDurationMs: 60_000,
     averageTimePerTaskMs: 15_000,
     averageTimePerDiscoveryMs: 12_000,
   },

@@ -395,6 +395,12 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
       icon: Clock,
     },
     {
+      title: 'Total Reading Time',
+      value: formatDuration(general.totalReadingDurationMs),
+      description: 'time spent reading',
+      icon: Clock,
+    },
+    {
       title: 'Average Time Per Task',
       value: formatDuration(general.averageTimePerTaskMs),
       description: 'average task duration',

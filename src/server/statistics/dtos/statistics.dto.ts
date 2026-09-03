@@ -38,6 +38,7 @@ const generalStatisticsDto = z.object({
   totalOutputTokens: z.number().int(),
   totalLearningDurationMs: z.number().int(),
   totalDiscoveringDurationMs: z.number().int(),
+  totalReadingDurationMs: z.number().int(),
   averageTimePerTaskMs: z.number().int(),
   averageTimePerDiscoveryMs: z.number().int(),
 });
