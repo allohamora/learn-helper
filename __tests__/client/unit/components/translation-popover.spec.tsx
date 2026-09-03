@@ -435,6 +435,47 @@ describe('TranslationPopover (desktop)', () => {
     expect(toastSuccessSpy).toHaveBeenCalledWith('Added to your vocabulary list');
   });
 
+  it('keeps a phrase marked as added after reselecting it later in the session, without re-adding it', async () => {
+    const toastSuccessSpy = vi.spyOn(toast, 'success').mockImplementation(() => '');
+    const generateHandler = vi.fn(() => HttpResponse.json({ success: true, data: {} }, { status: 201 }));
+    mockServer.addHandlers(api.generateVocabularyItem.mock(generateHandler));
+
+    renderPopover();
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    let trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const addButton = await screen.findByRole('button', { name: 'Add to learning list' });
+    fireEvent.click(addButton);
+    await screen.findByRole('button', { name: 'Added to learning list' });
+    expect(generateHandler).toHaveBeenCalledOnce();
+    const toastCallsAfterAdding = toastSuccessSpy.mock.calls.length;
+
+    const closeButton = screen.getByRole('button', { name: 'Close' });
+    fireEvent.click(closeButton);
+    await waitFor(() => expect(screen.queryByText('translated Some')).toBeNull());
+
+    setSelection(paragraph.firstChild!, 0, 4);
+    endPointerSelection();
+    trigger = await screen.findByRole('button', { name: 'Translate selection' });
+
+    fireEvent.mouseDown(trigger);
+    fireEvent.click(trigger);
+    await screen.findByText('translated Some');
+
+    const reopenedAddButton = (await screen.findByRole('button', {
+      name: 'Added to learning list',
+    })) as HTMLButtonElement;
+    expect(reopenedAddButton.disabled).toBe(true);
+    expect(generateHandler).toHaveBeenCalledOnce();
+    expect(toastSuccessSpy.mock.calls.length).toBe(toastCallsAfterAdding);
+  });
+
   it('keeps the add button disabled when the result is not addable', async () => {
     mockServer.addHandlers(
       http.post(`/api/v1/users/me/readings/${READING_ID}/translations`, async ({ request }) => {

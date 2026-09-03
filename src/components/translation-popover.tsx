@@ -1,5 +1,5 @@
 import { type FC, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FloatingPortal } from '@floating-ui/react';
 import { Check, Languages, Loader2, Plus, XIcon } from 'lucide-react';
 import { toast } from 'sonner';
@@ -110,7 +110,10 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
 
   const queryClient = useQueryClient();
 
+  const addMutationKey = ['add-vocabulary-item', data.text, data.before, data.after];
+
   const addMutation = useMutation({
+    mutationKey: addMutationKey,
     mutationFn: () => {
       const context =
         data.before || data.after ? JSON.stringify({ before: data.before, after: data.after }) : undefined;
@@ -123,6 +126,9 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
         'Failed to add item',
       );
     },
+    // Same lifetime as the translation cache above, so re-selecting the same phrase later in the
+    // reading session still finds this mutation's success in the cache (see wasAddedBefore).
+    gcTime: 30 * 60 * 1000,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-items'] });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-list-discover-items'] });
@@ -134,6 +140,11 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : 'Failed to add item'),
   });
+
+  // addMutation.isSuccess only reflects this render's own mutation instance, reset on every reopen
+  // of the popover - reading the mutation cache by key instead survives that, so a phrase already
+  // added earlier in the session stays disabled/"Added" without re-hitting the endpoint.
+  const wasAddedBefore = useMutationState({ filters: { mutationKey: addMutationKey, status: 'success' } }).length > 0;
 
   return (
     <div className="w-54 overflow-hidden rounded-md bg-popover p-3 text-popover-foreground shadow-md md:w-72">
@@ -177,19 +188,13 @@ const ResultContent: FC<{ readingId: string; data: TranslationData; onClose?: ()
           <Button
             type="button"
             size="xs"
-            disabled={!result.canAddToLearningList || addMutation.isPending || addMutation.isSuccess}
+            disabled={!result.canAddToLearningList || wasAddedBefore || addMutation.isPending}
             onClick={() => addMutation.mutate()}
-            title={addMutation.isSuccess ? 'Added to learning list' : 'Add to learning list'}
-            aria-label={addMutation.isSuccess ? 'Added to learning list' : 'Add to learning list'}
+            title={wasAddedBefore ? 'Added to learning list' : 'Add to learning list'}
+            aria-label={wasAddedBefore ? 'Added to learning list' : 'Add to learning list'}
           >
-            {addMutation.isPending ? (
-              <Loader2 className="animate-spin" />
-            ) : addMutation.isSuccess ? (
-              <Check />
-            ) : (
-              <Plus />
-            )}
-            <span>{addMutation.isSuccess ? 'Added' : 'Add'}</span>
+            {addMutation.isPending ? <Loader2 className="animate-spin" /> : wasAddedBefore ? <Check /> : <Plus />}
+            <span>{wasAddedBefore ? 'Added' : 'Add'}</span>
           </Button>
         </div>
       )}
