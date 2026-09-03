@@ -7,8 +7,6 @@ import { MimeType } from '@/const/mime-type';
 
 export const appClient = hc<AppType>('');
 
-// Works on any response envelope carrying a `success: true` + `data` shape, so it covers
-// SuccessResponse<T> and PaginatedResponse<T> alike without picking one apart.
 export type SuccessData<T> = T extends { success: true; data: infer D } ? D : never;
 
 const unwrapApiResponse = <T extends { success: true }>(json: T | ErrorResponse, fallback: string): T => {
