@@ -140,6 +140,7 @@ export const updateReadingState = async ({
       updateReadingStateInDb({ userId, readingId, currentPage, addDurationMs }, tx),
       recordReadingTimeSpent({ userId, readingId, addDurationMs, currentPage }, tx),
     ]);
+    if (updated === undefined) throw Exception.internalServer('Failed to update reading state');
 
     return updated;
   });

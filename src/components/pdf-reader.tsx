@@ -111,15 +111,22 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   // of bounds.
   const sizes = pageSizes ?? [];
 
+  // sizes.length backs count below, so any index the virtualizer passes in is in bounds.
+  const getPageSize = (index: number) => {
+    const size = sizes[index];
+    if (size === undefined) throw new Error(`Expected a page size for index ${index}`);
+    return size;
+  };
+
   // Caps each page independently at 125% of its own native size (rather than the shared container's
   // width), so a document with mixed page sizes (e.g. a cover page scanned smaller than the rest)
   // doesn't stretch every page to match whichever one happens to be widest.
   const getPageWidth = (index: number) =>
-    Math.min(containerWidth, sizes[index].width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE);
+    Math.min(containerWidth, getPageSize(index).width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE);
 
   const virtualizer = useWindowVirtualizer({
     count: sizes.length,
-    estimateSize: (index) => getPageWidth(index) * (sizes[index].height / sizes[index].width),
+    estimateSize: (index) => getPageWidth(index) * (getPageSize(index).height / getPageSize(index).width),
     gap: PAGE_GAP_PX,
     paddingEnd: PAGE_GAP_PX,
     overscan: OVERSCAN_PAGES,

@@ -123,10 +123,12 @@ const takeWords = (text: string, count: number, side: 'before' | 'after'): strin
 
   if (side === 'before') {
     const cut = words[words.length - count - 1];
+    if (cut === undefined) throw new Error('Expected a word before the cut index');
     return text.slice(cut.index + cut.segment.length).trim();
   }
 
   const cut = words[count];
+  if (cut === undefined) throw new Error('Expected a word at the cut index');
   return text.slice(0, cut.index).trim();
 };
 

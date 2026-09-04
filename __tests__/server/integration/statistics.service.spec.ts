@@ -533,6 +533,9 @@ describe('statisticsService', () => {
     vi.useRealTimers();
 
     const [utc, kyiv, newYork] = await Promise.all(statistics);
+    if (utc === undefined || kyiv === undefined || newYork === undefined) {
+      throw new Error('expected getStatistics to resolve for all three timezones');
+    }
 
     // learning event in utc: 2026-07-24, 21:30
     expect(utc.discoveringPerDay.find(({ date }) => date === '2026-07-24')).toMatchObject({

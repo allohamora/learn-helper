@@ -55,7 +55,9 @@ describe('useSelection', () => {
     endPointerSelection();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0][0].toString()).toBe('Some');
+    const [call] = callback.mock.calls;
+    if (call === undefined) throw new Error('callback was not called');
+    expect(call[0].toString()).toBe('Some');
   });
 
   it('calls the callback with the selection once a keyboard selection ends', () => {
@@ -66,7 +68,9 @@ describe('useSelection', () => {
     endKeyboardSelection();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0][0].toString()).toBe('Some sele');
+    const [call] = callback.mock.calls;
+    if (call === undefined) throw new Error('callback was not called');
+    expect(call[0].toString()).toBe('Some sele');
   });
 
   it('does not call the callback while the selection is still changing, only once it stops', () => {
@@ -81,7 +85,9 @@ describe('useSelection', () => {
     endPointerSelection();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0][0].toString()).toBe('Some selectable');
+    const [call] = callback.mock.calls;
+    if (call === undefined) throw new Error('callback was not called');
+    expect(call[0].toString()).toBe('Some selectable');
   });
 
   it('does not call the callback when the selection is cleared', () => {
@@ -162,7 +168,9 @@ describe('useSelection', () => {
     vi.runAllTimers();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0][0].toString()).toBe('Some');
+    const [call] = callback.mock.calls;
+    if (call === undefined) throw new Error('callback was not called');
+    expect(call[0].toString()).toBe('Some');
     vi.useRealTimers();
   });
 
@@ -179,7 +187,9 @@ describe('useSelection', () => {
     vi.runAllTimers();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback.mock.calls[0][0].toString()).toBe('Some selectable');
+    const [call] = callback.mock.calls;
+    if (call === undefined) throw new Error('callback was not called');
+    expect(call[0].toString()).toBe('Some selectable');
     vi.useRealTimers();
   });
 

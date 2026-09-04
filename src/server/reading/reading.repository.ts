@@ -11,6 +11,7 @@ import type { ListReadingsFilterDto } from './dtos/list-readings-filter.dto';
 export const createFile = async (data: typeof file.$inferInsert, tx: Transaction = db) => {
   try {
     const [created] = await tx.insert(file).values(data).returning();
+    if (created === undefined) throw Exception.internalServer('Failed to create file');
 
     return created;
   } catch (err) {
@@ -33,6 +34,7 @@ export const getFileByUserIdAndHash = async (
 
 export const createReading = async (data: typeof reading.$inferInsert, tx: Transaction = db) => {
   const [created] = await tx.insert(reading).values(data).returning();
+  if (created === undefined) throw Exception.internalServer('Failed to create reading');
 
   return created;
 };
@@ -99,6 +101,7 @@ export const getReadingsByUserId = async (
 
   const getTotal = async () => {
     const [total] = await tx.select({ total: count() }).from(reading).where(userFilter);
+    if (total === undefined) throw Exception.internalServer('Failed to count readings');
 
     return total;
   };

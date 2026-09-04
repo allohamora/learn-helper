@@ -5,6 +5,7 @@ import { RequestType } from '@/const/request';
 import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
+import { Exception } from '../utils/exception.utils';
 import type { UserVocabularyListItemsFilterDto } from './dtos/user-vocabulary-list-items-filter.dto';
 
 export const createUserVocabularyItemsFromList = async (
@@ -26,6 +27,7 @@ export const createUserVocabularyItem = async (
   tx: Transaction = db,
 ) => {
   const [created] = await tx.insert(userVocabularyItem).values(values).returning();
+  if (created === undefined) throw Exception.internalServer('Failed to create user vocabulary item');
 
   return created;
 };
@@ -194,6 +196,7 @@ export const getUserVocabularyListItems = async ({
       .innerJoin(vocabularyItem, eq(vocabularyListItem.vocabularyItemId, vocabularyItem.id))
       .innerJoin(userVocabularyItem, eq(userVocabularyItem.vocabularyItemId, vocabularyItem.id))
       .where(and(listFilter, userFilter, statusFilter, searchFilter));
+    if (total === undefined) throw Exception.internalServer('Failed to count user vocabulary list items');
 
     return total;
   };
