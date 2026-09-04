@@ -10,6 +10,7 @@ import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabular
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyDiscoverCard } from '@/components/vocabulary-discover-card';
 import { LearningStatus } from '@/const/vocabulary';
+import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { pageHead } from '@/utils/page';
 
 const BATCH_LIMIT = 10;
@@ -37,7 +38,7 @@ function VocabularyListDiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
   const [history, setHistory] = useState<string[]>([]);
-  const [startedAt, setStartedAt] = useState(new Date());
+  const { takeElapsedMs } = useVisibleDuration();
 
   const [isSubmitting, setIsSubmitting] = useState(false); // for disabled buttons rendering
   const isSubmittingRef = useRef(false); // for preventing double clicks
@@ -117,7 +118,7 @@ function VocabularyListDiscoverPage() {
         await discoverItem.mutateAsync({
           userVocabularyItemId: currentItem.id,
           status,
-          durationMs: Date.now() - startedAt.getTime(),
+          durationMs: takeElapsedMs(),
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Failed to discover item');
@@ -134,8 +135,6 @@ function VocabularyListDiscoverPage() {
         setHandled(0);
         setCurrentIndex(0);
       }
-
-      setStartedAt(new Date());
     });
   };
 
@@ -156,7 +155,7 @@ function VocabularyListDiscoverPage() {
       setHandled(0);
       setCurrentIndex(0);
 
-      setStartedAt(new Date());
+      takeElapsedMs();
     });
   };
 

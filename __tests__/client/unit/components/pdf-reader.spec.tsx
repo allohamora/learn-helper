@@ -20,6 +20,19 @@ const resetMockPageViewports = () => {
 };
 resetMockPageViewports();
 
+// happy-dom exposes visibilityState as a prototype getter, not an own property, so
+// getOwnPropertyDescriptor(document, 'visibilityState') is undefined by default - restoring via
+// `if (original) defineProperty(...)` would then be a no-op and leave the own property (and thus
+// 'hidden') stuck on document for every later test in the file. Falling back to `delete` restores
+// the real default instead.
+const restoreVisibilityState = (original: PropertyDescriptor | undefined) => {
+  if (original) {
+    Object.defineProperty(document, 'visibilityState', original);
+  } else {
+    delete (document as { visibilityState?: string }).visibilityState;
+  }
+};
+
 // react-pdf renders to a real <canvas> 2D context, which happy-dom doesn't provide; stub it with a
 // simple page indicator so this suite can cover loading/error states and the initial render. Document's
 // own fetch of `file` is stood in for here so the "download fails" test exercises the real error path,
@@ -492,7 +505,139 @@ describe('PdfReader', () => {
         expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 42_000 }),
       );
     } finally {
-      if (originalVisibilityState) Object.defineProperty(document, 'visibilityState', originalVisibilityState);
+      restoreVisibilityState(originalVisibilityState);
+    }
+  });
+
+  it('excludes hidden-tab time from the next flush once the tab becomes visible again', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
+      fireEvent.scroll(window);
+
+      // First visible span: 10s, flushed (and reset) by the hidden transition, as today.
+      dateNowSpy.mockReturnValue(BASE_NOW + 10_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      await waitFor(() => expect(onStateUpdate).toHaveBeenNthCalledWith(1, { currentPage: 3, addDurationMs: 10_000 }));
+
+      // A long stretch hidden - none of this should ever be reported.
+      dateNowSpy.mockReturnValue(BASE_NOW + 5_000_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      // Second visible span: 20s, reported by the next heartbeat.
+      dateNowSpy.mockReturnValue(BASE_NOW + 5_020_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const callback = call?.[0] as (() => void) | undefined;
+      expect(callback).toBeTypeOf('function');
+      callback!();
+
+      await waitFor(() => expect(onStateUpdate).toHaveBeenNthCalledWith(2, { currentPage: 3, addDurationMs: 20_000 }));
+      expect(onStateUpdate).toHaveBeenCalledTimes(2);
+    } finally {
+      restoreVisibilityState(originalVisibilityState);
+      setIntervalSpy.mockRestore();
+    }
+  });
+
+  it('does not count time before the tab becomes visible, when mounted while hidden', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+
+    try {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      // A long stretch hidden from the very start - none of this should ever be reported.
+      dateNowSpy.mockReturnValue(BASE_NOW + 1_000_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      // Only this span, after becoming visible, counts.
+      dateNowSpy.mockReturnValue(BASE_NOW + 1_008_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const callback = call?.[0] as (() => void) | undefined;
+      expect(callback).toBeTypeOf('function');
+      callback!();
+
+      await waitFor(() =>
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 1, addDurationMs: 8_000 }),
+      );
+    } finally {
+      restoreVisibilityState(originalVisibilityState);
+      setIntervalSpy.mockRestore();
+    }
+  });
+
+  it('sends nothing on a heartbeat that fires while the tab is currently hidden', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      // Goes hidden right at mount - nothing accumulated yet, so this flush is skipped.
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      // 20 minutes pass while still hidden, then the heartbeat fires.
+      dateNowSpy.mockReturnValue(BASE_NOW + 20 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const callback = call?.[0] as (() => void) | undefined;
+      expect(callback).toBeTypeOf('function');
+      callback!();
+
+      // Give any stray PATCH a chance to land before asserting it never did.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(onStateUpdate).not.toHaveBeenCalled();
+    } finally {
+      restoreVisibilityState(originalVisibilityState);
+      setIntervalSpy.mockRestore();
     }
   });
 
@@ -583,7 +728,7 @@ describe('PdfReader', () => {
         expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 42_000 }),
       );
     } finally {
-      if (originalVisibilityState) Object.defineProperty(document, 'visibilityState', originalVisibilityState);
+      restoreVisibilityState(originalVisibilityState);
     }
   });
 
@@ -640,7 +785,9 @@ describe('PdfReader', () => {
       mockGetVirtualItemForOffset.mockReturnValue({ index: 3 });
       fireEvent.scroll(window);
 
-      expect(documentAddSpy.mock.calls.filter(([type]) => type === 'visibilitychange')).toHaveLength(1);
+      // Two independent subscribers, each registered once: the component's own exit-flush effect,
+      // and useVisibleDuration's own visible/hidden accounting effect.
+      expect(documentAddSpy.mock.calls.filter(([type]) => type === 'visibilitychange')).toHaveLength(2);
       expect(windowAddSpy.mock.calls.filter(([type]) => type === 'pagehide')).toHaveLength(1);
     } finally {
       documentAddSpy.mockRestore();

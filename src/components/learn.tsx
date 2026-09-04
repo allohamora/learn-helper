@@ -4,6 +4,7 @@ import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
+import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { apiRequest, appClient } from '@/services/api';
 import type {
   DefinitionToVocabularyItemTask,
@@ -220,7 +221,7 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
   const [mistakes, setMistakes] = useState<Record<string, number>>({});
   const [isFinished, setIsFinished] = useState(false);
   const [retryTasks, setRetryTasks] = useState<(LearnTask & { originalTaskId: string })[]>([]);
-  const [startedAt, setStartedAt] = useState(new Date());
+  const { takeElapsedMs } = useVisibleDuration();
 
   const learnItemsQuery = useQuery({
     queryKey: ['vocabulary-list-learn-items', userVocabularyListId],
@@ -327,7 +328,7 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
       throw new Error('Current task is not found');
     }
 
-    const durationMs = Date.now() - startedAt.getTime();
+    const durationMs = takeElapsedMs();
 
     if (currentTask.type === UserVocabularyItemTaskType.Showcase) {
       createVocabularyListLearnEvent({
@@ -345,8 +346,6 @@ export const Learn: FC<Props> = ({ userVocabularyListId }) => {
         userVocabularyItemTaskType: currentTask.type,
       });
     }
-
-    setStartedAt(new Date());
   };
 
   const onNext = () => {

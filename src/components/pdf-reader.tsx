@@ -5,6 +5,7 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInterval } from 'react-use';
 import { apiRequest, appClient } from '@/services/api';
+import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
 import { TranslationPopover } from '@/components/translation-popover';
@@ -46,9 +47,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   const [currentPage, setCurrentPage] = useState(initialPage > 1 ? initialPage : 1);
   const hasResumedRef = useRef(false);
 
-  // Set for real once the interval effect below mounts - Date.now() is impure, so it can't be
-  // called directly during render (e.g. as this ref's initializer).
-  const lastFlushAtRef = useRef(0);
+  const { takeElapsedMs } = useVisibleDuration();
 
   const queryClient = useQueryClient();
 
@@ -65,16 +64,15 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['readings'] }),
   });
 
-  // Reports the real time elapsed since the last flush (heartbeat or exit), not an assumed
-  // constant, so an exit shortly after a heartbeat doesn't over-report reading time. A plain
-  // closure (not useEffectEvent) - useInterval already keeps its callback fresh across renders
-  // on its own, and an Effect Event can only be called directly from an effect authored in this
-  // component, which useInterval's internal setInterval isn't.
+  // Reports the real visible time elapsed since the last flush (heartbeat or exit), not an
+  // assumed constant, so an exit shortly after a heartbeat doesn't over-report reading time. A
+  // plain closure (not useEffectEvent) - useInterval already keeps its callback fresh across
+  // renders on its own, and an Effect Event can only be called directly from an effect authored
+  // in this component, which useInterval's internal setInterval isn't.
   const flush = () => {
-    const addDurationMs = Date.now() - lastFlushAtRef.current;
+    const addDurationMs = takeElapsedMs();
     if (addDurationMs <= 0) return;
 
-    lastFlushAtRef.current = Date.now();
     updateReadingState({ currentPage, addDurationMs });
   };
 
@@ -82,10 +80,9 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   // `keepalive: true` so the browser finishes the request even as the page is torn down - a
   // normal fetch can get cancelled mid-flight during unload.
   const flushOnExit = useEffectEvent(() => {
-    const addDurationMs = Date.now() - lastFlushAtRef.current;
+    const addDurationMs = takeElapsedMs();
     if (addDurationMs <= 0) return;
 
-    lastFlushAtRef.current = Date.now();
     void appClient.api.v1.users.me.readings[':readingId'].state.$patch(
       { param: { readingId }, json: { currentPage, addDurationMs } },
       { init: { keepalive: true } },
@@ -197,8 +194,6 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   // from every other effect in this component, so it only ever runs on this mount/unmount or a
   // real browser event - never as a side effect of a re-render or something like the PDF reloading.
   useEffect(() => {
-    lastFlushAtRef.current = Date.now();
-
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') flushOnExit();
     };
