@@ -81,6 +81,7 @@ describe('statisticsService', () => {
     expect(result.learningPerDay).toHaveLength(7);
     expect(result.costPerDay).toHaveLength(7);
     expect(result.itemsUpdatedPerDay).toHaveLength(7);
+    expect(result.readingPerDay).toHaveLength(7);
     expect(result.topMistakes).toEqual([]);
     expect(result.topHintedItems).toEqual([]);
     expect(result.discoveringPerDay).toEqual(
@@ -100,6 +101,9 @@ describe('statisticsService', () => {
     );
     expect(result.costPerDay).toEqual(
       expect.arrayContaining([expect.objectContaining({ costInNanoDollars: 0, inputTokens: 0, outputTokens: 0 })]),
+    );
+    expect(result.readingPerDay).toEqual(
+      expect.arrayContaining([expect.objectContaining({ durationMs: 0, translationsGenerated: 0 })]),
     );
   });
 
@@ -285,6 +289,9 @@ describe('statisticsService', () => {
           outputTokens: 5000,
         }),
       ]),
+    );
+    expect(result.readingPerDay).toEqual(
+      expect.arrayContaining([expect.objectContaining({ durationMs: 600_000, translationsGenerated: 2 })]),
     );
   });
 

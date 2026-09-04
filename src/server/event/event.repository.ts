@@ -146,6 +146,28 @@ export const getLearningEventsGroupedByDay = async ({
     .groupBy(event.type, date);
 };
 
+export const getReadingEventsGroupedByDay = async ({ userId, dateFrom, dateTo, timezone }: DailyEventStatisticsDto) => {
+  const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
+
+  return await db
+    .select({
+      type: event.type,
+      count: count(),
+      date,
+      durationMs: sum(event.durationMs).mapWith(Number),
+    })
+    .from(event)
+    .where(
+      and(
+        eq(event.userId, userId),
+        inArray(event.type, [EventType.ReadingTimeSpent, EventType.ReadingSelectionTranslationGenerated]),
+        gte(event.createdAt, dateFrom),
+        lte(event.createdAt, dateTo),
+      ),
+    )
+    .groupBy(event.type, date);
+};
+
 export const getCostEventsGroupedByDay = async ({ userId, dateFrom, dateTo, timezone }: DailyEventStatisticsDto) => {
   const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
 

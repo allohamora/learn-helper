@@ -72,6 +72,12 @@ const itemsUpdatedPerDayStatisticsDto = z.object({
   uaTranslation: z.number().int(),
 });
 
+const readingPerDayStatisticsDto = z.object({
+  date,
+  durationMs: z.number().int(),
+  translationsGenerated: z.number().int(),
+});
+
 const topVocabularyItemStatisticsDto = z.object({
   count: z.number().int(),
   value: z.string(),
@@ -84,6 +90,7 @@ export const statisticsDto = z.object({
   learningPerDay: z.array(learningPerDayStatisticsDto),
   costPerDay: z.array(costPerDayStatisticsDto),
   itemsUpdatedPerDay: z.array(itemsUpdatedPerDayStatisticsDto),
+  readingPerDay: z.array(readingPerDayStatisticsDto),
   topMistakes: z.array(topVocabularyItemStatisticsDto),
   topHintedItems: z.array(topVocabularyItemStatisticsDto),
 });
@@ -93,3 +100,4 @@ export type DiscoveringPerDayStatistics = z.infer<typeof discoveringPerDayStatis
 export type LearningPerDayStatistics = z.infer<typeof learningPerDayStatisticsDto>;
 export type CostPerDayStatistics = z.infer<typeof costPerDayStatisticsDto>;
 export type ItemsUpdatedPerDayStatistics = z.infer<typeof itemsUpdatedPerDayStatisticsDto>;
+export type ReadingPerDayStatistics = z.infer<typeof readingPerDayStatisticsDto>;

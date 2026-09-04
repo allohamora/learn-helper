@@ -51,6 +51,7 @@ const statisticsData = {
   ],
   costPerDay: [{ date: '2026-07-24', costInNanoDollars: 500_000_000, inputTokens: 100, outputTokens: 50 }],
   itemsUpdatedPerDay: [{ date: '2026-07-24', uaTranslation: 2 }],
+  readingPerDay: [{ date: '2026-07-24', durationMs: 60_000, translationsGenerated: 2 }],
   topMistakes: [{ count: 4, value: 'example', partOfSpeech: PartOfSpeech.Noun }],
   topHintedItems: [{ count: 3, value: 'practice', partOfSpeech: PartOfSpeech.Verb }],
 } satisfies StatisticsData;
