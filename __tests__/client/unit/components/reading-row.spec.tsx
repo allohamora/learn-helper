@@ -13,7 +13,13 @@ import { ReadingRow } from '@/components/reading-row';
 import { mockServer } from '../../setup-unit-context';
 
 describe('ReadingRow', () => {
-  const renderRow = (props: { id: string; title: string; totalPages: number; currentPage: number }) => {
+  const renderRow = (props: {
+    id: string;
+    title: string;
+    totalPages: number;
+    currentPage: number;
+    durationMs: number;
+  }) => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
     const rootRoute = createRootRoute();
@@ -48,7 +54,7 @@ describe('ReadingRow', () => {
 
   it('links the Read button to the reading detail route', async () => {
     const readingId = crypto.randomUUID();
-    renderRow({ id: readingId, title: 'My Book', totalPages: 10, currentPage: 3 });
+    renderRow({ id: readingId, title: 'My Book', totalPages: 10, currentPage: 3, durationMs: 0 });
 
     fireEvent.click(await screen.findByRole('link', { name: 'Read' }));
 
@@ -63,7 +69,7 @@ describe('ReadingRow', () => {
       ),
     );
 
-    renderRow({ id: readingId, title: 'My Book', totalPages: 10, currentPage: 3 });
+    renderRow({ id: readingId, title: 'My Book', totalPages: 10, currentPage: 3, durationMs: 0 });
 
     fireEvent.click(await screen.findByRole('button', { name: 'Delete reading' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));

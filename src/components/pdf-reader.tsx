@@ -2,7 +2,7 @@ import { type FC, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInterval } from 'react-use';
 import { apiRequest, appClient } from '@/services/api';
 import { Loader } from '@/components/ui/loader';
@@ -50,6 +50,8 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   // called directly during render (e.g. as this ref's initializer).
   const lastFlushAtRef = useRef(0);
 
+  const queryClient = useQueryClient();
+
   const { mutate: updateReadingState } = useMutation({
     mutationFn: ({ currentPage, addDurationMs }: { currentPage: number; addDurationMs: number }) =>
       apiRequest(
@@ -60,6 +62,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
           }),
         'Failed to update reading state',
       ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['readings'] }),
   });
 
   // Reports the real time elapsed since the last flush (heartbeat or exit), not an assumed
