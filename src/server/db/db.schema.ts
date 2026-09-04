@@ -327,6 +327,10 @@ export const event = pgTable(
     // marks a discovered event as later undone; generic across event types, not undo-specific
     revertedAt: timestamp('reverted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    // reading-time-spent hourly bucketing only (see reading.service.ts / event.repository.ts): the most
+    // recent heartbeat merged into this row. Null means only one flush has landed in the current hour so
+    // far. Not a generic "last updated" column - other event mutations (e.g. revert) don't touch it.
+    lastFlushedAt: timestamp('last_flushed_at', { withTimezone: true }),
   },
   (table) => [
     // statistics page: every query filters by user_id + type; benchmarked against wider indexes, see docs/database-design.md

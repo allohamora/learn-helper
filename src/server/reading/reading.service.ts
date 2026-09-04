@@ -5,7 +5,7 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mj
 import { EventType } from '@/const/event';
 import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
-import { insertEvent } from '../event/event.repository';
+import { insertEvent, updateCurrentHourReadingTimeSpentEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import { getUploadFileWebStream, removeUploadFile, writeUploadFile } from '../uploads/uploads.service';
 import { generateTranslationData } from './reading-translation-generation.service';
@@ -106,6 +106,27 @@ export const removeReading = async ({ userId, readingId }: { userId: string; rea
   await removeUploadFile(filePath);
 };
 
+// buckets reading-time-spent events by clock hour: a flush landing in the same hour as the reading's
+// latest event merges into that row instead of inserting a new one, so a long session accumulates
+// into one row per hour rather than one per 5-min flush
+const recordReadingTimeSpent = async (
+  {
+    userId,
+    readingId,
+    addDurationMs,
+    currentPage,
+  }: { userId: string; readingId: string; addDurationMs: number; currentPage: number },
+  tx: Transaction,
+) => {
+  const updated = await updateCurrentHourReadingTimeSpentEvent({ userId, readingId, addDurationMs, currentPage }, tx);
+  if (updated) return updated;
+
+  return insertEvent(
+    { type: EventType.ReadingTimeSpent, userId, readingId, durationMs: addDurationMs, metadata: { currentPage } },
+    tx,
+  );
+};
+
 export const updateReadingState = async ({
   userId,
   readingId,
@@ -117,10 +138,7 @@ export const updateReadingState = async ({
 
     const [updated] = await Promise.all([
       updateReadingStateInDb({ userId, readingId, currentPage, addDurationMs }, tx),
-      insertEvent(
-        { type: EventType.ReadingTimeSpent, userId, readingId, durationMs: addDurationMs, metadata: { currentPage } },
-        tx,
-      ),
+      recordReadingTimeSpent({ userId, readingId, addDurationMs, currentPage }, tx),
     ]);
 
     return updated;

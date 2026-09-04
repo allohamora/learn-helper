@@ -7,7 +7,7 @@ import { Readable } from 'node:stream';
 import { UPLOADS_DIR } from '@/server/uploads/uploads.service';
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
@@ -489,7 +489,7 @@ describe('reading.router', () => {
       ]);
     });
 
-    it('accumulates duration and records an event on every heartbeat', async () => {
+    it('accumulates duration and merges same-hour heartbeats into one event', async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       const created = await seedReading({ userId: USER_ID, title: 'Book' });
@@ -516,16 +516,45 @@ describe('reading.router', () => {
           type: EventType.ReadingTimeSpent,
           userId: USER_ID,
           readingId: created.id,
-          durationMs: 300_000,
-          metadata: { currentPage: 2 },
-        },
-        {
-          type: EventType.ReadingTimeSpent,
-          userId: USER_ID,
-          readingId: created.id,
-          durationMs: 300_000,
+          durationMs: 600_000,
           metadata: { currentPage: 4 },
         },
+      ]);
+      expect(events[0]!.lastFlushedAt).not.toBeNull();
+      expect(events[0]!.lastFlushedAt!.getTime()).toBeGreaterThan(events[0]!.createdAt.getTime());
+    });
+
+    it('records a separate event once a heartbeat crosses into a new clock hour', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 2, addDurationMs: 300_000 },
+      });
+
+      // pushes the first flush's event into the previous clock hour, simulating a heartbeat later in
+      // time without faking the system clock through the router's async I/O (which hangs the request -
+      // the DB driver needs real timers)
+      await db
+        .update(event)
+        .set({ createdAt: sql`${event.createdAt} - interval '2 hours'` })
+        .where(eq(event.readingId, created.id));
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 4, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(200);
+
+      const events = await db.query.event.findMany({
+        where: eq(event.userId, USER_ID),
+        orderBy: (fields, { asc }) => asc(fields.createdAt),
+      });
+      expect(events).toMatchObject([
+        { durationMs: 300_000, metadata: { currentPage: 2 } },
+        { durationMs: 300_000, metadata: { currentPage: 4 } },
       ]);
     });
 

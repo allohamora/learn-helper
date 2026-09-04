@@ -13,6 +13,37 @@ export const insertEvents = async (data: (typeof event.$inferInsert)[], tx: Tran
   return await tx.insert(event).values(data).returning();
 };
 
+// part of the reading-time-spent hourly bucketing (see reading.service.ts): updates the reading's
+// event in place when its latest flush falls in the current clock hour, accumulating duration_ms and
+// refreshing metadata. Returns undefined when no such row exists (none yet, or it's from a past hour) -
+// the caller falls back to insertEvent in that case, so a new bucket starts.
+export const updateCurrentHourReadingTimeSpentEvent = async (
+  {
+    userId,
+    readingId,
+    addDurationMs,
+    currentPage,
+  }: { userId: string; readingId: string; addDurationMs: number; currentPage: number },
+  tx: Transaction = db,
+) => {
+  const now = new Date();
+
+  const [updated] = await tx
+    .update(event)
+    .set({ durationMs: sql`${event.durationMs} + ${addDurationMs}`, metadata: { currentPage }, lastFlushedAt: now })
+    .where(
+      and(
+        eq(event.userId, userId),
+        eq(event.readingId, readingId),
+        eq(event.type, EventType.ReadingTimeSpent),
+        sql`date_trunc('hour', ${event.createdAt}) = date_trunc('hour', ${now.toISOString()}::timestamptz)`,
+      ),
+    )
+    .returning();
+
+  return updated;
+};
+
 export const revertUserVocabularyItemDiscoveredEvent = async (
   { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,
