@@ -2,7 +2,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfReader } from '@/components/pdf-reader';
 import { mockServer } from '../../setup-unit-context';
 
@@ -151,10 +151,19 @@ class MockResizeObserver {
 
 describe('PdfReader', () => {
   const originalResizeObserver = globalThis.ResizeObserver;
+  const BASE_NOW = 1_000_000;
+
+  // PdfReader flushes reading state on unmount (see "leaving the reader" tests below), and every
+  // test unmounts via cleanup() in afterEach - frozen at a constant by default, real wall-clock
+  // time can't advance between a test's mount and that cleanup, so addDurationMs stays 0 and the
+  // flush's own guard skips it, keeping tests that don't care about this feature free of a stray
+  // PATCH. Tests that do care move the clock forward via dateNowSpy.mockReturnValue(...).
+  let dateNowSpy: MockInstance<() => number>;
 
   beforeEach(() => {
     globalThis.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
     resetMockPageViewports();
+    dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(BASE_NOW);
   });
 
   afterEach(() => {
@@ -165,6 +174,7 @@ describe('PdfReader', () => {
     mockIsAtEnd.mockReset().mockReturnValue(false);
     mockUseWindowVirtualizer.mockClear();
     cleanup();
+    dateNowSpy.mockRestore();
   });
 
   const renderReader = (readingId: string, totalPages: number, initialPage = 1) => {
@@ -410,7 +420,7 @@ describe('PdfReader', () => {
     expect(mockScrollToIndex).not.toHaveBeenCalled();
   });
 
-  it('reports the current page and 5 minutes of duration on each heartbeat', async () => {
+  it('reports the current page and the real elapsed time on each heartbeat', async () => {
     const readingId = crypto.randomUUID();
     const onStateUpdate = vi.fn();
     mockServer.addHandlers(
@@ -423,30 +433,242 @@ describe('PdfReader', () => {
       }),
     );
 
-    // The 5-minute interval is set up during mount, so spying on setInterval and invoking the
+    // The 15-minute interval is set up during mount, so spying on setInterval and invoking the
     // captured callback directly (rather than actually waiting, or faking timers from before the
     // async mount/load completes) is the reliable way to simulate a tick.
     const setIntervalSpy = vi.spyOn(window, 'setInterval');
 
-    renderReader(readingId, 5);
-    await screen.findByText('Page 1');
-
-    // Scrolling ahead before the heartbeat fires proves it reads the latest page via a ref, not
-    // whatever the page was when the interval was first created.
-    mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
-    fireEvent.scroll(window);
-
     try {
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      // Scrolling ahead before the heartbeat fires proves it reads the latest page via a ref, not
+      // whatever the page was when the interval was first created.
+      mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
+      fireEvent.scroll(window);
+
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
+
+      dateNowSpy.mockReturnValue(BASE_NOW + 15 * 60_000);
       callback!();
 
       await waitFor(() =>
-        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 5 * 60_000 }),
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 15 * 60_000 }),
       );
     } finally {
       setIntervalSpy.mockRestore();
     }
+  });
+
+  it('flushes the reading state, with the real elapsed time, when the tab is hidden', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
+      fireEvent.scroll(window);
+
+      dateNowSpy.mockReturnValue(BASE_NOW + 42_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      await waitFor(() =>
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 42_000 }),
+      );
+    } finally {
+      if (originalVisibilityState) Object.defineProperty(document, 'visibilityState', originalVisibilityState);
+    }
+  });
+
+  it('flushes the reading state when the page is hidden via pagehide', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    renderReader(readingId, 5);
+    await screen.findByText('Page 1');
+
+    mockGetVirtualItemForOffset.mockReturnValue({ index: 1 });
+    fireEvent.scroll(window);
+
+    dateNowSpy.mockReturnValue(BASE_NOW + 17_000);
+    fireEvent(window, new Event('pagehide'));
+
+    await waitFor(() =>
+      expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 2, addDurationMs: 17_000 }),
+    );
+  });
+
+  it('flushes the reading state on unmount, so in-app navigation away is not lost', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const { unmount } = renderReader(readingId, 5);
+    await screen.findByText('Page 1');
+
+    mockGetVirtualItemForOffset.mockReturnValue({ index: 3 });
+    fireEvent.scroll(window);
+
+    dateNowSpy.mockReturnValue(BASE_NOW + 5_000);
+    unmount();
+
+    await waitFor(() =>
+      expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 4, addDurationMs: 5_000 }),
+    );
+  });
+
+  it('does not double-flush when visibilitychange and pagehide both fire for the same tab close', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
+      fireEvent.scroll(window);
+
+      dateNowSpy.mockReturnValue(BASE_NOW + 42_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      // Chrome fires both events, in this order, for an actual tab close - pagehide must not report
+      // the same elapsed time a second time.
+      fireEvent(document, new Event('visibilitychange'));
+      fireEvent(window, new Event('pagehide'));
+
+      await waitFor(() =>
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 42_000 }),
+      );
+    } finally {
+      if (originalVisibilityState) Object.defineProperty(document, 'visibilityState', originalVisibilityState);
+    }
+  });
+
+  it('does not flush again on unmount once an exit event already flushed', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const { unmount } = renderReader(readingId, 5);
+    await screen.findByText('Page 1');
+
+    mockGetVirtualItemForOffset.mockReturnValue({ index: 1 });
+    fireEvent.scroll(window);
+
+    dateNowSpy.mockReturnValue(BASE_NOW + 17_000);
+    fireEvent(window, new Event('pagehide'));
+
+    await waitFor(() =>
+      expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 2, addDurationMs: 17_000 }),
+    );
+
+    // The cleanup effect's own unconditional flushOnExit call, run right after pagehide's, must be
+    // skipped by the same guard - not send a second, ~0ms PATCH for the same close.
+    unmount();
+    expect(onStateUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('registers the exit-flush listeners exactly once, not again on every re-render', async () => {
+    const readingId = crypto.randomUUID();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+    );
+
+    const documentAddSpy = vi.spyOn(document, 'addEventListener');
+    const windowAddSpy = vi.spyOn(window, 'addEventListener');
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      // Several state updates (scroll-driven re-renders) after mount should never re-subscribe.
+      mockGetVirtualItemForOffset.mockReturnValue({ index: 1 });
+      fireEvent.scroll(window);
+      mockGetVirtualItemForOffset.mockReturnValue({ index: 3 });
+      fireEvent.scroll(window);
+
+      expect(documentAddSpy.mock.calls.filter(([type]) => type === 'visibilitychange')).toHaveLength(1);
+      expect(windowAddSpy.mock.calls.filter(([type]) => type === 'pagehide')).toHaveLength(1);
+    } finally {
+      documentAddSpy.mockRestore();
+      windowAddSpy.mockRestore();
+    }
+  });
+
+  it('does not save on scrolling or document (re)loading alone - only the heartbeat or an actual exit', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        onStateUpdate(await request.json());
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    renderReader(readingId, 5);
+    await screen.findByText('Page 1');
+
+    mockGetVirtualItemForOffset.mockReturnValue({ index: 1 });
+    fireEvent.scroll(window);
+    mockGetVirtualItemForOffset.mockReturnValue({ index: 3 });
+    fireEvent.scroll(window);
+
+    expect(onStateUpdate).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { type FC, useEffect, useRef, useState } from 'react';
+import { type FC, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
@@ -28,7 +28,7 @@ const PDF_POINTS_TO_CSS_PX = 96 / 72;
 // stop growing past a natural reading width on wide screens instead of stretching to fill them.
 const MAX_AUTO_SCALE = 1.25;
 
-const TIME_SPENT_FLUSH_INTERVAL_MS = 5 * 60_000;
+const TIME_SPENT_FLUSH_INTERVAL_MS = 15 * 60_000;
 
 export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,6 +46,10 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   const [currentPage, setCurrentPage] = useState(initialPage > 1 ? initialPage : 1);
   const hasResumedRef = useRef(false);
 
+  // Set for real once the interval effect below mounts - Date.now() is impure, so it can't be
+  // called directly during render (e.g. as this ref's initializer).
+  const lastFlushAtRef = useRef(0);
+
   const { mutate: updateReadingState } = useMutation({
     mutationFn: ({ currentPage, addDurationMs }: { currentPage: number; addDurationMs: number }) =>
       apiRequest(
@@ -56,6 +60,33 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
           }),
         'Failed to update reading state',
       ),
+  });
+
+  // Reports the real time elapsed since the last flush (heartbeat or exit), not an assumed
+  // constant, so an exit shortly after a heartbeat doesn't over-report reading time. A plain
+  // closure (not useEffectEvent) - useInterval already keeps its callback fresh across renders
+  // on its own, and an Effect Event can only be called directly from an effect authored in this
+  // component, which useInterval's internal setInterval isn't.
+  const flush = () => {
+    const addDurationMs = Date.now() - lastFlushAtRef.current;
+    if (addDurationMs <= 0) return;
+
+    lastFlushAtRef.current = Date.now();
+    updateReadingState({ currentPage, addDurationMs });
+  };
+
+  // Sends the same PATCH the heartbeat/mutation use, but bypasses react-query and sets
+  // `keepalive: true` so the browser finishes the request even as the page is torn down - a
+  // normal fetch can get cancelled mid-flight during unload.
+  const flushOnExit = useEffectEvent(() => {
+    const addDurationMs = Date.now() - lastFlushAtRef.current;
+    if (addDurationMs <= 0) return;
+
+    lastFlushAtRef.current = Date.now();
+    void appClient.api.v1.users.me.readings[':readingId'].state.$patch(
+      { param: { readingId }, json: { currentPage, addDurationMs } },
+      { init: { keepalive: true } },
+    );
   });
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
@@ -151,14 +182,33 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSizes]);
 
-  // A single heartbeat, every 5 minutes, reports both the latest page and the duration since the
-  // last heartbeat - one call that both bookmarks progress and records reading-time-spent, rather
-  // than separate save-on-scroll and time-tracking mechanisms. useInterval (unlike a hand-rolled
-  // setInterval) keeps its callback fresh across renders on its own, so this reads currentPage
-  // directly without needing a ref to dodge a stale closure.
-  useInterval(() => {
-    updateReadingState({ currentPage, addDurationMs: TIME_SPENT_FLUSH_INTERVAL_MS });
-  }, TIME_SPENT_FLUSH_INTERVAL_MS);
+  // A heartbeat, every 15 minutes, reports both the latest page and the duration since the last
+  // flush - a crash-safety net for progress since the last flush, since exit-time flushing below
+  // already covers every graceful way of leaving the reader.
+  useInterval(flush, TIME_SPENT_FLUSH_INTERVAL_MS);
+
+  // Flushes on the ways a user can actually leave the reader, so progress made since the last
+  // heartbeat isn't lost: tab hidden/backgrounded (visibilitychange), the tab/page closed
+  // (pagehide), or in-app navigation to another route (unmount - the browser events above never
+  // fire for a client-side route change). Deliberately a single effect with no deps, kept apart
+  // from every other effect in this component, so it only ever runs on this mount/unmount or a
+  // real browser event - never as a side effect of a re-render or something like the PDF reloading.
+  useEffect(() => {
+    lastFlushAtRef.current = Date.now();
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushOnExit();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', flushOnExit);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', flushOnExit);
+      flushOnExit();
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
