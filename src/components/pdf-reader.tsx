@@ -25,6 +25,9 @@ type Props = {
 const OVERSCAN_PAGES = 2; // approximates the old 800px pixel buffer, biased generous for short/landscape pages
 const PAGE_GAP_PX = 8;
 const PDF_POINTS_TO_CSS_PX = 96 / 72;
+// Mirrors @tanstack/react-virtual's own ~1px "close enough" landing tolerance, so a
+// scroll that settles just short of a page's top isn't attributed to the previous page.
+const SCROLL_BOUNDARY_TOLERANCE_PX = 2;
 // Mirrors pdf.js's own "Automatic Zoom": never render a page above 125% of its native size, so pages
 // stop growing past a natural reading width on wide screens instead of stretching to fill them.
 const MAX_AUTO_SCALE = 1.25;
@@ -218,7 +221,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
         return;
       }
 
-      const item = virtualizer.getVirtualItemForOffset(window.scrollY + headerHeight);
+      const item = virtualizer.getVirtualItemForOffset(window.scrollY + headerHeight + SCROLL_BOUNDARY_TOLERANCE_PX);
       if (item) setCurrentPage(item.index + 1);
     };
 
