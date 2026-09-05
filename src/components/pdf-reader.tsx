@@ -1,8 +1,11 @@
-import { type FC, useEffect, useRef, useState } from 'react';
+import { type FC, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { useWindowVirtualizer } from '@tanstack/react-virtual';
-import { appClient } from '@/services/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInterval } from 'react-use';
+import { apiRequest, appClient } from '@/services/api';
+import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
 import { TranslationPopover } from '@/components/translation-popover';
@@ -16,16 +19,22 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.m
 type Props = {
   readingId: string;
   totalPages: number;
+  initialPage: number;
 };
 
 const OVERSCAN_PAGES = 2; // approximates the old 800px pixel buffer, biased generous for short/landscape pages
 const PAGE_GAP_PX = 8;
 const PDF_POINTS_TO_CSS_PX = 96 / 72;
+// Mirrors @tanstack/react-virtual's own ~1px "close enough" landing tolerance, so a
+// scroll that settles just short of a page's top isn't attributed to the previous page.
+const SCROLL_BOUNDARY_TOLERANCE_PX = 2;
 // Mirrors pdf.js's own "Automatic Zoom": never render a page above 125% of its native size, so pages
 // stop growing past a natural reading width on wide screens instead of stretching to fill them.
 const MAX_AUTO_SCALE = 1.25;
 
-export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
+const TIME_SPENT_FLUSH_INTERVAL_MS = 5 * 60_000;
+
+export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -35,7 +44,83 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   // scroll coordinates and item positions.
   const [scrollMargin, setScrollMargin] = useState(0);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // Seeded from initialPage (guarded against the reading's default of 0, "never opened") so the
+  // toolbar shows the resumed page immediately, instead of flashing "Page 1" until the scroll
+  // triggered by the resume effect below lands.
+  const [currentPage, setCurrentPage] = useState(initialPage > 1 ? initialPage : 1);
+  const hasResumedRef = useRef(false);
+
+  const { peekElapsedMs, commitElapsedMs } = useVisibleDuration();
+
+  const queryClient = useQueryClient();
+
+  // Guards flush and flushOnExit from ever being in flight at the same time - without it, both
+  // could peek the same accumulated duration and each get it committed, double-counting it
+  // server-side, and their PATCHes could also land out of order and overwrite a newer currentPage
+  // with a stale one. Whichever finds this set skips its turn. For flush(), that's free - the next
+  // heartbeat picks up whatever accumulated. For flushOnExit(), a skip can mean that stretch of
+  // time is never sent at all, since the reader may not get another chance to flush - accepted:
+  // this guard's only job is to prevent two saves landing for the same time range, not to
+  // guarantee zero loss on exit.
+  //
+  // Not guarded against, and not fixable client-side: if a PATCH's response never reaches the
+  // client (e.g. the connection drops right after the server commits), commitElapsedMs never runs
+  // and the same duration gets resent - and applied again - on the next flush. Ruling that out
+  // needs a server-side idempotency key on the PATCH, which isn't worth it for a best-effort
+  // reading-time stat.
+  const pendingFlushRef = useRef<Promise<void> | null>(null);
+
+  const { mutateAsync: updateReadingState } = useMutation({
+    mutationFn: ({ currentPage, addDurationMs }: { currentPage: number; addDurationMs: number }) =>
+      apiRequest(
+        () =>
+          appClient.api.v1.users.me.readings[':readingId'].state.$patch({
+            param: { readingId },
+            json: { currentPage, addDurationMs },
+          }),
+        'Failed to update reading state',
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['readings'] }),
+  });
+
+  // Reports the real visible time elapsed since the last flush (heartbeat or exit), not an
+  // assumed constant, so an exit shortly after a heartbeat doesn't over-report reading time. A
+  // plain closure (not useEffectEvent) - useInterval already keeps its callback fresh across
+  // renders on its own, and an Effect Event can only be called directly from an effect authored
+  // in this component, which useInterval's internal setInterval isn't.
+  const flush = () => {
+    if (pendingFlushRef.current) return;
+    const addDurationMs = peekElapsedMs();
+    if (addDurationMs <= 0) return;
+
+    pendingFlushRef.current = updateReadingState({ currentPage, addDurationMs })
+      .then(() => commitElapsedMs(addDurationMs))
+      .catch((error: unknown) => console.error('Failed to flush reading state', error))
+      .finally(() => {
+        pendingFlushRef.current = null;
+      });
+  };
+
+  // Sends the same PATCH the heartbeat/mutation use, but bypasses react-query and sets
+  // `keepalive: true` so the browser finishes the request even as the page is torn down - a
+  // normal fetch can get cancelled mid-flight during unload.
+  const flushOnExit = useEffectEvent(() => {
+    if (pendingFlushRef.current) return;
+    const addDurationMs = peekElapsedMs();
+    if (addDurationMs <= 0) return;
+
+    pendingFlushRef.current = appClient.api.v1.users.me.readings[':readingId'].state
+      .$patch({ param: { readingId }, json: { currentPage, addDurationMs } }, { init: { keepalive: true } })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success) commitElapsedMs(addDurationMs);
+      })
+      .catch((error: unknown) => console.error('Failed to flush reading state', error))
+      .finally(() => {
+        pendingFlushRef.current = null;
+      });
+  });
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
   // every page's real dimensions are fetched up front via onLoadSuccess rather than assumed from one
@@ -90,15 +175,22 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
   // of bounds.
   const sizes = pageSizes ?? [];
 
+  // sizes.length backs count below, so any index the virtualizer passes in is in bounds.
+  const getPageSize = (index: number) => {
+    const size = sizes[index];
+    if (size === undefined) throw new Error(`Expected a page size for index ${index}`);
+    return size;
+  };
+
   // Caps each page independently at 125% of its own native size (rather than the shared container's
   // width), so a document with mixed page sizes (e.g. a cover page scanned smaller than the rest)
   // doesn't stretch every page to match whichever one happens to be widest.
   const getPageWidth = (index: number) =>
-    Math.min(containerWidth, sizes[index].width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE);
+    Math.min(containerWidth, getPageSize(index).width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE);
 
   const virtualizer = useWindowVirtualizer({
     count: sizes.length,
-    estimateSize: (index) => getPageWidth(index) * (sizes[index].height / sizes[index].width),
+    estimateSize: (index) => getPageWidth(index) * (getPageSize(index).height / getPageSize(index).width),
     gap: PAGE_GAP_PX,
     paddingEnd: PAGE_GAP_PX,
     overscan: OVERSCAN_PAGES,
@@ -112,6 +204,43 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
 
   const goToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
 
+  // Resumes reading where the user last left off, once the document has loaded and the
+  // virtualizer knows about every page. Guarded to fire only once per mount, so it doesn't
+  // fight the user's own scrolling afterward.
+  useEffect(() => {
+    if (!pageSizes || hasResumedRef.current) return;
+    hasResumedRef.current = true;
+
+    if (initialPage > 1) goToPage(initialPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSizes]);
+
+  // A heartbeat, every 5 minutes, reports both the latest page and the duration since the last
+  // flush - a crash-safety net for progress since the last flush, since exit-time flushing below
+  // already covers every graceful way of leaving the reader.
+  useInterval(flush, TIME_SPENT_FLUSH_INTERVAL_MS);
+
+  // Flushes on the ways a user can actually leave the reader, so progress made since the last
+  // heartbeat isn't lost: tab hidden/backgrounded (visibilitychange), the tab/page closed
+  // (pagehide), or in-app navigation to another route (unmount - the browser events above never
+  // fire for a client-side route change). Deliberately a single effect with no deps, kept apart
+  // from every other effect in this component, so it only ever runs on this mount/unmount or a
+  // real browser event - never as a side effect of a re-render or something like the PDF reloading.
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushOnExit();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', flushOnExit);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', flushOnExit);
+      flushOnExit();
+    };
+  }, []);
+
   useEffect(() => {
     const onScroll = () => {
       // A short last page can mean the browser's max scroll offset never actually pushes
@@ -122,7 +251,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages }) => {
         return;
       }
 
-      const item = virtualizer.getVirtualItemForOffset(window.scrollY + headerHeight);
+      const item = virtualizer.getVirtualItemForOffset(window.scrollY + headerHeight + SCROLL_BOUNDARY_TOLERANCE_PX);
       if (item) setCurrentPage(item.index + 1);
     };
 

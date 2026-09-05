@@ -14,15 +14,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { apiRequest, appClient } from '@/services/api';
+import { formatDuration } from '@/utils/duration';
 
 type Props = {
   id: string;
   title: string;
   totalPages: number;
   currentPage: number;
+  durationMs: number;
 };
 
-export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage }) => {
+export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage, durationMs }) => {
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -45,7 +47,7 @@ export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage }) =>
       <div className="min-w-0 space-y-1.5">
         <h2 className="line-clamp-2 text-sm/5 font-medium text-balance sm:text-base">{title}</h2>
         <p className="text-xs text-muted-foreground">
-          {currentPage} / {totalPages}
+          {currentPage} / {totalPages} &middot; {formatDuration(durationMs)}
         </p>
       </div>
 

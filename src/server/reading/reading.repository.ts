@@ -1,5 +1,5 @@
 import '@tanstack/react-start/server-only';
-import { and, count, desc, eq, lte } from 'drizzle-orm';
+import { and, count, desc, eq, lte, sql } from 'drizzle-orm';
 import { RequestType } from '@/const/request';
 import { file, reading } from '../db/db.schema';
 import { db } from '../db/db.service';
@@ -11,6 +11,7 @@ import type { ListReadingsFilterDto } from './dtos/list-readings-filter.dto';
 export const createFile = async (data: typeof file.$inferInsert, tx: Transaction = db) => {
   try {
     const [created] = await tx.insert(file).values(data).returning();
+    if (created === undefined) throw Exception.internalServer('Failed to create file');
 
     return created;
   } catch (err) {
@@ -33,6 +34,7 @@ export const getFileByUserIdAndHash = async (
 
 export const createReading = async (data: typeof reading.$inferInsert, tx: Transaction = db) => {
   const [created] = await tx.insert(reading).values(data).returning();
+  if (created === undefined) throw Exception.internalServer('Failed to create reading');
 
   return created;
 };
@@ -44,6 +46,24 @@ export const getReadingByIdAndUserId = async (
   return tx.query.reading.findFirst({
     where: and(eq(reading.id, readingId), eq(reading.userId, userId)),
   });
+};
+
+export const updateReadingState = async (
+  {
+    userId,
+    readingId,
+    currentPage,
+    addDurationMs,
+  }: { userId: string; readingId: string; currentPage: number; addDurationMs: number },
+  tx: Transaction = db,
+) => {
+  const [updated] = await tx
+    .update(reading)
+    .set({ currentPage, durationMs: sql`${reading.durationMs} + ${addDurationMs}` })
+    .where(and(eq(reading.id, readingId), eq(reading.userId, userId)))
+    .returning();
+
+  return updated;
 };
 
 export const getReadingWithFileByIdAndUserId = async (
@@ -81,6 +101,7 @@ export const getReadingsByUserId = async (
 
   const getTotal = async () => {
     const [total] = await tx.select({ total: count() }).from(reading).where(userFilter);
+    if (total === undefined) throw Exception.internalServer('Failed to count readings');
 
     return total;
   };

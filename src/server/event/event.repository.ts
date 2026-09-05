@@ -13,6 +13,48 @@ export const insertEvents = async (data: (typeof event.$inferInsert)[], tx: Tran
   return await tx.insert(event).values(data).returning();
 };
 
+// part of the reading-time-spent hourly bucketing (see reading.service.ts): merges into the reading's
+// event for the current clock hour, accumulating duration_ms and refreshing metadata, or starts a new
+// bucket if none exists yet (or the existing one is from a past hour). A single atomic upsert against
+// event_reading_time_spent_hourly_bucket_idx (db.schema.ts, keyed off hourBucket), rather than a
+// separate update + fallback insert, so two concurrent first-flushes for the same hour can't both
+// insert a row.
+export const upsertCurrentHourReadingTimeSpentEvent = async (
+  {
+    userId,
+    readingId,
+    addDurationMs,
+    currentPage,
+  }: { userId: string; readingId: string; addDurationMs: number; currentPage: number },
+  tx: Transaction = db,
+) => {
+  const [upserted] = await tx
+    .insert(event)
+    .values({
+      userId,
+      readingId,
+      type: EventType.ReadingTimeSpent,
+      durationMs: addDurationMs,
+      metadata: { currentPage },
+      // The DB's own clock, not the app server's, so it can't drift - see hourBucket (db.schema.ts).
+      // 'UTC' keeps bucketing consistent regardless of the connection's session timezone setting.
+      hourBucket: sql`date_trunc('hour', now(), 'UTC')`,
+    })
+    .onConflictDoUpdate({
+      target: [event.userId, event.readingId, event.hourBucket],
+      set: {
+        durationMs: sql`${event.durationMs} + ${addDurationMs}`,
+        metadata: { currentPage },
+        lastFlushedAt: sql`clock_timestamp()`,
+      },
+    })
+    .returning();
+
+  if (upserted === undefined) throw new Error('Failed to upsert reading-time-spent event');
+
+  return upserted;
+};
+
 export const revertUserVocabularyItemDiscoveredEvent = async (
   { userId, userVocabularyItemId }: { userId: string; userVocabularyItemId: string },
   tx: Transaction = db,
@@ -108,6 +150,28 @@ export const getLearningEventsGroupedByDay = async ({
           EventType.UserVocabularyItemTaskShowcaseViewed,
           EventType.UserVocabularyItemTaskHintUsed,
         ]),
+        gte(event.createdAt, dateFrom),
+        lte(event.createdAt, dateTo),
+      ),
+    )
+    .groupBy(event.type, date);
+};
+
+export const getReadingEventsGroupedByDay = async ({ userId, dateFrom, dateTo, timezone }: DailyEventStatisticsDto) => {
+  const date = sql<string>`date(${event.createdAt} AT TIME ZONE ${timezone})`.as('date');
+
+  return await db
+    .select({
+      type: event.type,
+      count: count(),
+      date,
+      durationMs: sum(event.durationMs).mapWith(Number),
+    })
+    .from(event)
+    .where(
+      and(
+        eq(event.userId, userId),
+        inArray(event.type, [EventType.ReadingTimeSpent, EventType.ReadingSelectionTranslationGenerated]),
         gte(event.createdAt, dateFrom),
         lte(event.createdAt, dateTo),
       ),

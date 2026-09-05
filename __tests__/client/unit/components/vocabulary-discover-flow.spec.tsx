@@ -1,8 +1,8 @@
 import type { ComponentType } from 'react';
 import { act } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { HttpResponse } from 'msw';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Route } from '@/routes/_auth/vocabulary-lists_.$userVocabularyListId_.discover';
@@ -62,6 +62,19 @@ const createVocabularyItem = (value: string): UserVocabularyItem => {
       updatedAt: timestamp,
     },
   };
+};
+
+// happy-dom exposes visibilityState as a prototype getter, not an own property, so
+// getOwnPropertyDescriptor(document, 'visibilityState') is undefined by default - restoring via
+// `if (original) defineProperty(...)` would then be a no-op and leave the own property (and thus
+// 'hidden') stuck on document for every later test in the file. Falling back to `delete` restores
+// the real default instead.
+const restoreVisibilityState = (original: PropertyDescriptor | undefined) => {
+  if (original) {
+    Object.defineProperty(document, 'visibilityState', original);
+  } else {
+    delete (document as { visibilityState?: string }).visibilityState;
+  }
 };
 
 describe('Vocabulary discover page', () => {
@@ -140,5 +153,157 @@ describe('Vocabulary discover page', () => {
 
     expect(discoverHandler).toHaveBeenCalledOnce();
     expect(toastErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('excludes hidden-tab time from the reported discover duration', async () => {
+    const BASE_NOW = 1_000_000;
+    const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];
+    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [firstItem, secondItem]));
+
+    const onDiscover = vi.fn();
+    mockServer.addHandlers(
+      http.post(
+        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId/discover`,
+        async ({ request, params }) => {
+          onDiscover(params.userVocabularyItemId, await request.json());
+          return HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Known } });
+        },
+      ),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(BASE_NOW);
+
+    try {
+      renderDiscoverPage();
+      const knowButton = await screen.findByRole('button', { name: 'I Know This' });
+
+      // 3 minutes thinking about the card...
+      dateNowSpy.mockReturnValue(BASE_NOW + 3 * 60_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      // ...tab hidden for a while, must not count...
+      dateNowSpy.mockReturnValue(BASE_NOW + 30 * 60_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      // ...then another 3 minutes thinking, for a total of 6.
+      dateNowSpy.mockReturnValue(BASE_NOW + 33 * 60_000);
+      fireEvent.click(knowButton);
+
+      await screen.findByText('second');
+
+      expect(onDiscover).toHaveBeenCalledExactlyOnceWith(firstItem.id, {
+        status: LearningStatus.Known,
+        durationMs: 6 * 60_000,
+      });
+    } finally {
+      dateNowSpy.mockRestore();
+      restoreVisibilityState(originalVisibilityState);
+    }
+  });
+
+  it('keeps the accumulated duration for a retry after a failed discover request', async () => {
+    const BASE_NOW = 1_000_000;
+    const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];
+    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [firstItem, secondItem]));
+
+    let attempt = 0;
+    const onDiscover = vi.fn();
+    mockServer.addHandlers(
+      http.post(
+        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId/discover`,
+        async ({ request, params }) => {
+          attempt += 1;
+          const json = await request.json();
+          if (attempt === 1) {
+            return HttpResponse.json({ success: false, error: { messages: ['boom'] } }, { status: 500 });
+          }
+
+          onDiscover(params.userVocabularyItemId, json);
+          return HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Known } });
+        },
+      ),
+    );
+
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+    const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(BASE_NOW);
+
+    try {
+      renderDiscoverPage();
+      const knowButton = await screen.findByRole('button', { name: 'I Know This' });
+
+      // 2 minutes thinking, then the first attempt fails.
+      dateNowSpy.mockReturnValue(BASE_NOW + 2 * 60_000);
+      fireEvent.click(knowButton);
+
+      await waitFor(() => expect(toastErrorSpy).toHaveBeenCalledOnce());
+      // Still on the first card - the failed attempt did not advance.
+      screen.getByText('first');
+
+      // 1 more minute, then a successful retry: if the first 2 minutes had been discarded (the
+      // old takeElapsedMs behavior), this would report only 60_000 instead of the full 3.
+      dateNowSpy.mockReturnValue(BASE_NOW + 3 * 60_000);
+      fireEvent.click(screen.getByRole('button', { name: 'I Know This' }));
+
+      await screen.findByText('second');
+
+      expect(onDiscover).toHaveBeenCalledExactlyOnceWith(firstItem.id, {
+        status: LearningStatus.Known,
+        durationMs: 3 * 60_000,
+      });
+      expect(attempt).toBe(2);
+    } finally {
+      dateNowSpy.mockRestore();
+      toastErrorSpy.mockRestore();
+    }
+  });
+
+  it("does not roll time spent before an undo into the next item's reported duration", async () => {
+    const BASE_NOW = 1_000_000;
+    const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];
+    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [firstItem, secondItem]));
+
+    const onDiscover = vi.fn();
+    mockServer.addHandlers(
+      http.post(
+        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId/discover`,
+        async ({ request, params }) => {
+          onDiscover(params.userVocabularyItemId, await request.json());
+          return HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Known } });
+        },
+      ),
+      http.post(`/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId/undo`, () =>
+        HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Waiting } }),
+      ),
+    );
+
+    const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(BASE_NOW);
+
+    try {
+      renderDiscoverPage();
+      const knowButton = await screen.findByRole('button', { name: 'I Know This' });
+
+      // 1 minute on the first card before marking it known.
+      dateNowSpy.mockReturnValue(BASE_NOW + 60_000);
+      fireEvent.click(knowButton);
+      await screen.findByText('second');
+
+      // 5s later, undo back to the first card - this gap must not roll into the next duration.
+      dateNowSpy.mockReturnValue(BASE_NOW + 65_000);
+      fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+      await screen.findByText('first');
+
+      // Only 5s actually spent on the re-shown card.
+      dateNowSpy.mockReturnValue(BASE_NOW + 70_000);
+      fireEvent.click(await screen.findByRole('button', { name: 'I Know This' }));
+
+      await waitFor(() => expect(onDiscover).toHaveBeenCalledTimes(2));
+      expect(onDiscover).toHaveBeenNthCalledWith(1, firstItem.id, { status: LearningStatus.Known, durationMs: 60_000 });
+      expect(onDiscover).toHaveBeenNthCalledWith(2, firstItem.id, { status: LearningStatus.Known, durationMs: 5_000 });
+    } finally {
+      dateNowSpy.mockRestore();
+    }
   });
 });

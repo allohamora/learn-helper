@@ -4,6 +4,7 @@ import { VocabularyListType } from '@/const/vocabulary';
 import { vocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
+import { Exception } from '../utils/exception.utils';
 
 export const insertVocabularyListIgnoringConflict = async (title: string) => {
   const [inserted] = await db
@@ -40,6 +41,7 @@ export const createPersonalVocabularyList = async (ownerId: string, tx: Transact
       title: null,
     })
     .returning();
+  if (created === undefined) throw Exception.internalServer('Failed to create personal vocabulary list');
 
   return created;
 };

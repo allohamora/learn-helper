@@ -96,6 +96,17 @@ const itemsUpdatedChartConfig = {
   },
 } satisfies ChartConfig;
 
+const readingChartConfig = {
+  durationMin: {
+    label: 'Duration (min)',
+    color: 'var(--chart-1)',
+  },
+  translationsGenerated: {
+    label: 'Translations Generated',
+    color: 'var(--chart-2)',
+  },
+} satisfies ChartConfig;
+
 type StatisticsData = SuccessData<InferResponseType<(typeof appClient.api.v1.users.me.statistics)['$get']>>;
 type TopVocabularyItem = StatisticsData['topMistakes'][number];
 
@@ -395,6 +406,12 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
       icon: Clock,
     },
     {
+      title: 'Total Reading Time',
+      value: formatDuration(general.totalReadingDurationMs),
+      description: 'time spent reading',
+      icon: Clock,
+    },
+    {
       title: 'Average Time Per Task',
       value: formatDuration(general.averageTimePerTaskMs),
       description: 'average task duration',
@@ -430,6 +447,12 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
   const itemsUpdatedPerDay = data.itemsUpdatedPerDay.map((item) => ({
     ...item,
     date: toShortDate(item.date),
+  }));
+
+  const readingPerDay = data.readingPerDay.map((item) => ({
+    ...item,
+    date: toShortDate(item.date),
+    durationMin: Math.round(item.durationMs / 60_000),
   }));
 
   return (
@@ -522,6 +545,23 @@ export const StatisticsDashboard: FC<StatisticsDashboardProps> = ({ data, isPhon
               <defs>{gradient('fillUaTranslation', 'var(--color-uaTranslation)')}</defs>
               <ChartAxes hide={isPhoneScreen} />
               <AreaSeries dataKey="uaTranslation" gradientId="fillUaTranslation" />
+            </AreaChart>
+          </ChartContainer>
+        </StatisticsChartCard>
+
+        <StatisticsChartCard
+          title="Reading Activity"
+          description="Daily time spent reading and reading selections translated"
+        >
+          <ChartContainer config={readingChartConfig} className="min-h-52 w-full">
+            <AreaChart accessibilityLayer data={readingPerDay}>
+              <defs>
+                {gradient('fillReadingDuration', 'var(--color-durationMin)')}
+                {gradient('fillTranslationsGenerated', 'var(--color-translationsGenerated)')}
+              </defs>
+              <ChartAxes hide={isPhoneScreen} />
+              <AreaSeries dataKey="durationMin" gradientId="fillReadingDuration" />
+              <AreaSeries dataKey="translationsGenerated" gradientId="fillTranslationsGenerated" />
             </AreaChart>
           </ChartContainer>
         </StatisticsChartCard>

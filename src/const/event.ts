@@ -15,6 +15,7 @@ export enum EventType {
   ReadingUploaded = 'reading-uploaded',
   ReadingDeleted = 'reading-deleted',
   ReadingSelectionTranslationGenerated = 'reading-selection-translation-generated',
+  ReadingTimeSpent = 'reading-time-spent',
 }
 
 export enum UserVocabularyItemTaskType {

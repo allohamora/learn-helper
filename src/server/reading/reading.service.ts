@@ -5,7 +5,7 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mj
 import { EventType } from '@/const/event';
 import type { Transaction } from '../db/db.types';
 import { db } from '../db/db.service';
-import { insertEvent } from '../event/event.repository';
+import { insertEvent, upsertCurrentHourReadingTimeSpentEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import { getUploadFileWebStream, removeUploadFile, writeUploadFile } from '../uploads/uploads.service';
 import { generateTranslationData } from './reading-translation-generation.service';
@@ -16,8 +16,10 @@ import {
   getFileByUserIdAndHash,
   getReadingByIdAndUserId,
   getReadingWithFileByIdAndUserId,
+  updateReadingState as updateReadingStateInDb,
 } from './reading.repository';
 import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
+import type { UpdateReadingStateDto } from './dtos/update-reading-state.dto';
 
 // Mirrors vocabularyItem.value's column length (src/server/db/db.schema.ts) - the largest a
 // selection can be and still become a stored learning item, independent of the translation's own length.
@@ -102,6 +104,28 @@ export const removeReading = async ({ userId, readingId }: { userId: string; rea
   });
 
   await removeUploadFile(filePath);
+};
+
+export const updateReadingState = async ({
+  userId,
+  readingId,
+  currentPage,
+  addDurationMs,
+}: UpdateReadingStateDto & { userId: string; readingId: string }) => {
+  return db.transaction(async (tx) => {
+    const reading = await getReadingByIdAndUserIdOrThrow({ userId, readingId }, tx);
+    if (currentPage > reading.totalPages) {
+      throw Exception.badRequest(`Page ${currentPage} exceeds the reading's total pages (${reading.totalPages})`);
+    }
+
+    const [updated] = await Promise.all([
+      updateReadingStateInDb({ userId, readingId, currentPage, addDurationMs }, tx),
+      upsertCurrentHourReadingTimeSpentEvent({ userId, readingId, addDurationMs, currentPage }, tx),
+    ]);
+    if (updated === undefined) throw Exception.internalServer('Failed to update reading state');
+
+    return updated;
+  });
 };
 
 export const translateReadingSelection = async ({

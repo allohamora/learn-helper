@@ -114,11 +114,12 @@ const seedUserItem = async ({
 describe('userVocabularyItemRepository', () => {
   describe('createUserVocabularyItemsFromList', () => {
     it('creates progress rows for every item in the list without creating duplicates on re-run', async () => {
-      const [{ id: userId }] = await db
+      const [createdUser] = await db
         .insert(user)
         .values({ id: 'user-1', name: 'Test User', email: 'test-user-1@example.com' })
         .returning();
-      if (!userId) throw new Error('expected user to be created');
+      if (createdUser === undefined) throw new Error('expected user to be created');
+      const { id: userId } = createdUser;
 
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A1');
       const items = await createMissingVocabularyItems([
@@ -141,11 +142,12 @@ describe('userVocabularyItemRepository', () => {
     });
 
     it('orders created rows by id to match the order items were added to the list', async () => {
-      const [{ id: userId }] = await db
+      const [createdUser] = await db
         .insert(user)
         .values({ id: 'user-2', name: 'Test User 2', email: 'test-user-2@example.com' })
         .returning();
-      if (!userId) throw new Error('expected user to be created');
+      if (createdUser === undefined) throw new Error('expected user to be created');
+      const { id: userId } = createdUser;
 
       const list = await findOrCreateVocabularyListByTitle('Oxford 5000 A2');
       const items = await createMissingVocabularyItems(

@@ -7,7 +7,7 @@ import { Readable } from 'node:stream';
 import { UPLOADS_DIR } from '@/server/uploads/uploads.service';
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { client } from '../setup-e2e-context';
 import { auth } from '../mocks/auth.middleware.mock';
 import { db } from '@/server/db/db.service';
@@ -18,7 +18,15 @@ import { EventType } from '@/const/event';
 
 const USER_ID = 'e2e-test-user';
 
-const seedReading = async ({ userId, title }: { userId: string; title: string }) => {
+const seedReading = async ({
+  userId,
+  title,
+  totalPages = 10,
+}: {
+  userId: string;
+  title: string;
+  totalPages?: number;
+}) => {
   const createdFile = await createFile({
     userId,
     fileName: `${title}.pdf`,
@@ -28,7 +36,7 @@ const seedReading = async ({ userId, title }: { userId: string; title: string })
     hash: title,
   });
 
-  return createReading({ userId, fileId: createdFile.id, title, totalPages: 1 });
+  return createReading({ userId, fileId: createdFile.id, title, totalPages });
 };
 
 const seedReadings = async ({ userId, titles }: { userId: string; titles: string[] }) => {
@@ -451,6 +459,220 @@ describe('reading.router', () => {
 
       const res = await client.api.v1.users.me.readings[':readingId'].$get({
         param: { readingId: '00000000-0000-7000-8000-000000000000' },
+      });
+      expect(res.status).toBe(401);
+    });
+  });
+
+  describe('PATCH /api/v1/users/me/readings/:readingId/state', () => {
+    it('sets the current page, adds to the total duration, and records a reading-time-spent event', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 3, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: { id: created.id, currentPage: 3, durationMs: 300_000 },
+      });
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toMatchObject({ currentPage: 3, durationMs: 300_000 });
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toMatchObject([
+        {
+          type: EventType.ReadingTimeSpent,
+          userId: USER_ID,
+          readingId: created.id,
+          durationMs: 300_000,
+          metadata: { currentPage: 3 },
+        },
+      ]);
+    });
+
+    it('accumulates duration and merges same-hour heartbeats into one event', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 2, addDurationMs: 300_000 },
+      });
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 4, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(200);
+
+      const body = await res.json();
+      expect(body).toMatchObject({ success: true, data: { id: created.id, currentPage: 4, durationMs: 600_000 } });
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toMatchObject({ currentPage: 4, durationMs: 600_000 });
+
+      const events = await db.query.event.findMany({ where: eq(event.userId, USER_ID) });
+      expect(events).toMatchObject([
+        {
+          type: EventType.ReadingTimeSpent,
+          userId: USER_ID,
+          readingId: created.id,
+          durationMs: 600_000,
+          metadata: { currentPage: 4 },
+        },
+      ]);
+      expect(events[0]!.lastFlushedAt).not.toBeNull();
+      expect(events[0]!.lastFlushedAt!.getTime()).toBeGreaterThan(events[0]!.createdAt.getTime());
+    });
+
+    it('records a separate event once a heartbeat crosses into a new clock hour', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 2, addDurationMs: 300_000 },
+      });
+
+      // pushes the first flush's event into the previous clock hour, simulating a heartbeat later in
+      // time without faking the system clock through the router's async I/O (which hangs the request -
+      // the DB driver needs real timers). hourBucket (not createdAt) is what bucketing keys off, so it
+      // has to move back too.
+      await db
+        .update(event)
+        .set({
+          createdAt: sql`${event.createdAt} - interval '2 hours'`,
+          hourBucket: sql`${event.hourBucket} - interval '2 hours'`,
+        })
+        .where(eq(event.readingId, created.id));
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 4, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(200);
+
+      const events = await db.query.event.findMany({
+        where: eq(event.userId, USER_ID),
+        orderBy: (fields, { asc }) => asc(fields.createdAt),
+      });
+      expect(events).toMatchObject([
+        { durationMs: 300_000, metadata: { currentPage: 2 } },
+        { durationMs: 300_000, metadata: { currentPage: 4 } },
+      ]);
+    });
+
+    it('returns 400 when currentPage is missing, rejected by schema validation before it reaches the service', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      const updateReadingStateSpy = vi.spyOn(readingService, 'updateReadingState');
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        // @ts-expect-error currentPage is intentionally omitted to test schema validation
+        json: { addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(400);
+      expect(updateReadingStateSpy).not.toHaveBeenCalled();
+
+      updateReadingStateSpy.mockRestore();
+    });
+
+    it('returns 400 when addDurationMs is missing, rejected by schema validation before it reaches the service', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+      const updateReadingStateSpy = vi.spyOn(readingService, 'updateReadingState');
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        // @ts-expect-error addDurationMs is intentionally omitted to test schema validation
+        json: { currentPage: 3 },
+      });
+      expect(res.status).toBe(400);
+      expect(updateReadingStateSpy).not.toHaveBeenCalled();
+
+      updateReadingStateSpy.mockRestore();
+    });
+
+    it('returns 400 for a non-positive currentPage', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 0, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 for a currentPage beyond the reading's totalPages", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book', totalPages: 5 });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 6, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(400);
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toMatchObject({ currentPage: 0, durationMs: 0 });
+    });
+
+    it('returns 400 for a negative addDurationMs', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 3, addDurationMs: -1 },
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 for another user's reading", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await db.insert(user).values({ id: 'other-user', name: 'Other User', email: 'other-user@example.com' });
+      const created = await seedReading({ userId: 'other-user', title: 'Not Mine' });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 2, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 404 for an unknown reading id', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+        json: { currentPage: 2, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it('returns 401 Unauthorized when not authenticated', async () => {
+      auth.unauthorized();
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: '00000000-0000-7000-8000-000000000000' },
+        json: { currentPage: 2, addDurationMs: 300_000 },
       });
       expect(res.status).toBe(401);
     });

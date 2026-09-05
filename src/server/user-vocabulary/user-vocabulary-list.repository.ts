@@ -4,6 +4,7 @@ import { VocabularyListType } from '@/const/vocabulary';
 import { userVocabularyList, vocabularyList } from '../db/db.schema';
 import { db } from '../db/db.service';
 import type { Transaction } from '../db/db.types';
+import { Exception } from '../utils/exception.utils';
 
 export const getUserVocabularyListByVocabularyListId = async (
   { userId, vocabularyListId }: { userId: string; vocabularyListId: string },
@@ -61,6 +62,7 @@ export const createUserVocabularyList = async (
   tx: Transaction = db,
 ) => {
   const [created] = await tx.insert(userVocabularyList).values({ userId, vocabularyListId }).returning();
+  if (created === undefined) throw Exception.internalServer('Failed to create user vocabulary list');
 
   return created;
 };

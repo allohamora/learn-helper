@@ -116,7 +116,7 @@ erDiagram
         title text
         total_pages integer "set after upload"
         current_page integer "default 0"
-        duration_ms integer "default 0"
+        duration_ms bigint "default 0"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
@@ -145,6 +145,8 @@ erDiagram
         metadata jsonb "optional"
         reverted_at timestamptz "optional"
         created_at timestamptz "default NOW"
+        last_flushed_at timestamptz "optional, reading-time-spent only"
+        hour_bucket timestamptz "optional, reading-time-spent only"
     }
 
     user ||--o{ user_vocabulary_item : "one-to-many"
@@ -307,7 +309,7 @@ This implements the `[new, review, review, …]` cycle via observation rather th
 
 ### Undoing a discovery — `reverted_at` and `user-vocabulary-item-discovery-undone`
 
-The event table is append-only: a discovery is never deleted when the user undoes it. Instead, undo (`POST .../items/{id}/undo`):
+The event table is append-only for discovery/undo specifically: a discovery is never deleted when the user undoes it (see [`last_flushed_at` and hourly bucketing](#last_flushed_at-and-hourly-bucketing-reading-time-spent) below for the one event type that isn't append-only table-wide). Instead, undo (`POST .../items/{id}/undo`):
 
 1. Sets `reverted_at = NOW()` on the active `user-vocabulary-item-discovered` event (the one for that user + item with `reverted_at IS NULL` — there is at most one at a time). This keeps "is this item currently discovered" a cheap, self-contained lookup on the event table (`reverted_at IS NULL`) without joining or mutating `user_vocabulary_item`.
 2. Inserts a `user-vocabulary-item-discovery-undone` event, copying `duration_ms` from the event it undoes — not a freshly-computed value — so the undone event is a self-sufficient historical record of what was reverted (no join back to the original event needed for analysis).
@@ -315,17 +317,27 @@ The event table is append-only: a discovery is never deleted when the user undoe
 
 `reverted_at` is a generic column (not undo-specific) so any future event type that needs a "later undone" marker can reuse it, rather than each undo-able event type growing its own flag.
 
+### `last_flushed_at` and hourly bucketing (`reading-time-spent`)
+
+`last_flushed_at` is purpose-specific, unlike a conventional generic `updated_at` column: it's set only by the `reading-time-spent` hourly bucket merge (see below), and no other event mutation touches it - the discovery-revert path, for instance, leaves it `null` (`reverted_at` already says everything there is to say about that mutation, so a second generic "was this row updated" column would be redundant there).
+
+The reading UI flushes a heartbeat every 5 minutes (`PATCH .../readings/{id}/state`), and rather than inserting a new event per flush forever, flushes are bucketed by clock hour via `event.hour_bucket` - `date_trunc('hour', NOW(), 'UTC')`, computed by the DB (not the app server) at insert time, so it can't drift from app-server clocks. A flush upserts into the reading's `reading-time-spent` event for that bucket via a single atomic `INSERT ... ON CONFLICT (user_id, reading_id, hour_bucket) DO UPDATE` (accumulating `duration_ms`, refreshing `metadata.currentPage`, setting `last_flushed_at`), rather than a separate update-then-insert-fallback - two concurrent first-flushes for the same hour would otherwise both see no existing row and both insert, duplicating the bucket. So per reading there's at most one `reading-time-spent` row per hour: `created_at` is that bucket's first flush, and `last_flushed_at` its most recent one. A `reading-time-spent` row with `last_flushed_at` still `null` means only one flush has landed in that hour so far. `hour_bucket` is `null` for every other event type, the same as `duration_ms` and the other `reading-time-spent`-specific columns.
+
+Hour buckets were chosen over a shorter fixed interval (e.g. 5 min) because any clock-aligned bucket already can't cross an hour boundary, so a finer one would only add rows without adding correctness for hour-level statistics.
+
 ### `user_vocabulary_item_ids`
 
 Stores the list of `user_vocabulary_item` ids included in a single AI generation batch. Used by admins to trace which vocabulary items were responsible for an unexpectedly high AI cost on a given event.
 
 ### `metadata`
 
-Free-form per-event debug context; shape varies by `type`. Currently populated as `{ input, output }` for all three AI-generation events:
+Free-form per-event context; shape varies by `type`. Populated as `{ input, output }` debug context for the three AI-generation events:
 
 - `reading-selection-translation-generated`: `input: { text, before, after }`, `output: { uaTranslation, isLearnable }`.
 - `vocabulary-item-generated`: `input: { value, context }`, `output: { ... }` (generated vocabulary item content).
 - `user-vocabulary-item-task-generated`: `input` is the `VocabularyItemData[]` batch (shared by both the English and Ukrainian sentence events), `output` is that event's generated tasks.
+
+`reading-time-spent` instead stores `{ currentPage }`: the page the reading was on at the event's most recent heartbeat (see [`last_flushed_at` and hourly bucketing](#last_flushed_at-and-hourly-bucketing-reading-time-spent) — an existing hour's row is updated in place on every flush merged into it, so `currentPage` reflects the latest one, not necessarily the bucket's first). Not currently rendered anywhere (scrolling isn't monotonic, so a raw timeline of it doesn't plot as clean progress), but kept for potential future analysis (e.g. per-page-range dwell time).
 
 Other event types leave it `null`; their debug-relevant data is already covered by existing columns (FKs, `status`, `field_name`, etc.).
 
@@ -448,7 +460,7 @@ User or admin uploads a new file for an existing reading → Server replaces the
 
 ### Reading progress
 
-Client sends a heartbeat every ~1 minute with `current_page` and `+duration_ms` → Server updates `reading.current_page` and increments `reading.duration_ms`.
+Client sends a heartbeat every 5 minutes with `current_page` and `+duration_ms` → Server updates `reading.current_page` and increments `reading.duration_ms`.
 
 Page numbering is 1-indexed (matching pdf.js). `current_page = 0` (default) means the user hasn't opened the PDF yet.
 

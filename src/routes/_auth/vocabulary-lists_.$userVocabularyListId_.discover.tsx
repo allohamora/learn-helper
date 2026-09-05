@@ -10,6 +10,7 @@ import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabular
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { VocabularyDiscoverCard } from '@/components/vocabulary-discover-card';
 import { LearningStatus } from '@/const/vocabulary';
+import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { pageHead } from '@/utils/page';
 
 const BATCH_LIMIT = 10;
@@ -37,7 +38,9 @@ function VocabularyListDiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
   const [history, setHistory] = useState<string[]>([]);
-  const [startedAt, setStartedAt] = useState(new Date());
+  // undo() deliberately discards the timer unconditionally (nothing to preserve on failure there),
+  // so it keeps using the atomic take; handle() can fail, so it uses peek/commit instead.
+  const { takeElapsedMs, peekElapsedMs, commitElapsedMs } = useVisibleDuration();
 
   const [isSubmitting, setIsSubmitting] = useState(false); // for disabled buttons rendering
   const isSubmittingRef = useRef(false); // for preventing double clicks
@@ -113,16 +116,21 @@ function VocabularyListDiscoverPage() {
     await withSubmitGuard(async () => {
       if (!currentItem) return;
 
+      const durationMs = peekElapsedMs();
       try {
         await discoverItem.mutateAsync({
           userVocabularyItemId: currentItem.id,
           status,
-          durationMs: Date.now() - startedAt.getTime(),
+          durationMs,
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Failed to discover item');
         return;
       }
+      commitElapsedMs(durationMs);
+      // Discards time that accumulated while the request was in flight, so it isn't folded into
+      // the next card's duration.
+      takeElapsedMs();
 
       setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
 
@@ -134,8 +142,6 @@ function VocabularyListDiscoverPage() {
         setHandled(0);
         setCurrentIndex(0);
       }
-
-      setStartedAt(new Date());
     });
   };
 
@@ -156,7 +162,7 @@ function VocabularyListDiscoverPage() {
       setHandled(0);
       setCurrentIndex(0);
 
-      setStartedAt(new Date());
+      takeElapsedMs();
     });
   };
 

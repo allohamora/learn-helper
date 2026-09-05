@@ -7,7 +7,13 @@ import { createVocabularyListItemsIfNotExist } from '@/server/vocabulary/vocabul
 import { findOrCreateVocabularyListByTitle } from '@/server/vocabulary/vocabulary-list.service';
 import { createUserVocabularyItemsFromList } from '@/server/user-vocabulary/user-vocabulary-item.repository';
 import { createUserVocabularyList } from '@/server/user-vocabulary/user-vocabulary-list.repository';
-import { insertEvent, insertEvents, revertUserVocabularyItemDiscoveredEvent } from '@/server/event/event.repository';
+import { createFile, createReading } from '@/server/reading/reading.repository';
+import {
+  insertEvent,
+  insertEvents,
+  revertUserVocabularyItemDiscoveredEvent,
+  upsertCurrentHourReadingTimeSpentEvent,
+} from '@/server/event/event.repository';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
 
@@ -125,6 +131,8 @@ describe('eventRepository', () => {
 
       expect(reverted).toMatchObject({ type: EventType.UserVocabularyItemDiscovered, durationMs: 100 });
       expect(reverted?.revertedAt).toEqual(expect.any(Date));
+      // lastFlushedAt is reading-time-spent-bucketing-specific; a revert isn't a flush, so it stays null
+      expect(reverted?.lastFlushedAt).toBeNull();
 
       const events = await db.query.event.findMany({ where: eq(event.userVocabularyItemId, userItem.id) });
       expect(events).toContainEqual(
@@ -144,6 +152,113 @@ describe('eventRepository', () => {
       });
 
       expect(reverted).toBeUndefined();
+    });
+  });
+
+  describe('upsertCurrentHourReadingTimeSpentEvent', () => {
+    const seedReading = async () => {
+      const createdFile = await createFile({
+        userId: USER_ID,
+        fileName: 'book.pdf',
+        filePath: `uploads/${USER_ID}/book.pdf`,
+        mimeType: 'application/pdf',
+        sizeBytes: 1,
+        hash: 'book',
+      });
+
+      return createReading({ userId: USER_ID, fileId: createdFile.id, title: 'Book', totalPages: 10 });
+    };
+
+    it('inserts a new row when no reading-time-spent event exists for the reading yet', async () => {
+      await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
+      const reading = await seedReading();
+
+      const upserted = await upsertCurrentHourReadingTimeSpentEvent({
+        userId: USER_ID,
+        readingId: reading.id,
+        addDurationMs: 300_000,
+        currentPage: 2,
+      });
+
+      expect(upserted).toMatchObject({
+        type: EventType.ReadingTimeSpent,
+        durationMs: 300_000,
+        metadata: { currentPage: 2 },
+      });
+      expect(upserted.lastFlushedAt).toBeNull();
+      const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
+      expect(events).toHaveLength(1);
+    });
+
+    it('starts a new row when the latest event is from a previous clock hour, leaving it untouched', async () => {
+      await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
+      const reading = await seedReading();
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      await db.insert(event).values({
+        userId: USER_ID,
+        readingId: reading.id,
+        type: EventType.ReadingTimeSpent,
+        durationMs: 300_000,
+        metadata: { currentPage: 2 },
+        createdAt: twoHoursAgo,
+        hourBucket: new Date(Math.floor(twoHoursAgo.getTime() / (60 * 60_000)) * (60 * 60_000)),
+      });
+
+      const upserted = await upsertCurrentHourReadingTimeSpentEvent({
+        userId: USER_ID,
+        readingId: reading.id,
+        addDurationMs: 300_000,
+        currentPage: 4,
+      });
+
+      expect(upserted).toMatchObject({ durationMs: 300_000, metadata: { currentPage: 4 } });
+      const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
+      expect(events).toHaveLength(2);
+      expect(events).toContainEqual(expect.objectContaining({ durationMs: 300_000, metadata: { currentPage: 2 } }));
+    });
+
+    it('accumulates duration and refreshes metadata when the latest event is in the current clock hour', async () => {
+      await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
+      const reading = await seedReading();
+      await upsertCurrentHourReadingTimeSpentEvent({
+        userId: USER_ID,
+        readingId: reading.id,
+        addDurationMs: 300_000,
+        currentPage: 2,
+      });
+
+      const upserted = await upsertCurrentHourReadingTimeSpentEvent({
+        userId: USER_ID,
+        readingId: reading.id,
+        addDurationMs: 300_000,
+        currentPage: 4,
+      });
+
+      expect(upserted).toMatchObject({ durationMs: 600_000, metadata: { currentPage: 4 } });
+      expect(upserted.lastFlushedAt).not.toBeNull();
+      expect(upserted.lastFlushedAt!.getTime()).toBeGreaterThan(upserted.createdAt.getTime());
+      const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
+      expect(events).toHaveLength(1);
+    });
+
+    it('does not create duplicate rows when concurrent first-flushes race for the same hour', async () => {
+      await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
+      const reading = await seedReading();
+
+      await Promise.all(
+        Array.from({ length: 10 }, () =>
+          upsertCurrentHourReadingTimeSpentEvent({
+            userId: USER_ID,
+            readingId: reading.id,
+            addDurationMs: 100,
+            currentPage: 1,
+          }),
+        ),
+      );
+
+      const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ durationMs: 1000 });
     });
   });
 });

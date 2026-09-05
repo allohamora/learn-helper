@@ -5,6 +5,7 @@ import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db
 import { db } from '../db/db.service';
 import { escapeLikePattern } from '../db/db.utils';
 import type { Transaction } from '../db/db.types';
+import { Exception } from '../utils/exception.utils';
 import type { PersonalVocabularyItemSearchFilterDto } from '../user-vocabulary/dtos/personal-vocabulary-item-search-filter.dto';
 
 export const getVocabularyItemById = async (vocabularyItemId: string, tx: Transaction = db) => {
@@ -83,6 +84,7 @@ export const searchVocabularyItemsForList = async ({
 
   const getTotal = async () => {
     const [total] = await db.select({ total: count() }).from(vocabularyItem).where(searchFilter);
+    if (total === undefined) throw Exception.internalServer('Failed to count vocabulary items');
 
     return total;
   };

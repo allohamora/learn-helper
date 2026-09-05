@@ -141,7 +141,9 @@ describe('getContext', () => {
     document.body.appendChild(container);
 
     // selects "dude", inside the third span
-    const textNode = container.children[2].firstChild!;
+    const thirdSpan = container.children[2];
+    if (thirdSpan === undefined) throw new Error('expected a third span');
+    const textNode = thirdSpan.firstChild!;
     const text = textNode.textContent!;
     const start = text.indexOf('dude');
     const range = makeRange((r) => {
@@ -462,7 +464,9 @@ describe('getContext', () => {
     layer.innerHTML = '<span>final</span><br><span>word target here</span>';
     document.body.appendChild(layer);
 
-    const textNode = layer.children[2].firstChild!;
+    const thirdSpan = layer.children[2];
+    if (thirdSpan === undefined) throw new Error('expected a third span');
+    const textNode = thirdSpan.firstChild!;
     const text = textNode.textContent!;
     const start = text.indexOf('target');
     const range = makeRange((r) => {
@@ -481,7 +485,9 @@ describe('getContext', () => {
     layer.innerHTML = '<span>first line</span><br><span>second line</span><br><span>third target line</span>';
     document.body.appendChild(layer);
 
-    const textNode = layer.children[4].firstChild!;
+    const fifthSpan = layer.children[4];
+    if (fifthSpan === undefined) throw new Error('expected a fifth span');
+    const textNode = fifthSpan.firstChild!;
     const text = textNode.textContent!;
     const start = text.indexOf('target');
     const range = makeRange((r) => {

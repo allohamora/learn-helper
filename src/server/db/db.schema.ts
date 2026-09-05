@@ -282,7 +282,10 @@ export const reading = pgTable('reading', {
   title: text('title').notNull(),
   totalPages: integer('total_pages').notNull(),
   currentPage: integer('current_page').default(0).notNull(),
-  durationMs: integer('duration_ms').default(0).notNull(),
+  // bigint, not integer: a 32-bit int overflows after ~24.9 days of cumulative reading time on one
+  // reading. mode: 'number' (not native BigInt) - see event.costInNanoDollars above for the same
+  // pattern; any realistic reading duration stays far below Number.MAX_SAFE_INTEGER.
+  durationMs: bigint('duration_ms', { mode: 'number' }).default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
@@ -327,10 +330,26 @@ export const event = pgTable(
     // marks a discovered event as later undone; generic across event types, not undo-specific
     revertedAt: timestamp('reverted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    // reading-time-spent hourly bucketing only (see reading.service.ts / event.repository.ts): the most
+    // recent heartbeat merged into this row. Null means only one flush has landed in the current hour so
+    // far. Not a generic "last updated" column - other event mutations (e.g. revert) don't touch it.
+    lastFlushedAt: timestamp('last_flushed_at', { withTimezone: true }),
+    // reading-time-spent hourly bucketing only (null for every other event type, like the other
+    // type-specific columns above): the clock hour a heartbeat falls in, set from the DB's own clock at
+    // insert time (not the app server's, so it can't drift) - see upsertCurrentHourReadingTimeSpentEvent
+    // (event.repository.ts), the only writer of this column, and the unique index below.
+    hourBucket: timestamp('hour_bucket', { withTimezone: true }),
   },
   (table) => [
     // statistics page: every query filters by user_id + type; benchmarked against wider indexes, see docs/database-design.md
     index('event_user_id_type_idx').on(table.userId, table.type),
+    // enforces "one reading-time-spent row per user/reading/clock-hour" at the DB level, so concurrent
+    // first-flushes for the same hour (e.g. two tabs open on the same reading) can't both insert a row -
+    // see upsertCurrentHourReadingTimeSpentEvent (event.repository.ts), which upserts against this index.
+    // No partial WHERE needed: hourBucket is only non-null for reading-time-spent rows (see above), and
+    // Postgres never treats NULLs as conflicting in a unique index, so every other event type is
+    // naturally exempt.
+    uniqueIndex('event_reading_time_spent_hourly_bucket_idx').on(table.userId, table.readingId, table.hourBucket),
   ],
 );
 

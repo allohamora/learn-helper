@@ -1174,6 +1174,9 @@ describe('user-vocabulary.router', () => {
       const { data: userList } = await postRes.json();
 
       const [, walk, jump, swim] = items;
+      if (walk === undefined || jump === undefined || swim === undefined) {
+        throw new Error('expected seedList to create 4 items');
+      }
       await db
         .update(userVocabularyItem)
         .set({ status: LearningStatus.Learning })
