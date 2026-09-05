@@ -111,7 +111,11 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
 
     pendingFlushRef.current = appClient.api.v1.users.me.readings[':readingId'].state
       .$patch({ param: { readingId }, json: { currentPage, addDurationMs } }, { init: { keepalive: true } })
-      .then(() => commitElapsedMs(addDurationMs))
+      .then(async (res) => {
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success) commitElapsedMs(addDurationMs);
+      })
       .catch((error: unknown) => console.error('Failed to flush reading state', error))
       .finally(() => {
         pendingFlushRef.current = null;
