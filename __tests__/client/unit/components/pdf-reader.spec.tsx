@@ -446,7 +446,7 @@ describe('PdfReader', () => {
       }),
     );
 
-    // The 15-minute interval is set up during mount, so spying on setInterval and invoking the
+    // The 5-minute interval is set up during mount, so spying on setInterval and invoking the
     // captured callback directly (rather than actually waiting, or faking timers from before the
     // async mount/load completes) is the reliable way to simulate a tick.
     const setIntervalSpy = vi.spyOn(window, 'setInterval');
@@ -460,15 +460,15 @@ describe('PdfReader', () => {
       mockGetVirtualItemForOffset.mockReturnValue({ index: 2 });
       fireEvent.scroll(window);
 
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
 
-      dateNowSpy.mockReturnValue(BASE_NOW + 15 * 60_000);
+      dateNowSpy.mockReturnValue(BASE_NOW + 5 * 60_000);
       callback!();
 
       await waitFor(() =>
-        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 15 * 60_000 }),
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 3, addDurationMs: 5 * 60_000 }),
       );
     } finally {
       setIntervalSpy.mockRestore();
@@ -546,7 +546,7 @@ describe('PdfReader', () => {
 
       // Second visible span: 20s, reported by the next heartbeat.
       dateNowSpy.mockReturnValue(BASE_NOW + 5_020_000);
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
       callback!();
@@ -587,7 +587,7 @@ describe('PdfReader', () => {
 
       // Only this span, after becoming visible, counts.
       dateNowSpy.mockReturnValue(BASE_NOW + 1_008_000);
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
       callback!();
@@ -627,7 +627,7 @@ describe('PdfReader', () => {
 
       // 20 minutes pass while still hidden, then the heartbeat fires.
       dateNowSpy.mockReturnValue(BASE_NOW + 20 * 60_000);
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
       callback!();
@@ -822,23 +822,23 @@ describe('PdfReader', () => {
       renderReader(readingId, 5);
       await screen.findByText('Page 1');
 
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
 
-      // First heartbeat: 5 minutes elapsed, the PATCH fails.
-      dateNowSpy.mockReturnValue(BASE_NOW + 5 * 60_000);
+      // First heartbeat: 2 minutes elapsed, the PATCH fails.
+      dateNowSpy.mockReturnValue(BASE_NOW + 2 * 60_000);
       callback!();
       await waitFor(() => expect(attempt).toBe(1));
       await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalledOnce());
 
-      // Second heartbeat, 15 minutes later: if the failed attempt's 5 minutes had been discarded
-      // (the old takeElapsedMs behavior), this would report only 15 * 60_000.
-      dateNowSpy.mockReturnValue(BASE_NOW + 20 * 60_000);
+      // Second heartbeat, 5 minutes later: if the failed attempt's 2 minutes had been discarded
+      // (the old takeElapsedMs behavior), this would report only 5 * 60_000.
+      dateNowSpy.mockReturnValue(BASE_NOW + 7 * 60_000);
       callback!();
 
       await waitFor(() =>
-        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 1, addDurationMs: 20 * 60_000 }),
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 1, addDurationMs: 7 * 60_000 }),
       );
       expect(attempt).toBe(2);
     } finally {
@@ -875,7 +875,7 @@ describe('PdfReader', () => {
       renderReader(readingId, 5);
       await screen.findByText('Page 1');
 
-      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 5 * 60_000);
       const callback = call?.[0] as (() => void) | undefined;
       expect(callback).toBeTypeOf('function');
 
@@ -901,13 +901,13 @@ describe('PdfReader', () => {
       Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
       fireEvent(document, new Event('visibilitychange'));
 
-      dateNowSpy.mockReturnValue(BASE_NOW + 20 * 60_000);
+      dateNowSpy.mockReturnValue(BASE_NOW + 11 * 60_000);
       callback!();
 
       await waitFor(() =>
         expect(patchedBodies).toEqual([
           { currentPage: 1, addDurationMs: 5 * 60_000 },
-          { currentPage: 1, addDurationMs: 15 * 60_000 },
+          { currentPage: 1, addDurationMs: 6 * 60_000 },
         ]),
       );
     } finally {

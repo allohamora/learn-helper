@@ -32,7 +32,7 @@ const SCROLL_BOUNDARY_TOLERANCE_PX = 2;
 // stop growing past a natural reading width on wide screens instead of stretching to fill them.
 const MAX_AUTO_SCALE = 1.25;
 
-const TIME_SPENT_FLUSH_INTERVAL_MS = 15 * 60_000;
+const TIME_SPENT_FLUSH_INTERVAL_MS = 5 * 60_000;
 
 export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -215,7 +215,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSizes]);
 
-  // A heartbeat, every 15 minutes, reports both the latest page and the duration since the last
+  // A heartbeat, every 5 minutes, reports both the latest page and the duration since the last
   // flush - a crash-safety net for progress since the last flush, since exit-time flushing below
   // already covers every graceful way of leaving the reader.
   useInterval(flush, TIME_SPENT_FLUSH_INTERVAL_MS);
