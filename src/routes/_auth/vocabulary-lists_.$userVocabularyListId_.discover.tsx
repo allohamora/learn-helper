@@ -128,6 +128,9 @@ function VocabularyListDiscoverPage() {
         return;
       }
       commitElapsedMs(durationMs);
+      // Discards time that accumulated while the request was in flight, so it isn't folded into
+      // the next card's duration.
+      takeElapsedMs();
 
       setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
 
