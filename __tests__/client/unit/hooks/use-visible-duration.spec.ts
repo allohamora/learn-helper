@@ -112,6 +112,40 @@ describe('useVisibleDuration', () => {
     expect(result.current.takeElapsedMs()).toBe(0);
   });
 
+  it('peekElapsedMs does not clear the accumulator, unlike takeElapsedMs', () => {
+    const { result } = renderHook(() => useVisibleDuration());
+
+    dateNowSpy.mockReturnValue(BASE_NOW + 5_000);
+    expect(result.current.peekElapsedMs()).toBe(5_000);
+    expect(result.current.peekElapsedMs()).toBe(5_000);
+  });
+
+  it('commitElapsedMs removes only the committed amount, keeping time accumulated afterward', () => {
+    const { result } = renderHook(() => useVisibleDuration());
+
+    dateNowSpy.mockReturnValue(BASE_NOW + 5_000);
+    const peeked = result.current.peekElapsedMs();
+    expect(peeked).toBe(5_000);
+
+    // More time elapses (e.g. the request is still in flight) before the commit happens.
+    dateNowSpy.mockReturnValue(BASE_NOW + 8_000);
+    result.current.commitElapsedMs(peeked);
+
+    expect(result.current.peekElapsedMs()).toBe(3_000);
+  });
+
+  it('keeps a peeked duration queued when it is never committed, e.g. a failed request', () => {
+    const { result } = renderHook(() => useVisibleDuration());
+
+    dateNowSpy.mockReturnValue(BASE_NOW + 5_000);
+    expect(result.current.peekElapsedMs()).toBe(5_000);
+
+    // Simulate a failed flush: commitElapsedMs is never called, so the 5s isn't lost - it's still
+    // there, plus whatever accumulates afterward.
+    dateNowSpy.mockReturnValue(BASE_NOW + 9_000);
+    expect(result.current.peekElapsedMs()).toBe(9_000);
+  });
+
   it('registers the visibilitychange listener once on mount and removes it on unmount', () => {
     const addSpy = vi.spyOn(document, 'addEventListener');
     const removeSpy = vi.spyOn(document, 'removeEventListener');

@@ -38,7 +38,9 @@ function VocabularyListDiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [handled, setHandled] = useState(0);
   const [history, setHistory] = useState<string[]>([]);
-  const { takeElapsedMs } = useVisibleDuration();
+  // undo() deliberately discards the timer unconditionally (nothing to preserve on failure there),
+  // so it keeps using the atomic take; handle() can fail, so it uses peek/commit instead.
+  const { takeElapsedMs, peekElapsedMs, commitElapsedMs } = useVisibleDuration();
 
   const [isSubmitting, setIsSubmitting] = useState(false); // for disabled buttons rendering
   const isSubmittingRef = useRef(false); // for preventing double clicks
@@ -114,16 +116,18 @@ function VocabularyListDiscoverPage() {
     await withSubmitGuard(async () => {
       if (!currentItem) return;
 
+      const durationMs = peekElapsedMs();
       try {
         await discoverItem.mutateAsync({
           userVocabularyItemId: currentItem.id,
           status,
-          durationMs: takeElapsedMs(),
+          durationMs,
         });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Failed to discover item');
         return;
       }
+      commitElapsedMs(durationMs);
 
       setHistory((prev) => [currentItem.id, ...prev].slice(0, HISTORY_LIMIT));
 

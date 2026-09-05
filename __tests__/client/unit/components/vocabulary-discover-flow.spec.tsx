@@ -204,6 +204,62 @@ describe('Vocabulary discover page', () => {
     }
   });
 
+  it('keeps the accumulated duration for a retry after a failed discover request', async () => {
+    const BASE_NOW = 1_000_000;
+    const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];
+    mockServer.addHandlers(api.vocabularyListDiscoverItems.ok(userVocabularyListId, [firstItem, secondItem]));
+
+    let attempt = 0;
+    const onDiscover = vi.fn();
+    mockServer.addHandlers(
+      http.post(
+        `/api/v1/users/me/vocabulary-lists/${userVocabularyListId}/items/:userVocabularyItemId/discover`,
+        async ({ request, params }) => {
+          attempt += 1;
+          const json = await request.json();
+          if (attempt === 1) {
+            return HttpResponse.json({ success: false, error: { messages: ['boom'] } }, { status: 500 });
+          }
+
+          onDiscover(params.userVocabularyItemId, json);
+          return HttpResponse.json({ success: true, data: { ...firstItem, status: LearningStatus.Known } });
+        },
+      ),
+    );
+
+    const toastErrorSpy = vi.spyOn(toast, 'error').mockImplementation(() => '');
+    const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(BASE_NOW);
+
+    try {
+      renderDiscoverPage();
+      const knowButton = await screen.findByRole('button', { name: 'I Know This' });
+
+      // 2 minutes thinking, then the first attempt fails.
+      dateNowSpy.mockReturnValue(BASE_NOW + 2 * 60_000);
+      fireEvent.click(knowButton);
+
+      await waitFor(() => expect(toastErrorSpy).toHaveBeenCalledOnce());
+      // Still on the first card - the failed attempt did not advance.
+      screen.getByText('first');
+
+      // 1 more minute, then a successful retry: if the first 2 minutes had been discarded (the
+      // old takeElapsedMs behavior), this would report only 60_000 instead of the full 3.
+      dateNowSpy.mockReturnValue(BASE_NOW + 3 * 60_000);
+      fireEvent.click(screen.getByRole('button', { name: 'I Know This' }));
+
+      await screen.findByText('second');
+
+      expect(onDiscover).toHaveBeenCalledExactlyOnceWith(firstItem.id, {
+        status: LearningStatus.Known,
+        durationMs: 3 * 60_000,
+      });
+      expect(attempt).toBe(2);
+    } finally {
+      dateNowSpy.mockRestore();
+      toastErrorSpy.mockRestore();
+    }
+  });
+
   it("does not roll time spent before an undo into the next item's reported duration", async () => {
     const BASE_NOW = 1_000_000;
     const [firstItem, secondItem] = [createVocabularyItem('first'), createVocabularyItem('second')];

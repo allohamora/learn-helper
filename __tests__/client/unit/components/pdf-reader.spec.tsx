@@ -797,6 +797,125 @@ describe('PdfReader', () => {
     }
   });
 
+  it('keeps the accumulated duration for the next flush after a heartbeat PATCH fails', async () => {
+    const readingId = crypto.randomUUID();
+    const onStateUpdate = vi.fn();
+    let attempt = 0;
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        attempt += 1;
+        const json = await request.json();
+        if (attempt === 1) return HttpResponse.json({ success: false, error: { messages: ['boom'] } }, { status: 500 });
+
+        onStateUpdate(json);
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const callback = call?.[0] as (() => void) | undefined;
+      expect(callback).toBeTypeOf('function');
+
+      // First heartbeat: 5 minutes elapsed, the PATCH fails.
+      dateNowSpy.mockReturnValue(BASE_NOW + 5 * 60_000);
+      callback!();
+      await waitFor(() => expect(attempt).toBe(1));
+      await waitFor(() => expect(consoleErrorSpy).toHaveBeenCalledOnce());
+
+      // Second heartbeat, 15 minutes later: if the failed attempt's 5 minutes had been discarded
+      // (the old takeElapsedMs behavior), this would report only 15 * 60_000.
+      dateNowSpy.mockReturnValue(BASE_NOW + 20 * 60_000);
+      callback!();
+
+      await waitFor(() =>
+        expect(onStateUpdate).toHaveBeenCalledExactlyOnceWith({ currentPage: 1, addDurationMs: 20 * 60_000 }),
+      );
+      expect(attempt).toBe(2);
+    } finally {
+      setIntervalSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
+  it('never sends two flushes at once - a hidden-tab flush during an in-flight heartbeat is skipped, not raced', async () => {
+    const readingId = crypto.randomUUID();
+    const patchedBodies: unknown[] = [];
+    let resolveFirst: (() => void) | undefined;
+    const firstHeld = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    mockServer.addHandlers(
+      http.get(`/api/v1/users/me/readings/${readingId}/download`, () =>
+        HttpResponse.arrayBuffer(new TextEncoder().encode('%PDF-1.4').buffer),
+      ),
+      http.patch(`/api/v1/users/me/readings/${readingId}/state`, async ({ request }) => {
+        const json = await request.json();
+        patchedBodies.push(json);
+        // Holds the first response open to simulate a slow request still in flight; a real second
+        // request landing here (rather than being skipped) would prove the race isn't guarded.
+        if (patchedBodies.length === 1) await firstHeld;
+        return HttpResponse.json({ success: true, data: {} });
+      }),
+    );
+
+    const originalVisibilityState = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+    const setIntervalSpy = vi.spyOn(window, 'setInterval');
+
+    try {
+      renderReader(readingId, 5);
+      await screen.findByText('Page 1');
+
+      const call = setIntervalSpy.mock.calls.find(([, delay]) => delay === 15 * 60_000);
+      const callback = call?.[0] as (() => void) | undefined;
+      expect(callback).toBeTypeOf('function');
+
+      // Heartbeat fires at +5min; its PATCH is held open, still in flight.
+      dateNowSpy.mockReturnValue(BASE_NOW + 5 * 60_000);
+      callback!();
+      await waitFor(() => expect(patchedBodies).toHaveLength(1));
+
+      // Tab is hidden 2 minutes later, while the heartbeat's PATCH is still in flight - must be
+      // skipped, not sent as a second, concurrent request that could land out of order.
+      dateNowSpy.mockReturnValue(BASE_NOW + 7 * 60_000);
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(patchedBodies).toHaveLength(1);
+
+      // Once the in-flight heartbeat resolves, the guard clears and the skipped time (never lost -
+      // it kept accumulating) rides along on the next flush.
+      resolveFirst!();
+      await waitFor(() => expect(patchedBodies).toHaveLength(1));
+
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      fireEvent(document, new Event('visibilitychange'));
+
+      dateNowSpy.mockReturnValue(BASE_NOW + 20 * 60_000);
+      callback!();
+
+      await waitFor(() =>
+        expect(patchedBodies).toEqual([
+          { currentPage: 1, addDurationMs: 5 * 60_000 },
+          { currentPage: 1, addDurationMs: 15 * 60_000 },
+        ]),
+      );
+    } finally {
+      restoreVisibilityState(originalVisibilityState);
+      setIntervalSpy.mockRestore();
+    }
+  });
+
   it('does not save on scrolling or document (re)loading alone - only the heartbeat or an actual exit', async () => {
     const readingId = crypto.randomUUID();
     const onStateUpdate = vi.fn();

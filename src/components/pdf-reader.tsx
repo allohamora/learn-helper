@@ -50,11 +50,27 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   const [currentPage, setCurrentPage] = useState(initialPage > 1 ? initialPage : 1);
   const hasResumedRef = useRef(false);
 
-  const { takeElapsedMs } = useVisibleDuration();
+  const { peekElapsedMs, commitElapsedMs } = useVisibleDuration();
 
   const queryClient = useQueryClient();
 
-  const { mutate: updateReadingState } = useMutation({
+  // Guards flush and flushOnExit from ever being in flight at the same time - without it, both
+  // could peek the same accumulated duration and each get it committed, double-counting it
+  // server-side, and their PATCHes could also land out of order and overwrite a newer currentPage
+  // with a stale one. Whichever finds this set skips its turn. For flush(), that's free - the next
+  // heartbeat picks up whatever accumulated. For flushOnExit(), a skip can mean that stretch of
+  // time is never sent at all, since the reader may not get another chance to flush - accepted:
+  // this guard's only job is to prevent two saves landing for the same time range, not to
+  // guarantee zero loss on exit.
+  //
+  // Not guarded against, and not fixable client-side: if a PATCH's response never reaches the
+  // client (e.g. the connection drops right after the server commits), commitElapsedMs never runs
+  // and the same duration gets resent - and applied again - on the next flush. Ruling that out
+  // needs a server-side idempotency key on the PATCH, which isn't worth it for a best-effort
+  // reading-time stat.
+  const pendingFlushRef = useRef<Promise<void> | null>(null);
+
+  const { mutateAsync: updateReadingState } = useMutation({
     mutationFn: ({ currentPage, addDurationMs }: { currentPage: number; addDurationMs: number }) =>
       apiRequest(
         () =>
@@ -73,23 +89,33 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   // renders on its own, and an Effect Event can only be called directly from an effect authored
   // in this component, which useInterval's internal setInterval isn't.
   const flush = () => {
-    const addDurationMs = takeElapsedMs();
+    if (pendingFlushRef.current) return;
+    const addDurationMs = peekElapsedMs();
     if (addDurationMs <= 0) return;
 
-    updateReadingState({ currentPage, addDurationMs });
+    pendingFlushRef.current = updateReadingState({ currentPage, addDurationMs })
+      .then(() => commitElapsedMs(addDurationMs))
+      .catch((error: unknown) => console.error('Failed to flush reading state', error))
+      .finally(() => {
+        pendingFlushRef.current = null;
+      });
   };
 
   // Sends the same PATCH the heartbeat/mutation use, but bypasses react-query and sets
   // `keepalive: true` so the browser finishes the request even as the page is torn down - a
   // normal fetch can get cancelled mid-flight during unload.
   const flushOnExit = useEffectEvent(() => {
-    const addDurationMs = takeElapsedMs();
+    if (pendingFlushRef.current) return;
+    const addDurationMs = peekElapsedMs();
     if (addDurationMs <= 0) return;
 
-    void appClient.api.v1.users.me.readings[':readingId'].state.$patch(
-      { param: { readingId }, json: { currentPage, addDurationMs } },
-      { init: { keepalive: true } },
-    );
+    pendingFlushRef.current = appClient.api.v1.users.me.readings[':readingId'].state
+      .$patch({ param: { readingId }, json: { currentPage, addDurationMs } }, { init: { keepalive: true } })
+      .then(() => commitElapsedMs(addDurationMs))
+      .catch((error: unknown) => console.error('Failed to flush reading state', error))
+      .finally(() => {
+        pendingFlushRef.current = null;
+      });
   });
 
   // Each page can have its own native size (e.g. a cover page sized differently from the rest), so
