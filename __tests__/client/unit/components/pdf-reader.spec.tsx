@@ -761,6 +761,8 @@ describe('PdfReader', () => {
     // The cleanup effect's own unconditional flushOnExit call, run right after pagehide's, must be
     // skipped by the same guard - not send a second, ~0ms PATCH for the same close.
     unmount();
+    // Give any stray PATCH a chance to land before asserting it never did.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(onStateUpdate).toHaveBeenCalledOnce();
   });
 
@@ -816,6 +818,8 @@ describe('PdfReader', () => {
     mockGetVirtualItemForOffset.mockReturnValue({ index: 3 });
     fireEvent.scroll(window);
 
+    // Give any stray PATCH a chance to land before asserting it never did.
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(onStateUpdate).not.toHaveBeenCalled();
   });
 });
