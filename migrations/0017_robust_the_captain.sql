@@ -1,1 +1,0 @@
-ALTER TABLE "event" ADD COLUMN "last_flushed_at" timestamp with time zone;

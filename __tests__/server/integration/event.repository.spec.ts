@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { db } from '@/server/db/db.service';
 import { event, user, userVocabularyItem } from '@/server/db/db.schema';
 import { createMissingVocabularyItems } from '@/server/vocabulary/vocabulary-item.repository';
@@ -12,7 +12,7 @@ import {
   insertEvent,
   insertEvents,
   revertUserVocabularyItemDiscoveredEvent,
-  updateCurrentHourReadingTimeSpentEvent,
+  upsertCurrentHourReadingTimeSpentEvent,
 } from '@/server/event/event.repository';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
 import { LearningStatus, PartOfSpeech } from '@/const/vocabulary';
@@ -155,11 +155,7 @@ describe('eventRepository', () => {
     });
   });
 
-  describe('updateCurrentHourReadingTimeSpentEvent', () => {
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
+  describe('upsertCurrentHourReadingTimeSpentEvent', () => {
     const seedReading = async () => {
       const createdFile = await createFile({
         userId: USER_ID,
@@ -173,77 +169,96 @@ describe('eventRepository', () => {
       return createReading({ userId: USER_ID, fileId: createdFile.id, title: 'Book', totalPages: 10 });
     };
 
-    // sets fake time synchronously, then restores real timers before awaiting the DB call - avoids
-    // fake timers interfering with the underlying async I/O (see statistics.service.spec.ts for the same pattern)
-    const updateAt = (at: string, data: { readingId: string; addDurationMs: number; currentPage: number }) => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date(at));
-      const result = updateCurrentHourReadingTimeSpentEvent({ userId: USER_ID, ...data });
-      vi.useRealTimers();
-
-      return result;
-    };
-
-    it('returns undefined when no reading-time-spent event exists for the reading yet', async () => {
+    it('inserts a new row when no reading-time-spent event exists for the reading yet', async () => {
       await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
       const reading = await seedReading();
 
-      const updated = await updateCurrentHourReadingTimeSpentEvent({
+      const upserted = await upsertCurrentHourReadingTimeSpentEvent({
         userId: USER_ID,
         readingId: reading.id,
         addDurationMs: 300_000,
         currentPage: 2,
       });
 
-      expect(updated).toBeUndefined();
+      expect(upserted).toMatchObject({
+        type: EventType.ReadingTimeSpent,
+        durationMs: 300_000,
+        metadata: { currentPage: 2 },
+      });
+      expect(upserted.lastFlushedAt).toBeNull();
       const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
-      expect(events).toHaveLength(0);
+      expect(events).toHaveLength(1);
     });
 
-    it('returns undefined when the latest event is from a previous clock hour', async () => {
+    it('starts a new row when the latest event is from a previous clock hour, leaving it untouched', async () => {
       await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
       const reading = await seedReading();
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
       await db.insert(event).values({
         userId: USER_ID,
         readingId: reading.id,
         type: EventType.ReadingTimeSpent,
         durationMs: 300_000,
         metadata: { currentPage: 2 },
-        createdAt: new Date('2026-05-01T09:55:00.000Z'),
+        createdAt: twoHoursAgo,
+        hourBucket: new Date(Math.floor(twoHoursAgo.getTime() / (60 * 60_000)) * (60 * 60_000)),
       });
 
-      const updated = await updateAt('2026-05-01T10:05:00.000Z', {
+      const upserted = await upsertCurrentHourReadingTimeSpentEvent({
+        userId: USER_ID,
         readingId: reading.id,
         addDurationMs: 300_000,
         currentPage: 4,
       });
 
-      expect(updated).toBeUndefined();
+      expect(upserted).toMatchObject({ durationMs: 300_000, metadata: { currentPage: 4 } });
       const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
-      expect(events).toMatchObject([{ durationMs: 300_000, metadata: { currentPage: 2 } }]);
+      expect(events).toHaveLength(2);
+      expect(events).toContainEqual(expect.objectContaining({ durationMs: 300_000, metadata: { currentPage: 2 } }));
     });
 
     it('accumulates duration and refreshes metadata when the latest event is in the current clock hour', async () => {
       await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
       const reading = await seedReading();
-      await db.insert(event).values({
+      await upsertCurrentHourReadingTimeSpentEvent({
         userId: USER_ID,
         readingId: reading.id,
-        type: EventType.ReadingTimeSpent,
-        durationMs: 300_000,
-        metadata: { currentPage: 2 },
-        createdAt: new Date('2026-05-01T10:05:00.000Z'),
+        addDurationMs: 300_000,
+        currentPage: 2,
       });
 
-      const updated = await updateAt('2026-05-01T10:50:00.000Z', {
+      const upserted = await upsertCurrentHourReadingTimeSpentEvent({
+        userId: USER_ID,
         readingId: reading.id,
         addDurationMs: 300_000,
         currentPage: 4,
       });
 
-      expect(updated).toMatchObject({ durationMs: 600_000, metadata: { currentPage: 4 } });
-      expect(updated!.lastFlushedAt).not.toBeNull();
-      expect(updated!.lastFlushedAt!.getTime()).toBeGreaterThan(updated!.createdAt.getTime());
+      expect(upserted).toMatchObject({ durationMs: 600_000, metadata: { currentPage: 4 } });
+      expect(upserted.lastFlushedAt).not.toBeNull();
+      expect(upserted.lastFlushedAt!.getTime()).toBeGreaterThan(upserted.createdAt.getTime());
+      const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
+      expect(events).toHaveLength(1);
+    });
+
+    it('does not create duplicate rows when concurrent first-flushes race for the same hour', async () => {
+      await db.insert(user).values({ id: USER_ID, name: 'Test User', email: `${USER_ID}@example.com` });
+      const reading = await seedReading();
+
+      await Promise.all(
+        Array.from({ length: 10 }, () =>
+          upsertCurrentHourReadingTimeSpentEvent({
+            userId: USER_ID,
+            readingId: reading.id,
+            addDurationMs: 100,
+            currentPage: 1,
+          }),
+        ),
+      );
+
+      const events = await db.query.event.findMany({ where: eq(event.readingId, reading.id) });
+      expect(events).toHaveLength(1);
+      expect(events[0]).toMatchObject({ durationMs: 1000 });
     });
   });
 });
