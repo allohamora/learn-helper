@@ -282,7 +282,10 @@ export const reading = pgTable('reading', {
   title: text('title').notNull(),
   totalPages: integer('total_pages').notNull(),
   currentPage: integer('current_page').default(0).notNull(),
-  durationMs: integer('duration_ms').default(0).notNull(),
+  // bigint, not integer: a 32-bit int overflows after ~24.9 days of cumulative reading time on one
+  // reading. mode: 'number' (not native BigInt) - see event.costInNanoDollars above for the same
+  // pattern; any realistic reading duration stays far below Number.MAX_SAFE_INTEGER.
+  durationMs: bigint('duration_ms', { mode: 'number' }).default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()

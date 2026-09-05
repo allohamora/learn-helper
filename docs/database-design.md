@@ -116,7 +116,7 @@ erDiagram
         title text
         total_pages integer "set after upload"
         current_page integer "default 0"
-        duration_ms integer "default 0"
+        duration_ms bigint "default 0"
         created_at timestamptz "default NOW"
         updated_at timestamptz "default NOW"
     }
