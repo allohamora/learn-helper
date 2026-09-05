@@ -45,7 +45,7 @@ export const upsertCurrentHourReadingTimeSpentEvent = async (
       set: {
         durationMs: sql`${event.durationMs} + ${addDurationMs}`,
         metadata: { currentPage },
-        lastFlushedAt: new Date(),
+        lastFlushedAt: sql`clock_timestamp()`,
       },
     })
     .returning();
