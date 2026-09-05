@@ -146,6 +146,7 @@ erDiagram
         reverted_at timestamptz "optional"
         created_at timestamptz "default NOW"
         last_flushed_at timestamptz "optional, reading-time-spent only"
+        hour_bucket timestamptz "optional, reading-time-spent only"
     }
 
     user ||--o{ user_vocabulary_item : "one-to-many"
@@ -198,7 +199,7 @@ erDiagram
 - user-grammar-topic-task-generated
 - user-grammar-topic-moved-to-next-step
 - grammar-topic-updated
-- reading-time-spent "fires every 5 minutes of active reading"
+- reading-time-spent "fires every 15 minutes of active reading"
 - reading-uploaded
 - reading-downloaded
 - reading-deleted
@@ -320,7 +321,7 @@ The event table is append-only for discovery/undo specifically: a discovery is n
 
 `last_flushed_at` is purpose-specific, unlike a conventional generic `updated_at` column: it's set only by the `reading-time-spent` hourly bucket merge (see below), and no other event mutation touches it - the discovery-revert path, for instance, leaves it `null` (`reverted_at` already says everything there is to say about that mutation, so a second generic "was this row updated" column would be redundant there).
 
-The reading UI flushes a heartbeat every 5 minutes (`PATCH .../readings/{id}/state`), and rather than inserting a new event per flush forever, flushes are bucketed by clock hour: a flush is merged into the reading's existing `reading-time-spent` event (accumulating `duration_ms`, refreshing `metadata.currentPage`, setting `last_flushed_at`) if that event's `created_at` falls in the same hour as `NOW()` (`date_trunc('hour', created_at) = date_trunc('hour', NOW())`), otherwise a new event is inserted. So per reading there's at most one `reading-time-spent` row per hour: `created_at` is that bucket's first flush, and `last_flushed_at` its most recent one. A `reading-time-spent` row with `last_flushed_at` still `null` means only one flush has landed in that hour so far.
+The reading UI flushes a heartbeat every 15 minutes (`PATCH .../readings/{id}/state`), and rather than inserting a new event per flush forever, flushes are bucketed by clock hour via `event.hour_bucket` - `date_trunc('hour', NOW(), 'UTC')`, computed by the DB (not the app server) at insert time, so it can't drift from app-server clocks. A flush upserts into the reading's `reading-time-spent` event for that bucket via a single atomic `INSERT ... ON CONFLICT (user_id, reading_id, hour_bucket) DO UPDATE` (accumulating `duration_ms`, refreshing `metadata.currentPage`, setting `last_flushed_at`), rather than a separate update-then-insert-fallback - two concurrent first-flushes for the same hour would otherwise both see no existing row and both insert, duplicating the bucket. So per reading there's at most one `reading-time-spent` row per hour: `created_at` is that bucket's first flush, and `last_flushed_at` its most recent one. A `reading-time-spent` row with `last_flushed_at` still `null` means only one flush has landed in that hour so far. `hour_bucket` is `null` for every other event type, the same as `duration_ms` and the other `reading-time-spent`-specific columns.
 
 Hour buckets were chosen over a shorter fixed interval (e.g. 15 min) because any clock-aligned bucket already can't cross an hour boundary, so a finer one would only add rows without adding correctness for hour-level statistics.
 
@@ -459,7 +460,7 @@ User or admin uploads a new file for an existing reading → Server replaces the
 
 ### Reading progress
 
-Client sends a heartbeat every ~1 minute with `current_page` and `+duration_ms` → Server updates `reading.current_page` and increments `reading.duration_ms`.
+Client sends a heartbeat every 15 minutes with `current_page` and `+duration_ms` → Server updates `reading.current_page` and increments `reading.duration_ms`.
 
 Page numbering is 1-indexed (matching pdf.js). `current_page = 0` (default) means the user hasn't opened the PDF yet.
 
