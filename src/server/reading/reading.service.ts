@@ -113,7 +113,10 @@ export const updateReadingState = async ({
   addDurationMs,
 }: UpdateReadingStateDto & { userId: string; readingId: string }) => {
   return db.transaction(async (tx) => {
-    await getReadingByIdAndUserIdOrThrow({ userId, readingId }, tx);
+    const reading = await getReadingByIdAndUserIdOrThrow({ userId, readingId }, tx);
+    if (currentPage > reading.totalPages) {
+      throw Exception.badRequest(`Page ${currentPage} exceeds the reading's total pages (${reading.totalPages})`);
+    }
 
     const [updated] = await Promise.all([
       updateReadingStateInDb({ userId, readingId, currentPage, addDurationMs }, tx),

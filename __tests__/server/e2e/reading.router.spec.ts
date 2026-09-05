@@ -18,7 +18,15 @@ import { EventType } from '@/const/event';
 
 const USER_ID = 'e2e-test-user';
 
-const seedReading = async ({ userId, title }: { userId: string; title: string }) => {
+const seedReading = async ({
+  userId,
+  title,
+  totalPages = 10,
+}: {
+  userId: string;
+  title: string;
+  totalPages?: number;
+}) => {
   const createdFile = await createFile({
     userId,
     fileName: `${title}.pdf`,
@@ -28,7 +36,7 @@ const seedReading = async ({ userId, title }: { userId: string; title: string })
     hash: title,
   });
 
-  return createReading({ userId, fileId: createdFile.id, title, totalPages: 1 });
+  return createReading({ userId, fileId: createdFile.id, title, totalPages });
 };
 
 const seedReadings = async ({ userId, titles }: { userId: string; titles: string[] }) => {
@@ -536,10 +544,14 @@ describe('reading.router', () => {
 
       // pushes the first flush's event into the previous clock hour, simulating a heartbeat later in
       // time without faking the system clock through the router's async I/O (which hangs the request -
-      // the DB driver needs real timers)
+      // the DB driver needs real timers). hourBucket (not createdAt) is what bucketing keys off, so it
+      // has to move back too.
       await db
         .update(event)
-        .set({ createdAt: sql`${event.createdAt} - interval '2 hours'` })
+        .set({
+          createdAt: sql`${event.createdAt} - interval '2 hours'`,
+          hourBucket: sql`${event.hourBucket} - interval '2 hours'`,
+        })
         .where(eq(event.readingId, created.id));
 
       const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
@@ -602,6 +614,21 @@ describe('reading.router', () => {
         json: { currentPage: 0, addDurationMs: 300_000 },
       });
       expect(res.status).toBe(400);
+    });
+
+    it("returns 400 for a currentPage beyond the reading's totalPages", async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      const created = await seedReading({ userId: USER_ID, title: 'Book', totalPages: 5 });
+
+      const res = await client.api.v1.users.me.readings[':readingId'].state.$patch({
+        param: { readingId: created.id },
+        json: { currentPage: 6, addDurationMs: 300_000 },
+      });
+      expect(res.status).toBe(400);
+
+      const foundReading = await db.query.reading.findFirst({ where: eq(reading.id, created.id) });
+      expect(foundReading).toMatchObject({ currentPage: 0, durationMs: 0 });
     });
 
     it('returns 400 for a negative addDurationMs', async () => {
