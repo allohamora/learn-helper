@@ -10,6 +10,10 @@ Sentry.init({
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
+    // not adding replayCanvasIntegration: the PDF reader renders pages to <canvas>, so without it
+    // replays show a blank reader; with it, replays would capture the actual document text as
+    // pixels, which DOM masking can't redact (the selectable text layer on top is invisible)
+
     // send all console calls to Sentry logs
     Sentry.consoleLoggingIntegration(),
     // send console.error messages to Sentry issues, by default sends all levels as issues
