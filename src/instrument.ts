@@ -14,6 +14,8 @@ Sentry.init({
     Sentry.consoleLoggingIntegration(),
     // send console.error messages to Sentry issues, by default sends all levels as issues
     Sentry.captureConsoleIntegration({ levels: ['error'] }),
+    // attach non-standard Error properties (e.g. Exception's code/payload) as extra context
+    Sentry.extraErrorDataIntegration(),
     Sentry.feedbackIntegration({
       // we will create this widget only for authenticated users
       autoInject: false,
