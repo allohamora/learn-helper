@@ -19,6 +19,8 @@ Sentry.init({
     // error.levels array defines which levels are sent to Sentry as issues
     Sentry.pinoIntegration({ error: { levels: ['error'] } }),
     Sentry.vercelAIIntegration(),
+    // not adding anrIntegration: it runs a permanent worker thread to detect event-loop blocking,
+    // and we haven't seen unexplained hangs that our existing tracing doesn't already explain
   ],
 
   // Send structured logs to Sentry
