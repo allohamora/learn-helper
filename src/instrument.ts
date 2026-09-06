@@ -1,9 +1,12 @@
 import * as Sentry from '@sentry/tanstackstart-react';
-import { IS_PRODUCTION, VITE_SENTRY_DSN } from './config';
+import { version } from '../package.json' with { type: 'json' };
+import { ENVIRONMENT, IS_PRODUCTION, VITE_SENTRY_DSN } from './config';
 
 Sentry.init({
   dsn: VITE_SENTRY_DSN,
   enabled: IS_PRODUCTION,
+  environment: ENVIRONMENT,
+  release: version,
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),

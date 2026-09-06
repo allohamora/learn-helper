@@ -5,6 +5,7 @@ import { devtools } from '@tanstack/devtools-vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import { nitro } from 'nitro/vite';
 import { sentryTanstackStart } from '@sentry/tanstackstart-react/vite';
+import { version } from './package.json' with { type: 'json' };
 
 export default defineConfig(({ mode }) => {
   const { SENTRY_ORG, SENTRY_PROJECT, SENTRY_AUTH_TOKEN, BETTER_AUTH_URL } = loadEnv(mode, process.cwd(), '');
@@ -21,6 +22,7 @@ export default defineConfig(({ mode }) => {
         org: SENTRY_ORG,
         project: SENTRY_PROJECT,
         authToken: SENTRY_AUTH_TOKEN,
+        release: { name: version },
       }),
       nitro({
         // https://github.com/nitrojs/nitro/issues/2973
