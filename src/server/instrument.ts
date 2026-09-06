@@ -1,19 +1,26 @@
 import '@tanstack/react-start/server-only';
 import * as Sentry from '@sentry/tanstackstart-react';
+import { version } from '../../package.json' with { type: 'json' };
 import { VITE_SENTRY_DSN } from '@/config';
 import { NODE_ENV } from './config';
 
 Sentry.init({
   dsn: VITE_SENTRY_DSN,
   enabled: NODE_ENV === 'production',
+  environment: NODE_ENV,
+  release: version,
   integrations: [
     // send all console calls to Sentry logs
     Sentry.consoleLoggingIntegration(),
     // send console.error messages to Sentry issues, by default sends all levels as issues
     Sentry.captureConsoleIntegration({ levels: ['error'] }),
+    // attach non-standard Error properties (e.g. Exception's code/payload) as extra context
+    Sentry.extraErrorDataIntegration(),
     // error.levels array defines which levels are sent to Sentry as issues
     Sentry.pinoIntegration({ error: { levels: ['error'] } }),
     Sentry.vercelAIIntegration(),
+    // sends CPU/memory/event-loop-delay gauges every 30s
+    Sentry.nodeRuntimeMetricsIntegration(),
   ],
 
   // Send structured logs to Sentry
@@ -26,3 +33,7 @@ export const startSpan = Sentry.startSpan;
 export const setTags = Sentry.setTags;
 export const setUser = Sentry.setUser;
 export const wrapFetchWithSentry = Sentry.wrapFetchWithSentry;
+export const metrics = Sentry.metrics;
+export const getActiveSpan = Sentry.getActiveSpan;
+export const getRootSpan = Sentry.getRootSpan;
+export const spanToJSON = Sentry.spanToJSON;

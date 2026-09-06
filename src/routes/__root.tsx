@@ -1,9 +1,11 @@
 import type { PropsWithChildren } from 'react';
+import * as Sentry from '@sentry/tanstackstart-react';
 import stylesCssUrl from '@/styles.css?url';
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { NotFound } from '@/components/not-found';
+import { ErrorFallback } from '@/components/error-fallback';
 import { Toaster } from '@/components/ui/sonner';
 import { APP_NAME } from '@/utils/page';
 
@@ -45,7 +47,7 @@ function RootDocument({ children }: PropsWithChildren) {
       </head>
 
       <body className="flex min-h-dvh min-w-full flex-col" suppressHydrationWarning>
-        {children}
+        <Sentry.ErrorBoundary fallback={ErrorFallback}>{children}</Sentry.ErrorBoundary>
 
         <Toaster />
 

@@ -1,16 +1,22 @@
 import * as Sentry from '@sentry/tanstackstart-react';
-import { IS_PRODUCTION, VITE_SENTRY_DSN } from './config';
+import { version } from '../package.json' with { type: 'json' };
+import { ENVIRONMENT, IS_PRODUCTION, VITE_SENTRY_DSN } from './config';
 
 Sentry.init({
   dsn: VITE_SENTRY_DSN,
   enabled: IS_PRODUCTION,
+  environment: ENVIRONMENT,
+  release: version,
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
+
     // send all console calls to Sentry logs
     Sentry.consoleLoggingIntegration(),
     // send console.error messages to Sentry issues, by default sends all levels as issues
     Sentry.captureConsoleIntegration({ levels: ['error'] }),
+    // attach non-standard Error properties (e.g. Exception's code/payload) as extra context
+    Sentry.extraErrorDataIntegration(),
     Sentry.feedbackIntegration({
       // we will create this widget only for authenticated users
       autoInject: false,

@@ -412,6 +412,8 @@ describe('PdfReader', () => {
 
     renderReader(readingId, 5, 3);
     await screen.findByText('Page 1');
+    // Give the resume effect's scrollToIndex call a chance to land before asserting it did.
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mockScrollToIndex).toHaveBeenCalledWith(2, { align: 'start' });
     // Shows the resumed page immediately, rather than starting at 1 and flashing to 3 once the
@@ -429,6 +431,8 @@ describe('PdfReader', () => {
 
     renderReader(readingId, 5, 1);
     await screen.findByText('Page 1');
+    // Give any stray scrollToIndex call a chance to land before asserting it never did.
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(mockScrollToIndex).not.toHaveBeenCalled();
   });

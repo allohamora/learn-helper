@@ -14,6 +14,7 @@ import { MimeType } from '@/const/mime-type';
 import { statisticsRouter } from './statistics/statistics.router';
 import { readingRouter } from './reading/reading.router';
 import { setUser } from './instrument';
+import { httpMetricsMiddleware } from './utils/http-metrics.utils';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -32,6 +33,7 @@ const api = new OpenAPIHono({
   },
 }).basePath('/api');
 
+api.use(httpMetricsMiddleware);
 api.use(secureHeaders());
 
 const isSsrUrl = (url: string) => {
