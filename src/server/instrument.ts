@@ -21,8 +21,6 @@ Sentry.init({
     Sentry.vercelAIIntegration(),
     // sends CPU/memory/event-loop-delay gauges every 30s
     Sentry.nodeRuntimeMetricsIntegration(),
-    // not adding anrIntegration: it runs a permanent worker thread to detect event-loop blocking,
-    // and we haven't seen unexplained hangs that our existing tracing doesn't already explain
   ],
 
   // Send structured logs to Sentry
