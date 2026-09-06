@@ -54,7 +54,7 @@ export const withRequestMetrics = (serverEntry: ServerEntry): ServerEntry => ({
     const [request] = args;
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith('/api')) {
+    if (url.pathname === '/api' || url.pathname.startsWith('/api/')) {
       return serverEntry.fetch(...args);
     }
 

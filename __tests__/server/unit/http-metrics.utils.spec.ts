@@ -121,6 +121,25 @@ describe('withRequestMetrics', () => {
     expect(metricsDistribution).not.toHaveBeenCalled();
   });
 
+  it('records metrics for a path that merely starts with "/api" but is not under the /api mount', async () => {
+    getActiveSpan.mockReturnValue({});
+    getRootSpan.mockImplementation((span) => span);
+    spanToJSON.mockReturnValue({ data: { 'http.route': '/apiary' } });
+
+    const inner = buildServerEntry(new Response('ok', { status: 200 }));
+    const wrapped = withRequestMetrics(inner);
+
+    await wrapped.fetch(new Request('https://example.com/apiary'));
+
+    expect(metricsCount).toHaveBeenCalledWith('http.server.request.count', 1, {
+      attributes: {
+        'http.request.method': 'GET',
+        'http.route': '/apiary',
+        'http.response.status_code': 200,
+      },
+    });
+  });
+
   it('records metrics for the root path "/"', async () => {
     getActiveSpan.mockReturnValue({});
     getRootSpan.mockImplementation((span) => span);
