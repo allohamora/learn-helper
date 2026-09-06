@@ -35,3 +35,7 @@ export const startSpan = Sentry.startSpan;
 export const setTags = Sentry.setTags;
 export const setUser = Sentry.setUser;
 export const wrapFetchWithSentry = Sentry.wrapFetchWithSentry;
+export const metrics = Sentry.metrics;
+export const getActiveSpan = Sentry.getActiveSpan;
+export const getRootSpan = Sentry.getRootSpan;
+export const spanToJSON = Sentry.spanToJSON;
