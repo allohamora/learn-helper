@@ -20,6 +20,22 @@ spec:
       containers:
         - name: postgres
           image: {{ .Values.postgres.image | quote }}
+          args:
+            # pg_stat_statements tracks call count, total/mean time, and rows for every
+            # distinct query shape run against the database - the actual data behind
+            # the slow-query metrics. This loads the module at startup; it still needs
+            # the one-time `CREATE EXTENSION pg_stat_statements` (see helm/README.md)
+            # before that data is queryable
+            - -c
+            - shared_preload_libraries=pg_stat_statements
+            # logs every individual query taking longer than 300ms, so a single slow
+            # execution is visible in logs even if pg_stat_statements' averages aren't
+            - -c
+            - log_min_duration_statement=300
+            # pinned explicitly so the connection-pool-exhaustion alert (numbackends
+            # vs. this value) has a known ceiling instead of assuming the image's default
+            - -c
+            - max_connections=100
           ports:
             - name: db
               containerPort: 5432

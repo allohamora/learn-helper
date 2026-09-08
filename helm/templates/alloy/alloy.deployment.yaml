@@ -1,0 +1,101 @@
+{{- if .Values.alloy.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alloy
+  template:
+    metadata:
+      labels:
+        app: alloy
+      annotations:
+        checksum/alloy-config: {{ include "config.alloy" . | sha256sum | quote }}
+        checksum/alloy-env: {{ toYaml .Values.alloy.env | sha256sum | quote }}
+    spec:
+      serviceAccountName: alloy
+      containers:
+        - name: alloy
+          image: {{ .Values.alloy.image | quote }}
+          args:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+          ports:
+            - name: http
+              containerPort: 12345
+          envFrom:
+            - secretRef:
+                name: alloy-env
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: POSTGRES_DB
+            - name: POSTGRES_DSN
+              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
+          volumeMounts:
+            - name: alloy-config
+              mountPath: /etc/alloy
+            - name: alloy-data
+              mountPath: /var/lib/alloy/data
+            - name: host-proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: host-sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: host-root
+              mountPath: /host/root
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: alloy-config
+          configMap:
+            name: alloy-config
+        - name: alloy-data
+          emptyDir: {}
+        - name: host-proc
+          hostPath:
+            path: /proc
+        - name: host-sys
+          hostPath:
+            path: /sys
+        - name: host-root
+          hostPath:
+            path: /
+{{- end }}
