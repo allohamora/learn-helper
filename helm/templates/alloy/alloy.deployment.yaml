@@ -17,7 +17,6 @@ spec:
         checksum/alloy-config: {{ include "config.alloy" . | sha256sum | quote }}
         checksum/alloy-env: {{ toYaml .Values.alloy.env | sha256sum | quote }}
     spec:
-      serviceAccountName: alloy
       containers:
         - name: alloy
           image: {{ .Values.alloy.image | quote }}
@@ -33,37 +32,23 @@ spec:
             - secretRef:
                 name: alloy-env
           env:
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-env
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-env
-                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
                   name: postgres-env
                   key: POSTGRES_DB
-            - name: POSTGRES_DSN
-              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
+            - name: DB_O11Y_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: DB_O11Y_PASSWORD
+            - name: DB_O11Y_DSN
+              value: postgresql://db-o11y:$(DB_O11Y_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
           volumeMounts:
             - name: alloy-config
               mountPath: /etc/alloy
             - name: alloy-data
               mountPath: /var/lib/alloy/data
-            - name: host-proc
-              mountPath: /host/proc
-              readOnly: true
-            - name: host-sys
-              mountPath: /host/sys
-              readOnly: true
-            - name: host-root
-              mountPath: /host/root
-              readOnly: true
           readinessProbe:
             httpGet:
               path: /-/ready
@@ -89,13 +74,4 @@ spec:
             name: alloy-config
         - name: alloy-data
           emptyDir: {}
-        - name: host-proc
-          hostPath:
-            path: /proc
-        - name: host-sys
-          hostPath:
-            path: /sys
-        - name: host-root
-          hostPath:
-            path: /
 {{- end }}

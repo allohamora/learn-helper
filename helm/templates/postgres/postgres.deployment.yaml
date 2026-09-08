@@ -23,19 +23,22 @@ spec:
           args:
             # pg_stat_statements tracks call count, total/mean time, and rows for every
             # distinct query shape run against the database - the actual data behind
-            # the slow-query metrics. This loads the module at startup; it still needs
-            # the one-time `CREATE EXTENSION pg_stat_statements` (see helm/README.md)
-            # before that data is queryable
+            # Database Observability's query stats. This loads the module at startup;
+            # it still needs the one-time `CREATE EXTENSION pg_stat_statements` (see
+            # helm/README.md) before that data is queryable
             - -c
             - shared_preload_libraries=pg_stat_statements
-            # logs every individual query taking longer than 300ms, so a single slow
-            # execution is visible in logs even if pg_stat_statements' averages aren't
+            # required by Grafana Database Observability: computes a stable queryid so
+            # explain plans/query samples can be correlated back to pg_stat_statements rows
             - -c
-            - log_min_duration_statement=300
-            # pinned explicitly so the connection-pool-exhaustion alert (numbackends
-            # vs. this value) has a known ceiling instead of assuming the image's default
+            - compute_query_id=on
+            # track statements nested inside functions/procedures too, not just top-level
             - -c
-            - max_connections=100
+            - pg_stat_statements.track=all
+            # default (1024) truncates long queries in pg_stat_activity before Database
+            # Observability's query-sample collector can read them
+            - -c
+            - track_activity_query_size=4096
           ports:
             - name: db
               containerPort: 5432

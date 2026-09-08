@@ -1,152 +1,62 @@
 {{- define "config.alloy" -}}
-// ---- Postgres metrics (incl. pg_stat_statements for slow-query analysis) ----
-// postgres_exporter supports ~20 collectors; only these 11 are actually useful here
-// (no replicas exist, so replication/wal collectors would produce nothing; the rest
-// are operational minutiae, not alert- or bottleneck-relevant at this scale).
-prometheus.exporter.postgres "postgres" {
-  data_source_names = [sys.env("POSTGRES_DSN")]
+// ---- Database Observability: query-level detail (explain plans, query samples with
+// wait events, schema catalog) via a dedicated low-privilege "db-o11y" role. See
+// helm/README.md for the one-time CREATE USER/GRANT step this depends on.
+prometheus.exporter.postgres "dbo" {
+  data_source_names = [sys.env("DB_O11Y_DSN")]
 
-  // pg_settings_* (one series per Postgres GUC, hundreds of them) is on by default
-  // and is static config, not operational data - explicitly disabled.
-  disable_settings_metrics = true
+  enabled_collectors = ["stat_statements"]
 
-  enabled_collectors = [
-    "database", "stat_database", "locks", "stat_bgwriter", "stat_checkpointer",
-    "stat_user_tables", "postmaster", "stat_statements", "database_wraparound",
-    "long_running_transactions", "stat_activity",
-  ]
-
-  // Postgres normalizes literal values out of the query before computing
-  // queryid, so the `query` label is a deterministic function of queryid
-  // (same shape -> same text, always) - it doesn't add series beyond what
-  // queryid already creates, just a bigger label value on each one. Actual
-  // cardinality risk would come from many distinct query *shapes* (e.g.
-  // variable-length IN(...) lists, dynamic per-tenant tables), not this flag.
+  // db-o11y's own monitoring queries are excluded from stat_statements tracking
+  // (ALTER ROLE ... SET pg_stat_statements.track = 'none', see helm/README.md), so
+  // this is belt-and-suspenders against them polluting the data being analyzed.
   stat_statements {
-    include_query = true
+    exclude_users = ["db-o11y"]
+  }
+
+  autodiscovery {
+    enabled = true
   }
 }
 
-prometheus.scrape "postgres" {
-  targets         = prometheus.exporter.postgres.postgres.targets
-  job_name        = "integrations/postgres"
+database_observability.postgres "dbo" {
+  data_source_name  = sys.env("DB_O11Y_DSN")
+  targets           = prometheus.exporter.postgres.dbo.targets
+  forward_to        = [loki.relabel.dbo.receiver]
+  enable_collectors = ["query_details", "query_samples", "schema_details", "explain_plans"]
+}
+
+loki.relabel "dbo" {
+  forward_to = [otelcol.receiver.loki.default.receiver]
+
+  rule {
+    target_label = "instance"
+    replacement  = "postgres"
+  }
+}
+
+discovery.relabel "dbo" {
+  targets = database_observability.postgres.dbo.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/db-o11y"
+  }
+  rule {
+    source_labels = ["instance"]
+    target_label  = "dsn"
+  }
+  rule {
+    target_label = "instance"
+    replacement  = "postgres"
+  }
+}
+
+prometheus.scrape "dbo" {
+  targets         = discovery.relabel.dbo.output
+  job_name        = "integrations/db-o11y"
   scrape_interval = "60s"
   forward_to      = [otelcol.receiver.prometheus.default.receiver]
-}
-
-// ---- k3s node/pod CPU+mem via kubelet cadvisor (apiserver-proxied) ----
-discovery.kubernetes "nodes" {
-  role = "node"
-}
-
-discovery.relabel "cadvisor" {
-  targets = discovery.kubernetes.nodes.targets
-
-  rule {
-    target_label = "__address__"
-    replacement  = "kubernetes.default.svc:443"
-  }
-  rule {
-    source_labels = ["__meta_kubernetes_node_name"]
-    regex         = "(.+)"
-    target_label  = "__metrics_path__"
-    replacement   = "/api/v1/nodes/${1}/proxy/metrics/cadvisor"
-  }
-}
-
-prometheus.scrape "cadvisor" {
-  targets           = discovery.relabel.cadvisor.output
-  job_name          = "integrations/kubernetes/cadvisor"
-  scheme            = "https"
-  scrape_interval   = "60s"
-  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-  tls_config {
-    server_name = "kubernetes"
-    ca_file     = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-  }
-  forward_to = [prometheus.relabel.cadvisor_filter.receiver]
-}
-
-// Cost control: cadvisor exposes hundreds of series per container, keep only
-// what's actually used (CPU/mem/network/disk usage + limits).
-prometheus.relabel "cadvisor_filter" {
-  forward_to = [otelcol.receiver.prometheus.default.receiver]
-
-  rule {
-    source_labels = ["__name__"]
-    regex         = "container_cpu_usage_seconds_total|container_memory_working_set_bytes|container_memory_usage_bytes|container_spec_cpu_quota|container_spec_memory_limit_bytes|container_network_receive_bytes_total|container_network_transmit_bytes_total|container_fs_usage_bytes|machine_memory_bytes"
-    action        = "keep"
-  }
-}
-
-// ---- Node-level host metrics (disk space, load, memory pressure) ----
-// node_exporter ships ~70 collectors enabled by default (arp, conntrack, nfs,
-// thermal_zone, bonding, etc.) - none of that applies to a homelab box, so
-// set_collectors overrides the default down to just what USE-method monitoring needs.
-prometheus.exporter.unix "node" {
-  rootfs_path    = "/host/root"
-  sysfs_path     = "/host/sys"
-  procfs_path    = "/host/proc"
-  set_collectors = ["cpu", "meminfo", "filesystem", "diskstats", "loadavg", "netdev"]
-}
-
-prometheus.scrape "node" {
-  targets         = prometheus.exporter.unix.node.targets
-  job_name        = "integrations/node_exporter"
-  scrape_interval = "60s"
-  forward_to      = [otelcol.receiver.prometheus.default.receiver]
-}
-
-{{- if .Values.kubeStateMetrics.enabled }}
-// ---- kube-state-metrics: pod restarts (incl. OOMKilled reason), PVC/node health ----
-prometheus.scrape "kube_state_metrics" {
-  targets         = [{"__address__" = "kube-state-metrics:8080"}]
-  job_name        = "integrations/kube-state-metrics"
-  scrape_interval = "60s"
-  forward_to      = [otelcol.receiver.prometheus.default.receiver]
-}
-{{- end }}
-
-// ---- kubelet's own /metrics: actual PVC usage (kube-state-metrics only has the
-// requested size, not what's actually used) ----
-discovery.relabel "kubelet" {
-  targets = discovery.kubernetes.nodes.targets
-
-  rule {
-    target_label = "__address__"
-    replacement  = "kubernetes.default.svc:443"
-  }
-  rule {
-    source_labels = ["__meta_kubernetes_node_name"]
-    regex         = "(.+)"
-    target_label  = "__metrics_path__"
-    replacement   = "/api/v1/nodes/${1}/proxy/metrics"
-  }
-}
-
-prometheus.scrape "kubelet" {
-  targets           = discovery.relabel.kubelet.output
-  job_name          = "integrations/kubernetes/kubelet"
-  scheme            = "https"
-  scrape_interval   = "60s"
-  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-  tls_config {
-    server_name = "kubernetes"
-    ca_file     = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-  }
-  forward_to = [prometheus.relabel.kubelet_filter.receiver]
-}
-
-// kubelet's /metrics exposes its whole internal surface (Go runtime, client-go,
-// container runtime calls, etc.) - keep only the PVC usage series.
-prometheus.relabel "kubelet_filter" {
-  forward_to = [otelcol.receiver.prometheus.default.receiver]
-
-  rule {
-    source_labels = ["__name__"]
-    regex         = "kubelet_volume_stats_available_bytes|kubelet_volume_stats_capacity_bytes"
-    action        = "keep"
-  }
 }
 
 otelcol.receiver.prometheus "default" {
@@ -155,81 +65,9 @@ otelcol.receiver.prometheus "default" {
   }
 }
 
-// ---- Logs: postgres + cloudflared pods only, never `app` ----
-discovery.kubernetes "pods" {
-  role = "pod"
-  namespaces {
-    own_namespace = true
-  }
-}
-
-discovery.relabel "infra_pods" {
-  targets = discovery.kubernetes.pods.targets
-
-  rule {
-    source_labels = ["__meta_kubernetes_pod_label_app"]
-    regex         = "postgres|cloudflared"
-    action        = "keep"
-  }
-}
-
-loki.source.kubernetes "infra_pods" {
-  targets    = discovery.relabel.infra_pods.output
-  forward_to = [otelcol.receiver.loki.default.receiver]
-}
-
-// ---- cloudflared tunnel metrics (connection health, request counts) ----
-discovery.relabel "cloudflared_metrics" {
-  targets = discovery.kubernetes.pods.targets
-
-  rule {
-    source_labels = ["__meta_kubernetes_pod_label_app"]
-    regex         = "cloudflared"
-    action        = "keep"
-  }
-  rule {
-    source_labels = ["__meta_kubernetes_pod_container_port_name"]
-    regex         = "metrics"
-    action        = "keep"
-  }
-}
-
-prometheus.scrape "cloudflared" {
-  targets         = discovery.relabel.cloudflared_metrics.output
-  job_name        = "integrations/cloudflared"
-  scrape_interval = "60s"
-  forward_to      = [otelcol.receiver.prometheus.default.receiver]
-}
-
-// ---- Kubernetes events (OOMKilled, failed scheduling, image pull errors) ----
-// Watches every pod in the namespace, including `app` - there's no per-pod
-// filter here like the log/metric scrapes above, so the Normal-event drop
-// below is also what keeps routine `app` deploy noise (Scheduled, Pulled,
-// Created, Started) out of this pipeline.
-loki.source.kubernetes_events "events" {
-  namespaces = ["{{ .Release.Namespace }}"]
-  log_format = "json"
-  forward_to = [loki.process.drop_normal_events.receiver]
-}
-
-// Most events are Normal pod-lifecycle noise, not the actionable Warning
-// events this pipeline is for - drop them instead of paying to ship them.
-// json log_format + an exact field match (rather than a regex over the raw
-// line) avoids misfiring if an event's own free-text message happened to
-// contain "type=Normal".
-loki.process "drop_normal_events" {
-  forward_to = [otelcol.receiver.loki.default.receiver]
-
-  stage.json {
-    expressions = { type = "type" }
-  }
-
-  stage.drop {
-    source = "type"
-    value  = "Normal"
-  }
-}
-
+// database_observability.postgres's query_details/query_samples/schema_details/
+// explain_plans collectors ship their output as Loki log entries (see loki.relabel
+// "dbo" above) - this receiver is that data's only source now, not raw Postgres logs.
 otelcol.receiver.loki "default" {
   output {
     logs = [otelcol.exporter.otlphttp.grafana_cloud.input]

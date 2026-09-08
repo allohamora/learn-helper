@@ -26,10 +26,6 @@ alloy:
     GRAFANA_CLOUD_INSTANCE_ID: "123456"
     GRAFANA_CLOUD_API_TOKEN: dummy-grafana-cloud-token
 
-kubeStateMetrics:
-  enabled: false
-  image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
-
 postgres:
   image: postgres:18.4-alpine
   # NOTE: the Postgres image only applies USER/PASSWORD/DB on first init of an
@@ -43,3 +39,6 @@ postgres:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: example
     POSTGRES_DB: test
+    # password for the dedicated low-privilege "db-o11y" monitoring role Alloy uses for
+    # Database Observability - must match the CREATE USER step in helm/README.md
+    DB_O11Y_PASSWORD: dummy-db-o11y-password

@@ -67,31 +67,17 @@ kubectl delete namespace learn-helper
 k3d cluster delete learn-helper
 ```
 
-# Grafana Alloy (infrastructure metrics/logs -> Grafana Cloud)
+# Grafana Alloy (Database Observability -> Grafana Cloud)
 
-Alloy is disabled by default (`alloy.enabled: false`). The app's own traces/logs/HTTP
-metrics already go straight to Sentry (see `src/server/instrument.ts`), so this pipeline
-is for everything Sentry doesn't cover - app pod logs are intentionally excluded here to
-avoid shipping (and paying for) the same data twice. It collects:
-
-- Postgres metrics, including `pg_stat_statements` for slow-query analysis (query text,
-  call counts, timings).
-- k3s node/pod CPU, memory, network and filesystem usage (via kubelet cAdvisor).
-- Host-level metrics (disk space, load average) via an embedded node_exporter.
-- `kube-state-metrics` (separately opt-in, see below) - pod restart counts (incl.
-  OOMKilled reason), node health conditions, PVC/PV capacity - plus kubelet's own
-  volume stats for actual (not just requested) PVC usage.
-- cloudflared tunnel metrics (connection health, request counts).
-- Pod logs for the `postgres` and `cloudflared` pods only.
-- Kubernetes events in this namespace - Warning only (OOMKilled, failed scheduling,
-  image pull errors); Normal events are dropped, since most of them are routine pod
-  lifecycle noise (Scheduled, Pulled, Created, Started) and this is also the only place
-  `app` pods are filtered out of this pipeline (the event watch itself is namespace-wide,
-  not scoped to specific pods like the log/metric scrapes above).
-
-`kube-state-metrics` is its own toggle (`kubeStateMetrics.enabled`) independent of
-`alloy.enabled`, since it's a separate Deployment - Alloy only scrapes it when both are
-enabled.
+Alloy is disabled by default (`alloy.enabled: false`). It exists solely to run Grafana
+Cloud's [Database Observability](https://grafana.com/docs/grafana-cloud/observe-and-act/monitor-applications/database-observability/)
+(DBO) integration for Postgres - query samples with wait events, `EXPLAIN` plans, and
+schema catalog data, collected through a dedicated low-privilege `db-o11y` Postgres role
+rather than the app's own credentials. Everything else this pipeline used to collect
+(generic Postgres metrics, k3s/host/cloudflared metrics, kube-state-metrics, Kubernetes
+events, raw pod logs) has been removed - this is DBO-only, nothing more. The app's own
+traces/logs/HTTP metrics go straight to Sentry (see `src/server/instrument.ts`) and
+aren't part of this pipeline either.
 
 To enable it:
 
@@ -99,8 +85,8 @@ To enable it:
    find your stack's OTLP gateway endpoint and instance ID.
 2. On the same page, generate an Access Policy token scoped to `metrics:write` and
    `logs:write`.
-3. Add these under `alloy.env` in `values.yaml` and set `alloy.enabled: true` (and
-   `kubeStateMetrics.enabled: true` for pod restart/node/PVC metrics):
+3. Add these under `alloy.env` in `values.yaml`, set `alloy.enabled: true`, and pick a
+   password for the new `db-o11y` monitoring role under `postgres.env`:
    ```yaml
    alloy:
      enabled: true
@@ -108,18 +94,34 @@ To enable it:
        GRAFANA_CLOUD_OTLP_ENDPOINT: https://otlp-gateway-<region>.grafana.net/otlp
        GRAFANA_CLOUD_INSTANCE_ID: '<instance-id>'
        GRAFANA_CLOUD_API_TOKEN: <token>
-   kubeStateMetrics:
-     enabled: true
+   postgres:
+     env:
+       DB_O11Y_PASSWORD: <pick a password>
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above. This also
-   restarts postgres (`shared_preload_libraries=pg_stat_statements` is now set on its
-   container args), which is required before the extension below can be created.
+   restarts postgres (`shared_preload_libraries=pg_stat_statements` and the Database
+   Observability-required settings are now set on its container args), which is
+   required before the one-time steps below will work.
 5. One-time: create the `pg_stat_statements` extension in the app database (safe to
    re-run; the deployment's `postgres.deployment.yaml` sets `shared_preload_libraries`
    unconditionally, but the extension itself is still opt-in per-database):
    ```bash
    kubectl exec -n learn-helper deploy/postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
      -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
+   ```
+6. One-time: create the `db-o11y` role Alloy uses for Database Observability, with the
+   password chosen in step 3 (`pg_monitor`/`pg_read_all_stats` give it read-only access
+   to stats views; `pg_stat_statements.track = 'none'` keeps its own monitoring queries
+   out of the query-stats data it's collecting):
+   ```bash
+   kubectl exec -n learn-helper deploy/postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 <<'EOF'
+   CREATE USER "db-o11y" WITH PASSWORD '<matches DB_O11Y_PASSWORD in values.yaml>';
+   GRANT pg_monitor TO "db-o11y";
+   GRANT pg_read_all_stats TO "db-o11y";
+   ALTER ROLE "db-o11y" SET pg_stat_statements.track = 'none';
+   GRANT USAGE ON SCHEMA public TO "db-o11y";
+   GRANT SELECT ON ALL TABLES IN SCHEMA public TO "db-o11y";
+   EOF
    ```
 
 ```bash
@@ -130,15 +132,15 @@ kubectl -n learn-helper logs deploy/alloy
 kubectl -n learn-helper port-forward deploy/alloy 12345:12345
 ```
 
-In Grafana Cloud, confirm data is arriving: Explore > Metrics for `pg_up`,
-`pg_stat_statements_calls`, `container_cpu_usage_seconds_total`,
-`node_filesystem_avail_bytes`, and (with `kubeStateMetrics.enabled: true`)
-`kube_pod_container_status_restarts_total`; Explore >
-Logs filtered on `app="postgres"` / `app="cloudflared"` (app logs should never appear
-there - only in Sentry).
+In Grafana Cloud, confirm data is arriving: Explore > Metrics and Explore > Logs, both
+filtered on `job="integrations/db-o11y"`. Once data is flowing, query samples, explain
+plans, and schema data actually surface in Grafana Cloud's **Database Observability**
+app, not Explore.
 
-Changing `alloy.env` (e.g. rotating the API token) follows the same `helm upgrade`
-flow as the `postgres.env`/`app.env` update steps above.
+Changing `alloy.env`/`postgres.env` (e.g. rotating the API token or the `db-o11y`
+password) follows the same `helm upgrade` flow as the `postgres.env`/`app.env` update
+steps above - rotating `DB_O11Y_PASSWORD` also needs an `ALTER ROLE "db-o11y" WITH
+PASSWORD '<new-password>';` run first, same as the note on `POSTGRES_PASSWORD` above.
 
 # Production setup notes
 
