@@ -52,7 +52,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   const hasResumedRef = useRef(false);
 
   const { peekElapsedMs, commitElapsedMs } = useVisibleDuration();
-  const { zoomLevel, canZoomIn, canZoomOut, zoomIn, zoomOut } = usePdfZoom();
+  const { zoomLevel, canZoomIn, canZoomOut, zoomIn, zoomOut, setZoom } = usePdfZoom();
 
   const queryClient = useQueryClient();
 
@@ -200,7 +200,18 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     scrollPaddingStart: headerHeight,
   });
 
-  const goToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
+  const scrollToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
+
+  // Sets currentPage synchronously rather than waiting for the scroll-driven onScroll listener
+  // below to catch up once the scroll settles - otherwise the toolbar's page input (now fully
+  // controlled by currentPage) would flash back to the old page for the duration of the scroll.
+  // Only for user-triggered navigation (toolbar, in-document links) - effects below that merely
+  // reposition the scroll for an already-current page use scrollToPage directly, since setting
+  // state from inside an effect is its own problem (react-hooks/set-state-in-effect).
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    scrollToPage(page);
+  };
 
   // estimateSize isn't part of the virtualizer's internal cache-invalidation deps, so a
   // containerWidth change (resize) alone won't trigger remeasurement — force it explicitly.
@@ -236,7 +247,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     // Falls back to a plain page-top jump if the richer position data isn't available - defensive
     // only, since scrollOffset/measurementsCache should always be populated once mounted.
     if (typeof offset !== 'number' || !beforeItem || !afterItem) {
-      goToPage(currentPage);
+      scrollToPage(currentPage);
       return;
     }
 
@@ -252,7 +263,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     if (!pageSizes || hasResumedRef.current) return;
     hasResumedRef.current = true;
 
-    if (initialPage > 1) goToPage(initialPage);
+    if (initialPage > 1) scrollToPage(initialPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSizes]);
 
@@ -374,6 +385,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
         canZoomOut={canZoomOut}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
+        onZoomChange={setZoom}
       />
     </div>
   );

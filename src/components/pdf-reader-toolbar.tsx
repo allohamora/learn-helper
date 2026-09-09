@@ -1,7 +1,9 @@
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 import { ZoomInIcon, ZoomOutIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useNumberFieldInput } from '@/hooks/use-number-field-input';
+import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT } from '@/hooks/use-pdf-zoom';
 
 type Props = {
   currentPage: number;
@@ -13,6 +15,7 @@ type Props = {
   canZoomOut: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  onZoomChange: (percent: number) => void;
 };
 
 export const PdfReaderToolbar: FC<Props> = ({
@@ -25,28 +28,27 @@ export const PdfReaderToolbar: FC<Props> = ({
   canZoomOut,
   onZoomIn,
   onZoomOut,
+  onZoomChange,
 }) => {
-  const [pageInput, setPageInput] = useState(String(currentPage));
-  const [syncedPage, setSyncedPage] = useState(currentPage);
+  // No step: zoom accepts any whole percent in range, not just increments of the +/- buttons' step.
+  const { inputRef: zoomInputRef, inputProps: zoomInputProps } = useNumberFieldInput({
+    'aria-label': 'Zoom percentage',
+    value: Math.round(zoomLevel * 100),
+    minValue: MIN_ZOOM_PERCENT,
+    maxValue: MAX_ZOOM_PERCENT,
+    isDisabled: disabled,
+    onChange: onZoomChange,
+  });
 
-  if (currentPage !== syncedPage) {
-    setSyncedPage(currentPage);
-    setPageInput(String(currentPage));
-  }
-
-  const submitPage = () => {
-    if (pageInput === '') return;
-
-    const page = Number(pageInput);
-    if (!Number.isInteger(page)) {
-      setPageInput(String(currentPage));
-      return;
-    }
-
-    const normalizedPage = Math.min(totalPages, Math.max(1, page));
-    setPageInput(String(normalizedPage));
-    onGoToPage(normalizedPage);
-  };
+  const { inputRef: pageInputRef, inputProps: pageInputProps } = useNumberFieldInput({
+    'aria-label': 'Page number',
+    value: currentPage,
+    minValue: 1,
+    maxValue: totalPages,
+    step: 1,
+    isDisabled: disabled,
+    onChange: onGoToPage,
+  });
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background">
@@ -62,9 +64,8 @@ export const PdfReaderToolbar: FC<Props> = ({
           >
             <ZoomOutIcon />
           </Button>
-          <span className="w-10 text-center text-sm text-muted-foreground tabular-nums">
-            {Math.round(zoomLevel * 100)}%
-          </span>
+          <Input ref={zoomInputRef} {...zoomInputProps} className="h-8 w-14 text-center tabular-nums" />
+          <span className="text-sm text-muted-foreground tabular-nums">%</span>
           <Button
             type="button"
             variant="ghost"
@@ -77,20 +78,7 @@ export const PdfReaderToolbar: FC<Props> = ({
           </Button>
         </div>
 
-        <Input
-          value={pageInput}
-          onChange={(event) => setPageInput(event.target.value)}
-          onBlur={submitPage}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              submitPage();
-            }
-          }}
-          disabled={disabled}
-          className="h-8 w-14 text-center tabular-nums"
-          aria-label="Page number"
-        />
+        <Input ref={pageInputRef} {...pageInputProps} className="h-8 w-14 text-center tabular-nums" />
         <span className="text-sm text-muted-foreground tabular-nums">/ {totalPages}</span>
       </div>
     </div>
