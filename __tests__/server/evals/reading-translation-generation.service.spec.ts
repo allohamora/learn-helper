@@ -123,6 +123,29 @@ describe.concurrent('reading-translation-generation.service', () => {
       ]);
     });
 
+    it('translates a long selection instead of echoing the after context back verbatim', async () => {
+      const text =
+        'One of our favorite pastries here in Portugal is pastel de nata, whose rich custard filling is a ' +
+        'perfect match for our sunny afternoons. Part of the charm of pastel de nata to us locals is the ' +
+        'little sayings printed on the napkins at every bakery. I bought a dozen of them this morning and ' +
+        'found that mine came wrapped in this old Portuguese proverb:';
+      const before = 'iv Preface';
+      const after = 'A vida é como um livro, cada dia uma nova página. “Life is like a book, each day a new page';
+
+      const { output } = await generateTranslationData({ text, before, after });
+      console.log('long-selection-context-echo-regression', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation.trim().toLowerCase()).not.toBe(after.trim().toLowerCase());
+      expect(output.uaTranslation.trim().toLowerCase()).not.toBe(before.trim().toLowerCase());
+      expect(output.isLearnable).toBe(false);
+
+      await expect(output).toSatisfyStatements([
+        "uaTranslation is a Ukrainian translation of the selected English text about pastel de nata pastries from Portugal, ending right after mentioning the old Portuguese proverb printed on the napkin (not going on to include the proverb's own wording, since that was never part of the selection). Minor grammatical imperfections (e.g. gender/case agreement) are fine and should not fail this check.",
+        'uaTranslation is NOT the Portuguese/English quote from the after context ("A vida é como um livro...Life is like a book, each day a new page"), and does not paraphrase or partially reproduce it.',
+      ]);
+    });
+
     it('uses surrounding context to pick the right sense of a word, without translating the context itself', async () => {
       const { output } = await generateTranslationData({
         text: 'bark',

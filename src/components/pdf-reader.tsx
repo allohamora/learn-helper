@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInterval } from 'react-use';
 import { apiRequest, appClient } from '@/services/api';
 import { useVisibleDuration } from '@/hooks/use-visible-duration';
+import { usePdfZoom } from '@/hooks/use-pdf-zoom';
 import { Loader } from '@/components/ui/loader';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
 import { TranslationPopover } from '@/components/translation-popover';
@@ -51,6 +52,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   const hasResumedRef = useRef(false);
 
   const { peekElapsedMs, commitElapsedMs } = useVisibleDuration();
+  const { zoomLevel, canZoomIn, canZoomOut, zoomIn, zoomOut, setZoom } = usePdfZoom();
 
   const queryClient = useQueryClient();
 
@@ -186,7 +188,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
   // width), so a document with mixed page sizes (e.g. a cover page scanned smaller than the rest)
   // doesn't stretch every page to match whichever one happens to be widest.
   const getPageWidth = (index: number) =>
-    Math.min(containerWidth, getPageSize(index).width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE);
+    Math.min(containerWidth, getPageSize(index).width * PDF_POINTS_TO_CSS_PX * MAX_AUTO_SCALE) * zoomLevel;
 
   const virtualizer = useWindowVirtualizer({
     count: sizes.length,
@@ -198,11 +200,61 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     scrollPaddingStart: headerHeight,
   });
 
+  const scrollToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
+
+  // Sets currentPage synchronously rather than waiting for the scroll-driven onScroll listener
+  // below to catch up once the scroll settles - otherwise the toolbar's page input (now fully
+  // controlled by currentPage) would flash back to the old page for the duration of the scroll.
+  // Only for user-triggered navigation (toolbar, in-document links) - effects below that merely
+  // reposition the scroll for an already-current page use scrollToPage directly, since setting
+  // state from inside an effect is its own problem (react-hooks/set-state-in-effect).
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    scrollToPage(page);
+  };
+
   // estimateSize isn't part of the virtualizer's internal cache-invalidation deps, so a
   // containerWidth change (resize) alone won't trigger remeasurement — force it explicitly.
   useEffect(() => virtualizer.measure(), [containerWidth, virtualizer]);
 
-  const goToPage = (page: number) => virtualizer.scrollToIndex(page - 1, { align: 'start' });
+  // Tracks the previously-seen zoomLevel (not just a "have we run yet" flag) so this is safe under
+  // StrictMode's dev-only double-invoke of mount effects: a boolean flag with no cleanup would stay
+  // set across that replay and let the second invocation fall through to the real work below, on
+  // mount, in dev. Comparing values instead is naturally idempotent - re-running with the same
+  // zoomLevel is always a no-op, whether that's StrictMode's replay or a genuinely unrelated render.
+  const previousZoomRef = useRef(zoomLevel);
+
+  // Re-measures on zoom (same reason as above) and, unlike a resize, also re-anchors scroll: zoom
+  // changes every page's height at once, and measure() alone doesn't touch scrollY, so whatever was
+  // under the viewport would otherwise drift out from under it, reading as an unrelated jump.
+  // Re-anchors to the same *relative* position within the current page (not just the page's top),
+  // so zooming mid-page doesn't snap you up to its start. Skipped when zoomLevel hasn't actually
+  // changed (e.g. the initial mount) so opening the reader never itself scrolls.
+  useEffect(() => {
+    const previousZoom = previousZoomRef.current;
+    previousZoomRef.current = zoomLevel;
+    if (zoomLevel === previousZoom) return;
+
+    const offset = virtualizer.scrollOffset;
+    const beforeItem = typeof offset === 'number' ? virtualizer.getVirtualItemForOffset(offset) : undefined;
+
+    virtualizer.measure();
+    // measure() only invalidates the cache - it doesn't recompute it, so reading measurementsCache
+    // right after would still return pre-zoom positions. Force the recompute first.
+    virtualizer.getVirtualItems();
+    const afterItem = beforeItem && virtualizer.measurementsCache[beforeItem.index];
+
+    // Falls back to a plain page-top jump if the richer position data isn't available - defensive
+    // only, since scrollOffset/measurementsCache should always be populated once mounted.
+    if (typeof offset !== 'number' || !beforeItem || !afterItem) {
+      scrollToPage(currentPage);
+      return;
+    }
+
+    const fraction = beforeItem.size > 0 ? (offset - beforeItem.start) / beforeItem.size : 0;
+    virtualizer.scrollToOffset(afterItem.start + fraction * afterItem.size, { align: 'start' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoomLevel]);
 
   // Resumes reading where the user last left off, once the document has loaded and the
   // virtualizer knows about every page. Guarded to fire only once per mount, so it doesn't
@@ -211,7 +263,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     if (!pageSizes || hasResumedRef.current) return;
     hasResumedRef.current = true;
 
-    if (initialPage > 1) goToPage(initialPage);
+    if (initialPage > 1) scrollToPage(initialPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSizes]);
 
@@ -263,7 +315,11 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     // -mx-4 cancels the shared layout's `.container` side padding, so pages render full-width on
     // mobile (matching mozilla's own pdf.js viewer) rather than losing ~32px of width, and thus text
     // size, to a gutter around a "card" that doesn't earn its keep on a small screen.
-    <div className="-mx-4 flex flex-col gap-4 pt-4 pb-20 md:mx-0">
+    // overflow-x-hidden is deliberate, not an oversight: zoom is meant to enlarge text within the
+    // page's existing width, not to require horizontal panning to read it. Pages are centered, so
+    // any excess width from zooming past what fits the viewport is clipped evenly on both edges by
+    // design, rather than adding a horizontal scrollbar.
+    <div className="-mx-4 flex flex-col gap-4 overflow-x-hidden pt-4 pb-20 md:mx-0">
       <TranslationPopover readingId={readingId} />
 
       <div ref={containerRef} className="mx-auto flex w-full flex-col items-center gap-4">
@@ -321,7 +377,18 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
         )}
       </div>
 
-      <PdfReaderToolbar currentPage={currentPage} totalPages={totalPages} onGoToPage={goToPage} />
+      <PdfReaderToolbar
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onGoToPage={goToPage}
+        isLoading={pageSizes === null}
+        zoomLevel={zoomLevel}
+        canZoomIn={canZoomIn}
+        canZoomOut={canZoomOut}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onZoomChange={setZoom}
+      />
     </div>
   );
 };
