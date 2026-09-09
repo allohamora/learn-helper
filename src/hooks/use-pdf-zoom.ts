@@ -11,20 +11,24 @@ export const MAX_ZOOM_PERCENT = MAX_ZOOM * 100;
 
 const clampZoom = (zoom: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 
-const getStoredZoom = () => {
-  if (typeof localStorage === 'undefined') return BASE_ZOOM;
-
-  const stored = Number(localStorage.getItem(ZOOM_STORAGE_KEY));
-
-  return stored ? clampZoom(stored) : BASE_ZOOM;
-};
-
 export const usePdfZoom = () => {
-  const [zoomLevel, setZoomLevel] = useState(getStoredZoom);
+  const [zoomLevel, setZoomLevel] = useState(BASE_ZOOM);
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+
+  // Reads the stored zoom only after mount, so the client's first render (the one React
+  // reconciles against the server-rendered HTML) always starts at BASE_ZOOM like the server did -
+  // reading localStorage during that render would mismatch whenever a non-default zoom is stored.
+  useEffect(() => {
+    const stored = Number(localStorage.getItem(ZOOM_STORAGE_KEY));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deferred read is the whole point, see comment above
+    if (stored) setZoomLevel(clampZoom(stored));
+    setIsStorageLoaded(true);
+  }, []);
 
   useEffect(() => {
+    if (!isStorageLoaded) return;
     localStorage.setItem(ZOOM_STORAGE_KEY, String(zoomLevel));
-  }, [zoomLevel]);
+  }, [isStorageLoaded, zoomLevel]);
 
   return {
     zoomLevel,
