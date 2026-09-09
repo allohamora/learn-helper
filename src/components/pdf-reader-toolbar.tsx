@@ -72,7 +72,7 @@ export const PdfReaderToolbar: FC<Props> = ({
           <Input
             ref={zoomInputRef}
             {...zoomInputProps}
-            className="h-6 w-12 shrink-0 px-0.5 text-center text-sm tabular-nums"
+            className="h-6 w-12 shrink-0 appearance-none px-0.5 text-center text-sm tabular-nums"
           />
           <span className="text-sm text-muted-foreground tabular-nums">%</span>
           <Button
@@ -92,7 +92,7 @@ export const PdfReaderToolbar: FC<Props> = ({
           <Input
             ref={pageInputRef}
             {...pageInputProps}
-            className="h-6 w-12 shrink-0 px-0.5 text-center text-sm tabular-nums"
+            className="h-6 w-12 shrink-0 appearance-none px-0.5 text-center text-sm tabular-nums"
           />
           <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">/ {totalPages}</span>
         </div>
