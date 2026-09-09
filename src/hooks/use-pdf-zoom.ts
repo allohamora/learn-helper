@@ -19,9 +19,10 @@ export const usePdfZoom = () => {
   // reconciles against the server-rendered HTML) always starts at BASE_ZOOM like the server did -
   // reading localStorage during that render would mismatch whenever a non-default zoom is stored.
   useEffect(() => {
-    const stored = Number(localStorage.getItem(ZOOM_STORAGE_KEY));
+    const raw = localStorage.getItem(ZOOM_STORAGE_KEY);
+    const stored = raw === null ? NaN : Number(raw);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deferred read is the whole point, see comment above
-    if (stored) setZoomLevel(clampZoom(stored));
+    if (Number.isFinite(stored)) setZoomLevel(clampZoom(stored));
     setIsStorageLoaded(true);
   }, []);
 
