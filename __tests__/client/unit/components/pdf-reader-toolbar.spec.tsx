@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
 
 const zoomProps = {
-  disabled: false,
+  isLoading: false,
   zoomLevel: 1,
   canZoomIn: true,
   canZoomOut: true,
@@ -223,7 +223,7 @@ describe('PdfReaderToolbar', () => {
 
   it('disables the page input and zoom buttons while the document is still loading', () => {
     const onGoToPage = vi.fn();
-    render(<PdfReaderToolbar currentPage={1} totalPages={5} onGoToPage={onGoToPage} {...zoomProps} disabled />);
+    render(<PdfReaderToolbar currentPage={1} totalPages={5} onGoToPage={onGoToPage} {...zoomProps} isLoading />);
 
     expect((screen.getByRole('textbox', { name: 'Page number' }) as HTMLInputElement).disabled).toBe(true);
     expect((screen.getByRole('textbox', { name: 'Zoom percentage' }) as HTMLInputElement).disabled).toBe(true);
@@ -240,7 +240,7 @@ describe('PdfReaderToolbar', () => {
         onGoToPage={onGoToPage}
         {...zoomProps}
         zoomLevel={1.5}
-        disabled
+        isLoading
       />,
     );
 

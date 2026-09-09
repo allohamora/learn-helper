@@ -9,7 +9,7 @@ type Props = {
   currentPage: number;
   totalPages: number;
   onGoToPage: (page: number) => void;
-  disabled: boolean;
+  isLoading: boolean;
   zoomLevel: number;
   canZoomIn: boolean;
   canZoomOut: boolean;
@@ -22,7 +22,7 @@ export const PdfReaderToolbar: FC<Props> = ({
   currentPage,
   totalPages,
   onGoToPage,
-  disabled,
+  isLoading,
   zoomLevel,
   canZoomIn,
   canZoomOut,
@@ -31,16 +31,16 @@ export const PdfReaderToolbar: FC<Props> = ({
   onZoomChange,
 }) => {
   // No step: zoom accepts any whole percent in range, not just increments of the +/- buttons' step.
-  // Blank while disabled, instead of showing BASE_ZOOM until the persisted value loads in.
+  // Blank while loading, instead of showing BASE_ZOOM until the persisted value loads in.
   const { inputRef: zoomInputRef, inputProps: zoomInputProps } = useNumberFieldInput({
     'aria-label': 'Zoom percentage',
-    value: disabled ? NaN : Math.round(zoomLevel * 100),
+    value: isLoading ? NaN : Math.round(zoomLevel * 100),
     minValue: MIN_ZOOM_PERCENT,
     maxValue: MAX_ZOOM_PERCENT,
     // Fixes numeric formatOptions so inputMode resolves the same on the server and the client -
     // leaving it to locale inference caused an SSR/CSR inputMode mismatch (numeric vs decimal).
     formatOptions: { maximumFractionDigits: 0 },
-    isDisabled: disabled,
+    isDisabled: isLoading,
     onChange: onZoomChange,
     // Otherwise the browser/OS infers "next" and Enter jumps focus to the page input.
     enterKeyHint: 'done',
@@ -53,7 +53,7 @@ export const PdfReaderToolbar: FC<Props> = ({
     maxValue: totalPages,
     step: 1,
     formatOptions: { maximumFractionDigits: 0 },
-    isDisabled: disabled,
+    isDisabled: isLoading,
     onChange: onGoToPage,
     enterKeyHint: 'done',
   });
@@ -67,7 +67,7 @@ export const PdfReaderToolbar: FC<Props> = ({
             variant="ghost"
             size="icon-sm"
             className="size-6 md:size-8"
-            disabled={disabled || !canZoomOut}
+            disabled={isLoading || !canZoomOut}
             aria-label="Zoom out"
             onClick={onZoomOut}
           >
@@ -84,7 +84,7 @@ export const PdfReaderToolbar: FC<Props> = ({
             variant="ghost"
             size="icon-sm"
             className="size-6 md:size-8"
-            disabled={disabled || !canZoomIn}
+            disabled={isLoading || !canZoomIn}
             aria-label="Zoom in"
             onClick={onZoomIn}
           >

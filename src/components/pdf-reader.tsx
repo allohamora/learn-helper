@@ -381,7 +381,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
         currentPage={currentPage}
         totalPages={totalPages}
         onGoToPage={goToPage}
-        disabled={pageSizes === null}
+        isLoading={pageSizes === null}
         zoomLevel={zoomLevel}
         canZoomIn={canZoomIn}
         canZoomOut={canZoomOut}
