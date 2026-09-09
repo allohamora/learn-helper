@@ -31,9 +31,10 @@ export const PdfReaderToolbar: FC<Props> = ({
   onZoomChange,
 }) => {
   // No step: zoom accepts any whole percent in range, not just increments of the +/- buttons' step.
+  // Blank while disabled, instead of showing BASE_ZOOM until the persisted value loads in.
   const { inputRef: zoomInputRef, inputProps: zoomInputProps } = useNumberFieldInput({
     'aria-label': 'Zoom percentage',
-    value: Math.round(zoomLevel * 100),
+    value: disabled ? NaN : Math.round(zoomLevel * 100),
     minValue: MIN_ZOOM_PERCENT,
     maxValue: MAX_ZOOM_PERCENT,
     // Fixes numeric formatOptions so inputMode resolves the same on the server and the client -

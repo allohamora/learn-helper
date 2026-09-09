@@ -230,4 +230,26 @@ describe('PdfReaderToolbar', () => {
     expect((screen.getByRole('button', { name: 'Zoom in' }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole('button', { name: 'Zoom out' }) as HTMLButtonElement).disabled).toBe(true);
   });
+
+  it('shows a blank zoom value while the document is still loading, not a stale zoom', () => {
+    const onGoToPage = vi.fn();
+    const { rerender } = render(
+      <PdfReaderToolbar
+        currentPage={1}
+        totalPages={5}
+        onGoToPage={onGoToPage}
+        {...zoomProps}
+        zoomLevel={1.5}
+        disabled
+      />,
+    );
+
+    expect((screen.getByRole('textbox', { name: 'Zoom percentage' }) as HTMLInputElement).value).toBe('');
+
+    rerender(
+      <PdfReaderToolbar currentPage={1} totalPages={5} onGoToPage={onGoToPage} {...zoomProps} zoomLevel={1.5} />,
+    );
+
+    expect((screen.getByRole('textbox', { name: 'Zoom percentage' }) as HTMLInputElement).value).toBe('150');
+  });
 });
