@@ -41,6 +41,8 @@ export const PdfReaderToolbar: FC<Props> = ({
     formatOptions: { maximumFractionDigits: 0 },
     isDisabled: disabled,
     onChange: onZoomChange,
+    // Otherwise the browser/OS infers "next" and Enter jumps focus to the page input.
+    enterKeyHint: 'done',
   });
 
   const { inputRef: pageInputRef, inputProps: pageInputProps } = useNumberFieldInput({
@@ -52,6 +54,7 @@ export const PdfReaderToolbar: FC<Props> = ({
     formatOptions: { maximumFractionDigits: 0 },
     isDisabled: disabled,
     onChange: onGoToPage,
+    enterKeyHint: 'done',
   });
 
   return (
