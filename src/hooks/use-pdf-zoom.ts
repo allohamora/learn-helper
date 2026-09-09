@@ -12,6 +12,8 @@ export const MAX_ZOOM_PERCENT = MAX_ZOOM * 100;
 const clampZoom = (zoom: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 
 const getStoredZoom = () => {
+  if (typeof localStorage === 'undefined') return BASE_ZOOM;
+
   const stored = Number(localStorage.getItem(ZOOM_STORAGE_KEY));
 
   return stored ? clampZoom(stored) : BASE_ZOOM;
