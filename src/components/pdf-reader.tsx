@@ -315,8 +315,10 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
     // -mx-4 cancels the shared layout's `.container` side padding, so pages render full-width on
     // mobile (matching mozilla's own pdf.js viewer) rather than losing ~32px of width, and thus text
     // size, to a gutter around a "card" that doesn't earn its keep on a small screen.
-    // overflow-x-hidden guarantees zoomed-in pages (wider than the viewport) never produce a
-    // horizontal scrollbar - the excess is clipped instead, since pages are already centered.
+    // overflow-x-hidden is deliberate, not an oversight: zoom is meant to enlarge text within the
+    // page's existing width, not to require horizontal panning to read it. Pages are centered, so
+    // any excess width from zooming past what fits the viewport is clipped evenly on both edges by
+    // design, rather than adding a horizontal scrollbar.
     <div className="-mx-4 flex flex-col gap-4 overflow-x-hidden pt-4 pb-20 md:mx-0">
       <TranslationPopover readingId={readingId} />
 
