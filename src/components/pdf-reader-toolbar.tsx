@@ -36,6 +36,9 @@ export const PdfReaderToolbar: FC<Props> = ({
     value: Math.round(zoomLevel * 100),
     minValue: MIN_ZOOM_PERCENT,
     maxValue: MAX_ZOOM_PERCENT,
+    // Fixes numeric formatOptions so inputMode resolves the same on the server and the client -
+    // leaving it to locale inference caused an SSR/CSR inputMode mismatch (numeric vs decimal).
+    formatOptions: { maximumFractionDigits: 0 },
     isDisabled: disabled,
     onChange: onZoomChange,
   });
@@ -46,40 +49,64 @@ export const PdfReaderToolbar: FC<Props> = ({
     minValue: 1,
     maxValue: totalPages,
     step: 1,
+    formatOptions: { maximumFractionDigits: 0 },
     isDisabled: disabled,
     onChange: onGoToPage,
   });
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background">
-      <div className="relative container flex h-14 items-center justify-center gap-2">
-        <div className="absolute left-4 flex items-center gap-1">
+      <div className="container flex h-14 flex-nowrap items-center gap-2 overflow-x-auto px-4">
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
+            className="size-6 md:size-8"
             disabled={disabled || !canZoomOut}
             aria-label="Zoom out"
             onClick={onZoomOut}
           >
-            <ZoomOutIcon />
+            <ZoomOutIcon className="size-4" />
           </Button>
-          <Input ref={zoomInputRef} {...zoomInputProps} className="h-8 w-14 text-center tabular-nums" />
+          <Input
+            ref={zoomInputRef}
+            {...zoomInputProps}
+            className="h-6 w-12 shrink-0 px-0.5 text-center text-sm tabular-nums"
+          />
           <span className="text-sm text-muted-foreground tabular-nums">%</span>
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
+            className="size-6 md:size-8"
             disabled={disabled || !canZoomIn}
             aria-label="Zoom in"
             onClick={onZoomIn}
           >
-            <ZoomInIcon />
+            <ZoomInIcon className="size-4" />
           </Button>
         </div>
 
-        <Input ref={pageInputRef} {...pageInputProps} className="h-8 w-14 text-center tabular-nums" />
-        <span className="text-sm text-muted-foreground tabular-nums">/ {totalPages}</span>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
+          <Input
+            ref={pageInputRef}
+            {...pageInputProps}
+            className="h-6 w-12 shrink-0 px-0.5 text-center text-sm tabular-nums"
+          />
+          <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">/ {totalPages}</span>
+        </div>
+
+        <div className="invisible flex shrink-0 items-center gap-1" aria-hidden>
+          <Button type="button" variant="ghost" size="icon-sm" className="size-6 md:size-8" tabIndex={-1}>
+            <ZoomOutIcon className="size-4" />
+          </Button>
+          <div className="h-6 w-12" />
+          <span className="text-sm">%</span>
+          <Button type="button" variant="ghost" size="icon-sm" className="size-6 md:size-8" tabIndex={-1}>
+            <ZoomInIcon className="size-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
