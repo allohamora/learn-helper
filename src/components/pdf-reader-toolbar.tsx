@@ -2,6 +2,7 @@ import { type FC } from 'react';
 import { ZoomInIcon, ZoomOutIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNumberFieldInput } from '@/hooks/use-number-field-input';
 import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT } from '@/hooks/use-pdf-zoom';
 
@@ -31,10 +32,9 @@ export const PdfReaderToolbar: FC<Props> = ({
   onZoomChange,
 }) => {
   // No step: zoom accepts any whole percent in range, not just increments of the +/- buttons' step.
-  // Blank while loading, instead of showing BASE_ZOOM until the persisted value loads in.
   const { inputRef: zoomInputRef, inputProps: zoomInputProps } = useNumberFieldInput({
     'aria-label': 'Zoom percentage',
-    value: isLoading ? NaN : Math.round(zoomLevel * 100),
+    value: Math.round(zoomLevel * 100),
     minValue: MIN_ZOOM_PERCENT,
     maxValue: MAX_ZOOM_PERCENT,
     // Fixes numeric formatOptions so inputMode resolves the same on the server and the client -
@@ -73,11 +73,15 @@ export const PdfReaderToolbar: FC<Props> = ({
           >
             <ZoomOutIcon className="size-4" />
           </Button>
-          <Input
-            ref={zoomInputRef}
-            {...zoomInputProps}
-            className="h-6 w-12 shrink-0 appearance-none px-0.5 text-center text-sm tabular-nums"
-          />
+          {isLoading ? (
+            <Skeleton className="h-6 w-12 shrink-0" />
+          ) : (
+            <Input
+              ref={zoomInputRef}
+              {...zoomInputProps}
+              className="h-6 w-12 shrink-0 appearance-none px-0.5 text-center text-sm tabular-nums"
+            />
+          )}
           <span className="text-sm text-muted-foreground tabular-nums">%</span>
           <Button
             type="button"
@@ -93,11 +97,15 @@ export const PdfReaderToolbar: FC<Props> = ({
         </div>
 
         <div className="flex min-w-0 flex-1 items-center justify-center gap-1">
-          <Input
-            ref={pageInputRef}
-            {...pageInputProps}
-            className="h-6 w-12 shrink-0 appearance-none px-0.5 text-center text-sm tabular-nums"
-          />
+          {isLoading ? (
+            <Skeleton className="h-6 w-12 shrink-0" />
+          ) : (
+            <Input
+              ref={pageInputRef}
+              {...pageInputProps}
+              className="h-6 w-12 shrink-0 appearance-none px-0.5 text-center text-sm tabular-nums"
+            />
+          )}
           <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">/ {totalPages}</span>
         </div>
 
