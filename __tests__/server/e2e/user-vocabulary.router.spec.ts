@@ -478,7 +478,7 @@ describe('user-vocabulary.router', () => {
       ]);
     });
 
-    it('returns 409 and still records the event when the generated word already exists', async () => {
+    it("reuses an existing vocabulary item and links it to the user's personal list, without duplicating the row", async () => {
       auth.authorized({ user: { id: USER_ID } });
       await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
       await createMissingVocabularyItems([
@@ -495,7 +495,16 @@ describe('user-vocabulary.router', () => {
       const res = await client.api.v1.users.me['vocabulary-lists'].personal.items.generate.$post({
         json: { value: 'run' },
       });
-      expect(res.status).toBe(409);
+      expect(res.status).toBe(201);
+
+      const body = await res.json();
+      expect(body).toMatchObject({
+        success: true,
+        data: {
+          status: LearningStatus.Learning,
+          vocabularyItem: { value: 'run', definition: 'existing definition' },
+        },
+      });
 
       const items = await db.query.vocabularyItem.findMany({ where: eq(vocabularyItem.value, 'run') });
       expect(items).toHaveLength(1);
@@ -507,7 +516,23 @@ describe('user-vocabulary.router', () => {
 
       await expect(
         getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: item.id }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject({ vocabularyItemId: item.id });
+    });
+
+    it('returns 409 when the word is already in the personal list', async () => {
+      auth.authorized({ user: { id: USER_ID } });
+      await db.insert(user).values({ id: USER_ID, name: 'E2E User', email: `${USER_ID}@example.com` });
+      await createPersonalVocabularyListForUser(USER_ID);
+
+      const first = await client.api.v1.users.me['vocabulary-lists'].personal.items.generate.$post({
+        json: { value: 'run' },
+      });
+      expect(first.status).toBe(201);
+
+      const second = await client.api.v1.users.me['vocabulary-lists'].personal.items.generate.$post({
+        json: { value: 'run' },
+      });
+      expect(second.status).toBe(409);
     });
 
     it('returns 400 when value is missing', async () => {

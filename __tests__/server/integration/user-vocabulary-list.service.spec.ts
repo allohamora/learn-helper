@@ -538,7 +538,7 @@ describe('userVocabularyListService', () => {
       ).resolves.toBeDefined();
     });
 
-    it('throws a conflict and does not add to the list when the generated word already exists', async () => {
+    it('reuses an already-existing vocabulary item and links it to the list, without duplicating it', async () => {
       const { id: userId } = await createTestUser('user-1');
       const [existingItem] = await createMissingVocabularyItems([
         {
@@ -552,16 +552,28 @@ describe('userVocabularyListService', () => {
       if (!existingItem) throw new Error('expected item to be created');
       const personalList = await createPersonalVocabularyListForUser(userId);
 
-      await expect(
-        generateVocabularyItem({
-          userId,
-          value: 'run',
-        }),
-      ).rejects.toThrow(Exception);
+      const userItem = await generateVocabularyItem({
+        userId,
+        value: 'run',
+      });
 
+      expect(userItem).toMatchObject({
+        status: LearningStatus.Learning,
+        vocabularyItemId: existingItem.id,
+        vocabularyItem: { value: 'run', definition: 'existing definition' },
+      });
       await expect(
         getVocabularyListItem({ vocabularyListId: personalList.id, vocabularyItemId: existingItem.id }),
-      ).resolves.toBeUndefined();
+      ).resolves.toBeDefined();
+    });
+
+    it('throws a conflict when the word is already in the personal list', async () => {
+      const { id: userId } = await createTestUser('user-1');
+      await createPersonalVocabularyListForUser(userId);
+
+      await generateVocabularyItem({ userId, value: 'run' });
+
+      await expect(generateVocabularyItem({ userId, value: 'run' })).rejects.toThrow(Exception);
     });
   });
 
