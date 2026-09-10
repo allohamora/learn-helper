@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.1.1](https://github.com/allohamora/learn-helper/compare/v0.1.0...v0.1.1) (2026-09-10)
+
+### Bug Fixes
+
+- Resolve fixed-collocation sense from context instead of default word meaning ([35ff208](https://github.com/allohamora/learn-helper/commit/35ff208b66ab6039fb328bc0866f019fd0050386))
+- Scope personal-list add conflict check to the personal list ([29dcf06](https://github.com/allohamora/learn-helper/commit/29dcf06f0f1a560e52e7753b813892b0e23e3010))
+- Assert quarters isLearnable and ground translation prompt in dictionary order ([19a57ea](https://github.com/allohamora/learn-helper/commit/19a57ea79df340068e3075db695e95fbcca3856c))
+- Stabilize translation prompts and prevent vocab/reading sense conflicts ([b4449a6](https://github.com/allohamora/learn-helper/commit/b4449a67307199d0749bff9b51230e08d83d2e6d))
+- Stop language leaks and verified a hallucinated eval judge rule ([93257cf](https://github.com/allohamora/learn-helper/commit/93257cf96ca655095c682f38c460f7ce0225270b))
+
+### Code Refactoring
+
+- Replace NaN-blank hack with skeleton loaders in pdf reader toolbar ([93f2959](https://github.com/allohamora/learn-helper/commit/93f295930ffc95cef04a962900802e0a71ae01d9))
+
+### Tests
+
+- Align pdf reader toolbar tests with skeleton loading state ([83a7cc6](https://github.com/allohamora/learn-helper/commit/83a7cc62fba872504f397f50ca0cd541ae6e9cbc))
+- Assert skeleton placeholders render while pdf reader toolbar is loading ([807c920](https://github.com/allohamora/learn-helper/commit/807c92021d511a3be6289a18c496aa408d5a4c31))
+- Cover null-part-of-speech lookup in vocabulary item repository ([3f7ed32](https://github.com/allohamora/learn-helper/commit/3f7ed32b34ecc27f42c733f90e967f62deb5dbac))
+
 ## [0.1.0](https://github.com/allohamora/learn-helper/compare/v0.0.5...v0.1.0) (2026-09-09)
 
 ### Features
