@@ -183,6 +183,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       console.log('context-disambiguation-quarters', JSON.stringify(output, null, 2));
 
       assertShape(output);
+      expect(output.isLearnable).toBe(true);
 
       await expect(output).toSatisfyStatements([
         'uaTranslation is the Ukrainian word/phrase for the living space/lodgings sense of "quarters" (e.g. "приміщення", "житло", "помешкання", case-insensitive, or an equally natural equivalent), given the "cramped ___" context - not the one-fourth/fraction sense ("чверть") and not the 25-cent coin sense.',
