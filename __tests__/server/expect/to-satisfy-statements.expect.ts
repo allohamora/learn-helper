@@ -48,6 +48,7 @@ expect.extend({
         '## Rules',
         '- Judge only what is literally present in the Input JSON. Do not infer or hallucinate content.',
         '- Only flag a statement as violated if you can quote the exact offending part of the Input JSON, from the field the statement actually refers to; otherwise treat it as satisfied.',
+        "- Only judge against constraints literally written in the Statements - never invent an additional implied rule that isn't stated. A statement banning specific things (e.g. \"no semicolons, colons, or dashes\") never implicitly bans other things it doesn't name (e.g. commas). A statement requiring a word/phrase to appear never implicitly requires it to be the sentence's main focus or subject, unless the statement says so.",
         '- Interpret statements leniently: accept any reasonable equivalent, not just the examples given.',
         '',
         '## Output Requirements',

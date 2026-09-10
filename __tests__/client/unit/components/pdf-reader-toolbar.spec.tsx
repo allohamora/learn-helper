@@ -221,19 +221,22 @@ describe('PdfReaderToolbar', () => {
     expect((screen.getByRole('button', { name: 'Zoom out' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('disables the page input and zoom buttons while the document is still loading', () => {
+  it('shows skeletons instead of the page/zoom inputs and disables the zoom buttons while the document is still loading', () => {
     const onGoToPage = vi.fn();
-    render(<PdfReaderToolbar currentPage={1} totalPages={5} onGoToPage={onGoToPage} {...zoomProps} isLoading />);
+    const { container } = render(
+      <PdfReaderToolbar currentPage={1} totalPages={5} onGoToPage={onGoToPage} {...zoomProps} isLoading />,
+    );
 
-    expect((screen.getByRole('textbox', { name: 'Page number' }) as HTMLInputElement).disabled).toBe(true);
-    expect((screen.getByRole('textbox', { name: 'Zoom percentage' }) as HTMLInputElement).disabled).toBe(true);
+    expect(screen.queryByRole('textbox', { name: 'Page number' })).toBeNull();
+    expect(screen.queryByRole('textbox', { name: 'Zoom percentage' })).toBeNull();
+    expect(container.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(2);
     expect((screen.getByRole('button', { name: 'Zoom in' }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole('button', { name: 'Zoom out' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('shows a blank zoom value while the document is still loading, not a stale zoom', () => {
+  it('replaces the zoom skeleton with the real value once loading finishes', () => {
     const onGoToPage = vi.fn();
-    const { rerender } = render(
+    const { container, rerender } = render(
       <PdfReaderToolbar
         currentPage={1}
         totalPages={5}
@@ -244,7 +247,8 @@ describe('PdfReaderToolbar', () => {
       />,
     );
 
-    expect((screen.getByRole('textbox', { name: 'Zoom percentage' }) as HTMLInputElement).value).toBe('');
+    expect(screen.queryByRole('textbox', { name: 'Zoom percentage' })).toBeNull();
+    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull();
 
     rerender(
       <PdfReaderToolbar currentPage={1} totalPages={5} onGoToPage={onGoToPage} {...zoomProps} zoomLevel={1.5} />,
