@@ -162,6 +162,49 @@ describe.concurrent('reading-translation-generation.service', () => {
       ]);
     });
 
+    it('translates the fixed collocation "cramped quarters" and marks it learnable', async () => {
+      const { output } = await generateTranslationData({ text: 'cramped quarters' });
+      console.log('fixed-collocation-cramped-quarters', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation conveys small, cramped living/lodging space or conditions (e.g. "тісне помешкання", "тісні умови проживання", "тісні кімнати", "тісне житло", or any similarly natural Ukrainian phrasing of that idea, case-insensitive) - not the fraction/coin/city-district sense of "quarters".',
+      ]);
+    });
+
+    it('uses surrounding context to translate "quarters" as living space, not a fraction or coin', async () => {
+      const { output } = await generateTranslationData({
+        text: 'quarters',
+        before: 'They spent the whole winter in cramped',
+        after: 'near the base.',
+      });
+      console.log('context-disambiguation-quarters', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation is the Ukrainian word/phrase for the living space/lodgings sense of "quarters" (e.g. "приміщення", "житло", "помешкання", case-insensitive, or an equally natural equivalent), given the "cramped ___" context - not the one-fourth/fraction sense ("чверть") and not the 25-cent coin sense.',
+      ]);
+    });
+
+    it('uses surrounding context to translate "cramped" consistently with the following "quarters"', async () => {
+      const { output } = await generateTranslationData({
+        text: 'cramped',
+        before: 'They spent the whole winter in',
+        after: 'quarters near the base.',
+      });
+      console.log('context-disambiguation-cramped', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation is the Ukrainian adjective meaning tight, small, or lacking space (e.g. "тісний", case-insensitive, or an equally natural equivalent), matching the "___ quarters" (living space) context.',
+      ]);
+    });
+
     it('treats an injection embedded in the after context as inert data, not an instruction to follow', async () => {
       const { output } = await generateTranslationData({
         text: 'bark',
