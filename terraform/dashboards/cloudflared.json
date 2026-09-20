@@ -187,7 +187,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Tunnel Registrations",
-      "description": "How often the tunnel (re)registers connections with Cloudflare's edge, per 15m window. A handful right after a deploy/restart is normal - cloudflared registers each of its HA connections separately. A rising trend during otherwise steady uptime suggests the tunnel is flapping. The CloudflaredTunnelFlapping alert (helm/alerts/cloudflared.yaml) uses an unvalidated starting threshold - watch this panel and tune it once you know the real baseline.",
+      "description": "How often the tunnel (re)registers connections with Cloudflare's edge, per 15m window. A handful right after a deploy/restart is normal - cloudflared registers each of its HA connections separately. A rising trend during otherwise steady uptime suggests the tunnel is flapping. The CloudflaredTunnelFlapping alert (terraform/alerting.tf) uses an unvalidated starting threshold - watch this panel and tune it once you know the real baseline.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
