@@ -19,11 +19,7 @@ groups:
         expr: >-
           sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name="production"}[5m]))
           /
-          (
-            sum(rate(cloudflared_tunnel_response_by_code{deployment_environment_name="production"}[5m]))
-            +
-            sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name="production"}[5m]))
-          )
+          sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name="production"}[5m]))
           > 0.05
         for: 5m
         labels:

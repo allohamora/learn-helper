@@ -127,8 +127,8 @@
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Errors",
-      "description": "cloudflared errors per second: HTTP 4xx/5xx responses, and origin-connection failures (e.g. the app being unreachable) that never produce a status code.",
+      "title": "Errors & Traffic",
+      "description": "cloudflared requests per minute: HTTP 4xx/5xx responses, and origin-connection failures (e.g. the app being unreachable) that never produce a status code. Total requests per minute is plotted alongside for scale, so the error lines can be judged against actual traffic volume. Per-minute instead of per-second so low-traffic numbers don't show up as confusing fractions.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -140,8 +140,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"4..|5..\", deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "HTTP 4xx/5xx",
+          "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"4..|5..\", deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "HTTP 4xx/5xx / min",
           "refId": "A"
         },
         {
@@ -149,17 +149,38 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "origin/tunnel errors",
+          "expr": "sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "origin/tunnel errors / min",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "total requests / min",
+          "refId": "C"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "min": 0
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "axisLabel": "requests / min"
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "total requests / min" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "semi-dark-blue" } },
+              { "id": "custom.fillOpacity", "value": 10 },
+              { "id": "custom.lineWidth", "value": 1 }
+            ]
+          }
+        ]
       }
     },
     {
