@@ -1,0 +1,10 @@
+{{- if .Values.alloy.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.alloy: |-
+{{ include "config.alloy" . | indent 4 }}
+{{- end }}

@@ -1,0 +1,118 @@
+{{- define "config.alloy" -}}
+// ---- cloudflared tunnel metrics + logs ----
+// Scoped to just the cloudflared pod via a server-side label selector, rather than
+// discovering every pod in the namespace and relabeling client-side.
+discovery.kubernetes "cloudflared" {
+  role = "pod"
+
+  namespaces {
+    own_namespace = true
+  }
+
+  selectors {
+    role  = "pod"
+    label = "app=cloudflared"
+  }
+}
+
+// Keep only the "metrics" port target - cloudflared's deployment exposes a "metrics"
+// container port (via --metrics 0.0.0.0:2000) alongside no other ports, but this
+// filter is what makes that scrape-worthy port explicit rather than assumed.
+discovery.relabel "cloudflared_metrics" {
+  targets = discovery.kubernetes.cloudflared.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
+  }
+}
+
+prometheus.scrape "cloudflared" {
+  targets         = discovery.relabel.cloudflared_metrics.output
+  job_name        = "cloudflared"
+  scrape_interval = "60s"
+  forward_to      = [otelcol.receiver.prometheus.default.receiver]
+}
+
+// Tails the cloudflared pod's stdout via the Kubernetes API - no port filter needed,
+// discovery.kubernetes "cloudflared" above already scopes this to just that one pod.
+loki.source.kubernetes "cloudflared" {
+  targets    = discovery.kubernetes.cloudflared.targets
+  forward_to = [otelcol.receiver.loki.default.receiver]
+}
+
+otelcol.receiver.prometheus "default" {
+  output {
+    metrics = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+
+otelcol.receiver.loki "default" {
+  output {
+    logs = [otelcol.processor.transform.cloudflared_logs.input]
+  }
+}
+
+// otelcol.receiver.prometheus sets service_name from the "cloudflared" job label
+// automatically; otelcol.receiver.loki has no equivalent, so logs would otherwise
+// show up as unknown_service in Grafana Cloud.
+otelcol.processor.transform "cloudflared_logs" {
+  error_mode = "ignore"
+
+  log_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "cloudflared")`,
+    ]
+  }
+
+  // cloudflared is run with --output json (zerolog), so each line is a JSON object
+  // with a "level" field already using OTel's own severity words (info/warn/error/...);
+  // copy it onto severity_text so Grafana Cloud's detected_level reflects the real
+  // level instead of falling back to unknown, and promote "message" to the log body.
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ParseJSON(body))`,
+      `set(severity_text, cache["level"]) where cache["level"] != nil`,
+      `set(body, cache["message"]) where cache["message"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+
+// ---- tag every metric/log with the current environment, so production and
+// non-production data can be told apart in Grafana Cloud. Reads the
+// OTEL_RESOURCE_ATTRIBUTES env var (set to "deployment.environment.name=<value>" in
+// alloy.deployment.yaml) and stamps it onto every metric/log's resource. ----
+otelcol.processor.resourcedetection "environment" {
+  detectors = ["env"]
+
+  output {
+    metrics = [otelcol.exporter.otlphttp.grafana_cloud.input]
+    logs    = [otelcol.exporter.otlphttp.grafana_cloud.input]
+  }
+}
+
+// ---- Grafana Cloud OTLP output ----
+// OTEL_EXPORTER_OTLP_HEADERS here is just Grafana Cloud's generated
+// base64(instance_id:token) value (not a full "key=value" header string), so the
+// "Basic " scheme prefix is added here to form the actual Authorization header.
+otelcol.auth.headers "grafana_cloud" {
+  header {
+    key   = "Authorization"
+    value = string.format("Basic %s", sys.env("OTEL_EXPORTER_OTLP_HEADERS"))
+  }
+}
+
+otelcol.exporter.otlphttp "grafana_cloud" {
+  client {
+    endpoint = sys.env("OTEL_EXPORTER_OTLP_ENDPOINT")
+    auth     = otelcol.auth.headers.grafana_cloud.handler
+  }
+}
+{{- end -}}

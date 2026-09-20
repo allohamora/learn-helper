@@ -20,6 +20,18 @@ spec:
         checksum/app-env: {{ toYaml .Values.app.env | sha256sum | quote }}
         checksum/postgres-env: {{ toYaml .Values.postgres.env | sha256sum | quote }}
     spec:
+      # Without this, the app container can start before postgres is ready to accept
+      # connections and crash with ECONNREFUSED. This waits until postgres is reachable.
+      initContainers:
+        - name: wait-for-postgres
+          image: {{ .Values.postgres.image | quote }}
+          envFrom:
+            - secretRef:
+                name: postgres-env
+          command:
+            - sh
+            - -c
+            - timeout 120 sh -c 'until pg_isready -h postgres -p 5432 -U "$POSTGRES_USER" -d "$POSTGRES_DB"; do sleep 2; done'
       containers:
         - name: app
           image: {{ .Values.app.image | default (printf "learn-helper:%s" .Chart.AppVersion) | quote }}

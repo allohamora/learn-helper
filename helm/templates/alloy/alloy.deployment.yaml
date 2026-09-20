@@ -1,0 +1,71 @@
+{{- if .Values.alloy.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alloy
+  template:
+    metadata:
+      labels:
+        app: alloy
+      annotations:
+        checksum/alloy-config: {{ include "config.alloy" . | sha256sum | quote }}
+        checksum/alloy-env: {{ toYaml .Values.alloy.env | sha256sum | quote }}
+    spec:
+      serviceAccountName: alloy
+      containers:
+        - name: alloy
+          image: {{ .Values.alloy.image | quote }}
+          args:
+            - run
+            - --server.http.listen-addr=0.0.0.0:12345
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+          ports:
+            - name: http
+              containerPort: 12345
+          envFrom:
+            - secretRef:
+                name: alloy-env
+          env:
+            # otelcol.processor.resourcedetection's "env" detector reads this exact
+            # variable name/format - composed here (not via k8s $(VAR) expansion,
+            # which can't reference envFrom-sourced vars like ENVIRONMENT above)
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "deployment.environment.name={{ .Values.alloy.env.ENVIRONMENT }}"
+          volumeMounts:
+            - name: alloy-config
+              mountPath: /etc/alloy
+            - name: alloy-data
+              mountPath: /var/lib/alloy/data
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: alloy-config
+          configMap:
+            name: alloy-config
+        - name: alloy-data
+          emptyDir: {}
+{{- end }}

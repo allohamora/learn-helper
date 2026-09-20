@@ -67,6 +67,61 @@ kubectl delete namespace learn-helper
 k3d cluster delete learn-helper
 ```
 
+# Grafana Alloy (cloudflared metrics/logs -> Grafana Cloud)
+
+Alloy is disabled by default (`alloy.enabled: false`). It collects the cloudflared
+tunnel's own Prometheus metrics (connection health, request counts, error rates - the
+`/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
+logs, and ships both to Grafana Cloud over OTLP. Every metric/log gets a
+`deployment.environment.name` resource attribute so production and non-production data can
+be told apart. Nothing else is collected - no Postgres metrics, no node/cluster
+metrics, no `app` pod logs. The app's own traces/logs/HTTP metrics go straight to
+Sentry (see `src/server/instrument.ts`) and aren't part of this pipeline either.
+
+To enable it:
+
+1. Run `terraform apply` in `terraform/` (see `terraform/README.md`) - it provisions the
+   OTLP access policy/token in Grafana Cloud.
+2. Fetch the endpoint and headers with the `terraform console` commands in
+   `terraform/README.md`'s "Use" section. The headers value is just the raw
+   `base64(instance_id:token)` value (the chart adds the `Basic ` scheme prefix itself).
+3. Add these under `alloy.env` in `values.yaml`, along with `ENVIRONMENT` (`production`
+   or `development`), and set `alloy.enabled: true`:
+   ```yaml
+   alloy:
+     enabled: true
+     env:
+       OTEL_EXPORTER_OTLP_ENDPOINT: <otel_exporter_otlp_endpoint output>
+       OTEL_EXPORTER_OTLP_HEADERS: '<otel_exporter_otlp_headers output>'
+       ENVIRONMENT: production
+   ```
+4. Re-run the `helm upgrade` command from the install/update steps above.
+
+```bash
+# Verify Alloy is scraping/shipping correctly.
+kubectl -n learn-helper logs deploy/alloy
+
+# Reach Alloy's own UI/health endpoint.
+kubectl -n learn-helper port-forward deploy/alloy 12345:12345
+```
+
+Confirm data is arriving via the Terraform-managed `Cloudflared Tunnel` dashboard in Grafana
+Cloud, or via Drilldown > Metrics/Logs filtered on `job="cloudflared"`/`service_name="cloudflared"`.
+
+Changing `alloy.env` (e.g. rotating the API token, or switching `ENVIRONMENT`) follows
+the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
+
+## Dashboard and alerts
+
+The `Cloudflared Tunnel` dashboard (HA connections, errors, tunnel registration churn,
+concurrent requests, connected edge locations, and logs) and its 5 alert rules
+(degraded HA connections, origin errors, tunnel flapping, elevated error logs,
+fatal log), plus the email contact
+point/notification policy that routes them, are managed by Terraform - see
+`terraform/README.md`. The dashboard JSON lives at `terraform/dashboards/cloudflared.json`
+and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to create or
+update them. None of this is deployed by the Helm chart itself.
+
 # Production setup notes
 
 ## SSH access via Cloudflare Zero Trust
