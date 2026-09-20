@@ -50,6 +50,21 @@ otelcol.receiver.prometheus "default" {
 
 otelcol.receiver.loki "default" {
   output {
+    logs = [otelcol.processor.resource.cloudflared_logs.input]
+  }
+}
+
+// otelcol.receiver.prometheus sets service_name from the "cloudflared" job label
+// automatically; otelcol.receiver.loki has no equivalent, so logs would otherwise
+// show up as unknown_service in Grafana Cloud.
+otelcol.processor.resource "cloudflared_logs" {
+  attributes {
+    key    = "service.name"
+    value  = "cloudflared"
+    action = "upsert"
+  }
+
+  output {
     logs = [otelcol.processor.resourcedetection.environment.input]
   }
 }
