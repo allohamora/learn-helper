@@ -67,6 +67,19 @@ otelcol.processor.transform "cloudflared_logs" {
     ]
   }
 
+  // cloudflared is run with --output json (zerolog), so each line is a JSON object
+  // with a "level" field already using OTel's own severity words (info/warn/error/...);
+  // copy it onto severity_text so Grafana Cloud's detected_level reflects the real
+  // level instead of falling back to unknown, and promote "message" to the log body.
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ParseJSON(body))`,
+      `set(severity_text, cache["level"]) where cache["level"] != nil`,
+      `set(body, cache["message"]) where cache["message"] != nil`,
+    ]
+  }
+
   output {
     logs = [otelcol.processor.resourcedetection.environment.input]
   }
