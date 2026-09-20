@@ -121,8 +121,9 @@ the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 ## Dashboard and alerts
 
 The `Cloudflared Tunnel` dashboard (HA connections, errors, tunnel registration churn,
-concurrent requests, connected edge locations, and logs) and its 3 alert rules
-(degraded HA connections, origin errors, tunnel flapping), plus the email contact
+concurrent requests, connected edge locations, and logs) and its 5 alert rules
+(degraded HA connections, origin errors, tunnel flapping, elevated error logs,
+fatal log), plus the email contact
 point/notification policy that routes them, are managed by Terraform - see
 `terraform/README.md`. The dashboard JSON lives at `terraform/dashboards/cloudflared.json`
 and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to create or
