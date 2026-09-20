@@ -80,19 +80,22 @@ Sentry (see `src/server/instrument.ts`) and aren't part of this pipeline either.
 
 To enable it:
 
-1. In Grafana Cloud, go to Connections > Add new connection > OpenTelemetry (OTLP) to
-   find your stack's OTLP gateway endpoint and instance ID.
-2. On the same page, generate an Access Policy token scoped to `metrics:write` and
-   `logs:write`.
+1. In Grafana Cloud, go to Connections > Add new connection > OpenTelemetry (OTLP). Skip
+   the guided infrastructure wizard - click "View connection details" instead to get your
+   stack's OTLP endpoint and generate an API token. We only need `metrics:write` and
+   `logs:write`, but it's fine to create the token with its default scopes (broader than
+   needed) in case something else in the stack needs them later.
+2. Copy the generated `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS`
+   values shown on that page. `OTEL_EXPORTER_OTLP_HEADERS` there is just the raw
+   `base64(instance_id:token)` value (the chart adds the `Basic ` scheme prefix itself).
 3. Add these under `alloy.env` in `values.yaml`, along with `ENVIRONMENT` (`production`
    or `development`), and set `alloy.enabled: true`:
    ```yaml
    alloy:
      enabled: true
      env:
-       GRAFANA_CLOUD_OTLP_ENDPOINT: https://otlp-gateway-<region>.grafana.net/otlp
-       GRAFANA_CLOUD_INSTANCE_ID: '<instance-id>'
-       GRAFANA_CLOUD_API_TOKEN: <token>
+       OTEL_EXPORTER_OTLP_ENDPOINT: https://otlp-gateway-<region>.grafana.net/otlp
+       OTEL_EXPORTER_OTLP_HEADERS: '<base64(instance_id:token)>'
        ENVIRONMENT: production
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.

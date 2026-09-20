@@ -22,9 +22,8 @@ alloy:
   enabled: false
   image: grafana/alloy:v1.19.2
   env:
-    GRAFANA_CLOUD_OTLP_ENDPOINT: https://otlp-gateway-prod-us-east-0.grafana.net/otlp
-    GRAFANA_CLOUD_INSTANCE_ID: "123456"
-    GRAFANA_CLOUD_API_TOKEN: dummy-grafana-cloud-token
+    OTEL_EXPORTER_OTLP_ENDPOINT: https://otlp-gateway-prod-us-east-0.grafana.net/otlp
+    OTEL_EXPORTER_OTLP_HEADERS: "MTIzNDU2OmR1bW15LWdyYWZhbmEtY2xvdWQtdG9rZW4="
     # tags every metric/log sent to Grafana Cloud with a deployment.environment.name
     # resource attribute, so production and non-production data can be told apart
     ENVIRONMENT: development

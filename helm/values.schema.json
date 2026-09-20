@@ -149,25 +149,16 @@
     },
     "alloyEnvironment": {
       "type": "object",
-      "required": [
-        "GRAFANA_CLOUD_OTLP_ENDPOINT",
-        "GRAFANA_CLOUD_INSTANCE_ID",
-        "GRAFANA_CLOUD_API_TOKEN",
-        "ENVIRONMENT"
-      ],
+      "required": ["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_EXPORTER_OTLP_HEADERS", "ENVIRONMENT"],
       "properties": {
-        "GRAFANA_CLOUD_OTLP_ENDPOINT": {
+        "OTEL_EXPORTER_OTLP_ENDPOINT": {
           "type": "string",
           "format": "uri"
         },
-        "GRAFANA_CLOUD_INSTANCE_ID": {
+        "OTEL_EXPORTER_OTLP_HEADERS": {
           "type": "string",
           "minLength": 1,
-          "pattern": "^[0-9]+$"
-        },
-        "GRAFANA_CLOUD_API_TOKEN": {
-          "type": "string",
-          "minLength": 1
+          "pattern": "^[A-Za-z0-9+/]+=*$"
         },
         "ENVIRONMENT": {
           "type": "string",

@@ -68,17 +68,20 @@ otelcol.processor.resourcedetection "environment" {
 }
 
 // ---- Grafana Cloud OTLP output ----
-otelcol.auth.basic "grafana_cloud" {
-  client_auth {
-    username = sys.env("GRAFANA_CLOUD_INSTANCE_ID")
-    password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+// OTEL_EXPORTER_OTLP_HEADERS here is just Grafana Cloud's generated
+// base64(instance_id:token) value (not a full "key=value" header string), so the
+// "Basic " scheme prefix is added here to form the actual Authorization header.
+otelcol.auth.headers "grafana_cloud" {
+  header {
+    key   = "Authorization"
+    value = string.format("Basic %s", sys.env("OTEL_EXPORTER_OTLP_HEADERS"))
   }
 }
 
 otelcol.exporter.otlphttp "grafana_cloud" {
   client {
-    endpoint = sys.env("GRAFANA_CLOUD_OTLP_ENDPOINT")
-    auth     = otelcol.auth.basic.grafana_cloud.handler
+    endpoint = sys.env("OTEL_EXPORTER_OTLP_ENDPOINT")
+    auth     = otelcol.auth.headers.grafana_cloud.handler
   }
 }
 {{- end -}}
