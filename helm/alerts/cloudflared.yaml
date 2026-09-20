@@ -16,14 +16,24 @@ groups:
             production environment so a devcontainer test run (ENVIRONMENT: development)
             can't page anyone.
       - alert: CloudflaredOriginErrors
-        expr: sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name="production"}[5m])) > 0.1
+        expr: >-
+          sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name="production"}[5m]))
+          /
+          (
+            sum(rate(cloudflared_tunnel_response_by_code{deployment_environment_name="production"}[5m]))
+            +
+            sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name="production"}[5m]))
+          )
+          > 0.05
         for: 5m
         labels:
           severity: warning
         annotations:
           summary: cloudflared is failing to proxy requests to the app's origin
           description: >-
-            Counts errors proxying to origin, distinct from the app's own HTTP error
-            responses. Threshold is a starting point - tune after watching real traffic.
-            Scoped to the production environment so a devcontainer test run
+            Origin-connection failures (never produce a status code) as a share of all
+            requests attempted, distinct from the app's own HTTP error responses. A
+            ratio instead of a raw rate so the threshold doesn't need retuning as
+            traffic grows or shrinks. 5% is a starting point - tune after watching real
+            traffic. Scoped to the production environment so a devcontainer test run
             (ENVIRONMENT: development) can't page anyone.
