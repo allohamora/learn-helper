@@ -250,6 +250,10 @@ resource "grafana_contact_point" "cloudflared" {
   email {
     addresses = [var.alert_contact_email]
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "grafana_notification_policy" "default" {
