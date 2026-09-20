@@ -2,7 +2,7 @@ import type { FC, UIEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import type { InferResponseType } from 'hono/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { createColumnHelper, flexRender, tableFeatures, useTable } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ExternalLink, Loader2, Pencil, Trash2, Undo2, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -236,47 +236,49 @@ const ActionsCell: FC<{
   );
 };
 
-const columnHelper = createColumnHelper<VocabularyItem>();
+const features = tableFeatures({});
+const columnHelper = createColumnHelper<typeof features, VocabularyItem>();
 
-const buildColumns = (userVocabularyListId: string, vocabularyListType: VocabularyListType) => [
-  columnHelper.accessor('vocabularyItem.value', {
-    header: 'Item',
-    cell: (info) => {
-      const item = info.row.original;
+const buildColumns = (userVocabularyListId: string, vocabularyListType: VocabularyListType) =>
+  columnHelper.columns([
+    columnHelper.accessor('vocabularyItem.value', {
+      header: 'Item',
+      cell: (info) => {
+        const item = info.row.original;
 
-      return (
-        <div className="min-w-0">
-          <div className="truncate font-medium">{item.vocabularyItem.value}</div>
-          <div className="truncate text-xs text-muted-foreground">({item.vocabularyItem.spelling})</div>
-          <div className="truncate text-xs text-muted-foreground">{item.vocabularyItem.uaTranslation}</div>
-        </div>
-      );
-    },
-  }),
-  columnHelper.accessor('vocabularyItem.definition', {
-    header: 'Definition',
-    cell: (info) => <div className="text-muted-foreground">{info.getValue()}</div>,
-  }),
-  columnHelper.accessor('vocabularyItem.partOfSpeech', {
-    header: 'Part of speech',
-    cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '-'}</div>,
-  }),
-  columnHelper.accessor('status', {
-    header: 'Status',
-    cell: (info) => <VocabularyStatusBadge status={info.getValue() as LearningStatus} />,
-  }),
-  columnHelper.display({
-    id: 'actions',
-    header: 'Actions',
-    cell: ({ row }) => (
-      <ActionsCell
-        item={row.original}
-        userVocabularyListId={userVocabularyListId}
-        vocabularyListType={vocabularyListType}
-      />
-    ),
-  }),
-];
+        return (
+          <div className="min-w-0">
+            <div className="truncate font-medium">{item.vocabularyItem.value}</div>
+            <div className="truncate text-xs text-muted-foreground">({item.vocabularyItem.spelling})</div>
+            <div className="truncate text-xs text-muted-foreground">{item.vocabularyItem.uaTranslation}</div>
+          </div>
+        );
+      },
+    }),
+    columnHelper.accessor('vocabularyItem.definition', {
+      header: 'Definition',
+      cell: (info) => <div className="text-muted-foreground">{info.getValue()}</div>,
+    }),
+    columnHelper.accessor('vocabularyItem.partOfSpeech', {
+      header: 'Part of speech',
+      cell: (info) => <div className="text-muted-foreground">{info.getValue() ?? '-'}</div>,
+    }),
+    columnHelper.accessor('status', {
+      header: 'Status',
+      cell: (info) => <VocabularyStatusBadge status={info.getValue() as LearningStatus} />,
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <ActionsCell
+          item={row.original}
+          userVocabularyListId={userVocabularyListId}
+          vocabularyListType={vocabularyListType}
+        />
+      ),
+    }),
+  ]);
 
 // one fixed template shared by the header and every row, so columns always line up (each row is
 // its own grid instance — virtualization renders them independently — so tracks must be sized to
@@ -312,10 +314,10 @@ export const VocabularyItemsTable: FC<Props> = ({
     [userVocabularyListId, vocabularyListType],
   );
 
-  const table = useReactTable({
+  const table = useTable({
+    features,
     data: items,
     columns,
-    getCoreRowModel: getCoreRowModel(),
     getRowId: (item) => item.id,
   });
 
@@ -366,7 +368,7 @@ export const VocabularyItemsTable: FC<Props> = ({
               className={cn(GRID_COLS_CLASS, 'absolute top-0 left-0 w-max items-center border-b hover:bg-muted/40')}
               style={{ minHeight: virtualRow.size, transform: `translateY(${virtualRow.start}px)` }}
             >
-              {row.getVisibleCells().map((cell) => (
+              {row.getAllCells().map((cell) => (
                 <div key={cell.id} className="min-w-0 px-3 py-2">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </div>

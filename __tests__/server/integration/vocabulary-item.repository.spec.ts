@@ -6,6 +6,7 @@ import { user, userVocabularyItem, vocabularyItem } from '@/server/db/db.schema'
 import {
   createMissingVocabularyItems,
   createVocabularyItemIfNotExist,
+  getVocabularyItemByValueAndPartOfSpeech,
   searchVocabularyItemsForList,
   updateVocabularyItemTranslation,
 } from '@/server/vocabulary/vocabulary-item.repository';
@@ -87,6 +88,19 @@ describe('vocabularyItemRepository', () => {
       const item = await createVocabularyItemIfNotExist(phrase);
 
       expect(item).toBeUndefined();
+      expect(await countItems(vocabularyItem)).toBe(1);
+    });
+  });
+
+  describe('getVocabularyItemByValueAndPartOfSpeech', () => {
+    it('returns the existing item when the part of speech is null, without inserting a duplicate', async () => {
+      const phrase = buildItem({ value: 'a few', partOfSpeech: undefined });
+      const [created] = await createMissingVocabularyItems([phrase]);
+      if (!created) throw new Error('expected item to be created');
+
+      const item = await getVocabularyItemByValueAndPartOfSpeech({ value: 'a few', partOfSpeech: null });
+
+      expect(item?.id).toBe(created.id);
       expect(await countItems(vocabularyItem)).toBe(1);
     });
   });

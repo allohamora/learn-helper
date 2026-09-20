@@ -268,9 +268,7 @@ export const userVocabularyRouter = new OpenAPIHono()
             "The AI-generated word, persisted and linked to the user's personal list, with the user's progress on it",
           schema: userVocabularyItemWithRelationsDto,
         }),
-        ...errorConflictResponse({
-          description: 'A vocabulary item with the generated value and part of speech already exists',
-        }),
+        ...errorConflictResponse({ description: 'The word is already in the list' }),
         ...errorBadRequestResponse({ description: 'The value is not a learnable word or fixed phrase' }),
       },
       security: [{ cookieAuth: [] }],

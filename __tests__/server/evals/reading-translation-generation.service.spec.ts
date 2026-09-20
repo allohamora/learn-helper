@@ -123,6 +123,29 @@ describe.concurrent('reading-translation-generation.service', () => {
       ]);
     });
 
+    it('translates a long selection instead of echoing the after context back verbatim', async () => {
+      const text =
+        'One of our favorite pastries here in Portugal is pastel de nata, whose rich custard filling is a ' +
+        'perfect match for our sunny afternoons. Part of the charm of pastel de nata to us locals is the ' +
+        'little sayings printed on the napkins at every bakery. I bought a dozen of them this morning and ' +
+        'found that mine came wrapped in this old Portuguese proverb:';
+      const before = 'iv Preface';
+      const after = 'A vida é como um livro, cada dia uma nova página. “Life is like a book, each day a new page';
+
+      const { output } = await generateTranslationData({ text, before, after });
+      console.log('long-selection-context-echo-regression', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation.trim().toLowerCase()).not.toBe(after.trim().toLowerCase());
+      expect(output.uaTranslation.trim().toLowerCase()).not.toBe(before.trim().toLowerCase());
+      expect(output.isLearnable).toBe(false);
+
+      await expect(output).toSatisfyStatements([
+        "uaTranslation is a Ukrainian translation of the selected English text about pastel de nata pastries from Portugal, ending right after mentioning the old Portuguese proverb printed on the napkin (not going on to include the proverb's own wording, since that was never part of the selection). Minor grammatical imperfections (e.g. gender/case agreement) are fine and should not fail this check.",
+        'uaTranslation is NOT the Portuguese/English quote from the after context ("A vida é como um livro...Life is like a book, each day a new page"), and does not paraphrase or partially reproduce it.',
+      ]);
+    });
+
     it('uses surrounding context to pick the right sense of a word, without translating the context itself', async () => {
       const { output } = await generateTranslationData({
         text: 'bark',
@@ -136,6 +159,50 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'uaTranslation is the Ukrainian word/phrase for the sound a dog makes ("гавкати", case-insensitive, or an equally natural equivalent), not a translation of the surrounding sentence about the dog or the mail carrier, and not the tree-bark sense.',
+      ]);
+    });
+
+    it('translates the fixed collocation "cramped quarters" and marks it learnable', async () => {
+      const { output } = await generateTranslationData({ text: 'cramped quarters' });
+      console.log('fixed-collocation-cramped-quarters', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation conveys small, cramped living/lodging space or conditions (e.g. "тісне помешкання", "тісні умови проживання", "тісні кімнати", "тісне житло", or any similarly natural Ukrainian phrasing of that idea, case-insensitive) - not the fraction/coin/city-district sense of "quarters".',
+      ]);
+    });
+
+    it('uses surrounding context to translate "quarters" as living space, not a fraction or coin', async () => {
+      const { output } = await generateTranslationData({
+        text: 'quarters',
+        before: 'They spent the whole winter in cramped',
+        after: 'near the base.',
+      });
+      console.log('context-disambiguation-quarters', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation is the Ukrainian word/phrase for the living space/lodgings sense of "quarters" (e.g. "приміщення", "житло", "помешкання", case-insensitive, or an equally natural equivalent), given the "cramped ___" context - not the one-fourth/fraction sense ("чверть") and not the 25-cent coin sense.',
+      ]);
+    });
+
+    it('uses surrounding context to translate "cramped" consistently with the following "quarters"', async () => {
+      const { output } = await generateTranslationData({
+        text: 'cramped',
+        before: 'They spent the whole winter in',
+        after: 'quarters near the base.',
+      });
+      console.log('context-disambiguation-cramped', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation is the Ukrainian adjective meaning tight, small, or lacking space (e.g. "тісний", case-insensitive, or an equally natural equivalent), matching the "___ quarters" (living space) context.',
       ]);
     });
 

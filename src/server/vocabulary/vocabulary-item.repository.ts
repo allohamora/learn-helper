@@ -1,6 +1,7 @@
 import '@tanstack/react-start/server-only';
-import { and, asc, count, eq, getTableColumns, gte, ilike } from 'drizzle-orm';
+import { and, asc, count, eq, getTableColumns, gte, ilike, isNull } from 'drizzle-orm';
 import { RequestType } from '@/const/request';
+import type { PartOfSpeech } from '@/const/vocabulary';
 import { userVocabularyItem, vocabularyItem, vocabularyListItem } from '../db/db.schema';
 import { db } from '../db/db.service';
 import { escapeLikePattern } from '../db/db.utils';
@@ -34,6 +35,18 @@ export const createVocabularyItemIfNotExist = async (
     .returning();
 
   return created;
+};
+
+export const getVocabularyItemByValueAndPartOfSpeech = async (
+  { value, partOfSpeech }: { value: string; partOfSpeech?: PartOfSpeech | null },
+  tx: Transaction = db,
+) => {
+  return tx.query.vocabularyItem.findFirst({
+    where: and(
+      eq(vocabularyItem.value, value),
+      partOfSpeech ? eq(vocabularyItem.partOfSpeech, partOfSpeech) : isNull(vocabularyItem.partOfSpeech),
+    ),
+  });
 };
 
 export const updateVocabularyItemTranslation = async (

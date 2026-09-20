@@ -1,0 +1,6 @@
+{
+  "id": "cloudflared",
+  "version": "1.0.0",
+  "name": "cloudflared",
+  "description": "Installs the cloudflared CLI for running Cloudflare Tunnels"
+}

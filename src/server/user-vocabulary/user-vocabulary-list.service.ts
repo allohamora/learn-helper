@@ -6,7 +6,6 @@ import type { Transaction } from '../db/db.types';
 import { insertEvent } from '../event/event.repository';
 import { Exception } from '../utils/exception.utils';
 import {
-  createUserVocabularyItem,
   createUserVocabularyItemIfNotExist,
   createUserVocabularyItemsFromList,
   getUserVocabularyItemByIdForUpdate,
@@ -29,12 +28,15 @@ import {
   getPersonalVocabularyListByOwnerId,
 } from '../vocabulary/vocabulary-list.repository';
 import {
-  createVocabularyListItem,
   createVocabularyListItemIfNotExist,
   deleteVocabularyListItem,
   getVocabularyListItem,
 } from '../vocabulary/vocabulary-list-item.repository';
-import { createVocabularyItemIfNotExist, searchVocabularyItemsForList } from '../vocabulary/vocabulary-item.repository';
+import {
+  createVocabularyItemIfNotExist,
+  getVocabularyItemByValueAndPartOfSpeech,
+  searchVocabularyItemsForList,
+} from '../vocabulary/vocabulary-item.repository';
 import { getUserForUpdateOrThrow } from '../user/user.service';
 import type { PersonalVocabularyItemSearchFilterDto } from './dtos/personal-vocabulary-item-search-filter.dto';
 import type { GenerateVocabularyItemDto } from '../vocabulary/dtos/generate-vocabulary-item.dto';
@@ -138,6 +140,40 @@ const addUserVocabularyItemInLearningStatus = async (
   ]);
 };
 
+// links a vocabulary item (already persisted, possibly shared with other lists) to the user's
+// personal list; throws if it's already linked there, regardless of whether it's also in other lists
+const linkVocabularyItemToPersonalList = async (
+  {
+    userId,
+    vocabularyItemId,
+    userVocabularyListId,
+    vocabularyListId,
+    isResetToLearning = true,
+  }: {
+    userId: string;
+    vocabularyItemId: string;
+    userVocabularyListId: string;
+    vocabularyListId: string;
+    isResetToLearning?: boolean;
+  },
+  tx: Transaction,
+) => {
+  const existingListItem = await getVocabularyListItem({ vocabularyListId, vocabularyItemId }, tx);
+  if (existingListItem) {
+    throw Exception.conflict(`Vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
+  }
+
+  const createdListItem = await createVocabularyListItemIfNotExist({ vocabularyListId, vocabularyItemId }, tx);
+  if (!createdListItem) {
+    throw Exception.conflict(`Vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
+  }
+
+  await addUserVocabularyItemInLearningStatus(
+    { userId, vocabularyItemId, userVocabularyListId, isResetToLearning },
+    tx,
+  );
+};
+
 export const addVocabularyItemToPersonalList = async ({
   userId,
   vocabularyItemId,
@@ -152,20 +188,9 @@ export const addVocabularyItemToPersonalList = async ({
       getUserPersonalVocabularyListWithRelationsOrThrow(userId, tx),
       getVocabularyItemByIdOrThrow(vocabularyItemId, tx),
     ]);
-    const vocabularyListId = vocabularyList.id;
 
-    const existingListItem = await getVocabularyListItem({ vocabularyListId, vocabularyItemId }, tx);
-    if (existingListItem) {
-      throw Exception.conflict(`Vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
-    }
-
-    const createdListItem = await createVocabularyListItemIfNotExist({ vocabularyListId, vocabularyItemId }, tx);
-    if (!createdListItem) {
-      throw Exception.conflict(`Vocabulary item "${vocabularyItemId}" already in list "${vocabularyListId}"`);
-    }
-
-    await addUserVocabularyItemInLearningStatus(
-      { userId, vocabularyItemId, userVocabularyListId, isResetToLearning },
+    await linkVocabularyItemToPersonalList(
+      { userId, vocabularyItemId, userVocabularyListId, vocabularyListId: vocabularyList.id, isResetToLearning },
       tx,
     );
 
@@ -238,26 +263,33 @@ export const removeVocabularyItemFromPersonalList = async ({
 };
 
 export const generateVocabularyItem = async ({ userId, ...data }: GenerateVocabularyItemDto & { userId: string }) => {
-  const { vocabularyList } = await getUserPersonalVocabularyListWithRelationsOrThrow(userId);
+  const { id: userVocabularyListId, vocabularyList } = await getUserPersonalVocabularyListWithRelationsOrThrow(userId);
 
   const output = await generateVocabularyItemContent({ userId, ...data });
 
   return db.transaction(async (tx) => {
-    const vocabularyItem = await createVocabularyItemIfNotExist(output, tx);
+    // the (value, partOfSpeech) pair is a dictionary-wide dedup key, shared across all lists/users,
+    // so a conflict here just means the item already exists - not that it's in this user's list
+    const vocabularyItem =
+      (await createVocabularyItemIfNotExist(output, tx)) ?? (await getVocabularyItemByValueAndPartOfSpeech(output, tx));
     if (!vocabularyItem) {
-      throw Exception.conflict(
-        `Vocabulary item "${output.value}" (${output.partOfSpeech ?? 'no part of speech'}) already exists`,
-      );
+      throw Exception.internalServer(`Failed to load vocabulary item "${output.value}" after insert`);
     }
 
-    await createVocabularyListItem({ vocabularyListId: vocabularyList.id, vocabularyItemId: vocabularyItem.id }, tx);
-
-    const userItem = await createUserVocabularyItem(
-      { userId, vocabularyItemId: vocabularyItem.id, ...newLearningProgress() },
+    await linkVocabularyItemToPersonalList(
+      { userId, vocabularyItemId: vocabularyItem.id, userVocabularyListId, vocabularyListId: vocabularyList.id },
       tx,
     );
 
-    return { ...userItem, vocabularyItem };
+    const userItem = await getUserVocabularyItemWithRelationsByVocabularyItemId(
+      { userId, vocabularyItemId: vocabularyItem.id },
+      tx,
+    );
+    if (!userItem) {
+      throw Exception.internalServer(`Failed to load vocabulary item "${vocabularyItem.id}" after insert`);
+    }
+
+    return userItem;
   });
 };
 

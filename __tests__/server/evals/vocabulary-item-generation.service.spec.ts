@@ -221,10 +221,15 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Verb);
+      // "give up" also has an object-taking sense ("give up (sth)", to renounce/quit something) - given
+      // bare, with no object anywhere in the input, the value must stay a bare, placeholder-free verb,
+      // not the object-taking sense (which would need an invented, unstated "(sth)").
+      expect(output.value.toLowerCase()).toBe('give up');
+      expect(output.uaTranslation).not.toMatch(/[()]/u);
 
       await expect(output).toSatisfyStatements([
         'value is "give up".',
-        'definition explains it means to stop trying or to quit/surrender, not the literal sense of giving an object upward.',
+        'definition explains it means to stop trying or to quit/surrender, not the literal sense of giving an object upward, and not the separate sense of renouncing/refusing a specific thing (e.g. "give up smoking").',
       ]);
     });
 
