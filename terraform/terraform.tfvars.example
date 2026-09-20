@@ -1,2 +1,5 @@
-grafana_url  = "https://<your-stack>.grafana.net"
-grafana_auth = "<service-account-token>"
+grafana_url                       = "https://<your-stack>.grafana.net"
+grafana_auth                      = "<service-account-token>"
+grafana_cloud_access_policy_token = "<cloud-access-policy-token>"
+
+alert_contact_email = "you@example.com"

@@ -80,13 +80,10 @@ Sentry (see `src/server/instrument.ts`) and aren't part of this pipeline either.
 
 To enable it:
 
-1. In Grafana Cloud, go to Connections > Add new connection > OpenTelemetry (OTLP). Skip
-   the guided infrastructure wizard - click "View connection details" instead to get your
-   stack's OTLP endpoint and generate an API token. We only need `metrics:write` and
-   `logs:write`, but it's fine to create the token with its default scopes (broader than
-   needed) in case something else in the stack needs them later.
-2. Copy the generated `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_HEADERS`
-   values shown on that page. `OTEL_EXPORTER_OTLP_HEADERS` there is just the raw
+1. Run `terraform apply` in `terraform/` (see `terraform/README.md`) - it provisions the
+   OTLP access policy/token in Grafana Cloud.
+2. Fetch the endpoint and headers with the `terraform console` commands in
+   `terraform/README.md`'s "Use" section. The headers value is just the raw
    `base64(instance_id:token)` value (the chart adds the `Basic ` scheme prefix itself).
 3. Add these under `alloy.env` in `values.yaml`, along with `ENVIRONMENT` (`production`
    or `development`), and set `alloy.enabled: true`:
@@ -94,8 +91,8 @@ To enable it:
    alloy:
      enabled: true
      env:
-       OTEL_EXPORTER_OTLP_ENDPOINT: https://otlp-gateway-<region>.grafana.net/otlp
-       OTEL_EXPORTER_OTLP_HEADERS: '<base64(instance_id:token)>'
+       OTEL_EXPORTER_OTLP_ENDPOINT: <otel_exporter_otlp_endpoint output>
+       OTEL_EXPORTER_OTLP_HEADERS: '<otel_exporter_otlp_headers output>'
        ENVIRONMENT: production
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
@@ -121,61 +118,15 @@ to confirm data is actually arriving.
 Changing `alloy.env` (e.g. rotating the API token, or switching `ENVIRONMENT`) follows
 the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
-## Dashboard
+## Dashboard and alerts
 
-`helm/dashboards/cloudflared.json` is an exportable Grafana dashboard covering HA
-connections, errors (HTTP 4xx/5xx and origin/tunnel-level) plotted against total request
-volume, tunnel registration churn, concurrent requests, connected edge locations, and
-logs for the cloudflared tunnel. In Grafana Cloud, go to Dashboards > New > Import, paste
-the file's contents, and pick your Prometheus and Loki datasources when prompted. It's
-not deployed by the chart - Helm only renders `templates/`, so this file is just kept
-here for reference/import.
-
-All panels filter on an `Environment` dashboard variable (backed by the
-`deployment.environment.name` resource attribute - see the Alloy section above),
-defaulting to `production`. Switch it to `development` to inspect devcontainer test data
-without it being blended into the production view.
-
-The dashboard has a fixed `uid`, so re-importing it (after editing this file) offers to
-overwrite the existing dashboard in place rather than creating a duplicate - same URL, no
-need to delete it first. If your Grafana Cloud instance doesn't offer that overwrite
-prompt, delete the dashboard and re-import; since the `uid` is fixed, you get the same URL
-back either way.
-
-Editing dashboard JSON directly in Grafana Cloud's UI (Dashboard settings > JSON Model)
-doesn't work for re-syncing this file - newer Grafana Cloud instances validate that editor
-against a different schema (`apiVersion`/`kind`/`metadata`/`spec`) than the classic export
-format this file uses, and pasting the classic format there fails with errors like
-"Missing property metadata". To keep this file in sync after changing the dashboard in
-Grafana Cloud, re-export it instead: Share > Export > Save JSON, and overwrite this file
-with that.
-
-## Alerts
-
-`helm/alerts/cloudflared.yaml` is a Prometheus-format alert rules file for the
-cloudflared tunnel. Like the dashboard, it's not deployed by the chart - it's kept here
-for reference/import.
-
-Both rules are scoped to `deployment_environment_name="production"`, so a devcontainer
-test run (`ENVIRONMENT: development`) never triggers a page.
-
-**Import the alert rules:**
-
-1. In Grafana Cloud: Alerts & IRM > Alerting, click "manage alert rules", then More >
-   Import.
-2. Import source: `Prometheus YAML file`, upload `helm/alerts/cloudflared.yaml`.
-3. Pick your Prometheus/Mimir data source and a target folder.
-4. Turn off "Pause imported alerting rules" (defaults to on - if you forget, the rules
-   get imported but never evaluate, so they'll never fire until you unpause them from
-   the Alert rules list).
-5. Import.
-
-**Get emailed when a rule fires:**
-
-1. Alerts & IRM > Alerting, click "manage contact points".
-2. Click "+ New contact point", set type to `Email`, enter your address.
-3. In Notification policies, on the default policy click More > Edit, and set the
-   contact point to the one you just created.
+The `Cloudflared Tunnel` dashboard (HA connections, errors, tunnel registration churn,
+concurrent requests, connected edge locations, and logs) and its 3 alert rules
+(degraded HA connections, origin errors, tunnel flapping), plus the email contact
+point/notification policy that routes them, are managed by Terraform - see
+`terraform/README.md`. The dashboard JSON lives at `terraform/dashboards/cloudflared.json`
+and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to create or
+update them. None of this is deployed by the Helm chart itself.
 
 # Production setup notes
 
