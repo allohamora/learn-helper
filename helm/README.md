@@ -108,9 +108,9 @@ kubectl -n learn-helper logs deploy/alloy
 kubectl -n learn-helper port-forward deploy/alloy 12345:12345
 ```
 
-In Grafana Cloud, confirm data is arriving: Explore > Metrics and Explore > Logs, both
-filtered on `job="cloudflared"`. The `deployment.environment.name` resource attribute lets
-you filter further by which environment sent the data.
+In Grafana Cloud, confirm data is arriving: Explore > Metrics filtered on `job="cloudflared"`
+and Explore > Logs filtered on `service_name="cloudflared"`. The `deployment.environment.name`
+resource attribute lets you filter further by which environment sent the data.
 
 Grafana Cloud's Application Observability page will report a "waiting for traces"/test
 connection error for this OTLP connection and never resolve it - that's expected, not a
