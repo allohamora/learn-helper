@@ -17,6 +17,7 @@ spec:
         checksum/alloy-config: {{ include "config.alloy" . | sha256sum | quote }}
         checksum/alloy-env: {{ toYaml .Values.alloy.env | sha256sum | quote }}
     spec:
+      serviceAccountName: alloy
       containers:
         - name: alloy
           image: {{ .Values.alloy.image | quote }}
@@ -31,19 +32,6 @@ spec:
           envFrom:
             - secretRef:
                 name: alloy-env
-          env:
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-env
-                  key: POSTGRES_DB
-            - name: DB_O11Y_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-env
-                  key: DB_O11Y_PASSWORD
-            - name: DB_O11Y_DSN
-              value: postgresql://db-o11y:$(DB_O11Y_PASSWORD)@postgres:5432/$(POSTGRES_DB)?sslmode=disable
           volumeMounts:
             - name: alloy-config
               mountPath: /etc/alloy

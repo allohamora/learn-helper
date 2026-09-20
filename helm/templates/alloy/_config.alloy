@@ -1,62 +1,45 @@
 {{- define "config.alloy" -}}
-// ---- Database Observability: query-level detail (explain plans, query samples with
-// wait events, schema catalog) via a dedicated low-privilege "db-o11y" role. See
-// helm/README.md for the one-time CREATE USER/GRANT step this depends on.
-prometheus.exporter.postgres "dbo" {
-  data_source_names = [sys.env("DB_O11Y_DSN")]
+// ---- cloudflared tunnel metrics + logs ----
+// Scoped to just the cloudflared pod via a server-side label selector, rather than
+// discovering every pod in the namespace and relabeling client-side.
+discovery.kubernetes "cloudflared" {
+  role = "pod"
 
-  enabled_collectors = ["stat_statements"]
-
-  // db-o11y's own monitoring queries are excluded from stat_statements tracking
-  // (ALTER ROLE ... SET pg_stat_statements.track = 'none', see helm/README.md), so
-  // this is belt-and-suspenders against them polluting the data being analyzed.
-  stat_statements {
-    exclude_users = ["db-o11y"]
+  namespaces {
+    own_namespace = true
   }
 
-  autodiscovery {
-    enabled = true
+  selectors {
+    role  = "pod"
+    label = "app=cloudflared"
   }
 }
 
-database_observability.postgres "dbo" {
-  data_source_name  = sys.env("DB_O11Y_DSN")
-  targets           = prometheus.exporter.postgres.dbo.targets
-  forward_to        = [loki.relabel.dbo.receiver]
-  enable_collectors = ["query_details", "query_samples", "schema_details", "explain_plans"]
-}
-
-loki.relabel "dbo" {
-  forward_to = [otelcol.receiver.loki.default.receiver]
+// Keep only the "metrics" port target - cloudflared's deployment exposes a "metrics"
+// container port (via --metrics 0.0.0.0:2000) alongside no other ports, but this
+// filter is what makes that scrape-worthy port explicit rather than assumed.
+discovery.relabel "cloudflared_metrics" {
+  targets = discovery.kubernetes.cloudflared.targets
 
   rule {
-    target_label = "instance"
-    replacement  = "postgres"
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
   }
 }
 
-discovery.relabel "dbo" {
-  targets = database_observability.postgres.dbo.targets
-
-  rule {
-    target_label = "job"
-    replacement  = "integrations/db-o11y"
-  }
-  rule {
-    source_labels = ["instance"]
-    target_label  = "dsn"
-  }
-  rule {
-    target_label = "instance"
-    replacement  = "postgres"
-  }
-}
-
-prometheus.scrape "dbo" {
-  targets         = discovery.relabel.dbo.output
-  job_name        = "integrations/db-o11y"
+prometheus.scrape "cloudflared" {
+  targets         = discovery.relabel.cloudflared_metrics.output
+  job_name        = "cloudflared"
   scrape_interval = "60s"
   forward_to      = [otelcol.receiver.prometheus.default.receiver]
+}
+
+// Tails the cloudflared pod's stdout via the Kubernetes API - no port filter needed,
+// discovery.kubernetes "cloudflared" above already scopes this to just that one pod.
+loki.source.kubernetes "cloudflared" {
+  targets    = discovery.kubernetes.cloudflared.targets
+  forward_to = [otelcol.receiver.loki.default.receiver]
 }
 
 otelcol.receiver.prometheus "default" {
@@ -65,9 +48,6 @@ otelcol.receiver.prometheus "default" {
   }
 }
 
-// database_observability.postgres's query_details/query_samples/schema_details/
-// explain_plans collectors ship their output as Loki log entries (see loki.relabel
-// "dbo" above) - this receiver is that data's only source now, not raw Postgres logs.
 otelcol.receiver.loki "default" {
   output {
     logs = [otelcol.exporter.otlphttp.grafana_cloud.input]

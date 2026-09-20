@@ -39,6 +39,3 @@ postgres:
     POSTGRES_USER: app
     POSTGRES_PASSWORD: example
     POSTGRES_DB: test
-    # password for the dedicated low-privilege "db-o11y" monitoring role Alloy uses for
-    # Database Observability - must match the CREATE USER step in helm/README.md
-    DB_O11Y_PASSWORD: dummy-db-o11y-password

@@ -67,15 +67,13 @@ kubectl delete namespace learn-helper
 k3d cluster delete learn-helper
 ```
 
-# Grafana Alloy (Database Observability -> Grafana Cloud)
+# Grafana Alloy (cloudflared metrics/logs -> Grafana Cloud)
 
-Alloy is disabled by default (`alloy.enabled: false`). It exists solely to run Grafana
-Cloud's [Database Observability](https://grafana.com/docs/grafana-cloud/observe-and-act/monitor-applications/database-observability/)
-(DBO) integration for Postgres - query samples with wait events, `EXPLAIN` plans, and
-schema catalog data, collected through a dedicated low-privilege `db-o11y` Postgres role
-rather than the app's own credentials. Everything else this pipeline used to collect
-(generic Postgres metrics, k3s/host/cloudflared metrics, kube-state-metrics, Kubernetes
-events, raw pod logs) has been removed - this is DBO-only, nothing more. The app's own
+Alloy is disabled by default (`alloy.enabled: false`). It collects the cloudflared
+tunnel's own Prometheus metrics (connection health, request counts, error rates - the
+`/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
+logs, and ships both to Grafana Cloud over OTLP. Nothing else is collected - no
+Postgres metrics, no node/cluster metrics, no `app` pod logs. The app's own
 traces/logs/HTTP metrics go straight to Sentry (see `src/server/instrument.ts`) and
 aren't part of this pipeline either.
 
@@ -85,8 +83,7 @@ To enable it:
    find your stack's OTLP gateway endpoint and instance ID.
 2. On the same page, generate an Access Policy token scoped to `metrics:write` and
    `logs:write`.
-3. Add these under `alloy.env` in `values.yaml`, set `alloy.enabled: true`, and pick a
-   password for the new `db-o11y` monitoring role under `postgres.env`:
+3. Add these under `alloy.env` in `values.yaml`, and set `alloy.enabled: true`:
    ```yaml
    alloy:
      enabled: true
@@ -94,35 +91,8 @@ To enable it:
        GRAFANA_CLOUD_OTLP_ENDPOINT: https://otlp-gateway-<region>.grafana.net/otlp
        GRAFANA_CLOUD_INSTANCE_ID: '<instance-id>'
        GRAFANA_CLOUD_API_TOKEN: <token>
-   postgres:
-     env:
-       DB_O11Y_PASSWORD: <pick a password>
    ```
-4. Re-run the `helm upgrade` command from the install/update steps above. This also
-   restarts postgres (`shared_preload_libraries=pg_stat_statements` and the Database
-   Observability-required settings are now set on its container args), which is
-   required before the one-time steps below will work.
-5. One-time: create the `pg_stat_statements` extension in the app database (safe to
-   re-run; the deployment's `postgres.deployment.yaml` sets `shared_preload_libraries`
-   unconditionally, but the extension itself is still opt-in per-database):
-   ```bash
-   kubectl exec -n learn-helper deploy/postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
-     -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
-   ```
-6. One-time: create the `db-o11y` role Alloy uses for Database Observability, with the
-   password chosen in step 3 (`pg_monitor`/`pg_read_all_stats` give it read-only access
-   to stats views; `pg_stat_statements.track = 'none'` keeps its own monitoring queries
-   out of the query-stats data it's collecting):
-   ```bash
-   kubectl exec -n learn-helper deploy/postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 <<'EOF'
-   CREATE USER "db-o11y" WITH PASSWORD '<matches DB_O11Y_PASSWORD in values.yaml>';
-   GRANT pg_monitor TO "db-o11y";
-   GRANT pg_read_all_stats TO "db-o11y";
-   ALTER ROLE "db-o11y" SET pg_stat_statements.track = 'none';
-   GRANT USAGE ON SCHEMA public TO "db-o11y";
-   GRANT SELECT ON ALL TABLES IN SCHEMA public TO "db-o11y";
-   EOF
-   ```
+4. Re-run the `helm upgrade` command from the install/update steps above.
 
 ```bash
 # Verify Alloy is scraping/shipping correctly.
@@ -133,14 +103,10 @@ kubectl -n learn-helper port-forward deploy/alloy 12345:12345
 ```
 
 In Grafana Cloud, confirm data is arriving: Explore > Metrics and Explore > Logs, both
-filtered on `job="integrations/db-o11y"`. Once data is flowing, query samples, explain
-plans, and schema data actually surface in Grafana Cloud's **Database Observability**
-app, not Explore.
+filtered on `job="cloudflared"`.
 
-Changing `alloy.env`/`postgres.env` (e.g. rotating the API token or the `db-o11y`
-password) follows the same `helm upgrade` flow as the `postgres.env`/`app.env` update
-steps above - rotating `DB_O11Y_PASSWORD` also needs an `ALTER ROLE "db-o11y" WITH
-PASSWORD '<new-password>';` run first, same as the note on `POSTGRES_PASSWORD` above.
+Changing `alloy.env` (e.g. rotating the API token) follows the same `helm upgrade`
+flow as the `postgres.env`/`app.env` update steps above.
 
 # Production setup notes
 
