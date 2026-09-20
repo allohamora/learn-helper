@@ -153,7 +153,8 @@
       "properties": {
         "OTEL_EXPORTER_OTLP_ENDPOINT": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "pattern": "^https://"
         },
         "OTEL_EXPORTER_OTLP_HEADERS": {
           "type": "string",
