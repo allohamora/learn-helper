@@ -184,6 +184,104 @@
       }
     },
     {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Tunnel Registrations",
+      "description": "How often the tunnel (re)registers connections with Cloudflare's edge, per 15m window. A handful right after a deploy/restart is normal - cloudflared registers each of its HA connections separately. A rising trend during otherwise steady uptime suggests the tunnel is flapping. No alert is wired to this yet - watch it for a while to learn the normal baseline before picking a threshold.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "increase(cloudflared_tunnel_tunnel_register_success{deployment_environment_name=\"$environment\"}[15m])",
+          "legendFormat": "registrations / 15m",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Concurrent Requests",
+      "description": "In-flight requests being proxied through the tunnel at once. A saturation/backpressure signal - a sustained climb can mean the origin is slow to respond or traffic has spiked.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(cloudflared_tunnel_concurrent_requests_per_tunnel{deployment_environment_name=\"$environment\"})",
+          "legendFormat": "concurrent requests",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Connected Edge Locations",
+      "description": "Which Cloudflare edge location each HA connection is currently attached to. Helps tell a Cloudflare-side edge issue (one location dropping) apart from a problem with your own infrastructure. One tile per active connection.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "cloudflared_tunnel_server_locations{deployment_environment_name=\"$environment\"} == 1",
+          "legendFormat": "{{connection_id}}: {{edge_location}}",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "textMode": "name",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
       "id": 3,
       "type": "logs",
       "title": "Logs",
@@ -192,7 +290,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {

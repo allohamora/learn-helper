@@ -125,10 +125,11 @@ the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
 `helm/dashboards/cloudflared.json` is an exportable Grafana dashboard covering HA
 connections, errors (HTTP 4xx/5xx and origin/tunnel-level) plotted against total request
-volume, and logs for the cloudflared tunnel. In Grafana Cloud, go to Dashboards > New >
-Import, paste the file's contents, and pick your Prometheus and Loki datasources when
-prompted. It's not deployed by the chart - Helm only renders `templates/`, so this file
-is just kept here for reference/import.
+volume, tunnel registration churn, concurrent requests, connected edge locations, and
+logs for the cloudflared tunnel. In Grafana Cloud, go to Dashboards > New > Import, paste
+the file's contents, and pick your Prometheus and Loki datasources when prompted. It's
+not deployed by the chart - Helm only renders `templates/`, so this file is just kept
+here for reference/import.
 
 All panels filter on an `Environment` dashboard variable (backed by the
 `deployment.environment.name` resource attribute - see the Alloy section above),
