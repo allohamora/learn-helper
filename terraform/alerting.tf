@@ -40,7 +40,8 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     labels = {
-      severity = "critical"
+      alert_group = "cloudflared"
+      severity    = "critical"
     }
 
     annotations = {
@@ -90,7 +91,8 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     labels = {
-      severity = "warning"
+      alert_group = "cloudflared"
+      severity    = "warning"
     }
 
     annotations = {
@@ -132,7 +134,8 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     labels = {
-      severity = "warning"
+      alert_group = "cloudflared"
+      severity    = "warning"
     }
 
     annotations = {
@@ -180,7 +183,8 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     labels = {
-      severity = "warning"
+      alert_group = "cloudflared"
+      severity    = "warning"
     }
 
     annotations = {
@@ -224,7 +228,8 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     labels = {
-      severity = "critical"
+      alert_group = "cloudflared"
+      severity    = "critical"
     }
 
     annotations = {
@@ -250,4 +255,14 @@ resource "grafana_contact_point" "cloudflared" {
 resource "grafana_notification_policy" "default" {
   contact_point = grafana_contact_point.cloudflared.name
   group_by      = ["..."]
+
+  policy {
+    contact_point = grafana_contact_point.cloudflared.name
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "cloudflared"
+    }
+  }
 }
