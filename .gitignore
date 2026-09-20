@@ -5,6 +5,9 @@ dist-ssr
 *.local
 .env
 helm/values.yaml
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate*
 .nitro
 .tanstack
 .wrangler
