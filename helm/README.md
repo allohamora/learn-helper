@@ -121,6 +121,28 @@ to confirm data is actually arriving.
 Changing `alloy.env` (e.g. rotating the API token, or switching `ENVIRONMENT`) follows
 the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
+## Dashboard
+
+`helm/dashboards/cloudflared.json` is an exportable Grafana dashboard covering HA
+connections, errors (HTTP 4xx/5xx and origin/tunnel-level), and logs for the cloudflared
+tunnel. In Grafana Cloud, go to Dashboards > New > Import, paste the file's contents, and
+pick your Prometheus and Loki datasources when prompted. It's not deployed by the chart -
+Helm only renders `templates/`, so this file is just kept here for reference/import.
+
+The dashboard has a fixed `uid`, so re-importing it (after editing this file) offers to
+overwrite the existing dashboard in place rather than creating a duplicate - same URL, no
+need to delete it first. If your Grafana Cloud instance doesn't offer that overwrite
+prompt, delete the dashboard and re-import; since the `uid` is fixed, you get the same URL
+back either way.
+
+Editing dashboard JSON directly in Grafana Cloud's UI (Dashboard settings > JSON Model)
+doesn't work for re-syncing this file - newer Grafana Cloud instances validate that editor
+against a different schema (`apiVersion`/`kind`/`metadata`/`spec`) than the classic export
+format this file uses, and pasting the classic format there fails with errors like
+"Missing property metadata". To keep this file in sync after changing the dashboard in
+Grafana Cloud, re-export it instead: Share > Export > Save JSON, and overwrite this file
+with that.
+
 # Production setup notes
 
 ## SSH access via Cloudflare Zero Trust
