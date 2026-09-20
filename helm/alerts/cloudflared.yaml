@@ -2,7 +2,7 @@ groups:
   - name: cloudflared
     rules:
       - alert: CloudflaredHAConnectionsDegraded
-        expr: (max(cloudflared_tunnel_ha_connections{deployment_environment_name="production"}) or vector(0)) < 4
+        expr: max(cloudflared_tunnel_ha_connections{deployment_environment_name="production"}) < 4
         for: 5m
         labels:
           severity: critical
@@ -10,9 +10,11 @@ groups:
           summary: cloudflared has fewer than 4 HA connections to Cloudflare's edge
           description: >-
             Covers everything from partial degradation down to a full outage (0
-            connections). The "or vector(0)" makes this also fire if the metric stops
-            arriving entirely (e.g. Alloy or cloudflared itself is down), since a plain
-            threshold check would otherwise see no data and stay silent. Scoped to the
+            connections), as long as the metric is actually arriving. Deliberately
+            does NOT fire on missing data - the server is expected to be powered off
+            sometimes, and that shouldn't page anyone. The tradeoff: if cloudflared or
+            Alloy silently dies while the server keeps running, this alert won't catch
+            it either, since that also looks like "no data" from here. Scoped to the
             production environment so a devcontainer test run (ENVIRONMENT: development)
             can't page anyone.
       - alert: CloudflaredOriginErrors
