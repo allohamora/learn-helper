@@ -72,10 +72,11 @@ k3d cluster delete learn-helper
 Alloy is disabled by default (`alloy.enabled: false`). It collects the cloudflared
 tunnel's own Prometheus metrics (connection health, request counts, error rates - the
 `/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
-logs, and ships both to Grafana Cloud over OTLP. Nothing else is collected - no
-Postgres metrics, no node/cluster metrics, no `app` pod logs. The app's own
-traces/logs/HTTP metrics go straight to Sentry (see `src/server/instrument.ts`) and
-aren't part of this pipeline either.
+logs, and ships both to Grafana Cloud over OTLP. Every metric/log gets a
+`deployment.environment.name` resource attribute so production and non-production data can
+be told apart. Nothing else is collected - no Postgres metrics, no node/cluster
+metrics, no `app` pod logs. The app's own traces/logs/HTTP metrics go straight to
+Sentry (see `src/server/instrument.ts`) and aren't part of this pipeline either.
 
 To enable it:
 
@@ -83,7 +84,8 @@ To enable it:
    find your stack's OTLP gateway endpoint and instance ID.
 2. On the same page, generate an Access Policy token scoped to `metrics:write` and
    `logs:write`.
-3. Add these under `alloy.env` in `values.yaml`, and set `alloy.enabled: true`:
+3. Add these under `alloy.env` in `values.yaml`, along with `ENVIRONMENT` (`production`
+   or `development`), and set `alloy.enabled: true`:
    ```yaml
    alloy:
      enabled: true
@@ -91,6 +93,7 @@ To enable it:
        GRAFANA_CLOUD_OTLP_ENDPOINT: https://otlp-gateway-<region>.grafana.net/otlp
        GRAFANA_CLOUD_INSTANCE_ID: '<instance-id>'
        GRAFANA_CLOUD_API_TOKEN: <token>
+       ENVIRONMENT: production
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
 
@@ -103,10 +106,11 @@ kubectl -n learn-helper port-forward deploy/alloy 12345:12345
 ```
 
 In Grafana Cloud, confirm data is arriving: Explore > Metrics and Explore > Logs, both
-filtered on `job="cloudflared"`.
+filtered on `job="cloudflared"`. The `deployment.environment.name` resource attribute lets
+you filter further by which environment sent the data.
 
-Changing `alloy.env` (e.g. rotating the API token) follows the same `helm upgrade`
-flow as the `postgres.env`/`app.env` update steps above.
+Changing `alloy.env` (e.g. rotating the API token, or switching `ENVIRONMENT`) follows
+the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
 # Production setup notes
 

@@ -32,6 +32,12 @@ spec:
           envFrom:
             - secretRef:
                 name: alloy-env
+          env:
+            # otelcol.processor.resourcedetection's "env" detector reads this exact
+            # variable name/format - composed here (not via k8s $(VAR) expansion,
+            # which can't reference envFrom-sourced vars like ENVIRONMENT above)
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "deployment.environment.name={{ .Values.alloy.env.ENVIRONMENT }}"
           volumeMounts:
             - name: alloy-config
               mountPath: /etc/alloy

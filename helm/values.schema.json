@@ -149,7 +149,12 @@
     },
     "alloyEnvironment": {
       "type": "object",
-      "required": ["GRAFANA_CLOUD_OTLP_ENDPOINT", "GRAFANA_CLOUD_INSTANCE_ID", "GRAFANA_CLOUD_API_TOKEN"],
+      "required": [
+        "GRAFANA_CLOUD_OTLP_ENDPOINT",
+        "GRAFANA_CLOUD_INSTANCE_ID",
+        "GRAFANA_CLOUD_API_TOKEN",
+        "ENVIRONMENT"
+      ],
       "properties": {
         "GRAFANA_CLOUD_OTLP_ENDPOINT": {
           "type": "string",
@@ -163,6 +168,10 @@
         "GRAFANA_CLOUD_API_TOKEN": {
           "type": "string",
           "minLength": 1
+        },
+        "ENVIRONMENT": {
+          "type": "string",
+          "enum": ["production", "development"]
         }
       },
       "additionalProperties": {

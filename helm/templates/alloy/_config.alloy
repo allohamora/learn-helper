@@ -44,13 +44,26 @@ loki.source.kubernetes "cloudflared" {
 
 otelcol.receiver.prometheus "default" {
   output {
-    metrics = [otelcol.exporter.otlphttp.grafana_cloud.input]
+    metrics = [otelcol.processor.resourcedetection.environment.input]
   }
 }
 
 otelcol.receiver.loki "default" {
   output {
-    logs = [otelcol.exporter.otlphttp.grafana_cloud.input]
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+
+// ---- tag every metric/log with the current environment, so production and
+// non-production data can be told apart in Grafana Cloud. Reads the
+// OTEL_RESOURCE_ATTRIBUTES env var (set to "deployment.environment.name=<value>" in
+// alloy.deployment.yaml) and stamps it onto every metric/log's resource. ----
+otelcol.processor.resourcedetection "environment" {
+  detectors = ["env"]
+
+  output {
+    metrics = [otelcol.exporter.otlphttp.grafana_cloud.input]
+    logs    = [otelcol.exporter.otlphttp.grafana_cloud.input]
   }
 }
 
