@@ -2,7 +2,7 @@ groups:
   - name: cloudflared
     rules:
       - alert: CloudflaredHAConnectionsDegraded
-        expr: (max(cloudflared_tunnel_ha_connections) or vector(0)) < 4
+        expr: (max(cloudflared_tunnel_ha_connections{deployment_environment_name="production"}) or vector(0)) < 4
         for: 5m
         labels:
           severity: critical
@@ -12,9 +12,11 @@ groups:
             Covers everything from partial degradation down to a full outage (0
             connections). The "or vector(0)" makes this also fire if the metric stops
             arriving entirely (e.g. Alloy or cloudflared itself is down), since a plain
-            threshold check would otherwise see no data and stay silent.
+            threshold check would otherwise see no data and stay silent. Scoped to the
+            production environment so a devcontainer test run (ENVIRONMENT: development)
+            can't page anyone.
       - alert: CloudflaredOriginErrors
-        expr: sum(rate(cloudflared_tunnel_request_errors[5m])) > 0.1
+        expr: sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name="production"}[5m])) > 0.1
         for: 5m
         labels:
           severity: warning
@@ -23,3 +25,5 @@ groups:
           description: >-
             Counts errors proxying to origin, distinct from the app's own HTTP error
             responses. Threshold is a starting point - tune after watching real traffic.
+            Scoped to the production environment so a devcontainer test run
+            (ENVIRONMENT: development) can't page anyone.

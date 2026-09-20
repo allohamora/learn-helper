@@ -129,6 +129,11 @@ tunnel. In Grafana Cloud, go to Dashboards > New > Import, paste the file's cont
 pick your Prometheus and Loki datasources when prompted. It's not deployed by the chart -
 Helm only renders `templates/`, so this file is just kept here for reference/import.
 
+All panels filter on an `Environment` dashboard variable (backed by the
+`deployment.environment.name` resource attribute - see the Alloy section above),
+defaulting to `production`. Switch it to `development` to inspect devcontainer test data
+without it being blended into the production view.
+
 The dashboard has a fixed `uid`, so re-importing it (after editing this file) offers to
 overwrite the existing dashboard in place rather than creating a duplicate - same URL, no
 need to delete it first. If your Grafana Cloud instance doesn't offer that overwrite
@@ -148,6 +153,9 @@ with that.
 `helm/alerts/cloudflared.yaml` is a Prometheus-format alert rules file for the
 cloudflared tunnel. Like the dashboard, it's not deployed by the chart - it's kept here
 for reference/import.
+
+Both rules are scoped to `deployment_environment_name="production"`, so a devcontainer
+test run (`ENVIRONMENT: development`) never triggers a page.
 
 **Import the alert rules:**
 

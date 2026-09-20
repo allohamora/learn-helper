@@ -51,10 +51,36 @@
   ],
   "title": "Cloudflared Tunnel",
   "uid": "learn-helper-cloudflared-tunnel",
-  "description": "cloudflared tunnel health: HA connections, error rate, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud.",
+  "description": "cloudflared tunnel health: HA connections, error rate, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "query": {
+          "query": "label_values(cloudflared_tunnel_ha_connections, deployment_environment_name)",
+          "refId": "StandardVariableQuery"
+        },
+        "current": {
+          "selected": true,
+          "text": "production",
+          "value": "production"
+        },
+        "refresh": 1,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
@@ -72,7 +98,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max(cloudflared_tunnel_ha_connections)",
+          "expr": "max(cloudflared_tunnel_ha_connections{deployment_environment_name=\"$environment\"})",
           "legendFormat": "HA connections",
           "instant": true,
           "range": false,
@@ -114,7 +140,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"4..|5..\"}[5m]))",
+          "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"4..|5..\", deployment_environment_name=\"$environment\"}[5m]))",
           "legendFormat": "HTTP 4xx/5xx",
           "refId": "A"
         },
@@ -123,7 +149,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_request_errors[5m]))",
+          "expr": "sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m]))",
           "legendFormat": "origin/tunnel errors",
           "refId": "B"
         }
@@ -152,7 +178,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "{service_name=\"cloudflared\"}",
+          "expr": "{service_name=\"cloudflared\", deployment_environment_name=\"$environment\"}",
           "maxLines": 100,
           "refId": "A"
         }
