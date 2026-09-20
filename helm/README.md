@@ -112,6 +112,12 @@ In Grafana Cloud, confirm data is arriving: Explore > Metrics and Explore > Logs
 filtered on `job="cloudflared"`. The `deployment.environment.name` resource attribute lets
 you filter further by which environment sent the data.
 
+Grafana Cloud's Application Observability page will report a "waiting for traces"/test
+connection error for this OTLP connection and never resolve it - that's expected, not a
+sign anything is broken. This pipeline only ever sends metrics and logs, never traces, so
+there's nothing for that specific check to find. Ignore it and use Explore/Drilldown above
+to confirm data is actually arriving.
+
 Changing `alloy.env` (e.g. rotating the API token, or switching `ENVIRONMENT`) follows
 the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
