@@ -143,6 +143,30 @@ format this file uses, and pasting the classic format there fails with errors li
 Grafana Cloud, re-export it instead: Share > Export > Save JSON, and overwrite this file
 with that.
 
+## Alerts
+
+`helm/alerts/cloudflared.yaml` is a Prometheus-format alert rules file for the
+cloudflared tunnel. Like the dashboard, it's not deployed by the chart - it's kept here
+for reference/import.
+
+**Import the alert rules:**
+
+1. In Grafana Cloud: Alerts & IRM > Alerting, click "manage alert rules", then More >
+   Import.
+2. Import source: `Prometheus YAML file`, upload `helm/alerts/cloudflared.yaml`.
+3. Pick your Prometheus/Mimir data source and a target folder.
+4. Turn off "Pause imported alerting rules" (defaults to on - if you forget, the rules
+   get imported but never evaluate, so they'll never fire until you unpause them from
+   the Alert rules list).
+5. Import.
+
+**Get emailed when a rule fires:**
+
+1. Alerts & IRM > Alerting, click "manage contact points".
+2. Click "+ New contact point", set type to `Email`, enter your address.
+3. In Notification policies, on the default policy click More > Edit, and set the
+   contact point to the one you just created.
+
 # Production setup notes
 
 ## SSH access via Cloudflare Zero Trust
