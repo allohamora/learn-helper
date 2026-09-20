@@ -44,7 +44,7 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     annotations = {
-      summary = "cloudflared has fewer than 4 HA connections to Cloudflare's edge"
+      summary     = "cloudflared has fewer than 4 HA connections to Cloudflare's edge"
       description = <<-EOT
         Covers everything from partial degradation down to a full outage (0
         connections), as long as the metric is actually arriving. Deliberately
@@ -94,7 +94,7 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     annotations = {
-      summary = "cloudflared is failing to proxy requests to the app's origin"
+      summary     = "cloudflared is failing to proxy requests to the app's origin"
       description = <<-EOT
         Origin-connection failures (never produce a status code) as a share of all
         requests attempted, distinct from the app's own HTTP error responses. A
@@ -136,7 +136,7 @@ resource "grafana_rule_group" "cloudflared" {
     }
 
     annotations = {
-      summary = "cloudflared is repeatedly re-registering with Cloudflare's edge"
+      summary     = "cloudflared is repeatedly re-registering with Cloudflare's edge"
       description = <<-EOT
         cloudflared registers each of its 4 HA connections separately, so a single
         pod restart/deploy produces a one-time burst of ~4 registrations that's
@@ -149,6 +149,90 @@ resource "grafana_rule_group" "cloudflared" {
         starting point, not a validated threshold - watch the Tunnel Registrations
         dashboard panel and adjust once you know what's actually normal. Scoped to
         the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "CloudflaredErrorLogsElevated"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"cloudflared\", deployment_environment_name=\"production\"} | detected_level=~\"error|fatal\" [5m])) > bool 5"
+      })
+    }
+
+    labels = {
+      severity = "warning"
+    }
+
+    annotations = {
+      summary     = "cloudflared is logging errors persistently"
+      description = <<-EOT
+        Counts cloudflared's own error/fatal-level log lines (detected_level, derived
+        by Alloy from the zerolog "level" field of cloudflared's JSON output), which
+        catches internal failures - auth, config reload, DNS - that don't necessarily
+        show up in the Prometheus metrics covered by the other rules here. More than
+        5 lines in a 5m window, sustained for 5m, so a single transient error doesn't
+        page anyone. No established baseline yet - adjust once you know what's normal.
+        Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "CloudflaredFatalLog"
+    condition     = "A"
+    for           = "1m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 120
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"cloudflared\", deployment_environment_name=\"production\"} | detected_level=\"fatal\" [1m])) > bool 0"
+      })
+    }
+
+    labels = {
+      severity = "critical"
+    }
+
+    annotations = {
+      summary     = "cloudflared logged a fatal error and is likely restarting"
+      description = <<-EOT
+        zerolog's Fatal level calls os.Exit(1), so even a single occurrence means the
+        process just crashed - no volume threshold, unlike the error-rate rule above.
+        Scoped to the production environment so a devcontainer test run
         (ENVIRONMENT: development) can't page anyone.
       EOT
     }
