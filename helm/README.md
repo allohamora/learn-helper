@@ -105,15 +105,8 @@ kubectl -n learn-helper logs deploy/alloy
 kubectl -n learn-helper port-forward deploy/alloy 12345:12345
 ```
 
-In Grafana Cloud, confirm data is arriving: Explore > Metrics filtered on `job="cloudflared"`
-and Explore > Logs filtered on `service_name="cloudflared"`. The `deployment.environment.name`
-resource attribute lets you filter further by which environment sent the data.
-
-Grafana Cloud's Application Observability page will report a "waiting for traces"/test
-connection error for this OTLP connection and never resolve it - that's expected, not a
-sign anything is broken. This pipeline only ever sends metrics and logs, never traces, so
-there's nothing for that specific check to find. Ignore it and use Explore/Drilldown above
-to confirm data is actually arriving.
+Confirm data is arriving via the Terraform-managed `Cloudflared Tunnel` dashboard in Grafana
+Cloud, or via Drilldown > Metrics/Logs filtered on `job="cloudflared"`/`service_name="cloudflared"`.
 
 Changing `alloy.env` (e.g. rotating the API token, or switching `ENVIRONMENT`) follows
 the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
