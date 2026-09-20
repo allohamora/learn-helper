@@ -35,3 +35,23 @@ groups:
             traffic grows or shrinks. 5% is a starting point - tune after watching real
             traffic. Scoped to the production environment so a devcontainer test run
             (ENVIRONMENT: development) can't page anyone.
+      - alert: CloudflaredTunnelFlapping
+        expr: increase(cloudflared_tunnel_tunnel_register_success{deployment_environment_name="production"}[30m]) > 12
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: cloudflared is repeatedly re-registering with Cloudflare's edge
+          description: >-
+            cloudflared registers each of its 4 HA connections separately, so a single
+            pod restart/deploy produces a one-time burst of ~4 registrations that's
+            normal, not a problem - the 12 threshold is what keeps that from firing, not
+            the "for" duration (a burst that did cross 12 would stay in the 30m window,
+            and therefore stay true, for close to 30 minutes, well past 15m). This only
+            fires on registration churn that keeps recurring well past what a single
+            restart explains. There's no established baseline for this tunnel yet (one
+            observation: 8 registrations in ~64m of normal operation), so 12 is a rough
+            starting point, not a validated threshold - watch the Tunnel Registrations
+            dashboard panel and adjust once you know what's actually normal. Scoped to
+            the production environment so a devcontainer test run
+            (ENVIRONMENT: development) can't page anyone.
