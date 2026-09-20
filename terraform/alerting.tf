@@ -245,7 +245,7 @@ resource "grafana_rule_group" "cloudflared" {
 }
 
 resource "grafana_contact_point" "cloudflared" {
-  name = "cloudflared-email"
+  name = "learn-helper-contact-point"
 
   email {
     addresses = [var.alert_contact_email]
