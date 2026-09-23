@@ -193,8 +193,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"}) * 100",
-          "legendFormat": "{{mountpoint}} ({{node}})",
+          "expr": "(node_filesystem_avail_bytes{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"} / node_filesystem_size_bytes{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"}) * 100",
+          "legendFormat": "free",
           "refId": "A"
         }
       ],
@@ -223,8 +223,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "rate(node_disk_read_bytes_total{deployment_environment_name=\"$environment\"}[5m])",
-          "legendFormat": "read {{device}} ({{node}})",
+          "expr": "sum(rate(node_disk_read_bytes_total{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "read",
           "refId": "A"
         },
         {
@@ -232,8 +232,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "rate(node_disk_written_bytes_total{deployment_environment_name=\"$environment\"}[5m])",
-          "legendFormat": "write {{device}} ({{node}})",
+          "expr": "sum(rate(node_disk_written_bytes_total{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "write",
           "refId": "B"
         }
       ],
@@ -261,8 +261,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "rate(node_network_receive_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m])",
-          "legendFormat": "rx {{device}} ({{node}})",
+          "expr": "sum(rate(node_network_receive_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "rx",
           "refId": "A"
         },
         {
@@ -270,8 +270,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m])",
-          "legendFormat": "tx {{device}} ({{node}})",
+          "expr": "sum(rate(node_network_transmit_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "tx",
           "refId": "B"
         }
       ],
@@ -365,8 +365,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(node_filesystem_files_free{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"} / node_filesystem_files{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"}) * 100",
-          "legendFormat": "{{mountpoint}} ({{node}})",
+          "expr": "(node_filesystem_files_free{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"} / node_filesystem_files{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"}) * 100",
+          "legendFormat": "free",
           "refId": "A"
         }
       ],

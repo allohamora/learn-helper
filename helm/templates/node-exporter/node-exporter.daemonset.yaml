@@ -32,10 +32,15 @@ spec:
             - --path.rootfs=/host/root
             # k3s's containerd lives under /run/k3s/containerd and /var/lib/rancher/k3s,
             # not the generic Docker/containerd paths - each pod's shm mount otherwise
-            # leaks through as its own filesystem
-            - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/k3s/containerd/.+|var/lib/rancher/k3s/agent/containerd/.+|var/lib/kubelet/.+)($|/)
+            # leaks through as its own filesystem. /etc, /var/log, /var/lib/cni and /k3d
+            # are individual bind-mounts in this devcontainer's k3d setup, not real disks.
+            - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|etc|var/log|var/lib/cni|var/lib/kubelet|k3d|run/k3s/containerd/.+|var/lib/rancher/k3s/agent/containerd/.+)($|/)
             - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
-            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo)$
+            # nbd* comes from Docker Desktop's VM disk backing, not a real host disk
+            - --collector.diskstats.device-exclude=^(nbd|loop|ram|dm-|zram).*$
+            # erspan/gre/gretap/ip6gre/ip6tnl/ip6_vti/ip_vti/sit/tunl are default kernel
+            # tunnel interfaces present on any Linux host, always idle
+            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo|erspan.*|gre.*|gretap.*|ip6gre.*|ip6tnl.*|ip6_vti.*|ip_vti.*|sit.*|tunl.*)$
           ports:
             - name: metrics
               containerPort: 9100
