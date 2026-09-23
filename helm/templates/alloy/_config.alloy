@@ -6,7 +6,7 @@ discovery.kubernetes "cloudflared" {
   role = "pod"
 
   namespaces {
-    own_namespace = true
+    own_namespace = true // in the same namespace as alloy
   }
 
   selectors {
@@ -40,6 +40,48 @@ prometheus.scrape "cloudflared" {
 loki.source.kubernetes "cloudflared" {
   targets    = discovery.kubernetes.cloudflared.targets
   forward_to = [otelcol.receiver.loki.default.receiver]
+}
+
+// ---- node-exporter host metrics ----
+// Scoped to just the node-exporter pods via a server-side label selector, rather than
+// discovering every pod in the namespace and relabeling client-side.
+discovery.kubernetes "node_exporter" {
+  role = "pod"
+
+  namespaces {
+    own_namespace = true // in the same namespace as alloy
+  }
+
+  selectors {
+    role  = "pod"
+    label = "app=node-exporter"
+  }
+}
+
+// Keep only the "metrics" port target, and copy each pod's node name onto a "node"
+// label - node-exporter is a DaemonSet (one pod per node), so once this cluster grows
+// beyond one node, per-host metrics need to stay distinguishable from each other.
+discovery.relabel "node_exporter_metrics" {
+  targets = discovery.kubernetes.node_exporter.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_node_name"]
+    target_label  = "node"
+    action        = "replace"
+  }
+}
+
+prometheus.scrape "node_exporter" {
+  targets         = discovery.relabel.node_exporter_metrics.output
+  job_name        = "node-exporter"
+  scrape_interval = "60s"
+  forward_to      = [otelcol.receiver.prometheus.default.receiver]
 }
 
 otelcol.receiver.prometheus "default" {

@@ -72,11 +72,13 @@ k3d cluster delete learn-helper
 Alloy is disabled by default (`alloy.enabled: false`). It collects the cloudflared
 tunnel's own Prometheus metrics (connection health, request counts, error rates - the
 `/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
-logs, and ships both to Grafana Cloud over OTLP. Every metric/log gets a
-`deployment.environment.name` resource attribute so production and non-production data can
-be told apart. Nothing else is collected - no Postgres metrics, no node/cluster
-metrics, no `app` pod logs. The app's own traces/logs/HTTP metrics go straight to
-Sentry (see `src/server/instrument.ts`) and aren't part of this pipeline either.
+logs, and - when `nodeExporter.enabled: true` - host metrics (CPU, memory, disk,
+network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100. All of
+it ships to Grafana Cloud over OTLP, with every metric/log getting a
+`deployment.environment.name` resource attribute so production and non-production data
+can be told apart. Postgres metrics and `app` pod logs are still not collected. The
+app's own traces/logs/HTTP metrics go straight to Sentry (see
+`src/server/instrument.ts`) and aren't part of this pipeline either.
 
 To enable it:
 
@@ -96,6 +98,11 @@ To enable it:
        ENVIRONMENT: production
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
+
+To also collect host metrics, set `nodeExporter.enabled: true` in `values.yaml`
+(`nodeExporter.image` defaults to `quay.io/prometheus/node-exporter:v1.12.1` in
+`values.example.yaml`) and re-run `helm upgrade` again. It only needs Alloy enabled to
+be useful - on its own it just runs an unscraped `/metrics` endpoint.
 
 ```bash
 # Verify Alloy is scraping/shipping correctly.
@@ -121,6 +128,14 @@ point/notification policy that routes them, are managed by Terraform - see
 `terraform/README.md`. The dashboard JSON lives at `terraform/dashboards/cloudflared.json`
 and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to create or
 update them. None of this is deployed by the Helm chart itself.
+
+Likewise, the `Node Exporter` dashboard (CPU, memory, load average, disk space, disk
+I/O, network traffic, and uptime) and its 9 alert rules (low memory, high CPU, low disk
+space, low inodes, disk predicted to fill within 24h, inodes predicted to fill within
+24h, node-exporter unreachable, swap filling up, OOM kill detected) route through the
+same contact point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/node-exporter.json` and the alert rules are in the same
+`terraform/alerting.tf`.
 
 # Production setup notes
 
