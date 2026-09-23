@@ -109,55 +109,6 @@ resource "grafana_rule_group" "cloudflared" {
   }
 
   rule {
-    name          = "CloudflaredTunnelFlapping"
-    condition     = "A"
-    for           = "15m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 2400
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = "increase(cloudflared_tunnel_tunnel_register_success{deployment_environment_name=\"production\"}[30m]) > bool 12"
-      })
-    }
-
-    labels = {
-      alert_group = "cloudflared"
-      severity    = "warning"
-    }
-
-    annotations = {
-      summary     = "cloudflared is repeatedly re-registering with Cloudflare's edge"
-      description = <<-EOT
-        cloudflared registers each of its 4 HA connections separately, so a single
-        pod restart/deploy produces a one-time burst of ~4 registrations that's
-        normal, not a problem - the 12 threshold is what keeps that from firing, not
-        the "for" duration (a burst that did cross 12 would stay in the 30m window,
-        and therefore stay true, for close to 30 minutes, well past 15m). This only
-        fires on registration churn that keeps recurring well past what a single
-        restart explains. There's no established baseline for this tunnel yet (one
-        observation: 8 registrations in ~64m of normal operation), so 12 is a rough
-        starting point, not a validated threshold - watch the Tunnel Registrations
-        dashboard panel and adjust once you know what's actually normal. Scoped to
-        the production environment so a devcontainer test run
-        (ENVIRONMENT: development) can't page anyone.
-      EOT
-    }
-  }
-
-  rule {
     name          = "CloudflaredErrorLogsElevated"
     condition     = "A"
     for           = "5m"
@@ -242,6 +193,7 @@ resource "grafana_rule_group" "cloudflared" {
       EOT
     }
   }
+
 }
 
 # bool is placed only on the outer threshold comparison in each rule below, never
@@ -274,7 +226,7 @@ resource "grafana_rule_group" "node_exporter" {
         instant    = true
         range      = false
         datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = "node_memory_MemAvailable_bytes{deployment_environment_name=\"production\"} / node_memory_MemTotal_bytes{deployment_environment_name=\"production\"} < bool 0.10"
+        expr       = "node_memory_MemAvailable_bytes{deployment_environment_name=\"production\"} / node_memory_MemTotal_bytes{deployment_environment_name=\"production\"} < bool 0.20"
       })
     }
 
@@ -284,7 +236,7 @@ resource "grafana_rule_group" "node_exporter" {
     }
 
     annotations = {
-      summary     = "Host has less than 10% memory available"
+      summary     = "Host has less than 20% memory available"
       description = <<-EOT
         Available memory (not just "free" - includes reclaimable cache/buffers) as a
         share of total, so the threshold doesn't need retuning if the host's memory
@@ -365,7 +317,7 @@ resource "grafana_rule_group" "node_exporter" {
             node_filesystem_avail_bytes{fstype!~"tmpfs|overlay", deployment_environment_name="production"}
             /
             node_filesystem_size_bytes{fstype!~"tmpfs|overlay", deployment_environment_name="production"}
-            < bool 0.10
+            < bool 0.20
           )
           and on(instance, device, mountpoint) (
             node_filesystem_readonly{deployment_environment_name="production"} == 0
@@ -380,7 +332,7 @@ resource "grafana_rule_group" "node_exporter" {
     }
 
     annotations = {
-      summary     = "Host filesystem has less than 10% space free"
+      summary     = "Host filesystem has less than 20% space free"
       description = <<-EOT
         Excludes tmpfs/overlay (ephemeral, not worth alerting on) and read-only
         mounts (can't be written to further, so a full one isn't actionable the same
@@ -393,215 +345,7 @@ resource "grafana_rule_group" "node_exporter" {
   }
 
   rule {
-    name          = "HostOutOfInodes"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 600
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = <<-EOT
-          (
-            node_filesystem_files_free{deployment_environment_name="production"}
-            /
-            node_filesystem_files{deployment_environment_name="production"}
-            < bool 0.10
-          )
-          and on(instance, device, mountpoint) (
-            node_filesystem_readonly{deployment_environment_name="production"} == 0
-          )
-        EOT
-      })
-    }
-
-    labels = {
-      alert_group = "node-exporter"
-      severity    = "critical"
-    }
-
-    annotations = {
-      summary     = "Host filesystem has less than 10% inodes free"
-      description = <<-EOT
-        A filesystem can run out of inodes (the metadata slots that track files/
-        directories) well before it runs out of disk space, if the workload creates
-        lots of small files - this catches that failure mode, which the disk-space
-        rule above would miss entirely. Deliberately does NOT fire on missing data.
-        Scoped to the production environment so a devcontainer test run
-        (ENVIRONMENT: development) can't page anyone.
-      EOT
-    }
-  }
-
-  rule {
-    name          = "HostDiskMayFillIn24Hours"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 21600
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = <<-EOT
-          (
-            predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay", deployment_environment_name="production"}[3h], 24 * 3600)
-            <= bool 0
-          )
-          and on(instance, device, mountpoint) (
-            node_filesystem_avail_bytes{deployment_environment_name="production"} > 0
-          )
-          and on(instance, device, mountpoint) (
-            node_filesystem_readonly{deployment_environment_name="production"} == 0
-          )
-        EOT
-      })
-    }
-
-    labels = {
-      alert_group = "node-exporter"
-      severity    = "warning"
-    }
-
-    annotations = {
-      summary     = "Host filesystem is trending toward full within 24 hours"
-      description = <<-EOT
-        Fits a trend line to the last 3h of free-space samples and projects it 24h
-        forward - fires before HostOutOfDiskSpace's hard 10% threshold is hit, while
-        there's still time to act. A filesystem that's already essentially full
-        (avail_bytes near 0) is excluded here since HostOutOfDiskSpace already covers
-        it. Deliberately does NOT fire on missing data. Scoped to the production
-        environment so a devcontainer test run (ENVIRONMENT: development) can't page
-        anyone.
-      EOT
-    }
-  }
-
-  rule {
-    name          = "NodeExporterDown"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 600
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = "up{job=\"node-exporter\", deployment_environment_name=\"production\"} == bool 0"
-      })
-    }
-
-    labels = {
-      alert_group = "node-exporter"
-      severity    = "critical"
-    }
-
-    annotations = {
-      summary     = "node-exporter isn't responding to scrapes"
-      description = <<-EOT
-        Alloy scraped the node-exporter target and got no response. Distinct from the
-        server being powered off entirely - that case produces no "up" series at all,
-        since Alloy runs on the same node and goes down with it, which
-        no_data_state = "OK" already treats as fine. This only fires when Alloy itself
-        is up and reachable but node-exporter specifically has crashed, is
-        crash-looping, or is otherwise unresponsive. Scoped to the production
-        environment so a devcontainer test run (ENVIRONMENT: development) can't page
-        anyone.
-      EOT
-    }
-  }
-
-  rule {
-    name          = "HostInodesMayFillIn24Hours"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 21600
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = <<-EOT
-          (
-            predict_linear(node_filesystem_files_free{fstype!~"tmpfs|overlay", deployment_environment_name="production"}[3h], 24 * 3600)
-            <= bool 0
-          )
-          and on(instance, device, mountpoint) (
-            node_filesystem_files_free{deployment_environment_name="production"} > 0
-          )
-          and on(instance, device, mountpoint) (
-            node_filesystem_readonly{deployment_environment_name="production"} == 0
-          )
-        EOT
-      })
-    }
-
-    labels = {
-      alert_group = "node-exporter"
-      severity    = "warning"
-    }
-
-    annotations = {
-      summary     = "Host filesystem is trending toward inode exhaustion within 24 hours"
-      description = <<-EOT
-        Same predict_linear approach as HostDiskMayFillIn24Hours, applied to free
-        inodes instead of free bytes - fires before HostOutOfInodes's hard 10%
-        threshold is hit, while there's still time to act. A filesystem already
-        essentially out of inodes (files_free near 0) is excluded here since
-        HostOutOfInodes already covers it. Deliberately does NOT fire on missing
-        data. Scoped to the production environment so a devcontainer test run
-        (ENVIRONMENT: development) can't page anyone.
-      EOT
-    }
-  }
-
-  rule {
-    name          = "HostSwapIsFillingUp"
+    name          = "HostOutOfSwap"
     condition     = "A"
     for           = "2m"
     is_paused     = false
@@ -677,7 +421,7 @@ resource "grafana_rule_group" "node_exporter" {
       summary     = "Kernel OOM killer has killed a process on the host"
       description = <<-EOT
         A backstop for HostOutOfMemory: that rule fires when available memory drops
-        below 10% and stays there for 2m, but a sudden allocation spike can trigger
+        below 20% and stays there for 2m, but a sudden allocation spike can trigger
         the OOM killer before that condition is ever sustained long enough to fire.
         This catches it after the fact - by the time this fires, something has
         already been killed. Deliberately does NOT fire on missing data. Scoped to

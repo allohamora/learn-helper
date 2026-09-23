@@ -120,22 +120,47 @@ the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
 ## Dashboard and alerts
 
-The `Cloudflared Tunnel` dashboard (HA connections, errors, tunnel registration churn,
-concurrent requests, connected edge locations, and logs) and its 5 alert rules
-(degraded HA connections, origin errors, tunnel flapping, elevated error logs,
+The goal here is to collect and alert on only what's actually useful, not everything
+these tools can expose. node-exporter's defaults and cloudflared's `/metrics` endpoint
+between them offer well over a hundred metric families; shipping all of it to Grafana
+Cloud would mean paying for and scrolling past series nobody looks at. So this is
+intentional, not partial or unfinished: node-exporter only runs the collectors its
+panels/alerts need, Alloy further filters both scrape jobs down to the exact metric
+names a panel or alert reads, and every alert rule has a corresponding dashboard panel
+so firing one always has somewhere to look for the "why." Adding a new panel or alert is
+expected to come with adding the metric it needs to the relevant `keep` allow-list (and
+vice versa - a metric with no panel or alert reading it should come back out).
+
+The `Cloudflared Tunnel` dashboard (HA connections, uptime, errors, requests, concurrent
+requests, stream errors, origin error rate, and logs)
+and its 4 alert rules (degraded HA connections, origin errors, elevated error logs,
 fatal log), plus the email contact
 point/notification policy that routes them, are managed by Terraform - see
 `terraform/README.md`. The dashboard JSON lives at `terraform/dashboards/cloudflared.json`
 and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to create or
-update them. None of this is deployed by the Helm chart itself.
+update them. None of this is deployed by the Helm chart itself. Alloy only ships the
+handful of `cloudflared_tunnel_*` metrics (plus `process_start_time_seconds`) that
+back these panels/alerts - see the `prometheus.relabel "cloudflared_keep"` component in
+`alloy/_config.alloy`.
 
-Likewise, the `Node Exporter` dashboard (CPU, memory, load average, disk space, disk
-I/O, network traffic, and uptime) and its 9 alert rules (low memory, high CPU, low disk
-space, low inodes, disk predicted to fill within 24h, inodes predicted to fill within
-24h, node-exporter unreachable, swap filling up, OOM kill detected) route through the
-same contact point/notification policy. The dashboard JSON lives at
+Likewise, the `Node Exporter` dashboard (CPU usage, memory usage, swap usage, disk usage
+%, disk load %, network traffic, uptime, and OOM kills) and its 5 alert rules (low memory, high CPU,
+low disk space, swap filling up, OOM kill detected) route through the same contact
+point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/node-exporter.json` and the alert rules are in the same
-`terraform/alerting.tf`.
+`terraform/alerting.tf`. node-exporter itself only runs the collectors those panels/alerts
+need (see its `--collector.*` args in `node-exporter.daemonset.yaml`), and Alloy further
+filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"`).
+
+None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
+`NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
+`no_data_state = "OK"`). That's deliberate, not an oversight: this host is expected to be
+powered off manually for large stretches of time and brought back online later, so absence
+of data is the normal state, not an anomaly - a rule that alerted on it would mostly be
+alerting on the host being off, which nobody needs to hear about. The tradeoff is that a
+crashed node-exporter or Alloy process on a host that's still otherwise up also looks like
+"no data" from here and won't page anyone either; that's accepted given how much of this
+host's time is expected to be offline anyway.
 
 # Production setup notes
 

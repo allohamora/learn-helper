@@ -4,7 +4,7 @@ Manages Grafana Cloud resources via the
 [`grafana/grafana`](https://registry.terraform.io/providers/grafana/grafana/latest) provider:
 the OTLP ingestion connection Alloy ships cloudflared's and node-exporter's
 metrics/logs to (see `helm/README.md`'s Alloy section), the `Cloudflared Tunnel` and
-`Node Exporter` dashboards, their 14 alert rules combined, and the email contact
+`Node Exporter` dashboards, their 9 alert rules combined, and the email contact
 point/notification policy that routes them. All of this used to be set up by hand in
 the Grafana Cloud UI; now it's one `terraform apply`.
 
@@ -30,7 +30,7 @@ other root credential in an IaC setup.
    Policies > Create access policy, scope it to `accesspolicies:read`,
    `accesspolicies:write`, `accesspolicies:delete`, and `stacks:read`. Create a token from
    it and copy it immediately.
-4. Alert contact email (`alert_contact_email`): where all 14 alert rules (cloudflared
+4. Alert contact email (`alert_contact_email`): where all 9 alert rules (cloudflared
    and node-exporter) should email on fire.
 5. Copy the example vars file and fill in all values:
    ```bash

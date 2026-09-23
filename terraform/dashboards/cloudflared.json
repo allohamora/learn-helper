@@ -51,7 +51,7 @@
   ],
   "title": "Cloudflared Tunnel",
   "uid": "learn-helper-cloudflared-tunnel",
-  "description": "cloudflared tunnel health: HA connections, error rate, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "cloudflared tunnel health: HA connections, uptime, errors, requests, concurrent requests, stream errors, origin error rate, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -83,15 +83,47 @@
   },
   "panels": [
     {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Uptime",
+      "description": "Time since the cloudflared process last started. A drop to zero marks a restart.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "time() - process_start_time_seconds{deployment_environment_name=\"$environment\"}",
+          "legendFormat": "uptime",
+          "instant": false,
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 1,
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 1,
-      "type": "stat",
+      "type": "timeseries",
       "title": "HA connections",
       "description": "Active connections from cloudflared to Cloudflare's edge. 0 means the tunnel is down.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 8 },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -100,67 +132,48 @@
           },
           "expr": "max(cloudflared_tunnel_ha_connections{deployment_environment_name=\"$environment\"})",
           "legendFormat": "HA connections",
-          "instant": true,
-          "range": false,
+          "instant": false,
+          "range": true,
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "red", "value": null },
               { "color": "green", "value": 1 }
             ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
           }
         },
         "overrides": []
-      },
-      "options": {
-        "graphMode": "none",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
       }
     },
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Errors & Traffic",
-      "description": "cloudflared requests per minute: HTTP 4xx/5xx responses, and origin-connection failures (e.g. the app being unreachable) that never produce a status code. Total requests per minute is plotted alongside for scale, so the error lines can be judged against actual traffic volume. Per-minute instead of per-second so low-traffic numbers don't show up as confusing fractions.",
+      "title": "Errors",
+      "description": "Origin/tunnel errors per minute - failures proxying to the app that never produce an HTTP status code (e.g. the app being unreachable). The CloudflaredOriginErrors alert (terraform/alerting.tf) fires when this exceeds 5% of total requests. Per-minute instead of per-second so low-traffic numbers don't show up as confusing fractions.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 6, "y": 0, "w": 18, "h": 8 },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"4..|5..\", deployment_environment_name=\"$environment\"}[5m])) * 60",
-          "legendFormat": "HTTP 4xx/5xx / min",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
           "expr": "sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m])) * 60",
-          "legendFormat": "origin/tunnel errors / min",
+          "legendFormat": "errors / min",
           "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name=\"$environment\"}[5m])) * 60",
-          "legendFormat": "total requests / min",
-          "refId": "C"
         }
       ],
       "fieldConfig": {
@@ -168,26 +181,17 @@
           "unit": "short",
           "min": 0,
           "custom": {
-            "axisLabel": "requests / min"
+            "axisLabel": "errors / min"
           }
         },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "total requests / min" },
-            "properties": [
-              { "id": "color", "value": { "mode": "fixed", "fixedColor": "semi-dark-blue" } },
-              { "id": "custom.fillOpacity", "value": 10 },
-              { "id": "custom.lineWidth", "value": 1 }
-            ]
-          }
-        ]
+        "overrides": []
       }
     },
     {
-      "id": 4,
+      "id": 10,
       "type": "timeseries",
-      "title": "Tunnel Registrations",
-      "description": "How often the tunnel (re)registers connections with Cloudflare's edge, per 15m window. A handful right after a deploy/restart is normal - cloudflared registers each of its HA connections separately. A rising trend during otherwise steady uptime suggests the tunnel is flapping. The CloudflaredTunnelFlapping alert (terraform/alerting.tf) uses an unvalidated starting threshold - watch this panel and tune it once you know the real baseline.",
+      "title": "Stream Errors",
+      "description": "Failures to establish/acknowledge a request stream between cloudflared and Cloudflare's edge, per second - distinct from the Errors panel, which is about reaching your app, not the edge. Thresholds match Grafana Labs' community Cloudflare Tunnel dashboard (#24874).",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -199,24 +203,37 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "increase(cloudflared_tunnel_tunnel_register_success{deployment_environment_name=\"$environment\"}[15m])",
-          "legendFormat": "registrations / 15m",
+          "expr": "sum(rate(cloudflared_proxy_connect_streams_errors{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "stream errors/sec",
+          "instant": false,
+          "range": true,
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "min": 0
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
     },
     {
-      "id": 5,
+      "id": 9,
       "type": "timeseries",
       "title": "Concurrent Requests",
-      "description": "In-flight requests being proxied through the tunnel at once. A saturation/backpressure signal - a sustained climb can mean the origin is slow to respond or traffic has spiked.",
+      "description": "In-flight requests being proxied through the tunnel at once. Thresholds match Grafana Labs' community Cloudflare Tunnel dashboard (#24874): a sustained climb usually means the origin is slow to respond or traffic has spiked.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -230,22 +247,35 @@
           },
           "expr": "sum(cloudflared_tunnel_concurrent_requests_per_tunnel{deployment_environment_name=\"$environment\"})",
           "legendFormat": "concurrent requests",
+          "instant": false,
+          "range": true,
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "min": 0
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
     },
     {
-      "id": 6,
-      "type": "stat",
-      "title": "Connected Edge Locations",
-      "description": "Which Cloudflare edge location each HA connection is currently attached to. Helps tell a Cloudflare-side edge issue (one location dropping) apart from a problem with your own infrastructure. One tile per active connection.",
+      "id": 8,
+      "type": "timeseries",
+      "title": "Requests",
+      "description": "Total requests proxied through the tunnel per minute. Per-minute instead of per-second so low-traffic numbers don't show up as confusing fractions.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -257,28 +287,59 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "cloudflared_tunnel_server_locations{deployment_environment_name=\"$environment\"} == 1",
-          "legendFormat": "{{connection_id}}: {{edge_location}}",
-          "instant": true,
-          "range": false,
+          "expr": "sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "requests / min",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "axisLabel": "requests / min"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Origin Error Rate %",
+      "description": "Origin-connection failures as a percentage of all requests attempted - the exact ratio the CloudflaredOriginErrors alert (terraform/alerting.tf) evaluates. Fires above 5%. Denominator is clamp_min'd so a window with zero traffic reads as 0% instead of an undrawable 0/0 (NaN).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m])) / clamp_min(sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name=\"$environment\"}[5m])), 1e-9)) * 100",
+          "legendFormat": "error rate",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
+          "unit": "percent",
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 5 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
           }
         },
         "overrides": []
-      },
-      "options": {
-        "graphMode": "none",
-        "textMode": "name",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
       }
     },
     {
@@ -290,7 +351,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {

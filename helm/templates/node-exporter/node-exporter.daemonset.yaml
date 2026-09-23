@@ -30,6 +30,19 @@ spec:
             - --path.procfs=/host/proc
             - --path.sysfs=/host/sys
             - --path.rootfs=/host/root
+            # Explicit allow-list instead of node-exporter's ~49 default collectors - each one
+            # here backs a dashboard panel or an alerting.tf rule; everything else (nfs/nfsd,
+            # netclass, conntrack, ipvs, arp, sockstat, ...) was shipping hundreds of unused
+            # series to Grafana Cloud. stat is for node_boot_time_seconds (Uptime panel), vmstat
+            # is for node_vmstat_oom_kill (HostOomKillDetected alert).
+            - --collector.disable-defaults
+            - --collector.cpu
+            - --collector.meminfo
+            - --collector.filesystem
+            - --collector.diskstats
+            - --collector.netdev
+            - --collector.stat
+            - --collector.vmstat
             # k3s's containerd lives under /run/k3s/containerd and /var/lib/rancher/k3s,
             # not the generic Docker/containerd paths - each pod's shm mount otherwise
             # leaks through as its own filesystem. /etc, /var/log, /var/lib/cni and /k3d

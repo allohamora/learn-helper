@@ -46,7 +46,7 @@
           "uid": "${DS_PROMETHEUS}"
         },
         "query": {
-          "query": "label_values(node_uname_info, deployment_environment_name)",
+          "query": "label_values(node_cpu_seconds_total, deployment_environment_name)",
           "refId": "StandardVariableQuery"
         },
         "current": {
@@ -63,6 +63,118 @@
   },
   "panels": [
     {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Uptime",
+      "description": "Time since each host last booted. A drop to zero marks a reboot.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "time() - node_boot_time_seconds{deployment_environment_name=\"$environment\"}",
+          "legendFormat": "{{node}}",
+          "instant": false,
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 1,
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Disk usage %",
+      "description": "Used space as a share of total, per mountpoint (tmpfs/overlay and read-only mounts excluded) - same scope as the HostOutOfDiskSpace alert (terraform/alerting.tf), not limited to specific mountpoints. Fires above 80%.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "((1 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"})) * 100) and on(instance, device, mountpoint) (node_filesystem_readonly{deployment_environment_name=\"$environment\"} == 0)",
+          "legendFormat": "{{mountpoint}} ({{node}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Memory usage %",
+      "description": "Used memory (total minus available - available includes reclaimable cache/buffers) as a share of total. The HostOutOfMemory alert fires when available drops below 20% of total, i.e. used rises above 80%.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(1 - (node_memory_MemAvailable_bytes{deployment_environment_name=\"$environment\"} / node_memory_MemTotal_bytes{deployment_environment_name=\"$environment\"})) * 100",
+          "legendFormat": "used ({{node}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 1,
       "type": "timeseries",
       "title": "CPU usage",
@@ -71,7 +183,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -87,114 +199,39 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 100
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
     },
     {
-      "id": 2,
+      "id": 8,
       "type": "timeseries",
-      "title": "Memory usage",
-      "description": "Used memory (total minus available - available includes reclaimable cache/buffers) against total. The HostOutOfMemory alert fires when available drops below 10% of total.",
+      "title": "Swap usage",
+      "description": "Percentage of configured swap in use. The HostOutOfSwap alert (terraform/alerting.tf) fires above 80% sustained for 2m. No line here usually just means the host has no swap configured.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "node_memory_MemTotal_bytes{deployment_environment_name=\"$environment\"} - node_memory_MemAvailable_bytes{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "used ({{node}})",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "node_memory_MemTotal_bytes{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "total ({{node}})",
-          "refId": "B"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "min": 0
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 3,
-      "type": "timeseries",
-      "title": "Load average",
-      "description": "1/5/15 minute load averages - number of processes runnable or waiting on uninterruptible I/O.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "node_load1{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "1m ({{node}})",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "node_load5{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "5m ({{node}})",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "node_load15{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "15m ({{node}})",
-          "refId": "C"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Disk space free",
-      "description": "Free space as a share of total, per mountpoint (tmpfs/overlay excluded). The HostOutOfDiskSpace alert fires below 10%; HostDiskMayFillIn24Hours fires earlier if the trend projects a fill within 24h.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "(node_filesystem_avail_bytes{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"} / node_filesystem_size_bytes{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"}) * 100",
-          "legendFormat": "free",
+          "expr": "(1 - (node_memory_SwapFree_bytes{deployment_environment_name=\"$environment\"} / node_memory_SwapTotal_bytes{deployment_environment_name=\"$environment\"})) * 100",
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
@@ -202,7 +239,17 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
-          "max": 100
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
@@ -210,36 +257,27 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Disk I/O",
-      "description": "Bytes read/written per second, per device.",
+      "title": "Disk load %",
+      "description": "Share of time the busiest whole disk had at least one I/O operation in flight - how busy the disk is, distinct from raw throughput. Aggregated across whole disks only (partitions like vda1 excluded, since their I/O is already counted in the parent device) with max(), so multi-disk hosts are represented by their busiest disk.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(node_disk_read_bytes_total{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "read",
+          "expr": "max(rate(node_disk_io_time_seconds_total{device=~\"(sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)\", deployment_environment_name=\"$environment\"}[5m])) * 100",
+          "legendFormat": "disk load",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum(rate(node_disk_written_bytes_total{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "write",
-          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "Bps",
+          "unit": "percent",
           "min": 0
         },
         "overrides": []
@@ -254,7 +292,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 16, "w": 18, "h": 8 },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -284,97 +322,40 @@
       }
     },
     {
-      "id": 7,
-      "type": "stat",
-      "title": "Uptime",
-      "description": "Time since each host last booted.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 18, "y": 16, "w": 6, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "time() - node_boot_time_seconds{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "{{node}}",
-          "instant": true,
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "dtdurations"
-        },
-        "overrides": []
-      },
-      "options": {
-        "graphMode": "none",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        }
-      }
-    },
-    {
-      "id": 8,
-      "type": "timeseries",
-      "title": "Swap usage",
-      "description": "Percentage of configured swap in use. The HostSwapIsFillingUp alert (terraform/alerting.tf) fires above 80% sustained for 2m. No line here usually just means the host has no swap configured.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "(1 - (node_memory_SwapFree_bytes{deployment_environment_name=\"$environment\"} / node_memory_SwapTotal_bytes{deployment_environment_name=\"$environment\"})) * 100",
-          "legendFormat": "{{node}}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      }
-    },
-    {
       "id": 9,
       "type": "timeseries",
-      "title": "Disk inodes free",
-      "description": "Free inodes (file/directory metadata slots) as a share of total, per mountpoint (tmpfs/overlay excluded) - distinct from the 'Disk space free' panel, since a filesystem can run out of inodes well before it runs out of bytes. The HostOutOfInodes alert fires below 10%; HostInodesMayFillIn24Hours fires earlier if the trend projects exhaustion within 24h.",
+      "title": "OOM kills",
+      "description": "Kernel OOM-killer process kills per 5m window, per host. node_vmstat_oom_kill is a cumulative counter since boot, so this charts increase() rather than the raw total. The HostOomKillDetected alert (terraform/alerting.tf) fires on any kill within a 15m window.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(node_filesystem_files_free{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"} / node_filesystem_files{mountpoint=~\"^(/|/var/lib/rancher/k3s)$\", deployment_environment_name=\"$environment\"}) * 100",
-          "legendFormat": "free",
+          "expr": "increase(node_vmstat_oom_kill{deployment_environment_name=\"$environment\"}[5m])",
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
+          "unit": "short",
           "min": 0,
-          "max": 100
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
