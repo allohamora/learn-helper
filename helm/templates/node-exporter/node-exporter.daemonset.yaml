@@ -1,0 +1,117 @@
+{{- if .Values.nodeExporter.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostPID: false
+      priorityClassName: system-node-critical
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: node-exporter
+          image: {{ .Values.nodeExporter.image | quote }}
+          args:
+            - --path.procfs=/host/proc
+            - --path.sysfs=/host/sys
+            - --path.rootfs=/host/root
+            # Explicit allow-list instead of node-exporter's ~49 default collectors - each one
+            # here backs a dashboard panel or an alerting.tf rule; everything else (nfs/nfsd,
+            # netclass, conntrack, ipvs, arp, sockstat, ...) was shipping hundreds of unused
+            # series to Grafana Cloud. stat is for node_boot_time_seconds (Uptime panel), vmstat
+            # is for node_vmstat_oom_kill (HostOomKillDetected alert).
+            - --collector.disable-defaults
+            - --collector.cpu
+            - --collector.meminfo
+            - --collector.filesystem
+            - --collector.diskstats
+            - --collector.netdev
+            - --collector.stat
+            - --collector.vmstat
+            # k3s's containerd lives under /run/k3s/containerd and /var/lib/rancher/k3s,
+            # not the generic Docker/containerd paths - each pod's shm mount otherwise
+            # leaks through as its own filesystem. /etc, /var/log, /var/lib/cni and /k3d
+            # are individual bind-mounts in this devcontainer's k3d setup, not real disks.
+            - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|etc|var/log|var/lib/cni|var/lib/kubelet|k3d|run/k3s/containerd/.+|var/lib/rancher/k3s/agent/containerd/.+)($|/)
+            - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|erofs)$
+            # nbd* comes from Docker Desktop's VM disk backing, not a real host disk
+            - --collector.diskstats.device-exclude=^(nbd|loop|ram|dm-|zram).*$
+            # erspan/gre/gretap/ip6gre/ip6tnl/ip6_vti/ip_vti/sit/tunl are default kernel
+            # tunnel interfaces present on any Linux host, always idle
+            - --collector.netdev.device-exclude=^(veth.*|cni.*|flannel.*|lo|erspan.*|gre.*|gretap.*|ip6gre.*|ip6tnl.*|ip6_vti.*|ip_vti.*|sit.*|tunl.*)$
+          ports:
+            - name: metrics
+              containerPort: 9100
+          volumeMounts:
+            - name: proc
+              mountPath: /host/proc
+              readOnly: true
+            - name: sys
+              mountPath: /host/sys
+              readOnly: true
+            - name: root
+              mountPath: /host/root
+              readOnly: true
+              mountPropagation: HostToContainer
+            - name: udev
+              mountPath: /run/udev
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: metrics
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: metrics
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+        - name: sys
+          hostPath:
+            path: /sys
+        - name: root
+          hostPath:
+            path: /
+        # Without this, the diskstats collector can't open /run/udev/data and logs
+        # "Failed to open directory, disabling udev device properties" on every start.
+        - name: udev
+          hostPath:
+            path: /run/udev
+{{- end }}

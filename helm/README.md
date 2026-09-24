@@ -72,11 +72,13 @@ k3d cluster delete learn-helper
 Alloy is disabled by default (`alloy.enabled: false`). It collects the cloudflared
 tunnel's own Prometheus metrics (connection health, request counts, error rates - the
 `/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
-logs, and ships both to Grafana Cloud over OTLP. Every metric/log gets a
-`deployment.environment.name` resource attribute so production and non-production data can
-be told apart. Nothing else is collected - no Postgres metrics, no node/cluster
-metrics, no `app` pod logs. The app's own traces/logs/HTTP metrics go straight to
-Sentry (see `src/server/instrument.ts`) and aren't part of this pipeline either.
+logs, and - when `nodeExporter.enabled: true` - host metrics (CPU, memory, disk,
+network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100, along
+with its pod logs. All of it ships to Grafana Cloud over OTLP, with every metric/log
+getting a `deployment.environment.name` resource attribute so production and
+non-production data can be told apart. Postgres metrics and `app` pod logs are still
+not collected. The app's own traces/logs/HTTP metrics go straight to Sentry (see
+`src/server/instrument.ts`) and aren't part of this pipeline either.
 
 To enable it:
 
@@ -97,6 +99,15 @@ To enable it:
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
 
+`values.schema.json` requires a `nodeExporter` block, so an existing `values.yaml` must
+add it (copy it from `values.example.yaml`, `enabled: false`) before the next
+`helm upgrade`, even if host metrics aren't wanted.
+
+To also collect host metrics, set `nodeExporter.enabled: true` in `values.yaml`
+(`nodeExporter.image` defaults to `quay.io/prometheus/node-exporter:v1.12.1` in
+`values.example.yaml`) and re-run `helm upgrade` again. It only needs Alloy enabled to
+be useful - on its own it just runs an unscraped `/metrics` endpoint.
+
 ```bash
 # Verify Alloy is scraping/shipping correctly.
 kubectl -n learn-helper logs deploy/alloy
@@ -113,14 +124,47 @@ the same `helm upgrade` flow as the `postgres.env`/`app.env` update steps above.
 
 ## Dashboard and alerts
 
-The `Cloudflared Tunnel` dashboard (HA connections, errors, tunnel registration churn,
-concurrent requests, connected edge locations, and logs) and its 5 alert rules
-(degraded HA connections, origin errors, tunnel flapping, elevated error logs,
+The goal here is to collect and alert on only what's actually useful, not everything
+these tools can expose. node-exporter's defaults and cloudflared's `/metrics` endpoint
+between them offer well over a hundred metric families; shipping all of it to Grafana
+Cloud would mean paying for and scrolling past series nobody looks at. So this is
+intentional, not partial or unfinished: node-exporter only runs the collectors its
+panels/alerts need, Alloy further filters both scrape jobs down to the exact metric
+names a panel or alert reads, and every alert rule has a corresponding dashboard panel
+so firing one always has somewhere to look for the "why." Adding a new panel or alert is
+expected to come with adding the metric it needs to the relevant `keep` allow-list (and
+vice versa - a metric with no panel or alert reading it should come back out).
+
+The `Cloudflared Tunnel` dashboard (HA connections, uptime, errors, requests, concurrent
+requests, stream errors, origin error rate, and logs)
+and its 4 alert rules (degraded HA connections, origin errors, elevated error logs,
 fatal log), plus the email contact
 point/notification policy that routes them, are managed by Terraform - see
 `terraform/README.md`. The dashboard JSON lives at `terraform/dashboards/cloudflared.json`
 and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to create or
-update them. None of this is deployed by the Helm chart itself.
+update them. None of this is deployed by the Helm chart itself. Alloy only ships the
+handful of `cloudflared_tunnel_*` metrics (plus `process_start_time_seconds`) that
+back these panels/alerts - see the `prometheus.relabel "cloudflared_keep"` component in
+`alloy/_config.alloy`.
+
+Likewise, the `Node Exporter` dashboard (CPU usage, memory usage, swap usage, disk usage
+%, disk load %, network traffic, uptime, and OOM kills) and its 5 alert rules (low memory, high CPU,
+low disk space, swap filling up, OOM kill detected) route through the same contact
+point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/node-exporter.json` and the alert rules are in the same
+`terraform/alerting.tf`. node-exporter itself only runs the collectors those panels/alerts
+need (see its `--collector.*` args in `node-exporter.daemonset.yaml`), and Alloy further
+filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"`).
+
+None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
+`NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
+`no_data_state = "OK"`). That's deliberate, not an oversight: this host is expected to be
+powered off manually for large stretches of time and brought back online later, so absence
+of data is the normal state, not an anomaly - a rule that alerted on it would mostly be
+alerting on the host being off, which nobody needs to hear about. The tradeoff is that a
+crashed node-exporter or Alloy process on a host that's still otherwise up also looks like
+"no data" from here and won't page anyone either; that's accepted given how much of this
+host's time is expected to be offline anyway.
 
 # Production setup notes
 

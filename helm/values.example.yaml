@@ -28,6 +28,10 @@ alloy:
     # resource attribute, so production and non-production data can be told apart
     ENVIRONMENT: development
 
+nodeExporter:
+  enabled: false
+  image: quay.io/prometheus/node-exporter:v1.12.1
+
 postgres:
   image: postgres:18.4-alpine
   # NOTE: the Postgres image only applies USER/PASSWORD/DB on first init of an

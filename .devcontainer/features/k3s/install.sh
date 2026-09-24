@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
 
+# Pre-create ~/.kube with the correct owner so the persistent volume mount (see
+# devcontainer-feature.json) copies it up with matching permissions on first mount.
+mkdir -p /home/vscode/.kube
+chown vscode:vscode /home/vscode/.kube
+
 # Install kubectl, matching the container's architecture (arm64 on Apple Silicon, amd64 on x86_64 CI/hosts)
 ARCH="$(dpkg --print-architecture)"
 KUBECTL_VERSION="$(curl -L -s https://dl.k8s.io/release/stable.txt)"

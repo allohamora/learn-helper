@@ -49,9 +49,9 @@
       "version": ""
     }
   ],
-  "title": "Cloudflared Tunnel",
-  "uid": "learn-helper-cloudflared-tunnel",
-  "description": "cloudflared tunnel health: HA connections, uptime, errors, requests, concurrent requests, stream errors, origin error rate, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "title": "Node Exporter",
+  "uid": "learn-helper-node-exporter",
+  "description": "Host metrics (CPU, memory, disk, network) and pod logs collected by node-exporter. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -66,7 +66,7 @@
           "uid": "${DS_PROMETHEUS}"
         },
         "query": {
-          "query": "label_values(cloudflared_tunnel_ha_connections, deployment_environment_name)",
+          "query": "label_values(node_cpu_seconds_total, deployment_environment_name)",
           "refId": "StandardVariableQuery"
         },
         "current": {
@@ -86,7 +86,7 @@
       "id": 7,
       "type": "timeseries",
       "title": "Uptime",
-      "description": "Time since the cloudflared process last started. A drop to zero marks a restart.",
+      "description": "Time since each host last booted. A drop to zero marks a reboot.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -98,8 +98,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "time() - process_start_time_seconds{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "uptime",
+          "expr": "time() - node_boot_time_seconds{deployment_environment_name=\"$environment\"}",
+          "legendFormat": "{{node}}",
           "instant": false,
           "range": true,
           "refId": "A"
@@ -115,10 +115,10 @@
       }
     },
     {
-      "id": 1,
+      "id": 4,
       "type": "timeseries",
-      "title": "HA connections",
-      "description": "Active connections from cloudflared to Cloudflare's edge. 0 means the tunnel is down.",
+      "title": "Disk usage %",
+      "description": "Used space as a share of total, per mountpoint (tmpfs/overlay and read-only mounts excluded) - same scope as the HostOutOfDiskSpace alert (terraform/alerting.tf), not limited to specific mountpoints. Fires above 80%.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -130,22 +130,21 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max(cloudflared_tunnel_ha_connections{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "HA connections",
-          "instant": false,
-          "range": true,
+          "expr": "((1 - (node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"})) * 100) and on(instance, device, mountpoint) (node_filesystem_readonly{deployment_environment_name=\"$environment\"} == 0)",
+          "legendFormat": "{{mountpoint}} ({{node}})",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "percent",
           "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
             ]
           },
           "custom": {
@@ -158,8 +157,8 @@
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Errors",
-      "description": "Origin/tunnel errors per minute - failures proxying to the app that never produce an HTTP status code (e.g. the app being unreachable). The CloudflaredOriginErrors alert (terraform/alerting.tf) fires when this exceeds 5% of total requests. Per-minute instead of per-second so low-traffic numbers don't show up as confusing fractions.",
+      "title": "Memory usage %",
+      "description": "Used memory (total minus available - available includes reclaimable cache/buffers) as a share of total. The HostOutOfMemory alert fires when available drops below 20% of total, i.e. used rises above 80%.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -171,27 +170,35 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m])) * 60",
-          "legendFormat": "errors / min",
-          "refId": "B"
+          "expr": "(1 - (node_memory_MemAvailable_bytes{deployment_environment_name=\"$environment\"} / node_memory_MemTotal_bytes{deployment_environment_name=\"$environment\"})) * 100",
+          "legendFormat": "used ({{node}})",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "percent",
           "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
           "custom": {
-            "axisLabel": "errors / min"
+            "thresholdsStyle": { "mode": "area" }
           }
         },
         "overrides": []
       }
     },
     {
-      "id": 10,
+      "id": 1,
       "type": "timeseries",
-      "title": "Stream Errors",
-      "description": "Failures to establish/acknowledge a request stream between cloudflared and Cloudflare's edge, per second - distinct from the Errors panel, which is about reaching your app, not the edge. Thresholds match Grafana Labs' community Cloudflare Tunnel dashboard (#24874).",
+      "title": "CPU usage",
+      "description": "Share of CPU time not spent idle, averaged across all cores. The HostHighCpuLoad alert (terraform/alerting.tf) fires above 80% sustained for 10m.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -203,65 +210,21 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_proxy_connect_streams_errors{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "stream errors/sec",
-          "instant": false,
-          "range": true,
+          "expr": "(1 - avg without (cpu, mode) (rate(node_cpu_seconds_total{mode=\"idle\", deployment_environment_name=\"$environment\"}[5m]))) * 100",
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "percent",
           "min": 0,
+          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.1 },
-              { "color": "red", "value": 1 }
-            ]
-          },
-          "custom": {
-            "thresholdsStyle": { "mode": "area" }
-          }
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 9,
-      "type": "timeseries",
-      "title": "Concurrent Requests",
-      "description": "In-flight requests being proxied through the tunnel at once. Thresholds match Grafana Labs' community Cloudflare Tunnel dashboard (#24874): a sustained climb usually means the origin is slow to respond or traffic has spiked.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum(cloudflared_tunnel_concurrent_requests_per_tunnel{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "concurrent requests",
-          "instant": false,
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 50 },
-              { "color": "red", "value": 100 }
+              { "color": "red", "value": 80 }
             ]
           },
           "custom": {
@@ -274,8 +237,48 @@
     {
       "id": 8,
       "type": "timeseries",
-      "title": "Requests",
-      "description": "Total requests proxied through the tunnel per minute. Per-minute instead of per-second so low-traffic numbers don't show up as confusing fractions.",
+      "title": "Swap usage",
+      "description": "Percentage of configured swap in use. The HostOutOfSwap alert (terraform/alerting.tf) fires above 80% sustained for 2m. No line here usually just means the host has no swap configured.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(1 - (node_memory_SwapFree_bytes{deployment_environment_name=\"$environment\"} / node_memory_SwapTotal_bytes{deployment_environment_name=\"$environment\"})) * 100",
+          "legendFormat": "{{node}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Disk load %",
+      "description": "Share of time the busiest whole disk had at least one I/O operation in flight - how busy the disk is, distinct from raw throughput. Aggregated across whole disks only (partitions like vda1 excluded, since their I/O is already counted in the parent device) with max(), so multi-disk hosts are represented by their busiest disk.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -287,27 +290,24 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name=\"$environment\"}[5m])) * 60",
-          "legendFormat": "requests / min",
-          "refId": "C"
+          "expr": "max by (node) (rate(node_disk_io_time_seconds_total{device=~\"(sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)\", deployment_environment_name=\"$environment\"}[5m])) * 100",
+          "legendFormat": "{{node}}",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "min": 0,
-          "custom": {
-            "axisLabel": "requests / min"
-          }
+          "unit": "percent",
+          "min": 0
         },
         "overrides": []
       }
     },
     {
-      "id": 11,
+      "id": 6,
       "type": "timeseries",
-      "title": "Origin Error Rate %",
-      "description": "Origin-connection failures as a percentage of all requests attempted - the exact ratio the CloudflaredOriginErrors alert (terraform/alerting.tf) evaluates. Fires above 5%. Denominator is clamp_min'd so a window with zero traffic reads as 0% instead of an undrawable 0/0 (NaN).",
+      "title": "Network traffic",
+      "description": "Bytes received/transmitted per second, per interface (loopback excluded).",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -319,20 +319,58 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(sum(rate(cloudflared_tunnel_request_errors{deployment_environment_name=\"$environment\"}[5m])) / clamp_min(sum(rate(cloudflared_tunnel_total_requests{deployment_environment_name=\"$environment\"}[5m])), 1e-9)) * 100",
-          "legendFormat": "error rate",
+          "expr": "sum by (node) (rate(node_network_receive_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "rx ({{node}})",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (node) (rate(node_network_transmit_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "tx ({{node}})",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "OOM kills",
+      "description": "Kernel OOM-killer process kills per 5m window, per host. node_vmstat_oom_kill is a cumulative counter since boot, so this charts increase() rather than the raw total. The HostOomKillDetected alert (terraform/alerting.tf) fires on any kill within a 15m window.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "increase(node_vmstat_oom_kill{deployment_environment_name=\"$environment\"}[5m])",
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
+          "unit": "short",
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red", "value": 5 }
+              { "color": "red", "value": 1 }
             ]
           },
           "custom": {
@@ -343,10 +381,10 @@
       }
     },
     {
-      "id": 3,
+      "id": 10,
       "type": "logs",
       "title": "Logs",
-      "description": "cloudflared pod logs, latest first.",
+      "description": "node-exporter pod logs, latest first.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -358,7 +396,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "{service_name=\"cloudflared\", deployment_environment_name=\"$environment\"}",
+          "expr": "{service_name=\"node-exporter\", deployment_environment_name=\"$environment\"}",
           "maxLines": 100,
           "refId": "A"
         }
