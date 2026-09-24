@@ -53,10 +53,10 @@ prometheus.relabel "cloudflared_keep" {
 // discovery.kubernetes "cloudflared" above already scopes this to just that one pod.
 loki.source.kubernetes "cloudflared" {
   targets    = discovery.kubernetes.cloudflared.targets
-  forward_to = [otelcol.receiver.loki.default.receiver]
+  forward_to = [otelcol.receiver.loki.cloudflared.receiver]
 }
 
-// ---- node-exporter host metrics ----
+// ---- node-exporter host metrics + logs ----
 // Scoped to just the node-exporter pods via a server-side label selector, rather than
 // discovering every pod in the namespace and relabeling client-side.
 discovery.kubernetes "node_exporter" {
@@ -98,6 +98,13 @@ prometheus.scrape "node_exporter" {
   forward_to      = [prometheus.relabel.node_exporter_keep.receiver]
 }
 
+// Tails each node-exporter pod's stdout via the Kubernetes API - no port filter needed,
+// discovery.kubernetes "node_exporter" above already scopes this to just those pods.
+loki.source.kubernetes "node_exporter" {
+  targets    = discovery.kubernetes.node_exporter.targets
+  forward_to = [otelcol.receiver.loki.node_exporter.receiver]
+}
+
 // node-exporter's own Go runtime/process/scrape-health metrics aren't host metrics and back no
 // dashboard panel or alert, so they're dropped here too - node-exporter.daemonset.yaml's
 // --collector.* allow-list only controls host-metric collectors, not these. Keep only what a
@@ -118,15 +125,21 @@ otelcol.receiver.prometheus "default" {
   }
 }
 
-otelcol.receiver.loki "default" {
+otelcol.receiver.loki "cloudflared" {
   output {
     logs = [otelcol.processor.transform.cloudflared_logs.input]
   }
 }
 
-// otelcol.receiver.prometheus sets service_name from the "cloudflared" job label
-// automatically; otelcol.receiver.loki has no equivalent, so logs would otherwise
-// show up as unknown_service in Grafana Cloud.
+otelcol.receiver.loki "node_exporter" {
+  output {
+    logs = [otelcol.processor.transform.node_exporter_logs.input]
+  }
+}
+
+// otelcol.receiver.prometheus sets service_name from the job label automatically;
+// otelcol.receiver.loki has no equivalent, so logs would otherwise show up as
+// unknown_service in Grafana Cloud.
 otelcol.processor.transform "cloudflared_logs" {
   error_mode = "ignore"
 
@@ -147,6 +160,21 @@ otelcol.processor.transform "cloudflared_logs" {
       `set(cache, ParseJSON(body))`,
       `set(severity_text, cache["level"]) where cache["level"] != nil`,
       `set(body, cache["message"]) where cache["message"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+
+otelcol.processor.transform "node_exporter_logs" {
+  error_mode = "ignore"
+
+  log_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "node-exporter")`,
     ]
   }
 

@@ -73,11 +73,11 @@ Alloy is disabled by default (`alloy.enabled: false`). It collects the cloudflar
 tunnel's own Prometheus metrics (connection health, request counts, error rates - the
 `/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
 logs, and - when `nodeExporter.enabled: true` - host metrics (CPU, memory, disk,
-network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100. All of
-it ships to Grafana Cloud over OTLP, with every metric/log getting a
-`deployment.environment.name` resource attribute so production and non-production data
-can be told apart. Postgres metrics and `app` pod logs are still not collected. The
-app's own traces/logs/HTTP metrics go straight to Sentry (see
+network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100, along
+with its pod logs. All of it ships to Grafana Cloud over OTLP, with every metric/log
+getting a `deployment.environment.name` resource attribute so production and
+non-production data can be told apart. Postgres metrics and `app` pod logs are still
+not collected. The app's own traces/logs/HTTP metrics go straight to Sentry (see
 `src/server/instrument.ts`) and aren't part of this pipeline either.
 
 To enable it:
