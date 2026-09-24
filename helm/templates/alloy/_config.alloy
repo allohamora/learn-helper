@@ -154,11 +154,22 @@ otelcol.processor.transform "cloudflared_logs" {
   // with a "level" field already using OTel's own severity words (info/warn/error/...);
   // copy it onto severity_text so Grafana Cloud's detected_level reflects the real
   // level instead of falling back to unknown, and promote "message" to the log body.
+  // The remaining fields vary by event type (precheck vs. tunnel connection vs. config
+  // update), so each is promoted only when present rather than assumed on every line.
   log_statements {
     context = "log"
     statements = [
       `set(cache, ParseJSON(body))`,
       `set(severity_text, cache["level"]) where cache["level"] != nil`,
+      `set(attributes["component"], cache["component"]) where cache["component"] != nil`,
+      `set(attributes["target"], cache["target"]) where cache["target"] != nil`,
+      `set(attributes["status"], cache["status"]) where cache["status"] != nil`,
+      `set(attributes["conn_index"], cache["connIndex"]) where cache["connIndex"] != nil`,
+      `set(attributes["connection"], cache["connection"]) where cache["connection"] != nil`,
+      `set(attributes["ip"], cache["ip"]) where cache["ip"] != nil`,
+      `set(attributes["location"], cache["location"]) where cache["location"] != nil`,
+      `set(attributes["protocol"], cache["protocol"]) where cache["protocol"] != nil`,
+      `set(attributes["run_id"], cache["run_id"]) where cache["run_id"] != nil`,
       `set(body, cache["message"]) where cache["message"] != nil`,
     ]
   }
@@ -175,6 +186,18 @@ otelcol.processor.transform "node_exporter_logs" {
     context = "resource"
     statements = [
       `set(attributes["service.name"], "node-exporter")`,
+    ]
+  }
+
+  // node-exporter logs logfmt, not JSON (e.g. `level=INFO source=... msg="..."`), so
+  // it's parsed the same way as cloudflared's JSON but with ParseKeyValue - severity_text
+  // drives detected_level instead of falling back to Grafana Cloud's own heuristics.
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ParseKeyValue(body))`,
+      `set(severity_text, cache["level"]) where cache["level"] != nil`,
+      `set(body, cache["msg"]) where cache["msg"] != nil`,
     ]
   }
 
