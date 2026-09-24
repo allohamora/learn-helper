@@ -270,8 +270,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "max(rate(node_disk_io_time_seconds_total{device=~\"(sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)\", deployment_environment_name=\"$environment\"}[5m])) * 100",
-          "legendFormat": "disk load",
+          "expr": "max by (node) (rate(node_disk_io_time_seconds_total{device=~\"(sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)\", deployment_environment_name=\"$environment\"}[5m])) * 100",
+          "legendFormat": "{{node}}",
           "refId": "A"
         }
       ],
@@ -299,8 +299,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(node_network_receive_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "rx",
+          "expr": "sum by (node) (rate(node_network_receive_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "rx ({{node}})",
           "refId": "A"
         },
         {
@@ -308,8 +308,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(node_network_transmit_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "tx",
+          "expr": "sum by (node) (rate(node_network_transmit_bytes_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "tx ({{node}})",
           "refId": "B"
         }
       ],
