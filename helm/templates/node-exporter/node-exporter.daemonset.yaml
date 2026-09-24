@@ -69,6 +69,9 @@ spec:
               mountPath: /host/root
               readOnly: true
               mountPropagation: HostToContainer
+            - name: udev
+              mountPath: /run/udev
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /
@@ -106,4 +109,9 @@ spec:
         - name: root
           hostPath:
             path: /
+        # Without this, the diskstats collector can't open /run/udev/data and logs
+        # "Failed to open directory, disabling udev device properties" on every start.
+        - name: udev
+          hostPath:
+            path: /run/udev
 {{- end }}
