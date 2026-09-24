@@ -99,6 +99,10 @@ To enable it:
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
 
+`values.schema.json` requires a `nodeExporter` block, so an existing `values.yaml` must
+add it (copy it from `values.example.yaml`, `enabled: false`) before the next
+`helm upgrade`, even if host metrics aren't wanted.
+
 To also collect host metrics, set `nodeExporter.enabled: true` in `values.yaml`
 (`nodeExporter.image` defaults to `quay.io/prometheus/node-exporter:v1.12.1` in
 `values.example.yaml`) and re-run `helm upgrade` again. It only needs Alloy enabled to
