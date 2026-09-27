@@ -362,8 +362,8 @@
     {
       "id": 12,
       "type": "timeseries",
-      "title": "Sequential vs index scans",
-      "description": "Per-table scan rate (pg_stat_user_tables_seq_scan/idx_scan) - a table whose sequential-scan rate keeps pace with or exceeds its index-scan rate, especially as it grows, is a candidate for a missing index. Visibility only, no established baseline yet so no alert.",
+      "title": "Sequential scan share",
+      "description": "Per-table share of scans that were sequential rather than index-based (pg_stat_user_tables_seq_scan / (seq_scan + idx_scan)) - a table sustained at or above 50%, i.e. sequential scans keeping pace with or exceeding index scans, especially as it grows, is a candidate for a missing index. Tables with no scan activity in the window are hidden to avoid meaningless flat 0%/100% lines. Reads as No data with no scan activity anywhere, same idiom as Cache hit ratio's NaN. Visibility only, no established baseline yet so no alert.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -375,24 +375,26 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "{{relname}} seq",
+          "expr": "(sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) / (sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) + sum by (relname) (rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])))) * 100 and sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m]) + rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])) > 0",
+          "legendFormat": "{{relname}}",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum by (relname) (rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "{{relname}} idx",
-          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "min": 0
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 50 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
