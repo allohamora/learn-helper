@@ -79,8 +79,11 @@ Kubernetes' own view of cluster state: pod phase/restarts/OOMKilled reasons, Dep
 StatefulSet/DaemonSet replica availability, PVC phase, and Node `Ready`/pressure
 conditions from the `kube-state-metrics` Deployment; per-container CPU/memory usage
 scraped directly from every node's kubelet (`/metrics/cadvisor`, proxied through the API
-server); and `Warning`-type Kubernetes events (`FailedScheduling`, `BackOff`,
-`FailedMount`, ...) as logs, with routine `Normal` events dropped. All of it ships to
+server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`, and
+`Warning`, e.g. `FailedScheduling`/`BackOff`/`FailedMount`) as logs. Except for Node
+metrics (nodes aren't namespaced), all of this is scoped to this release's own namespace,
+so other namespaces' own components (e.g. `kube-system`'s coredns/traefik) don't clutter
+`dashboards/kubernetes.json`. All of it ships to
 Grafana Cloud over OTLP, with every metric/log getting a `deployment.environment.name`
 resource attribute so production and non-production data can be told apart. Postgres
 metrics and `app` pod logs are still not collected. The app's own traces/logs/HTTP
@@ -123,9 +126,12 @@ To also collect cluster-level Kubernetes metrics/events, set
 time Alloy's ServiceAccount gets cluster-wide (not namespace-scoped) read access - a
 `ClusterRole`/`ClusterRoleBinding` (`alloy.cluster-role.yaml`) granting `list`/`watch` on
 nodes, `get` on `nodes/proxy` (for the kubelet cAdvisor scrape), and `list`/`watch`/`get`
-on events cluster-wide (for the events log source) - a deliberate, expected step for a
-cluster monitoring agent, but worth noting since every prior Alloy source only ever
-needed access to its own namespace.
+on events cluster-wide - a deliberate, expected step for a cluster monitoring agent, but
+worth noting since every prior Alloy source only ever needed access to its own namespace.
+This grant is broader than what's actually watched: the kubelet/cAdvisor scrape and the
+events log source (`loki.source.kubernetes_events`'s `namespaces` argument) both filter
+down to this release's own namespace client-side, and `kube-state-metrics` restricts
+itself to it directly via `--namespaces`.
 
 ```bash
 # Verify Alloy is scraping/shipping correctly.
@@ -175,20 +181,39 @@ point/notification policy. The dashboard JSON lives at
 need (see its `--collector.*` args in `node-exporter.daemonset.yaml`), and Alloy further
 filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"`).
 
-Likewise, the `Kubernetes Cluster` dashboard (pod phase breakdown, pod restarts, container
-OOMKilled count, Deployment/StatefulSet/DaemonSet replica availability, Node `Ready`
-condition, PVC phase, container CPU/memory usage, and Warning events) and its 6 alert rules
-(pod crash-looping, unavailable Deployment replicas, container OOMKilled, node not ready,
-PVC stuck pending, elevated Warning events) route through the same contact point/notification
-policy. The dashboard JSON lives at `terraform/dashboards/kubernetes.json` and the alert
-rules are in the same `terraform/alerting.tf`. `kube-state-metrics` only watches the object
-kinds those panels/alerts need (see its `--resources=...` flag and
-`kube-state-metrics.cluster-role.yaml`), and Alloy filters both the kube-state-metrics and
-kubelet/cAdvisor scrapes down to the exact metric names used, and the events log source down
-to `Warning`-type events only (see the `kube_state_metrics_keep`/`kubelet_cadvisor_keep`/
-`k8s_events_keep` components in `alloy/_config.alloy`). PVC fill percentage isn't covered -
-that lives on a third kubelet metrics endpoint (`kubelet_volume_stats_*`) that isn't part of
-this pipeline, so only PVC phase (bound/pending/lost) is tracked.
+Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
+OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
+and its 6 alert rules (pod crash-looping, unavailable Deployment replicas, container
+OOMKilled, node not ready, PVC stuck pending, elevated Warning events) route through the same
+contact point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/kubernetes.json` and the alert rules are in the same
+`terraform/alerting.tf`. `kube-state-metrics` only watches the object kinds those
+panels/alerts need (see its `--resources=...` flag and
+`kube-state-metrics.cluster-role.yaml`), and Alloy filters the kube-state-metrics and
+kubelet/cAdvisor scrapes down to the exact metric names used (see the
+`kube_state_metrics_keep`/`kubelet_cadvisor_keep` components in `alloy/_config.alloy`). The
+CPU/memory panels group by `container` (i.e. by service - `app`, `postgres`, `cloudflared`,
+...) and show each as a percentage of that container's own configured `resources.limits`
+(e.g. 50% means using half of what it's allowed), not raw cores/bytes and not relative to
+the host - `kube_pod_container_resource_limits` (kube-state-metrics) is the denominator.
+Service replicas shows each service's current available/ready replica count (Deployments
+and the node-exporter DaemonSet, unified onto one `service` label) rather than a separate
+up/down flag - the DeploymentReplicasUnavailable alert still reads
+`kube_deployment_status_replicas_unavailable` directly even though it no longer backs its
+own dashboard panel. The events log source ships every event type, unfiltered - the
+`KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
+query, rather than relying on a curated pipeline. PVC fill percentage has no panel: these
+PVCs use local-path-provisioner, which backs every claim with a plain directory on the
+node's single root filesystem rather than an isolated volume, so kubelet's
+`kubelet_volume_stats_used_bytes`/`capacity_bytes` report the same whole-filesystem numbers
+for every PVC on the node instead of each claim's own usage - confirmed against a real
+cluster, not a theoretical concern (see the comment above `loki.source.kubernetes_events` in
+`alloy/_config.alloy`). A real per-claim number would need either a sidecar per workload
+walking its own mount (e.g. `du`) or a provisioner that backs each claim with its own volume
+(Longhorn, OpenEBS LVM) - both are real infrastructure additions not justified yet. Only PVC
+phase (bound/pending/lost) is tracked, and it has no dedicated panel either - the
+PersistentVolumeClaimPending alert reads `kube_persistentvolumeclaim_status_phase` directly,
+same pattern as the DeploymentReplicasUnavailable alert above.
 
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses

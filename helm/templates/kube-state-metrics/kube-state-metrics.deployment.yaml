@@ -24,8 +24,13 @@ spec:
           # Restricts kube-state-metrics' own watches to the same object kinds granted in
           # kube-state-metrics.cluster-role.yaml - it would otherwise try (and fail, then log
           # noisy errors) to watch everything its default resource list covers.
+          # --namespaces further restricts namespaced resources (pods, deployments, ...) to
+          # this release's own namespace, so cluster add-ons like kube-system's coredns/traefik
+          # don't clutter dashboards/kubernetes.json's panels. Nodes are cluster-scoped and stay
+          # unaffected by this flag - kube_node_status_condition still covers every node.
           args:
             - --resources=pods,nodes,persistentvolumeclaims,deployments,replicasets,statefulsets,daemonsets,jobs,cronjobs
+            - --namespaces={{ .Release.Namespace }}
           ports:
             - name: metrics
               containerPort: 8080

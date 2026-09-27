@@ -672,7 +672,7 @@ resource "grafana_rule_group" "kubernetes" {
         instant    = true
         range      = false
         datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
-        expr       = "sum(count_over_time({service_name=\"kubernetes-events\", deployment_environment_name=\"production\"}[5m])) > bool 5"
+        expr       = "sum(count_over_time({service_name=\"kubernetes-events\", deployment_environment_name=\"production\"} | type=\"Warning\" [5m])) > bool 5"
       })
     }
 
@@ -685,11 +685,12 @@ resource "grafana_rule_group" "kubernetes" {
       summary     = "Kubernetes is logging Warning events persistently"
       description = <<-EOT
         Counts Warning-type cluster events (FailedScheduling, BackOff, FailedMount,
-        Unhealthy, ...) - Normal events aren't shipped at all, so this is already a curated
-        signal, not raw event volume. More than 5 in a 5m window, sustained for 5m, so a
-        single transient event doesn't page anyone. No established baseline yet - adjust
-        once you know what's normal. Scoped to the production environment so a devcontainer
-        test run (ENVIRONMENT: development) can't page anyone.
+        Unhealthy, ...) - the Events panel (dashboards/kubernetes.json) ships every event
+        type, so this rule filters to Warning itself rather than relying on a curated
+        pipeline. More than 5 in a 5m window, sustained for 5m, so a single transient event
+        doesn't page anyone. No established baseline yet - adjust once you know what's
+        normal. Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
       EOT
     }
   }

@@ -154,12 +154,14 @@ prometheus.scrape "kube_state_metrics" {
 
 // kube-state-metrics exposes hundreds of metric families across every object kind it watches -
 // keep only what backs a panel in dashboards/kubernetes.json or a rule in alerting.tf.
+// kube_pod_container_resource_limits is the denominator for the CPU/memory panels' percent-of-
+// limit calculation - each container's own configured limit, not a fixed/arbitrary baseline.
 prometheus.relabel "kube_state_metrics_keep" {
   forward_to = [otelcol.receiver.prometheus.default.receiver]
 
   rule {
     source_labels = ["__name__"]
-    regex         = "kube_pod_status_phase|kube_pod_container_status_restarts_total|kube_pod_container_status_last_terminated_reason|kube_pod_container_status_waiting_reason|kube_deployment_status_replicas_available|kube_deployment_status_replicas_unavailable|kube_deployment_spec_replicas|kube_statefulset_status_replicas_ready|kube_statefulset_spec_replicas|kube_daemonset_status_number_ready|kube_daemonset_status_desired_number_scheduled|kube_persistentvolumeclaim_status_phase|kube_job_status_failed|kube_node_status_condition"
+    regex         = "kube_pod_status_phase|kube_pod_container_status_restarts_total|kube_pod_container_status_last_terminated_reason|kube_pod_container_status_waiting_reason|kube_deployment_status_replicas_available|kube_deployment_status_replicas_unavailable|kube_deployment_spec_replicas|kube_statefulset_status_replicas_ready|kube_statefulset_spec_replicas|kube_daemonset_status_number_ready|kube_daemonset_status_desired_number_scheduled|kube_persistentvolumeclaim_status_phase|kube_job_status_failed|kube_node_status_condition|kube_pod_container_resource_limits"
     action        = "keep"
   }
 }
@@ -219,7 +221,10 @@ prometheus.scrape "kubelet_cadvisor" {
 // cAdvisor emits per-cgroup series for the pod-sandbox ("POD") pause container and for cgroup
 // parents (empty container label) alongside real per-container series - drop both first (a
 // well-known cadvisor scrape gotcha, not a metric-name filter), then keep only the two metric
-// names dashboards/kubernetes.json's container CPU/memory panels read.
+// names dashboards/kubernetes.json's container CPU/memory panels read. cAdvisor scrapes every
+// container on the node regardless of namespace, so also drop anything outside this release's
+// own namespace - same scoping kube-state-metrics.deployment.yaml's --namespaces flag applies,
+// keeping kube-system's own pods (coredns, traefik, ...) out of the panels.
 prometheus.relabel "kubelet_cadvisor_keep" {
   forward_to = [otelcol.receiver.prometheus.default.receiver]
 
@@ -230,18 +235,40 @@ prometheus.relabel "kubelet_cadvisor_keep" {
   }
 
   rule {
+    source_labels = ["namespace"]
+    regex         = "{{ .Release.Namespace }}"
+    action        = "keep"
+  }
+
+  rule {
     source_labels = ["__name__"]
     regex         = "container_cpu_usage_seconds_total|container_memory_working_set_bytes"
     action        = "keep"
   }
 }
 
-// ---- kubernetes events (Warning only) ----
-// Watches every namespace (not own_namespace like the sources above) - the cluster-wide
-// ClusterRole/ClusterRoleBinding in alloy.cluster-role.yaml grants the "events"/"events.k8s.io"
-// watch this needs.
+// PVC fill percentage isn't tracked here: kubelet's kubelet_volume_stats_used_bytes/
+// capacity_bytes exist, but these PVCs use local-path-provisioner, which backs every claim
+// with a plain directory on the node's single root filesystem rather than an isolated
+// volume - kubelet reports the same whole-filesystem numbers for every PVC on the node
+// instead of each claim's own usage (confirmed against a real cluster: postgres-data and
+// app-uploads both read the node's full disk usage despite very different real content).
+// A real per-claim number would need either a sidecar per workload walking its own mount
+// (e.g. `du`) or a provisioner that backs each claim with its own volume (Longhorn, OpenEBS
+// LVM) - both are real infrastructure additions not justified yet. Only PVC phase (bound/
+// pending/lost, from kube-state-metrics) is tracked as a result, and it has no dedicated
+// dashboard panel either - the PersistentVolumeClaimPending alert (terraform/alerting.tf)
+// reads kube_persistentvolumeclaim_status_phase directly, same pattern as the
+// DeploymentReplicasUnavailable alert.
+
+// ---- kubernetes events (this release's own namespace) ----
+// Scoped to this release's own namespace (not cluster-wide) so kube-system's own events
+// (coredns, traefik, ...) don't clutter the Events panel - the ClusterRole/ClusterRoleBinding
+// in alloy.cluster-role.yaml still grants cluster-wide "events"/"events.k8s.io" watch, broader
+// than what's actually used here.
 loki.source.kubernetes_events "cluster" {
   job_name   = "kubernetes-events"
+  namespaces = [{{ .Release.Namespace | quote }}]
   forward_to = [otelcol.receiver.loki.k8s_events.receiver]
 }
 
@@ -340,8 +367,10 @@ otelcol.processor.transform "node_exporter_logs" {
 
 // loki.source.kubernetes_events formats each event as logfmt by default (name=... kind=...
 // reason=... type=... count=... msg="...", per grafana/alloy's event_controller.go) - promote
-// the fields dashboards/kubernetes.json's events panel and the KubernetesWarningEventsElevated
-// alert read, same as cloudflared/node-exporter's own log parsing above.
+// the fields dashboards/kubernetes.json's Events panel reads, same as cloudflared/node-exporter's
+// own log parsing above. All event types (Normal and Warning) ship through - the
+// KubernetesWarningEventsElevated alert (terraform/alerting.tf) filters to "type" = "Warning"
+// itself rather than relying on a Warning-only pipeline.
 otelcol.processor.transform "k8s_events" {
   error_mode = "ignore"
 
@@ -357,28 +386,12 @@ otelcol.processor.transform "k8s_events" {
     statements = [
       `set(cache, ParseKeyValue(body))`,
       `set(severity_text, "warn") where cache["type"] == "Warning"`,
+      `set(severity_text, "info") where cache["type"] == "Normal"`,
       `set(attributes["type"], cache["type"]) where cache["type"] != nil`,
       `set(attributes["reason"], cache["reason"]) where cache["reason"] != nil`,
       `set(attributes["kind"], cache["kind"]) where cache["kind"] != nil`,
       `set(attributes["name"], cache["name"]) where cache["name"] != nil`,
       `set(body, cache["msg"]) where cache["msg"] != nil`,
-    ]
-  }
-
-  output {
-    logs = [otelcol.processor.filter.k8s_events_keep.input]
-  }
-}
-
-// Drop routine "Normal" events (Scheduled, Pulled, Created, Started, ...) - only "Warning"
-// events (FailedScheduling, BackOff, FailedMount, Unhealthy, ...) back a panel or alert.
-otelcol.processor.filter "k8s_events_keep" {
-  error_mode = "ignore"
-
-  log_conditions {
-    context = "log"
-    conditions = [
-      `attributes["type"] != "Warning"`,
     ]
   }
 

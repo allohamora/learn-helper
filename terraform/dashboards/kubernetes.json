@@ -45,7 +45,7 @@
   ],
   "title": "Kubernetes Cluster",
   "uid": "learn-helper-kubernetes-cluster",
-  "description": "Kubernetes' own view of cluster state (kube-state-metrics), per-container resource usage (kubelet/cAdvisor), and Warning-type cluster events. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Kubernetes' own view of cluster state (kube-state-metrics), per-container resource usage (kubelet/cAdvisor), and cluster events - all scoped to this release's own namespace. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -79,8 +79,8 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "Pod phase",
-      "description": "Pods by phase, cluster-wide. A sustained rise in Pending or Failed usually means a scheduling or image/config problem worth checking the Warning events panel for.",
+      "title": "Service replicas",
+      "description": "Available replicas per service right now (Deployments: kube_deployment_status_replicas_available; the node-exporter DaemonSet: kube_daemonset_status_number_ready, unified onto the same 'service' label via label_replace). Every service here is configured for 1 replica, so seeing a drop below that (e.g. app: 0) means it's down - check the Events panel for why. If a service is ever scaled beyond 1, this reflects that too, unlike a plain up/down flag.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -92,8 +92,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (phase) (kube_pod_status_phase{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "{{phase}}",
+          "expr": "label_replace(kube_deployment_status_replicas_available{deployment_environment_name=\"$environment\"}, \"service\", \"$1\", \"deployment\", \"(.*)\") or label_replace(kube_daemonset_status_number_ready{deployment_environment_name=\"$environment\"}, \"service\", \"$1\", \"daemonset\", \"(.*)\")",
+          "legendFormat": "{{service}}",
           "refId": "A"
         }
       ],
@@ -101,9 +101,15 @@
         "defaults": {
           "unit": "short",
           "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
           "custom": {
-            "stacking": { "mode": "normal" },
-            "fillOpacity": 20
+            "thresholdsStyle": { "mode": "area" }
           }
         },
         "overrides": []
@@ -125,8 +131,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "{{namespace}}/{{pod}}",
+          "expr": "sum by (container) (increase(kube_pod_container_status_restarts_total{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "{{container}}",
           "refId": "A"
         }
       ],
@@ -152,7 +158,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Container OOMKilled",
-      "description": "Containers whose last termination reason was OOMKilled. Distinct from node-exporter's HostOomKillDetected - this is a container hitting its own memory limit, not the whole host running out. The ContainerOomKilled alert (terraform/alerting.tf) fires on any occurrence.",
+      "description": "Approximate OOM kill count per service over time (each line defaults to 0, jumping when that container's last crash is currently flagged OOMKilled). Not an exact historical tally - kube-state-metrics only exposes the current last-termination reason, not a per-event counter, so a container that restarted for unrelated reasons and then OOM'd once would show its full restart count here. Distinct from node-exporter's HostOomKillDetected - this is a container hitting its own memory limit, not the whole host running out. The ContainerOomKilled alert (terraform/alerting.tf) fires on any occurrence.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -164,8 +170,8 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (namespace, pod) (kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", deployment_environment_name=\"$environment\"})",
-          "legendFormat": "{{namespace}}/{{pod}}",
+          "expr": "sum by (container) ((kube_pod_container_resource_limits{resource=\"cpu\", deployment_environment_name=\"$environment\"} * 0) or (kube_pod_container_status_restarts_total{deployment_environment_name=\"$environment\"} * on (namespace, pod, container) kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", deployment_environment_name=\"$environment\"}))",
+          "legendFormat": "{{container}}",
           "refId": "A"
         }
       ],
@@ -188,44 +194,6 @@
       }
     },
     {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Deployment replica availability",
-      "description": "Available vs. unavailable replicas per Deployment. The DeploymentReplicasUnavailable alert (terraform/alerting.tf) fires when unavailable stays above 0 for several minutes - i.e. a rollout is stuck, not just mid-rollout.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "kube_deployment_status_replicas_available{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "{{deployment}} available",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "kube_deployment_status_replicas_unavailable{deployment_environment_name=\"$environment\"}",
-          "legendFormat": "{{deployment}} unavailable",
-          "refId": "B"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0
-        },
-        "overrides": []
-      }
-    },
-    {
       "id": 5,
       "type": "timeseries",
       "title": "Node Ready condition",
@@ -234,7 +202,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -266,60 +234,35 @@
       }
     },
     {
-      "id": 6,
-      "type": "timeseries",
-      "title": "PVC phase",
-      "description": "PersistentVolumeClaim phase (1 = active phase for that claim). Fill percentage isn't tracked here - that lives on a separate kubelet metrics endpoint not part of this pipeline. The PersistentVolumeClaimPending alert (terraform/alerting.tf) fires when a claim stays Pending.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "kube_persistentvolumeclaim_status_phase{deployment_environment_name=\"$environment\"} == 1",
-          "legendFormat": "{{namespace}}/{{persistentvolumeclaim}} ({{phase}})",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "max": 1
-        },
-        "overrides": []
-      }
-    },
-    {
       "id": 7,
       "type": "timeseries",
       "title": "Container CPU usage",
-      "description": "CPU cores used, per pod (summed across its containers).",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "description": "CPU usage as a percentage of each container's own configured resources.limits.cpu (not the host's total CPU) - e.g. 50% means it's using half of what it's allowed. Above 100% isn't possible - the kernel throttles it at the limit instead.",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "{{namespace}}/{{pod}}",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 * sum by (container) (rate(container_cpu_usage_seconds_total{deployment_environment_name=\"$environment\"}[5m])) / sum by (container) (kube_pod_container_resource_limits{deployment_environment_name=\"$environment\", resource=\"cpu\"})",
+          "legendFormat": "{{container}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "min": 0
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
@@ -328,41 +271,46 @@
       "id": 8,
       "type": "timeseries",
       "title": "Container memory usage",
-      "description": "Working-set memory used, per pod (summed across its containers).",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "description": "Working-set memory as a percentage of each container's own configured resources.limits.memory (not the host's total memory) - e.g. 50% means it's using half of what it's allowed. Unlike CPU, exceeding this limit gets the container OOMKilled - see the Container OOMKilled panel.",
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum by (namespace, pod) (container_memory_working_set_bytes{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "{{namespace}}/{{pod}}",
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "100 * sum by (container) (container_memory_working_set_bytes{deployment_environment_name=\"$environment\"}) / sum by (container) (kube_pod_container_resource_limits{deployment_environment_name=\"$environment\", resource=\"memory\"})",
+          "legendFormat": "{{container}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
-          "min": 0
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
     },
     {
-      "id": 9,
+      "id": 28,
       "type": "logs",
-      "title": "Warning events",
-      "description": "Kubernetes Warning-type events (FailedScheduling, BackOff, FailedMount, Unhealthy, ...), latest first. Routine Normal events aren't shipped.",
+      "title": "Events",
+      "description": "Kubernetes events for this release's own namespace, latest first - both routine (Pulled, Created, Started, Scheduled, ...) and Warning-type (FailedScheduling, BackOff, FailedMount, Unhealthy, ...). The KubernetesWarningEventsElevated alert (terraform/alerting.tf) filters to Warning-type only.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {
