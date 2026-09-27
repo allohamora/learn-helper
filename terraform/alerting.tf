@@ -808,6 +808,65 @@ resource "grafana_rule_group" "postgres" {
       EOT
     }
   }
+
+  rule {
+    name          = "PostgresDeadTupleRatioHigh"
+    condition     = "A"
+    for           = "1h"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          max(
+            (
+              pg_stat_user_tables_n_dead_tup{deployment_environment_name="production"}
+              /
+              (
+                pg_stat_user_tables_n_dead_tup{deployment_environment_name="production"}
+                +
+                pg_stat_user_tables_n_live_tup{deployment_environment_name="production"}
+              )
+            )
+            and (pg_stat_user_tables_n_live_tup{deployment_environment_name="production"} > 1000)
+          ) > bool 0.5
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "A table's dead tuple ratio has stayed above 50% for an hour"
+      description = <<-EOT
+        Dead tuples (n_dead_tup) as a share of a table's rows (n_dead_tup +
+        n_live_tup) - autovacuum's default scale factor already lets this ratio
+        cycle up toward ~20% between runs, so 50% signals autovacuum genuinely
+        falling behind rather than a normal catch-up cycle. Sustained for 1h to
+        filter out that normal cycling. Restricted to tables with more than 1000
+        live rows so small/lookup tables (where a handful of dead rows is a huge
+        percentage but irrelevant in practice) can't trigger it. Deliberately does
+        NOT fire on missing data. Scoped to the production environment so a
+        devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
 }
 
 resource "grafana_contact_point" "cloudflared" {
