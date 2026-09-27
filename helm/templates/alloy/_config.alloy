@@ -504,7 +504,7 @@ otelcol.processor.transform "postgres_logs" {
   log_statements {
     context = "log"
     statements = [
-      `set(cache, ExtractPatterns(body, "^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)$"))`,
+      `set(cache, ExtractPatterns(body, "^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)"))`,
       `set(severity_text, "debug") where IsMatch(cache["severity"], "^DEBUG")`,
       `set(severity_text, "info") where cache["severity"] == "LOG" or cache["severity"] == "INFO" or cache["severity"] == "NOTICE"`,
       `set(severity_text, "warn") where cache["severity"] == "WARNING" or cache["severity"] == "DETAIL" or cache["severity"] == "HINT" or cache["severity"] == "CONTEXT" or cache["severity"] == "QUERY"`,
