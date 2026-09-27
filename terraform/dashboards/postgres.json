@@ -403,7 +403,7 @@
       "id": 11,
       "type": "table",
       "title": "Top queries by time",
-      "description": "Top 10 normalized queries (pg_stat_statements, keyed by queryid) by total execution time over the last 10m, via pg_stat_statements_seconds_total. Query text isn't exposed by the exporter - cross-reference queryid against pg_stat_statements on the server to identify the actual statement.",
+      "description": "Top 10 normalized queries (pg_stat_statements, keyed by queryid) by total execution time over the last 10m, via pg_stat_statements_seconds_total, alongside calls/sec, avg latency, rows/sec, and avg rows/call for those same 10 queries (each filtered down to the ranked set with `and on(queryid, datname, user) topk(...)`, so a query that's slow-but-rare still shows its own calls/rows rather than a different top-10). Query text isn't exposed by the exporter - cross-reference queryid against pg_stat_statements on the server to identify the actual statement.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -419,6 +419,46 @@
           "format": "table",
           "instant": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (queryid, datname, user) (rate(pg_stat_statements_calls_total{deployment_environment_name=\"$environment\"}[10m])) and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])) / sum by (queryid, datname, user) (rate(pg_stat_statements_calls_total{deployment_environment_name=\"$environment\"}[10m]))) * 1000 and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (queryid, datname, user) (rate(pg_stat_statements_rows_total{deployment_environment_name=\"$environment\"}[10m])) and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum by (queryid, datname, user) (rate(pg_stat_statements_rows_total{deployment_environment_name=\"$environment\"}[10m])) / sum by (queryid, datname, user) (rate(pg_stat_statements_calls_total{deployment_environment_name=\"$environment\"}[10m]))) and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "E"
         }
       ],
       "fieldConfig": {
@@ -429,15 +469,37 @@
           {
             "matcher": { "id": "byName", "options": "time/sec" },
             "properties": [{ "id": "unit", "value": "s" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "calls/sec" },
+            "properties": [{ "id": "unit", "value": "ops" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "avg latency (ms)" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "rows/sec" },
+            "properties": [{ "id": "unit", "value": "ops" }]
           }
         ]
       },
       "transformations": [
         {
+          "id": "merge",
+          "options": {}
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": { "Time": true },
-            "renameByName": { "Value": "time/sec" }
+            "renameByName": {
+              "Value #A": "time/sec",
+              "Value #B": "calls/sec",
+              "Value #C": "avg latency (ms)",
+              "Value #D": "rows/sec",
+              "Value #E": "avg rows/call"
+            }
           }
         }
       ]
