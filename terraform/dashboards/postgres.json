@@ -80,7 +80,7 @@
       "id": 1,
       "type": "timeseries",
       "title": "Connections",
-      "description": "Active backend connections (pg_stat_database_numbackends, summed across databases) against the server's own configured max_connections (pg_settings_max_connections). The PostgresConnectionsHigh alert (terraform/alerting.tf) fires above 80% of that limit - self-adjusting if max_connections is ever tuned, rather than a fixed guessed number.",
+      "description": "Active backend connections (pg_stat_database_numbackends, summed across databases) as a share of the server's own configured max_connections (pg_settings_max_connections). The PostgresConnectionsHigh alert (terraform/alerting.tf) fires above 80% of that limit - self-adjusting if max_connections is ever tuned, rather than a fixed guessed number.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -92,24 +92,26 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(pg_stat_database_numbackends{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "connections",
+          "expr": "sum(pg_stat_database_numbackends{deployment_environment_name=\"$environment\"}) / max(pg_settings_max_connections{deployment_environment_name=\"$environment\"}) * 100",
+          "legendFormat": "active connections",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "max(pg_settings_max_connections{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "max_connections",
-          "refId": "B"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
-          "min": 0
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }

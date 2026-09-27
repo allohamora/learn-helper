@@ -248,7 +248,7 @@ own dashboard panel. The events log source ships every event type, unfiltered - 
 `KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
 query, rather than relying on a curated pipeline.
 
-Likewise, the `Postgres` dashboard (connections vs. `max_connections`, cache hit ratio,
+Likewise, the `Postgres` dashboard (connections as a share of `max_connections`, cache hit ratio,
 transactions/sec, slow query rate, database size, deadlocks, locks by mode, a filtered
 "last slow query + plan" log panel, and unfiltered logs) and its 3 alert rules
 (connections high, cache hit ratio low, slow queries elevated) route through the same
