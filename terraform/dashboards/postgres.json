@@ -45,7 +45,7 @@
   ],
   "title": "Postgres",
   "uid": "learn-helper-postgres",
-  "description": "Postgres health: connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, time since last autovacuum, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Postgres health: CPU/memory/disk usage, connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, time since last autovacuum, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -85,7 +85,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -125,7 +125,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -165,7 +165,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -195,6 +195,126 @@
       }
     },
     {
+      "id": 14,
+      "type": "timeseries",
+      "title": "CPU usage %",
+      "description": "CPU usage of the postgres container itself (not the exporter sidecar) as a percentage of its own configured resources.limits.cpu - e.g. 50% means it's using half of what it's allowed. Above 100% isn't possible - the kernel throttles it at the limit instead.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * sum(rate(container_cpu_usage_seconds_total{deployment_environment_name=\"$environment\", container=\"postgres\"}[5m])) / sum(kube_pod_container_resource_limits{deployment_environment_name=\"$environment\", container=\"postgres\", resource=\"cpu\"})",
+          "legendFormat": "cpu",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Memory usage %",
+      "description": "Working-set memory of the postgres container itself (not the exporter sidecar) as a percentage of its own configured resources.limits.memory - e.g. 50% means it's using half of what it's allowed. Exceeding this gets the container OOMKilled - see dashboards/kubernetes.json's Container OOMKilled panel.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * sum(container_memory_working_set_bytes{deployment_environment_name=\"$environment\", container=\"postgres\"}) / sum(kube_pod_container_resource_limits{deployment_environment_name=\"$environment\", container=\"postgres\", resource=\"memory\"})",
+          "legendFormat": "memory",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Disk usage % (approx)",
+      "description": "Total logical size of all databases (pg_database_size_bytes, same figure as the Database size panel) against the postgres-data PVC's requested 5Gi (postgres-data.persistent-volume-claim.yaml). An approximation, not real disk usage: the PVC's local-path storage class doesn't enforce that 5Gi request, and pg_database_size_bytes excludes WAL and other on-disk files - so this can read low even when the underlying volume is fuller.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * sum(pg_database_size_bytes{deployment_environment_name=\"$environment\"}) / (5 * 1024 * 1024 * 1024)",
+          "legendFormat": "disk (approx)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 5,
       "type": "timeseries",
       "title": "Slow query rate",
@@ -203,7 +323,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 32, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -232,7 +352,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -261,7 +381,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -300,7 +420,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -329,7 +449,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -368,7 +488,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -408,7 +528,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -437,7 +557,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 8 },
+      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -542,7 +662,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 48, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {
