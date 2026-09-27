@@ -33,3 +33,15 @@ resource "grafana_dashboard" "node_exporter" {
   folder    = grafana_folder.cloudflared.uid
   overwrite = true
 }
+
+resource "grafana_dashboard" "kubernetes" {
+  config_json = replace(
+    replace(
+      file("${path.module}/dashboards/kubernetes.json"),
+      "$${DS_PROMETHEUS}", data.grafana_data_source.prometheus.uid
+    ),
+    "$${DS_LOKI}", data.grafana_data_source.loki.uid
+  )
+  folder    = grafana_folder.cloudflared.uid
+  overwrite = true
+}

@@ -1,0 +1,19 @@
+{{- if .Values.kubeStateMetrics.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-kube-state-metrics
+rules:
+  # Only the object kinds the curated metric set in alloy/_config.alloy actually reads -
+  # not kube-state-metrics' full default collector list (which also covers configmaps,
+  # secrets, services, ingresses, networkpolicies, horizontalpodautoscalers, ...).
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "persistentvolumeclaims"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["list", "watch"]
+{{- end }}

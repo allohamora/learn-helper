@@ -119,6 +119,132 @@ prometheus.relabel "node_exporter_keep" {
   }
 }
 
+// ---- kube-state-metrics cluster object-state metrics ----
+// Scoped to just the kube-state-metrics pod via a server-side label selector, same as the
+// two sources above.
+discovery.kubernetes "kube_state_metrics" {
+  role = "pod"
+
+  namespaces {
+    own_namespace = true // in the same namespace as alloy
+  }
+
+  selectors {
+    role  = "pod"
+    label = "app=kube-state-metrics"
+  }
+}
+
+discovery.relabel "kube_state_metrics_metrics" {
+  targets = discovery.kubernetes.kube_state_metrics.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
+  }
+}
+
+prometheus.scrape "kube_state_metrics" {
+  targets         = discovery.relabel.kube_state_metrics_metrics.output
+  job_name        = "kube-state-metrics"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.kube_state_metrics_keep.receiver]
+}
+
+// kube-state-metrics exposes hundreds of metric families across every object kind it watches -
+// keep only what backs a panel in dashboards/kubernetes.json or a rule in alerting.tf.
+prometheus.relabel "kube_state_metrics_keep" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "kube_pod_status_phase|kube_pod_container_status_restarts_total|kube_pod_container_status_last_terminated_reason|kube_pod_container_status_waiting_reason|kube_deployment_status_replicas_available|kube_deployment_status_replicas_unavailable|kube_deployment_spec_replicas|kube_statefulset_status_replicas_ready|kube_statefulset_spec_replicas|kube_daemonset_status_number_ready|kube_daemonset_status_desired_number_scheduled|kube_persistentvolumeclaim_status_phase|kube_job_status_failed|kube_node_status_condition"
+    action        = "keep"
+  }
+}
+
+// ---- kubelet/cAdvisor per-container CPU/memory metrics ----
+// One target per cluster node - unlike the pod-scoped sources above, kubelet is a per-node
+// component, so discovery targets nodes directly rather than a labeled pod.
+discovery.kubernetes "kubelet" {
+  role = "node"
+}
+
+// Every kubelet exposes /metrics/cadvisor on its own HTTPS port (10250), but that port isn't
+// guaranteed reachable from Alloy's pod network depending on the node's CNI/firewall setup.
+// Proxying the request through the API server (already reachable at kubernetes.default.svc:443
+// from any pod) avoids that, and reuses Alloy's own in-cluster service-account token/CA below
+// instead of needing kubelet's self-signed cert trusted.
+discovery.relabel "kubelet_cadvisor" {
+  targets = discovery.kubernetes.kubelet.targets
+
+  rule {
+    target_label = "__address__"
+    replacement  = "kubernetes.default.svc:443"
+  }
+
+  rule {
+    target_label = "__scheme__"
+    replacement  = "https"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    regex         = "(.+)"
+    target_label  = "__metrics_path__"
+    replacement   = "/api/v1/nodes/$1/proxy/metrics/cadvisor"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    target_label  = "node"
+    action        = "replace"
+  }
+}
+
+prometheus.scrape "kubelet_cadvisor" {
+  targets           = discovery.relabel.kubelet_cadvisor.output
+  job_name          = "kubelet-cadvisor"
+  scrape_interval   = "60s"
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+  tls_config {
+    ca_file = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  }
+
+  forward_to = [prometheus.relabel.kubelet_cadvisor_keep.receiver]
+}
+
+// cAdvisor emits per-cgroup series for the pod-sandbox ("POD") pause container and for cgroup
+// parents (empty container label) alongside real per-container series - drop both first (a
+// well-known cadvisor scrape gotcha, not a metric-name filter), then keep only the two metric
+// names dashboards/kubernetes.json's container CPU/memory panels read.
+prometheus.relabel "kubelet_cadvisor_keep" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+
+  rule {
+    source_labels = ["container"]
+    regex         = "POD|"
+    action        = "drop"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "container_cpu_usage_seconds_total|container_memory_working_set_bytes"
+    action        = "keep"
+  }
+}
+
+// ---- kubernetes events (Warning only) ----
+// Watches every namespace (not own_namespace like the sources above) - the cluster-wide
+// ClusterRole/ClusterRoleBinding in alloy.cluster-role.yaml grants the "events"/"events.k8s.io"
+// watch this needs.
+loki.source.kubernetes_events "cluster" {
+  job_name   = "kubernetes-events"
+  forward_to = [otelcol.receiver.loki.k8s_events.receiver]
+}
+
 otelcol.receiver.prometheus "default" {
   output {
     metrics = [otelcol.processor.resourcedetection.environment.input]
@@ -134,6 +260,12 @@ otelcol.receiver.loki "cloudflared" {
 otelcol.receiver.loki "node_exporter" {
   output {
     logs = [otelcol.processor.transform.node_exporter_logs.input]
+  }
+}
+
+otelcol.receiver.loki "k8s_events" {
+  output {
+    logs = [otelcol.processor.transform.k8s_events.input]
   }
 }
 
@@ -198,6 +330,55 @@ otelcol.processor.transform "node_exporter_logs" {
       `set(cache, ParseKeyValue(body))`,
       `set(severity_text, cache["level"]) where cache["level"] != nil`,
       `set(body, cache["msg"]) where cache["msg"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+
+// loki.source.kubernetes_events formats each event as logfmt by default (name=... kind=...
+// reason=... type=... count=... msg="...", per grafana/alloy's event_controller.go) - promote
+// the fields dashboards/kubernetes.json's events panel and the KubernetesWarningEventsElevated
+// alert read, same as cloudflared/node-exporter's own log parsing above.
+otelcol.processor.transform "k8s_events" {
+  error_mode = "ignore"
+
+  log_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "kubernetes-events")`,
+    ]
+  }
+
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ParseKeyValue(body))`,
+      `set(severity_text, "warn") where cache["type"] == "Warning"`,
+      `set(attributes["type"], cache["type"]) where cache["type"] != nil`,
+      `set(attributes["reason"], cache["reason"]) where cache["reason"] != nil`,
+      `set(attributes["kind"], cache["kind"]) where cache["kind"] != nil`,
+      `set(attributes["name"], cache["name"]) where cache["name"] != nil`,
+      `set(body, cache["msg"]) where cache["msg"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.filter.k8s_events_keep.input]
+  }
+}
+
+// Drop routine "Normal" events (Scheduled, Pulled, Created, Started, ...) - only "Warning"
+// events (FailedScheduling, BackOff, FailedMount, Unhealthy, ...) back a panel or alert.
+otelcol.processor.filter "k8s_events_keep" {
+  error_mode = "ignore"
+
+  log_conditions {
+    context = "log"
+    conditions = [
+      `attributes["type"] != "Warning"`,
     ]
   }
 

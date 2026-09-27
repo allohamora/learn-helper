@@ -74,11 +74,19 @@ tunnel's own Prometheus metrics (connection health, request counts, error rates 
 `/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
 logs, and - when `nodeExporter.enabled: true` - host metrics (CPU, memory, disk,
 network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100, along
-with its pod logs. All of it ships to Grafana Cloud over OTLP, with every metric/log
-getting a `deployment.environment.name` resource attribute so production and
-non-production data can be told apart. Postgres metrics and `app` pod logs are still
-not collected. The app's own traces/logs/HTTP metrics go straight to Sentry (see
-`src/server/instrument.ts`) and aren't part of this pipeline either.
+with its pod logs. When `kubeStateMetrics.enabled: true`, it additionally collects
+Kubernetes' own view of cluster state: pod phase/restarts/OOMKilled reasons, Deployment/
+StatefulSet/DaemonSet replica availability, PVC phase, and Node `Ready`/pressure
+conditions from the `kube-state-metrics` Deployment; per-container CPU/memory usage
+scraped directly from every node's kubelet (`/metrics/cadvisor`, proxied through the API
+server); and `Warning`-type Kubernetes events (`FailedScheduling`, `BackOff`,
+`FailedMount`, ...) as logs, with routine `Normal` events dropped. All of it ships to
+Grafana Cloud over OTLP, with every metric/log getting a `deployment.environment.name`
+resource attribute so production and non-production data can be told apart. Postgres
+metrics and `app` pod logs are still not collected. The app's own traces/logs/HTTP
+metrics go straight to Sentry (see `src/server/instrument.ts`) and aren't part of this
+pipeline either - there's no Kubernetes-level equivalent of traces to collect here, so
+none is added.
 
 To enable it:
 
@@ -99,14 +107,25 @@ To enable it:
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
 
-`values.schema.json` requires a `nodeExporter` block, so an existing `values.yaml` must
-add it (copy it from `values.example.yaml`, `enabled: false`) before the next
-`helm upgrade`, even if host metrics aren't wanted.
+`values.schema.json` requires `nodeExporter` and `kubeStateMetrics` blocks, so an
+existing `values.yaml` must add them (copy from `values.example.yaml`, `enabled: false`)
+before the next `helm upgrade`, even if host metrics or cluster metrics aren't wanted.
 
 To also collect host metrics, set `nodeExporter.enabled: true` in `values.yaml`
 (`nodeExporter.image` defaults to `quay.io/prometheus/node-exporter:v1.12.1` in
 `values.example.yaml`) and re-run `helm upgrade` again. It only needs Alloy enabled to
 be useful - on its own it just runs an unscraped `/metrics` endpoint.
+
+To also collect cluster-level Kubernetes metrics/events, set
+`kubeStateMetrics.enabled: true` in `values.yaml` (`kubeStateMetrics.image` defaults to
+`registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0` in
+`values.example.yaml`) and re-run `helm upgrade` again. Enabling it is also the first
+time Alloy's ServiceAccount gets cluster-wide (not namespace-scoped) read access - a
+`ClusterRole`/`ClusterRoleBinding` (`alloy.cluster-role.yaml`) granting `list`/`watch` on
+nodes, `get` on `nodes/proxy` (for the kubelet cAdvisor scrape), and `list`/`watch`/`get`
+on events cluster-wide (for the events log source) - a deliberate, expected step for a
+cluster monitoring agent, but worth noting since every prior Alloy source only ever
+needed access to its own namespace.
 
 ```bash
 # Verify Alloy is scraping/shipping correctly.
@@ -155,6 +174,21 @@ point/notification policy. The dashboard JSON lives at
 `terraform/alerting.tf`. node-exporter itself only runs the collectors those panels/alerts
 need (see its `--collector.*` args in `node-exporter.daemonset.yaml`), and Alloy further
 filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"`).
+
+Likewise, the `Kubernetes Cluster` dashboard (pod phase breakdown, pod restarts, container
+OOMKilled count, Deployment/StatefulSet/DaemonSet replica availability, Node `Ready`
+condition, PVC phase, container CPU/memory usage, and Warning events) and its 6 alert rules
+(pod crash-looping, unavailable Deployment replicas, container OOMKilled, node not ready,
+PVC stuck pending, elevated Warning events) route through the same contact point/notification
+policy. The dashboard JSON lives at `terraform/dashboards/kubernetes.json` and the alert
+rules are in the same `terraform/alerting.tf`. `kube-state-metrics` only watches the object
+kinds those panels/alerts need (see its `--resources=...` flag and
+`kube-state-metrics.cluster-role.yaml`), and Alloy filters both the kube-state-metrics and
+kubelet/cAdvisor scrapes down to the exact metric names used, and the events log source down
+to `Warning`-type events only (see the `kube_state_metrics_keep`/`kubelet_cadvisor_keep`/
+`k8s_events_keep` components in `alloy/_config.alloy`). PVC fill percentage isn't covered -
+that lives on a third kubelet metrics endpoint (`kubelet_volume_stats_*`) that isn't part of
+this pipeline, so only PVC phase (bound/pending/lost) is tracked.
 
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
