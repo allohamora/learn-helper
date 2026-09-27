@@ -64,25 +64,13 @@ spec:
             - "auto_explain.log_format=json"
             - "-c"
             - "auto_explain.sample_rate=1" # log every qualifying statement
-            - "-c"
-            - "logging_collector=on" # required for log_destination=jsonlog below
-            - "-c"
-            - "log_destination=jsonlog"
-            # log_directory + "/" + log_filename resolves to /proc/self/fd/1, i.e. this
-            # container's own stdout - the standard trick for getting the logging
-            # collector's structured output onto stdout instead of a log file, so Alloy
-            # can tail it the same way as every other pod's logs. Rotation is disabled
-            # so the collector never tries to reopen/rename that special path.
-            - "-c"
-            - "log_directory=/proc/self/fd"
-            - "-c"
-            - "log_filename=1"
-            - "-c"
-            - "log_rotation_age=0"
-            - "-c"
-            - "log_rotation_size=0"
-            - "-c"
-            - "log_truncate_on_rotation=off"
+            # jsonlog/csvlog can only be produced by the logging_collector, which
+            # writes to actual files - there's no way to make it land on this
+            # container's own stdout (the /proc/self/fd/<n> trick doesn't work here:
+            # postgres unconditionally appends ".json" to the configured filename
+            # for jsonlog, so it can never resolve to a bare fd number). Logging
+            # straight to stderr (the default) is what every other pod in this
+            # cluster does, and Alloy already tails it the same way.
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data

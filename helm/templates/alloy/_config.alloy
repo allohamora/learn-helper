@@ -473,11 +473,9 @@ otelcol.processor.transform "k8s_events" {
 }
 {{- end }}
 
-// jsonlog (see log_destination in postgres.deployment.yaml) gives one JSON object
-// per log line, same shape idea as cloudflared's zerolog output - reuse ParseJSON
-// rather than logfmt. error_severity uses Postgres's own words (LOG/WARNING/ERROR/
-// FATAL/PANIC), not OTel's, so map them explicitly rather than copying raw - same
-// approach as k8s_events' Warning/Normal -> warn/info mapping above.
+// Postgres logs plain text to stderr (jsonlog isn't usable here - see
+// postgres.deployment.yaml - so there's no structured body/error_severity to
+// pull severity_text from, unlike cloudflared/k8s_events' JSON sources).
 {{- if .Values.postgresExporter.enabled }}
 otelcol.processor.transform "postgres_logs" {
   error_mode = "ignore"
@@ -486,19 +484,6 @@ otelcol.processor.transform "postgres_logs" {
     context = "resource"
     statements = [
       `set(attributes["service.name"], "postgres")`,
-    ]
-  }
-
-  log_statements {
-    context = "log"
-    statements = [
-      `set(cache, ParseJSON(body))`,
-      `set(severity_text, "info") where cache["error_severity"] == "LOG"`,
-      `set(severity_text, "warn") where cache["error_severity"] == "WARNING"`,
-      `set(severity_text, "error") where cache["error_severity"] == "ERROR"`,
-      `set(severity_text, "fatal") where cache["error_severity"] == "FATAL"`,
-      `set(severity_text, "fatal") where cache["error_severity"] == "PANIC"`,
-      `set(body, cache["message"]) where cache["message"] != nil`,
     ]
   }
 
