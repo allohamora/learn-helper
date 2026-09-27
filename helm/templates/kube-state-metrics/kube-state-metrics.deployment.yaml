@@ -29,7 +29,7 @@ spec:
           # don't clutter dashboards/kubernetes.json's panels. Nodes are cluster-scoped and stay
           # unaffected by this flag - kube_node_status_condition still covers every node.
           args:
-            - --resources=pods,nodes,persistentvolumeclaims,deployments,replicasets,statefulsets,daemonsets,jobs,cronjobs
+            - --resources=pods,nodes,persistentvolumeclaims,deployments,daemonsets
             - --namespaces={{ .Release.Namespace }}
           ports:
             - name: metrics
