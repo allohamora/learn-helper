@@ -321,7 +321,7 @@ prometheus.relabel "postgres_keep" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes|pg_stat_statements_calls_total|pg_stat_statements_seconds_total|pg_stat_statements_rows_total|pg_stat_statements_block_read_seconds_total|pg_stat_statements_block_write_seconds_total|pg_stat_user_tables_n_dead_tup|pg_stat_user_tables_n_live_tup|pg_stat_user_tables_seq_scan|pg_stat_user_tables_idx_scan|pg_stat_user_tables_last_autovacuum"
+    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes|pg_stat_statements_calls_total|pg_stat_statements_seconds_total|pg_stat_statements_rows_total|pg_stat_user_tables_n_dead_tup|pg_stat_user_tables_n_live_tup|pg_stat_user_tables_seq_scan|pg_stat_user_tables_idx_scan|pg_stat_user_tables_last_autovacuum"
     action        = "keep"
   }
 }
