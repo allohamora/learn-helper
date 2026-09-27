@@ -341,7 +341,26 @@ discovery.relabel "postgres_logs" {
 
 loki.source.kubernetes "postgres" {
   targets    = discovery.relabel.postgres_logs.output
+  forward_to = [loki.process.postgres_multiline.receiver]
+}
+
+// Kubernetes' container log capture is strictly line-based - every "\n" postgres
+// writes (e.g. each line of a pretty-printed auto_explain plan) lands as its own
+// separately-timestamped log record with no relation to the ones around it. This
+// stitches those back together: any line starting with the log_line_prefix format
+// (the same pattern the transform below matches on) starts a new record, and every
+// line after it up to the next match - or max_wait_time - gets appended to it.
+// max_lines defaults to 128, too low for a deeply-nested plan (log_analyze/
+// log_buffers/log_verbose/log_triggers are all on) - raised well above what a
+// realistic plan here produces so a long one doesn't get split mid-plan again.
+loki.process "postgres_multiline" {
   forward_to = [otelcol.receiver.loki.postgres.receiver]
+
+  stage.multiline {
+    firstline     = "^\\S+ \\S+ \\S+ \\[\\d+\\] \\w+:"
+    max_lines     = 4096
+    max_wait_time = "3s"
+  }
 }
 {{- end }}
 
@@ -516,7 +535,7 @@ otelcol.processor.transform "postgres_logs" {
   log_statements {
     context = "log"
     statements = [
-      `set(cache, ExtractPatterns(body, "^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)"))`,
+      `set(cache, ExtractPatterns(body, "(?s)^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)"))`,
       `set(severity_text, "debug") where IsMatch(cache["severity"], "^DEBUG")`,
       `set(severity_text, "info") where cache["severity"] == "LOG" or cache["severity"] == "INFO" or cache["severity"] == "NOTICE"`,
       `set(severity_text, "warn") where cache["severity"] == "WARNING" or cache["severity"] == "DETAIL" or cache["severity"] == "HINT" or cache["severity"] == "CONTEXT" or cache["severity"] == "QUERY"`,
