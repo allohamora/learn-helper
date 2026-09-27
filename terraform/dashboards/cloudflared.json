@@ -343,6 +343,38 @@
       }
     },
     {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Responses by status code",
+      "description": "HTTP status codes actually returned through the tunnel per minute (cloudflared_tunnel_response_by_code) - the one place a real application response code is visible here, distinct from the Errors panel above (connection-level failures that never produce a status code) and from Sentry (which only sees responses the app itself generated, not ones Cloudflare's edge or Traefik return before a request reaches it).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (status_code) (rate(cloudflared_tunnel_response_by_code{deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "{{status_code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "axisLabel": "responses / min"
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 3,
       "type": "logs",
       "title": "Logs",

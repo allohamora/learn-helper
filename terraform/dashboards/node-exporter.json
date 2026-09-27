@@ -381,6 +381,133 @@
       }
     },
     {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Filesystem inodes %",
+      "description": "Used inodes as a share of total, per mountpoint (tmpfs/overlay and read-only mounts excluded, same scope as Disk usage % above). A distinct way to run out of a filesystem: a mountpoint can have plenty of free bytes but no free inodes left if it accumulates many small files (e.g. an uploads directory). No alert on this yet.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "((1 - (node_filesystem_files_free{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"} / node_filesystem_files{fstype!~\"tmpfs|overlay\", deployment_environment_name=\"$environment\"})) * 100) and on(instance, device, mountpoint) (node_filesystem_readonly{deployment_environment_name=\"$environment\"} == 0)",
+          "legendFormat": "{{mountpoint}} ({{node}})",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Network errors/drops",
+      "description": "Packet errors and drops per second, per direction (loopback excluded) - network interface health, distinct from the Network traffic panel's volume. Should be flat at zero; sustained non-zero values point to a NIC or driver problem.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum by (node) (rate(node_network_receive_errs_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "rx errors ({{node}})",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum by (node) (rate(node_network_transmit_errs_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "tx errors ({{node}})",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum by (node) (rate(node_network_receive_drop_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "rx drops ({{node}})",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum by (node) (rate(node_network_transmit_drop_total{device!=\"lo\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "tx drops ({{node}})",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "custom": {
+            "axisLabel": "events / sec"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.1 },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Disk throughput",
+      "description": "Bytes read/written per second across whole disks (partitions like vda1 excluded, same scope as Disk load % above) - actual data volume, distinct from Disk load %'s busy-time measurement.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum by (node) (rate(node_disk_read_bytes_total{device=~\"(sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "read ({{node}})",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+          "expr": "sum by (node) (rate(node_disk_written_bytes_total{device=~\"(sd[a-z]|vd[a-z]|xvd[a-z]|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)\", deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "write ({{node}})",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 10,
       "type": "logs",
       "title": "Logs",
@@ -389,7 +516,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {

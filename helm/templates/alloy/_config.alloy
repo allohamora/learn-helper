@@ -38,13 +38,16 @@ prometheus.scrape "cloudflared" {
 // cloudflared exposes ~60 metric families (rpc client stats, tcp/udp session counts, icmp,
 // its own Go runtime...) but only these back a dashboard panel or an alerting.tf rule - drop
 // the rest rather than ship them to Grafana Cloud unused. process_start_time_seconds backs
-// the Uptime panel.
+// the Uptime panel. cloudflared_proxy_connect_latency (connection-setup time, not request/
+// response time - cloudflared exposes no per-request duration metric at all) was tried and
+// dropped: it only samples on a fresh connect, which barely happens once cloudflared's
+// connection to the origin is warm, so it sat empty in practice.
 prometheus.relabel "cloudflared_keep" {
   forward_to = [otelcol.receiver.prometheus.default.receiver]
 
   rule {
     source_labels = ["__name__"]
-    regex         = "process_start_time_seconds|cloudflared_tunnel_ha_connections|cloudflared_tunnel_request_errors|cloudflared_tunnel_total_requests|cloudflared_tunnel_concurrent_requests_per_tunnel|cloudflared_proxy_connect_streams_errors"
+    regex         = "process_start_time_seconds|cloudflared_tunnel_ha_connections|cloudflared_tunnel_request_errors|cloudflared_tunnel_total_requests|cloudflared_tunnel_concurrent_requests_per_tunnel|cloudflared_proxy_connect_streams_errors|cloudflared_tunnel_response_by_code"
     action        = "keep"
   }
 }
@@ -114,7 +117,7 @@ prometheus.relabel "node_exporter_keep" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "node_cpu_seconds_total|node_memory_MemTotal_bytes|node_memory_MemAvailable_bytes|node_memory_SwapTotal_bytes|node_memory_SwapFree_bytes|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_readonly|node_disk_io_time_seconds_total|node_network_receive_bytes_total|node_network_transmit_bytes_total|node_boot_time_seconds|node_vmstat_oom_kill"
+    regex         = "node_cpu_seconds_total|node_memory_MemTotal_bytes|node_memory_MemAvailable_bytes|node_memory_SwapTotal_bytes|node_memory_SwapFree_bytes|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_readonly|node_filesystem_files|node_filesystem_files_free|node_disk_io_time_seconds_total|node_disk_read_bytes_total|node_disk_written_bytes_total|node_network_receive_bytes_total|node_network_transmit_bytes_total|node_network_receive_errs_total|node_network_transmit_errs_total|node_network_receive_drop_total|node_network_transmit_drop_total|node_boot_time_seconds|node_vmstat_oom_kill"
     action        = "keep"
   }
 }

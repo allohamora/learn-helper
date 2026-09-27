@@ -202,7 +202,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -239,7 +239,7 @@
       "title": "Container CPU usage",
       "description": "CPU usage as a percentage of each container's own configured resources.limits.cpu (not the host's total CPU) - e.g. 50% means it's using half of what it's allowed. Above 100% isn't possible - the kernel throttles it at the limit instead.",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
@@ -273,7 +273,7 @@
       "title": "Container memory usage",
       "description": "Working-set memory as a percentage of each container's own configured resources.limits.memory (not the host's total memory) - e.g. 50% means it's using half of what it's allowed. Unlike CPU, exceeding this limit gets the container OOMKilled - see the Container OOMKilled panel.",
       "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
@@ -310,7 +310,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {

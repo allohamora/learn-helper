@@ -161,7 +161,7 @@ expected to come with adding the metric it needs to the relevant `keep` allow-li
 vice versa - a metric with no panel or alert reading it should come back out).
 
 The `Cloudflared Tunnel` dashboard (HA connections, uptime, errors, requests, concurrent
-requests, stream errors, origin error rate, and logs)
+requests, stream errors, origin error rate, responses by status code, and logs)
 and its 4 alert rules (degraded HA connections, origin errors, elevated error logs,
 fatal log), plus the email contact
 point/notification policy that routes them, are managed by Terraform - see
@@ -170,16 +170,30 @@ and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to c
 update them. None of this is deployed by the Helm chart itself. Alloy only ships the
 handful of `cloudflared_tunnel_*` metrics (plus `process_start_time_seconds`) that
 back these panels/alerts - see the `prometheus.relabel "cloudflared_keep"` component in
-`alloy/_config.alloy`.
+`alloy/_config.alloy`. Responses by status code is the one place an actual application
+response code is visible here - distinct from the Errors panel (connection-level failures
+that never produce a status code) and from Sentry (which only sees responses the app
+itself generated, not ones Cloudflare's edge or Traefik return before a request reaches
+it). It has no alert yet. cloudflared exposes no per-request duration metric at all - its
+only latency-shaped metric (`cloudflared_proxy_connect_latency`, connection-setup time)
+was tried and dropped since it only samples on a fresh connect and sat empty in practice;
+actual request/response timing for the app is Sentry's job, not this pipeline's.
 
 Likewise, the `Node Exporter` dashboard (CPU usage, memory usage, swap usage, disk usage
-%, disk load %, network traffic, uptime, and OOM kills) and its 5 alert rules (low memory, high CPU,
-low disk space, swap filling up, OOM kill detected) route through the same contact
+%, filesystem inodes %, disk load %, disk throughput, network traffic, network
+errors/drops, uptime, and OOM kills) and its 5 alert rules (low memory, high CPU, low
+disk space, swap filling up, OOM kill detected) route through the same contact
 point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/node-exporter.json` and the alert rules are in the same
 `terraform/alerting.tf`. node-exporter itself only runs the collectors those panels/alerts
 need (see its `--collector.*` args in `node-exporter.daemonset.yaml`), and Alloy further
 filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"`).
+Filesystem inodes %, disk throughput, and network errors/drops have no alert yet - they
+exist for visibility into failure modes (running out of inodes despite free bytes, a NIC
+dropping packets) their neighboring panels can't show on their own. Swap activity
+(`node_vmstat_pswpin`/`pswpout`) was tried and dropped: it only reads non-zero once swap
+usage is already moving, so it never told you anything the Swap usage panel above didn't
+already show first.
 
 Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
 OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
