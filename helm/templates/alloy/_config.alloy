@@ -161,7 +161,7 @@ prometheus.relabel "kube_state_metrics_keep" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "kube_pod_status_phase|kube_pod_container_status_restarts_total|kube_pod_container_status_last_terminated_reason|kube_deployment_status_replicas_available|kube_deployment_status_replicas_unavailable|kube_deployment_status_condition|kube_daemonset_status_number_ready|kube_persistentvolumeclaim_status_phase|kube_node_status_condition|kube_pod_container_resource_limits"
+    regex         = "kube_pod_status_phase|kube_pod_container_status_restarts_total|kube_pod_container_status_last_terminated_reason|kube_deployment_status_replicas_available|kube_deployment_status_replicas_unavailable|kube_daemonset_status_number_ready|kube_node_status_condition|kube_pod_container_resource_limits"
     action        = "keep"
   }
 }
@@ -246,20 +246,6 @@ prometheus.relabel "kubelet_cadvisor_keep" {
     action        = "keep"
   }
 }
-
-// PVC fill percentage isn't tracked here: kubelet's kubelet_volume_stats_used_bytes/
-// capacity_bytes exist, but these PVCs use local-path-provisioner, which backs every claim
-// with a plain directory on the node's single root filesystem rather than an isolated
-// volume - kubelet reports the same whole-filesystem numbers for every PVC on the node
-// instead of each claim's own usage (confirmed against a real cluster: postgres-data and
-// app-uploads both read the node's full disk usage despite very different real content).
-// A real per-claim number would need either a sidecar per workload walking its own mount
-// (e.g. `du`) or a provisioner that backs each claim with its own volume (Longhorn, OpenEBS
-// LVM) - both are real infrastructure additions not justified yet. Only PVC phase (bound/
-// pending/lost, from kube-state-metrics) is tracked as a result, and it has no dedicated
-// dashboard panel either - the PersistentVolumeClaimPending alert (terraform/alerting.tf)
-// reads kube_persistentvolumeclaim_status_phase directly, same pattern as the
-// DeploymentReplicasUnavailable alert.
 
 // ---- kubernetes events (this release's own namespace) ----
 // Scoped to this release's own namespace (not cluster-wide) so kube-system's own events

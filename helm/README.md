@@ -183,8 +183,8 @@ filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"
 
 Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
 OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
-and its 7 alert rules (pod crash-looping, unavailable Deployment replicas, stuck Deployment
-rollout, container OOMKilled, node not ready, PVC stuck pending, elevated Warning events) route through the same
+and its 5 alert rules (pod crash-looping, unavailable Deployment replicas, container
+OOMKilled, node not ready, elevated Warning events) route through the same
 contact point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/kubernetes.json` and the alert rules are in the same
 `terraform/alerting.tf`. `kube-state-metrics` only watches the object kinds those
@@ -202,18 +202,7 @@ up/down flag - the DeploymentReplicasUnavailable alert still reads
 `kube_deployment_status_replicas_unavailable` directly even though it no longer backs its
 own dashboard panel. The events log source ships every event type, unfiltered - the
 `KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
-query, rather than relying on a curated pipeline. PVC fill percentage has no panel: these
-PVCs use local-path-provisioner, which backs every claim with a plain directory on the
-node's single root filesystem rather than an isolated volume, so kubelet's
-`kubelet_volume_stats_used_bytes`/`capacity_bytes` report the same whole-filesystem numbers
-for every PVC on the node instead of each claim's own usage - confirmed against a real
-cluster, not a theoretical concern (see the comment above `loki.source.kubernetes_events` in
-`alloy/_config.alloy`). A real per-claim number would need either a sidecar per workload
-walking its own mount (e.g. `du`) or a provisioner that backs each claim with its own volume
-(Longhorn, OpenEBS LVM) - both are real infrastructure additions not justified yet. Only PVC
-phase (bound/pending/lost) is tracked, and it has no dedicated panel either - the
-PersistentVolumeClaimPending alert reads `kube_persistentvolumeclaim_status_phase` directly,
-same pattern as the DeploymentReplicasUnavailable alert above.
+query, rather than relying on a curated pipeline.
 
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses

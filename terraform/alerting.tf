@@ -523,50 +523,6 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "DeploymentRolloutStuck"
-    condition     = "A"
-    for           = "1m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 600
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = "kube_deployment_status_condition{condition=\"Progressing\", status=\"false\", deployment_environment_name=\"production\"} == bool 1"
-      })
-    }
-
-    labels = {
-      alert_group = "kubernetes"
-      severity    = "warning"
-    }
-
-    annotations = {
-      summary     = "A Deployment's rollout exceeded its progress deadline"
-      description = <<-EOT
-        Progressing/false only appears once a rollout has been stuck past
-        spec.progressDeadlineSeconds (10m by default) - distinct from
-        DeploymentReplicasUnavailable, which can fire mid-rollout and self-resolve. This
-        catches a rollout that's confirmed stuck even if old replicas are still available and
-        serving traffic, so the flat replica count never dips. Deliberately does NOT fire on
-        missing data. Scoped to the production environment so a devcontainer test run
-        (ENVIRONMENT: development) can't page anyone.
-      EOT
-    }
-  }
-
-  rule {
     name          = "ContainerOomKilled"
     condition     = "A"
     for           = "1m"
@@ -649,48 +605,6 @@ resource "grafana_rule_group" "kubernetes" {
         data - the server is expected to be powered off sometimes, and that shouldn't page
         anyone. Scoped to the production environment so a devcontainer test run
         (ENVIRONMENT: development) can't page anyone.
-      EOT
-    }
-  }
-
-  rule {
-    name          = "PersistentVolumeClaimPending"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
-
-    data {
-      ref_id         = "A"
-      datasource_uid = data.grafana_data_source.prometheus.uid
-
-      relative_time_range {
-        from = 600
-        to   = 0
-      }
-
-      model = jsonencode({
-        refId      = "A"
-        instant    = true
-        range      = false
-        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
-        expr       = "kube_persistentvolumeclaim_status_phase{phase=\"Pending\", deployment_environment_name=\"production\"} == bool 1"
-      })
-    }
-
-    labels = {
-      alert_group = "kubernetes"
-      severity    = "warning"
-    }
-
-    annotations = {
-      summary     = "A PersistentVolumeClaim is stuck Pending"
-      description = <<-EOT
-        Fires once a claim has stayed unbound for 5m, rather than on the brief Pending
-        window every claim passes through at creation. Fill percentage isn't covered here -
-        that lives on a separate kubelet metrics endpoint not part of this pipeline.
-        Deliberately does NOT fire on missing data. Scoped to the production environment so
-        a devcontainer test run (ENVIRONMENT: development) can't page anyone.
       EOT
     }
   }

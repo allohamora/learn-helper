@@ -8,7 +8,7 @@ rules:
   # not kube-state-metrics' full default collector list (which also covers configmaps,
   # secrets, services, ingresses, networkpolicies, horizontalpodautoscalers, ...).
   - apiGroups: [""]
-    resources: ["pods", "nodes", "persistentvolumeclaims"]
+    resources: ["pods", "nodes"]
     verbs: ["list", "watch"]
   - apiGroups: ["apps"]
     resources: ["deployments", "daemonsets"]
