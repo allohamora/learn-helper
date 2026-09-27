@@ -652,6 +652,107 @@ resource "grafana_rule_group" "kubernetes" {
       EOT
     }
   }
+
+  rule {
+    name          = "PodCpuUsageHigh"
+    condition     = "A"
+    for           = "15m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          100 * sum by (pod, container) (rate(container_cpu_usage_seconds_total{deployment_environment_name="production"}[5m]))
+          /
+          sum by (pod, container) (kube_pod_container_resource_limits{deployment_environment_name="production", resource="cpu"})
+          > bool 80
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "{{ $labels.pod }}/{{ $labels.container }} is using more than 80% of its CPU limit"
+      description = <<-EOT
+        Multi-dimensional like PodCrashLooping above - one alert instance per (pod,
+        container) that crosses 80% of its own resources.limits.cpu, same query dashboards/
+        kubernetes.json's Container CPU usage panel plots. The kernel throttles rather than
+        kills on CPU, so this is a capacity-planning warning, not an imminent-crash signal
+        like PodMemoryUsageHigh below. Sustained for 15m so a brief legitimate spike (a
+        deploy, a batch job) doesn't page anyone. Deliberately does NOT fire on missing
+        data. Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PodMemoryUsageHigh"
+    condition     = "A"
+    for           = "10m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          100 * sum by (pod, container) (container_memory_working_set_bytes{deployment_environment_name="production"})
+          /
+          sum by (pod, container) (kube_pod_container_resource_limits{deployment_environment_name="production", resource="memory"})
+          > bool 80
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "{{ $labels.pod }}/{{ $labels.container }} is using more than 80% of its memory limit"
+      description = <<-EOT
+        Multi-dimensional like PodCrashLooping above - one alert instance per (pod,
+        container) that crosses 80% of its own resources.limits.memory, same query
+        dashboards/kubernetes.json's Container memory usage panel plots. Unlike CPU,
+        exceeding the limit gets the container OOMKilled (see ContainerOomKilled above), so
+        this is meant to catch the approach before that happens - shorter 10m window than
+        PodCpuUsageHigh's 15m since memory pressure escalates faster. Deliberately does NOT
+        fire on missing data. Scoped to the production environment so a devcontainer test
+        run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
 }
 
 resource "grafana_rule_group" "postgres" {
@@ -914,6 +1015,7 @@ resource "grafana_rule_group" "postgres" {
       EOT
     }
   }
+
 }
 
 resource "grafana_contact_point" "cloudflared" {

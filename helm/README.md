@@ -227,9 +227,9 @@ already show first.
 
 Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
 OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
-and its 5 alert rules (pod crash-looping, unavailable Deployment replicas, container
-OOMKilled, node not ready, elevated Warning events) route through the same
-contact point/notification policy. The dashboard JSON lives at
+and its 7 alert rules (pod crash-looping, unavailable Deployment replicas, container
+OOMKilled, node not ready, elevated Warning events, high per-container CPU/memory usage)
+route through the same contact point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/kubernetes.json` and the alert rules are in the same
 `terraform/alerting.tf`. `kube-state-metrics` only watches the object kinds those
 panels/alerts need (see its `--resources=...` flag and
@@ -239,7 +239,11 @@ kubelet/cAdvisor scrapes down to the exact metric names used (see the
 CPU/memory panels group by `container` (i.e. by service - `app`, `postgres`, `cloudflared`,
 ...) and show each as a percentage of that container's own configured `resources.limits`
 (e.g. 50% means using half of what it's allowed), not raw cores/bytes and not relative to
-the host - `kube_pod_container_resource_limits` (kube-state-metrics) is the denominator.
+the host - `kube_pod_container_resource_limits` (kube-state-metrics) is the denominator;
+`PodCpuUsageHigh`/`PodMemoryUsageHigh` alert on the same per-(pod, container) query
+crossing 80%. A per-PVC disk usage % panel/alert was tried and dropped - see
+`alloy/_config.alloy`'s comment above the events source for why kubelet can't give a real
+per-PVC number on this cluster's `local-path` storage class.
 Service replicas shows each service's current available/ready replica count (Deployments
 and the node-exporter DaemonSet, unified onto one `service` label) rather than a separate
 up/down flag - the DeploymentReplicasUnavailable alert still reads

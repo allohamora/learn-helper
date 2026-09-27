@@ -251,6 +251,18 @@ prometheus.relabel "kubelet_cadvisor_keep" {
   }
 }
 
+// A per-PVC disk usage % (kubelet's plain /metrics exposes kubelet_volume_stats_used_bytes/
+// capacity_bytes, the same idea as the cAdvisor scrape above but for volumes) was tried and
+// dropped: kubelet only gets real per-volume stats from a CSI driver's NodeGetVolumeStats -
+// for a plain hostPath-style mount like local-path-provisioner's, it falls back to statfs()
+// on the mount path, which reports the whole underlying filesystem's stats, not that
+// directory's actual usage. Since postgres-data and app-uploads are both just directories on
+// the same node disk, both metrics came back identical for either PVC (confirmed live:
+// ~92GB "used" for both, while `du` inside each pod showed 63MB and 4KB respectively) - not
+// usable as a per-app signal. The real constraint this would have measured (the node disk
+// filling up) is already covered by node-exporter's HostOutOfDiskSpace alert regardless of
+// how the PVC directories are laid out underneath.
+
 // ---- kubernetes events (this release's own namespace) ----
 // Scoped to this release's own namespace (not cluster-wide) so kube-system's own events
 // (coredns, traefik, ...) don't clutter the Events panel - the ClusterRole/ClusterRoleBinding
