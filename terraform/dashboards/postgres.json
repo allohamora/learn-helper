@@ -45,7 +45,7 @@
   ],
   "title": "Postgres",
   "uid": "learn-helper-postgres",
-  "description": "Postgres health: connections, cache hit ratio, transactions, slow queries (with auto_explain plans), database size, deadlocks, locks, dead tuple ratio, sequential/index scans, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Postgres health: connections, cache hit ratio, transactions, slow queries (with auto_explain plans), database size, deadlocks, locks, dead tuples, sequential/index scans, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -323,8 +323,8 @@
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Dead tuple ratio",
-      "description": "Dead tuples as a share of each table's rows (n_dead_tup / (n_dead_tup + n_live_tup)), per table. Autovacuum's default scale factor already lets this cycle up toward ~20% between runs - the PostgresDeadTupleRatioHigh alert (terraform/alerting.tf) only fires above 50% sustained for 1h, restricted to tables with over 1000 live rows, so a normal catch-up cycle or a tiny lookup table doesn't page anyone.",
+      "title": "Dead tuples",
+      "description": "Dead tuple count (n_dead_tup) per table - a ratio would hit 100% on any small/lookup table and be meaningless, so this plots the raw count instead. Red above 100000, the threshold awesome-prometheus-alerts' Postgres rules use for 'high dead tuple count, vacuum needed'. A separate ratio-based check (PostgresDeadTupleRatioHigh in terraform/alerting.tf) is what actually pages, restricted to tables with over 1000 live rows so this panel and that alert can use different scales without contradicting each other.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -336,21 +336,20 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "pg_stat_user_tables_n_dead_tup{deployment_environment_name=\"$environment\"} / (pg_stat_user_tables_n_dead_tup{deployment_environment_name=\"$environment\"} + pg_stat_user_tables_n_live_tup{deployment_environment_name=\"$environment\"}) * 100",
+          "expr": "pg_stat_user_tables_n_dead_tup{deployment_environment_name=\"$environment\"}",
           "legendFormat": "{{relname}}",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "percent",
+          "unit": "short",
           "min": 0,
-          "max": 100,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "red", "value": 50 }
+              { "color": "red", "value": 100000 }
             ]
           },
           "custom": {
