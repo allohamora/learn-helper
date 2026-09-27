@@ -281,11 +281,13 @@ otelcol.receiver.loki "node_exporter" {
   }
 }
 
+{{- if .Values.kubeStateMetrics.enabled }}
 otelcol.receiver.loki "k8s_events" {
   output {
     logs = [otelcol.processor.transform.k8s_events.input]
   }
 }
+{{- end }}
 
 // otelcol.receiver.prometheus sets service_name from the job label automatically;
 // otelcol.receiver.loki has no equivalent, so logs would otherwise show up as
@@ -362,6 +364,7 @@ otelcol.processor.transform "node_exporter_logs" {
 // own log parsing above. All event types (Normal and Warning) ship through - the
 // KubernetesWarningEventsElevated alert (terraform/alerting.tf) filters to "type" = "Warning"
 // itself rather than relying on a Warning-only pipeline.
+{{- if .Values.kubeStateMetrics.enabled }}
 otelcol.processor.transform "k8s_events" {
   error_mode = "ignore"
 
@@ -390,6 +393,7 @@ otelcol.processor.transform "k8s_events" {
     logs = [otelcol.processor.resourcedetection.environment.input]
   }
 }
+{{- end }}
 
 // ---- tag every metric/log with the current environment, so production and
 // non-production data can be told apart in Grafana Cloud. Reads the
