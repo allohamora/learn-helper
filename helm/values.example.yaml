@@ -36,6 +36,10 @@ kubeStateMetrics:
   enabled: false
   image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0
 
+postgresExporter:
+  enabled: false
+  image: quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+
 postgres:
   image: postgres:18.4-alpine
   # NOTE: the Postgres image only applies USER/PASSWORD/DB on first init of an

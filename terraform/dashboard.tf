@@ -45,3 +45,15 @@ resource "grafana_dashboard" "kubernetes" {
   folder    = grafana_folder.cloudflared.uid
   overwrite = true
 }
+
+resource "grafana_dashboard" "postgres" {
+  config_json = replace(
+    replace(
+      file("${path.module}/dashboards/postgres.json"),
+      "$${DS_PROMETHEUS}", data.grafana_data_source.prometheus.uid
+    ),
+    "$${DS_LOKI}", data.grafana_data_source.loki.uid
+  )
+  folder    = grafana_folder.cloudflared.uid
+  overwrite = true
+}

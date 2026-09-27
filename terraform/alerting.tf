@@ -654,6 +654,265 @@ resource "grafana_rule_group" "kubernetes" {
   }
 }
 
+resource "grafana_rule_group" "postgres" {
+  name             = "postgres"
+  folder_uid       = grafana_folder.cloudflared.uid
+  interval_seconds = 60
+
+  rule {
+    name          = "PostgresConnectionsHigh"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            sum(pg_stat_database_numbackends{deployment_environment_name="production"})
+            /
+            max(pg_settings_max_connections{deployment_environment_name="production"})
+          ) > bool 0.8
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres is using more than 80% of max_connections"
+      description = <<-EOT
+        Active backend connections as a share of the server's own configured
+        max_connections, so the threshold self-adjusts if that setting is ever
+        tuned instead of chasing a fixed guessed number. Deliberately does NOT
+        fire on missing data - the server is expected to be powered off sometimes,
+        and that shouldn't page anyone. Scoped to the production environment so a
+        devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresCacheHitRatioLow"
+    condition     = "A"
+    for           = "15m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            sum(rate(pg_stat_database_blks_hit{deployment_environment_name="production"}[10m]))
+            /
+            (
+              sum(rate(pg_stat_database_blks_hit{deployment_environment_name="production"}[10m]))
+              +
+              sum(rate(pg_stat_database_blks_read{deployment_environment_name="production"}[10m]))
+            )
+          ) < bool 0.98
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres cache hit ratio has dropped below 98%"
+      description = <<-EOT
+        Share of block reads served from shared buffers rather than disk, sustained
+        for 15m. The container has only 512Mi allotted, so the working set can
+        plausibly outgrow cache - a sustained drop signals rising physical I/O. With
+        no query activity at all this ratio is 0/0 (NaN), and Prometheus comparisons
+        against NaN are always false, so this rule stays silent rather than firing
+        on an idle database - same idiom as node-exporter's HostOutOfSwap.
+        Deliberately does NOT fire on missing data. Scoped to the production
+        environment so a devcontainer test run (ENVIRONMENT: development) can't
+        page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresSlowQueriesElevated"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"production\"} |= \"duration:\" [5m])) > bool 10"
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres is logging slow queries persistently"
+      description = <<-EOT
+        Counts log lines containing "duration:" - emitted once per slow statement
+        by both log_min_duration_statement and auto_explain (each qualifying
+        statement produces two such lines, one from each mechanism - see
+        postgres.deployment.yaml), so this is roughly double the actual slow-query
+        count. More than 10 in a 5m window, sustained for 5m, so a single transient
+        slow query doesn't page anyone. No established baseline yet - adjust once
+        you know what's normal. Scoped to the production environment so a
+        devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresReadLatencyHigh"
+    condition     = "A"
+    for           = "10m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 900
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            increase(pg_stat_statements_totals_read_exec_time_ms{deployment_environment_name="production"}[10m])
+            /
+            increase(pg_stat_statements_totals_read_calls{deployment_environment_name="production"}[10m])
+          ) > bool 100
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres average SELECT latency is above 100ms"
+      description = <<-EOT
+        Average execution time per SELECT call over a 10m window, derived from
+        pg_stat_statements' cumulative sums via the custom query in
+        postgres-exporter.configmap.yaml. This is an approximation of a true
+        latency percentile (like RDS's ReadLatency) - pg_stat_statements only
+        exposes cumulative counters, not per-request distributions. 100ms is a
+        starting point for this hardware, not a validated threshold. Needs
+        `CREATE EXTENSION pg_stat_statements` to have been run (see
+        helm/README.md) - stays silent (no data) until then. Scoped to the
+        production environment so a devcontainer test run (ENVIRONMENT:
+        development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresWriteLatencyHigh"
+    condition     = "A"
+    for           = "10m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 900
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            increase(pg_stat_statements_totals_write_exec_time_ms{deployment_environment_name="production"}[10m])
+            /
+            increase(pg_stat_statements_totals_write_calls{deployment_environment_name="production"}[10m])
+          ) > bool 250
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres average write latency is above 250ms"
+      description = <<-EOT
+        Same shape as PostgresReadLatencyHigh, but for INSERT/UPDATE/DELETE calls -
+        an approximation of RDS's WriteLatency, not a true percentile. 250ms is a
+        starting point for this hardware, not a validated threshold. Needs
+        `CREATE EXTENSION pg_stat_statements` to have been run (see
+        helm/README.md) - stays silent (no data) until then. Scoped to the
+        production environment so a devcontainer test run (ENVIRONMENT:
+        development) can't page anyone.
+      EOT
+    }
+  }
+}
+
 resource "grafana_contact_point" "cloudflared" {
   name = "learn-helper-contact-point"
 
@@ -697,6 +956,16 @@ resource "grafana_notification_policy" "default" {
       label = "alert_group"
       match = "="
       value = "kubernetes"
+    }
+  }
+
+  policy {
+    contact_point = grafana_contact_point.cloudflared.name
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "postgres"
     }
   }
 }

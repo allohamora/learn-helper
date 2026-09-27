@@ -1,0 +1,35 @@
+{{- if .Values.postgresExporter.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-exporter-queries
+  namespace: {{ .Release.Namespace }}
+data:
+  # postgres_exporter has no built-in average-query-latency metric - only
+  # pg_stat_statements' own cumulative counters - so this derives read/write
+  # exec-time-per-call from them. Requires `CREATE EXTENSION pg_stat_statements`
+  # to have been run once (see helm/README.md) - until then this query errors and
+  # postgres_exporter just skips these series rather than crashing.
+  queries.yaml: |
+    stat_statements_totals:
+      query: |
+        SELECT
+          coalesce(sum(calls) FILTER (WHERE query ~* '^\s*select'), 0)::float8 AS read_calls,
+          coalesce(sum(total_exec_time) FILTER (WHERE query ~* '^\s*select'), 0)::float8 AS read_exec_time_ms,
+          coalesce(sum(calls) FILTER (WHERE query ~* '^\s*(insert|update|delete)'), 0)::float8 AS write_calls,
+          coalesce(sum(total_exec_time) FILTER (WHERE query ~* '^\s*(insert|update|delete)'), 0)::float8 AS write_exec_time_ms
+        FROM pg_stat_statements;
+      metrics:
+        - read_calls:
+            usage: "COUNTER"
+            description: "Cumulative SELECT executions"
+        - read_exec_time_ms:
+            usage: "COUNTER"
+            description: "Cumulative SELECT execution time (ms)"
+        - write_calls:
+            usage: "COUNTER"
+            description: "Cumulative INSERT/UPDATE/DELETE executions"
+        - write_exec_time_ms:
+            usage: "COUNTER"
+            description: "Cumulative INSERT/UPDATE/DELETE execution time (ms)"
+{{- end }}
