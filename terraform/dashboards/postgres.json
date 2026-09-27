@@ -45,7 +45,7 @@
   ],
   "title": "Postgres",
   "uid": "learn-helper-postgres",
-  "description": "Postgres health: connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Postgres health: connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, time since last autovacuum, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -203,7 +203,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -232,7 +232,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -329,7 +329,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -400,6 +400,35 @@
       }
     },
     {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Time since last autovacuum",
+      "description": "Seconds since autovacuum last ran on each table (time() - pg_stat_user_tables_last_autovacuum). Normally sawtooths as autovacuum cycles through tables; a line that climbs without ever resetting means autovacuum has stopped touching that table. A table with no line has never been autovacuumed - the exporter reports last_autovacuum as 0 (Unix epoch) rather than omitting the series for a NULL value, so this filters those out with `and (... > 0)` instead of plotting a ~56-year-old fake timestamp for every untouched table. Visibility only, no established baseline yet so no alert.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(time() - pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"}) and (pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"} > 0)",
+          "legendFormat": "{{relname}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 11,
       "type": "table",
       "title": "Top queries by time",
@@ -408,7 +437,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 8 },
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -513,7 +542,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {
