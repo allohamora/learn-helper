@@ -403,7 +403,7 @@
       "id": 13,
       "type": "timeseries",
       "title": "Time since last autovacuum",
-      "description": "Seconds since autovacuum last ran on each table (time() - pg_stat_user_tables_last_autovacuum). Normally sawtooths as autovacuum cycles through tables; a line that climbs without ever resetting means autovacuum has stopped touching that table. A table with no line has never been autovacuumed - the exporter reports last_autovacuum as 0 (Unix epoch) rather than omitting the series for a NULL value, so this filters those out with `and (... > 0)` instead of plotting a ~56-year-old fake timestamp for every untouched table. Visibility only, no established baseline yet so no alert.",
+      "description": "Seconds since autovacuum last ran on each table (time() - pg_stat_user_tables_last_autovacuum). Normally sawtooths as autovacuum cycles through tables; a line that climbs without ever resetting means autovacuum has stopped touching that table. The exporter reports last_autovacuum as 0 (Unix epoch) rather than omitting the series for a NULL value, so a never-vacuumed table's line is forced flat to 0 via `* (... > bool 0)` instead of plotting a ~56-year-old fake timestamp - same idiom as the Sequential scan share panel's `* 0` fallback, so the table still shows up (and keeps its relname label) instead of dropping out of the chart. Visibility only, no established baseline yet so no alert.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -415,7 +415,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(time() - pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"}) and (pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"} > 0)",
+          "expr": "(time() - pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"}) * (pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"} > bool 0)",
           "legendFormat": "{{relname}}",
           "refId": "A"
         }
