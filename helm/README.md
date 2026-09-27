@@ -183,8 +183,8 @@ filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"
 
 Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
 OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
-and its 6 alert rules (pod crash-looping, unavailable Deployment replicas, container
-OOMKilled, node not ready, PVC stuck pending, elevated Warning events) route through the same
+and its 7 alert rules (pod crash-looping, unavailable Deployment replicas, stuck Deployment
+rollout, container OOMKilled, node not ready, PVC stuck pending, elevated Warning events) route through the same
 contact point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/kubernetes.json` and the alert rules are in the same
 `terraform/alerting.tf`. `kube-state-metrics` only watches the object kinds those
