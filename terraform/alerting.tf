@@ -867,6 +867,52 @@ resource "grafana_rule_group" "postgres" {
       EOT
     }
   }
+
+  rule {
+    name          = "PostgresErrorLogsElevated"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"production\"} | detected_level=~\"error|fatal\" [5m])) > bool 5"
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres is logging errors persistently"
+      description = <<-EOT
+        Counts postgres's own error/fatal-level log lines (detected_level, derived
+        by Alloy from the ERROR/FATAL/PANIC severity word in each line's
+        log_line_prefix - see _config.alloy's postgres_logs transform), which
+        catches failures the pg_stat_database metrics above don't - failed auth,
+        constraint violations, deadlock victims, disk-full errors. More than 5
+        lines in a 5m window, sustained for 5m, so a single transient error
+        doesn't page anyone. No established baseline yet - adjust once you know
+        what's normal. Scoped to the production environment so a devcontainer
+        test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
 }
 
 resource "grafana_contact_point" "cloudflared" {

@@ -474,8 +474,11 @@ otelcol.processor.transform "k8s_events" {
 {{- end }}
 
 // Postgres logs plain text to stderr (jsonlog isn't usable here - see
-// postgres.deployment.yaml - so there's no structured body/error_severity to
-// pull severity_text from, unlike cloudflared/k8s_events' JSON sources).
+// postgres.deployment.yaml), so severity_text is pulled from the log_line_prefix's
+// default "%m [%p] " format instead of a structured field - e.g.
+// "2026-09-27 10:15:23.456 UTC [123] ERROR:  ...". Continuation lines
+// (STATEMENT/DETAIL/HINT/CONTEXT) repeat the same prefix but aren't real severities,
+// so they're left unmapped rather than guessed at.
 {{- if .Values.postgresExporter.enabled }}
 otelcol.processor.transform "postgres_logs" {
   error_mode = "ignore"
@@ -484,6 +487,19 @@ otelcol.processor.transform "postgres_logs" {
     context = "resource"
     statements = [
       `set(attributes["service.name"], "postgres")`,
+    ]
+  }
+
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ExtractPatterns(body, "^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)$"))`,
+      `set(severity_text, "debug") where IsMatch(cache["severity"], "^DEBUG")`,
+      `set(severity_text, "info") where cache["severity"] == "LOG" or cache["severity"] == "INFO" or cache["severity"] == "NOTICE"`,
+      `set(severity_text, "warn") where cache["severity"] == "WARNING"`,
+      `set(severity_text, "error") where cache["severity"] == "ERROR"`,
+      `set(severity_text, "fatal") where cache["severity"] == "FATAL" or cache["severity"] == "PANIC"`,
+      `set(body, cache["message"]) where cache["message"] != nil`,
     ]
   }
 
