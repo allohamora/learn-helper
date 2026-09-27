@@ -75,9 +75,9 @@ tunnel's own Prometheus metrics (connection health, request counts, error rates 
 logs, and - when `nodeExporter.enabled: true` - host metrics (CPU, memory, disk,
 network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100, along
 with its pod logs. When `kubeStateMetrics.enabled: true`, it additionally collects
-Kubernetes' own view of cluster state: pod phase/restarts/OOMKilled reasons, Deployment/
-StatefulSet/DaemonSet replica availability, PVC phase, and Node `Ready`/pressure
-conditions from the `kube-state-metrics` Deployment; per-container CPU/memory usage
+Kubernetes' own view of cluster state: pod phase/restarts/OOMKilled reasons,
+Deployment/DaemonSet replica availability, and Node `Ready` condition from the
+`kube-state-metrics` Deployment; per-container CPU/memory usage
 scraped directly from every node's kubelet (`/metrics/cadvisor`, proxied through the API
 server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`, and
 `Warning`, e.g. `FailedScheduling`/`BackOff`/`FailedMount`) as logs. Except for Node
