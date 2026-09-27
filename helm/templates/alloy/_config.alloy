@@ -477,8 +477,19 @@ otelcol.processor.transform "k8s_events" {
 // postgres.deployment.yaml), so severity_text is pulled from the log_line_prefix's
 // default "%m [%p] " format instead of a structured field - e.g.
 // "2026-09-27 10:15:23.456 UTC [123] ERROR:  ...". Continuation lines
-// (STATEMENT/DETAIL/HINT/CONTEXT) repeat the same prefix but aren't real severities,
-// so they're left unmapped rather than guessed at.
+// (STATEMENT/DETAIL/HINT/CONTEXT/QUERY) repeat the same prefix but aren't
+// severities of their own - they're mapped by what postgres guarantees about
+// their parent line instead of guessed at. Per log_min_error_statement's docs,
+// STATEMENT (the client's own failing query) is only ever printed for a message
+// at error severity or worse - the default threshold, unchanged here. DETAIL/
+// HINT/CONTEXT/QUERY (QUERY being the internally-generated query behind the
+// error, e.g. from a trigger, as distinct from STATEMENT) aren't gated by that
+// same setting and can trail a WARNING too, so with log_min_messages left at
+// its 'warning' default (nothing below warning reaches the log at all), "warn"
+// is the safe floor for them regardless of which of warning/error/fatal/panic
+// they're actually attached to. log_error_verbosity isn't raised to VERBOSE
+// here, so the SQLSTATE/LOCATION lines it would add never appear and aren't
+// handled below.
 {{- if .Values.postgresExporter.enabled }}
 otelcol.processor.transform "postgres_logs" {
   error_mode = "ignore"
@@ -496,8 +507,8 @@ otelcol.processor.transform "postgres_logs" {
       `set(cache, ExtractPatterns(body, "^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)$"))`,
       `set(severity_text, "debug") where IsMatch(cache["severity"], "^DEBUG")`,
       `set(severity_text, "info") where cache["severity"] == "LOG" or cache["severity"] == "INFO" or cache["severity"] == "NOTICE"`,
-      `set(severity_text, "warn") where cache["severity"] == "WARNING"`,
-      `set(severity_text, "error") where cache["severity"] == "ERROR"`,
+      `set(severity_text, "warn") where cache["severity"] == "WARNING" or cache["severity"] == "DETAIL" or cache["severity"] == "HINT" or cache["severity"] == "CONTEXT" or cache["severity"] == "QUERY"`,
+      `set(severity_text, "error") where cache["severity"] == "ERROR" or cache["severity"] == "STATEMENT"`,
       `set(severity_text, "fatal") where cache["severity"] == "FATAL" or cache["severity"] == "PANIC"`,
       `set(body, cache["message"]) where cache["message"] != nil`,
     ]
