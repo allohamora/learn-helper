@@ -198,7 +198,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Slow query rate",
-      "description": "Count of log lines containing \"duration:\" per interval - emitted once per slow statement by both log_min_duration_statement and auto_explain (each qualifying statement produces two such lines, one from each mechanism - see postgres.deployment.yaml). The PostgresSlowQueriesElevated alert (terraform/alerting.tf) fires above 10 in a 5m window.",
+      "description": "Count of log lines containing \"duration:\" per interval - emitted once per slow statement by both log_min_duration_statement and auto_explain (each qualifying statement produces two such lines, one from each mechanism - see postgres.deployment.yaml). Falls back to 0 (via `or vector(0)`) when no such lines exist in the window, instead of showing No data. The PostgresSlowQueryDetected alert (terraform/alerting.tf) fires above 1 in a 5m window.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -210,7 +210,7 @@
             "type": "loki",
             "uid": "${DS_LOKI}"
           },
-          "expr": "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"$environment\"} |= \"duration:\" [$__interval]))",
+          "expr": "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"$environment\"} |= \"duration:\" [$__interval])) or vector(0)",
           "legendFormat": "slow queries",
           "refId": "A"
         }
