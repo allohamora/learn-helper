@@ -118,8 +118,8 @@
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Pod restarts",
-      "description": "Container restarts per 5m window, per pod - a proxy for crash-looping. The PodCrashLooping alert (terraform/alerting.tf) fires on a sustained elevated rate.",
+      "title": "Container restarts",
+      "description": "Container restarts per 5m window, summed across all pods of that container - a proxy for crash-looping. The PodCrashLooping alert (terraform/alerting.tf) fires on a sustained elevated rate.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
