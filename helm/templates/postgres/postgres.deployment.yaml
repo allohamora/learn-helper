@@ -129,6 +129,7 @@ spec:
               value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
           args:
             - --web.listen-address=:9187
+            - --collector.stat_statements # per-query calls/time/rows/IO from pg_stat_statements, already loaded above via shared_preload_libraries
           ports:
             - name: metrics
               containerPort: 9187
