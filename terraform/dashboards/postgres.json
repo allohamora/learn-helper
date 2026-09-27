@@ -45,7 +45,7 @@
   ],
   "title": "Postgres",
   "uid": "learn-helper-postgres",
-  "description": "Postgres health: connections, cache hit ratio, transactions, query latency, slow queries (with auto_explain plans), database size, deadlocks, locks, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Postgres health: connections, cache hit ratio, transactions, slow queries (with auto_explain plans), database size, deadlocks, locks, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -193,44 +193,6 @@
       }
     },
     {
-      "id": 4,
-      "type": "timeseries",
-      "title": "Query latency, read vs write",
-      "description": "Average execution time per call (increase(pg_stat_statements_totals_*_exec_time_ms) / increase(pg_stat_statements_totals_*_calls)), split into SELECT vs INSERT/UPDATE/DELETE via the custom query in postgres-exporter.configmap.yaml. This is an average over the window, not a true percentile - pg_stat_statements only exposes cumulative sums/counts, not per-request distributions. The PostgresReadLatencyHigh/PostgresWriteLatencyHigh alerts (terraform/alerting.tf) fire above 100ms/250ms respectively. Needs `CREATE EXTENSION pg_stat_statements` to have been run (see helm/README.md) - empty until then.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "increase(pg_stat_statements_totals_read_exec_time_ms{deployment_environment_name=\"$environment\"}[10m]) / increase(pg_stat_statements_totals_read_calls{deployment_environment_name=\"$environment\"}[10m])",
-          "legendFormat": "read (SELECT) ms/call",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "increase(pg_stat_statements_totals_write_exec_time_ms{deployment_environment_name=\"$environment\"}[10m]) / increase(pg_stat_statements_totals_write_calls{deployment_environment_name=\"$environment\"}[10m])",
-          "legendFormat": "write (INSERT/UPDATE/DELETE) ms/call",
-          "refId": "B"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "min": 0
-        },
-        "overrides": []
-      }
-    },
-    {
       "id": 5,
       "type": "timeseries",
       "title": "Slow query rate",
@@ -239,7 +201,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -268,7 +230,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {

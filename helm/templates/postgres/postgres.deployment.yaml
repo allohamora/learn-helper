@@ -129,13 +129,9 @@ spec:
               value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
           args:
             - --web.listen-address=:9187
-            - --extend.query-path=/etc/postgres-exporter/queries.yaml
           ports:
             - name: metrics
               containerPort: 9187
-          volumeMounts:
-            - name: postgres-exporter-queries
-              mountPath: /etc/postgres-exporter
           resources:
             requests:
               cpu: 50m
@@ -148,8 +144,3 @@ spec:
         - name: postgres-data
           persistentVolumeClaim:
             claimName: postgres-data
-        {{- if .Values.postgresExporter.enabled }}
-        - name: postgres-exporter-queries
-          configMap:
-            name: postgres-exporter-queries
-        {{- end }}

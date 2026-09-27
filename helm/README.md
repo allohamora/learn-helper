@@ -82,10 +82,10 @@ scraped directly from every node's kubelet (`/metrics/cadvisor`, proxied through
 server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`, and
 `Warning`, e.g. `FailedScheduling`/`BackOff`/`FailedMount`) as logs. When
 `postgresExporter.enabled: true`, it additionally collects Postgres query/connection
-metrics (connections, cache hit ratio, transactions, deadlocks, locks, database size,
-and query latency) from a `postgres-exporter` sidecar's `/metrics` endpoint on port
-9187, along with the `postgres` container's own JSON-formatted logs (slow queries and
-`auto_explain` plans included). Except for Node metrics (nodes aren't namespaced), all
+metrics (connections, cache hit ratio, transactions, deadlocks, locks, and database
+size) from a `postgres-exporter` sidecar's `/metrics` endpoint on port 9187, along with
+the `postgres` container's own JSON-formatted logs (slow queries and `auto_explain`
+plans included). Except for Node metrics (nodes aren't namespaced), all
 of this is scoped to this release's own namespace, so other namespaces' own components
 (e.g. `kube-system`'s coredns/traefik) don't clutter `dashboards/kubernetes.json`. All of
 it ships to Grafana Cloud over OTLP, with every metric/log getting a
@@ -148,8 +148,11 @@ itself - see the `args` in `postgres.deployment.yaml` for the full parameter lis
 Changing `shared_preload_libraries` requires a restart; the Deployment's
 `strategy: Recreate` already handles that as part of the same `helm upgrade`.
 
-Before Postgres query-level metrics (read/write latency) and the slow-query/plan panel
-have data, run this once against the live database (idempotent):
+`pg_stat_statements` is preloaded but not required by any dashboard panel or alert here
+
+- the slow-query/plan panel comes from `auto_explain`'s own logs, not this extension. It's
+  available for manual, ad-hoc query-stats inspection; to use it, run this once against the
+  live database (idempotent):
 
 ```bash
 kubectl exec -n learn-helper deploy/postgres -c postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
@@ -246,20 +249,22 @@ own dashboard panel. The events log source ships every event type, unfiltered - 
 query, rather than relying on a curated pipeline.
 
 Likewise, the `Postgres` dashboard (connections vs. `max_connections`, cache hit ratio,
-transactions/sec, query latency split read/write, slow query rate, database size,
-deadlocks, locks by mode, a filtered "last slow query + plan" log panel, and unfiltered
-logs) and its 5 alert rules (connections high, cache hit ratio low, slow queries
-elevated, read latency high, write latency high) route through the same contact
-point/notification policy. The dashboard JSON lives at `terraform/dashboards/postgres.json`
-and the alert rules are in the same `terraform/alerting.tf`. Alloy filters the
-postgres-exporter scrape down to the exact metric names used (`prometheus.relabel
-"postgres_keep"` in `alloy/_config.alloy`); read/write latency come from a
-`pg_stat_statements`-derived custom query (`postgres-exporter.configmap.yaml`), an
-_average_ execution time per call, not a true latency percentile the way RDS's
-`ReadLatency`/`WriteLatency` are - `pg_stat_statements` only exposes cumulative sums/
-counts. The slow query rate panel and alert both match log lines containing
-`"duration:"`, which both `log_min_duration_statement` and `auto_explain` emit per
-qualifying statement - each slow query is counted roughly twice, one line per mechanism.
+transactions/sec, slow query rate, database size, deadlocks, locks by mode, a filtered
+"last slow query + plan" log panel, and unfiltered logs) and its 3 alert rules
+(connections high, cache hit ratio low, slow queries elevated) route through the same
+contact point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/postgres.json` and the alert rules are in the same
+`terraform/alerting.tf`. Alloy filters the postgres-exporter scrape down to the exact
+metric names used (`prometheus.relabel "postgres_keep"` in `alloy/_config.alloy`). The
+slow query rate panel and alert both match log lines containing `"duration:"`, which
+both `log_min_duration_statement` and `auto_explain` emit per qualifying statement - each
+slow query is counted roughly twice, one line per mechanism. Read/write query latency
+(derived from `pg_stat_statements`) was tried as a metric/alert pair and dropped: it was
+only an _average_ execution time per call, not a true latency percentile the way RDS's
+`ReadLatency`/`WriteLatency` are, since `pg_stat_statements` only exposes cumulative
+sums/counts. `pg_stat_statements` itself stays enabled server-side for manual, ad-hoc
+inspection (see the Alloy section above) - it's just not wired into this dashboard/alert
+pipeline anymore.
 Deliberately not added: a CPU/memory alarm (already generic per-`container` in the
 `Kubernetes Cluster` dashboard/`ContainerOomKilled`), a storage/free-space alarm
 (`HostOutOfDiskSpace` already covers the underlying filesystem `local-path` writes to),

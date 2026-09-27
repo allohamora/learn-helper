@@ -303,14 +303,12 @@ prometheus.scrape "postgres" {
 
 // postgres_exporter's default collectors expose far more than this - keep only
 // what backs a panel in dashboards/postgres.json or a rule in alerting.tf.
-// pg_stat_statements_totals_* come from the custom query in
-// postgres-exporter.configmap.yaml, not a default collector.
 prometheus.relabel "postgres_keep" {
   forward_to = [otelcol.receiver.prometheus.default.receiver]
 
   rule {
     source_labels = ["__name__"]
-    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes|pg_stat_statements_totals_read_calls|pg_stat_statements_totals_read_exec_time_ms|pg_stat_statements_totals_write_calls|pg_stat_statements_totals_write_exec_time_ms"
+    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes"
     action        = "keep"
   }
 }
