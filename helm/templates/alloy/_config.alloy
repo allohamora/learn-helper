@@ -38,13 +38,16 @@ prometheus.scrape "cloudflared" {
 // cloudflared exposes ~60 metric families (rpc client stats, tcp/udp session counts, icmp,
 // its own Go runtime...) but only these back a dashboard panel or an alerting.tf rule - drop
 // the rest rather than ship them to Grafana Cloud unused. process_start_time_seconds backs
-// the Uptime panel.
+// the Uptime panel. cloudflared_proxy_connect_latency (connection-setup time, not request/
+// response time - cloudflared exposes no per-request duration metric at all) was tried and
+// dropped: it only samples on a fresh connect, which barely happens once cloudflared's
+// connection to the origin is warm, so it sat empty in practice.
 prometheus.relabel "cloudflared_keep" {
   forward_to = [otelcol.receiver.prometheus.default.receiver]
 
   rule {
     source_labels = ["__name__"]
-    regex         = "process_start_time_seconds|cloudflared_tunnel_ha_connections|cloudflared_tunnel_request_errors|cloudflared_tunnel_total_requests|cloudflared_tunnel_concurrent_requests_per_tunnel|cloudflared_proxy_connect_streams_errors"
+    regex         = "process_start_time_seconds|cloudflared_tunnel_ha_connections|cloudflared_tunnel_request_errors|cloudflared_tunnel_total_requests|cloudflared_tunnel_concurrent_requests_per_tunnel|cloudflared_proxy_connect_streams_errors|cloudflared_tunnel_response_by_code"
     action        = "keep"
   }
 }
@@ -114,10 +117,151 @@ prometheus.relabel "node_exporter_keep" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "node_cpu_seconds_total|node_memory_MemTotal_bytes|node_memory_MemAvailable_bytes|node_memory_SwapTotal_bytes|node_memory_SwapFree_bytes|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_readonly|node_disk_io_time_seconds_total|node_network_receive_bytes_total|node_network_transmit_bytes_total|node_boot_time_seconds|node_vmstat_oom_kill"
+    regex         = "node_cpu_seconds_total|node_memory_MemTotal_bytes|node_memory_MemAvailable_bytes|node_memory_SwapTotal_bytes|node_memory_SwapFree_bytes|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_readonly|node_filesystem_files|node_filesystem_files_free|node_disk_io_time_seconds_total|node_disk_read_bytes_total|node_disk_written_bytes_total|node_network_receive_bytes_total|node_network_transmit_bytes_total|node_network_receive_errs_total|node_network_transmit_errs_total|node_network_receive_drop_total|node_network_transmit_drop_total|node_boot_time_seconds|node_vmstat_oom_kill"
     action        = "keep"
   }
 }
+
+{{- if .Values.kubeStateMetrics.enabled }}
+// ---- kube-state-metrics cluster object-state metrics ----
+// Scoped to just the kube-state-metrics pod via a server-side label selector, same as the
+// two sources above.
+discovery.kubernetes "kube_state_metrics" {
+  role = "pod"
+
+  namespaces {
+    own_namespace = true // in the same namespace as alloy
+  }
+
+  selectors {
+    role  = "pod"
+    label = "app=kube-state-metrics"
+  }
+}
+
+discovery.relabel "kube_state_metrics_metrics" {
+  targets = discovery.kubernetes.kube_state_metrics.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
+  }
+}
+
+prometheus.scrape "kube_state_metrics" {
+  targets         = discovery.relabel.kube_state_metrics_metrics.output
+  job_name        = "kube-state-metrics"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.kube_state_metrics_keep.receiver]
+}
+
+// kube-state-metrics exposes hundreds of metric families across every object kind it watches -
+// keep only what backs a panel in dashboards/kubernetes.json or a rule in alerting.tf.
+// kube_pod_container_resource_limits is the denominator for the CPU/memory panels' percent-of-
+// limit calculation - each container's own configured limit, not a fixed/arbitrary baseline.
+prometheus.relabel "kube_state_metrics_keep" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "kube_pod_status_phase|kube_pod_container_status_restarts_total|kube_pod_container_status_last_terminated_reason|kube_deployment_status_replicas_available|kube_deployment_status_replicas_unavailable|kube_daemonset_status_number_ready|kube_node_status_condition|kube_pod_container_resource_limits"
+    action        = "keep"
+  }
+}
+
+// ---- kubelet/cAdvisor per-container CPU/memory metrics ----
+// One target per cluster node - unlike the pod-scoped sources above, kubelet is a per-node
+// component, so discovery targets nodes directly rather than a labeled pod.
+discovery.kubernetes "kubelet" {
+  role = "node"
+}
+
+// Every kubelet exposes /metrics/cadvisor on its own HTTPS port (10250), but that port isn't
+// guaranteed reachable from Alloy's pod network depending on the node's CNI/firewall setup.
+// Proxying the request through the API server (already reachable at kubernetes.default.svc:443
+// from any pod) avoids that, and reuses Alloy's own in-cluster service-account token/CA below
+// instead of needing kubelet's self-signed cert trusted.
+discovery.relabel "kubelet_cadvisor" {
+  targets = discovery.kubernetes.kubelet.targets
+
+  rule {
+    target_label = "__address__"
+    replacement  = "kubernetes.default.svc:443"
+  }
+
+  rule {
+    target_label = "__scheme__"
+    replacement  = "https"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    regex         = "(.+)"
+    target_label  = "__metrics_path__"
+    replacement   = "/api/v1/nodes/$1/proxy/metrics/cadvisor"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_node_name"]
+    target_label  = "node"
+    action        = "replace"
+  }
+}
+
+prometheus.scrape "kubelet_cadvisor" {
+  targets           = discovery.relabel.kubelet_cadvisor.output
+  job_name          = "kubelet-cadvisor"
+  scrape_interval   = "60s"
+  bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+  tls_config {
+    ca_file = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+  }
+
+  forward_to = [prometheus.relabel.kubelet_cadvisor_keep.receiver]
+}
+
+// cAdvisor emits per-cgroup series for the pod-sandbox ("POD") pause container and for cgroup
+// parents (empty container label) alongside real per-container series - drop both first (a
+// well-known cadvisor scrape gotcha, not a metric-name filter), then keep only the two metric
+// names dashboards/kubernetes.json's container CPU/memory panels read. cAdvisor scrapes every
+// container on the node regardless of namespace, so also drop anything outside this release's
+// own namespace - same scoping kube-state-metrics.deployment.yaml's --namespaces flag applies,
+// keeping kube-system's own pods (coredns, traefik, ...) out of the panels.
+prometheus.relabel "kubelet_cadvisor_keep" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+
+  rule {
+    source_labels = ["container"]
+    regex         = "POD|"
+    action        = "drop"
+  }
+
+  rule {
+    source_labels = ["namespace"]
+    regex         = "{{ .Release.Namespace }}"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "container_cpu_usage_seconds_total|container_memory_working_set_bytes"
+    action        = "keep"
+  }
+}
+
+// ---- kubernetes events (this release's own namespace) ----
+// Scoped to this release's own namespace (not cluster-wide) so kube-system's own events
+// (coredns, traefik, ...) don't clutter the Events panel - the ClusterRole/ClusterRoleBinding
+// in alloy.cluster-role.yaml still grants cluster-wide "events"/"events.k8s.io" watch, broader
+// than what's actually used here.
+loki.source.kubernetes_events "cluster" {
+  job_name   = "kubernetes-events"
+  namespaces = [{{ .Release.Namespace | quote }}]
+  forward_to = [otelcol.receiver.loki.k8s_events.receiver]
+}
+{{- end }}
 
 otelcol.receiver.prometheus "default" {
   output {
@@ -136,6 +280,14 @@ otelcol.receiver.loki "node_exporter" {
     logs = [otelcol.processor.transform.node_exporter_logs.input]
   }
 }
+
+{{- if .Values.kubeStateMetrics.enabled }}
+otelcol.receiver.loki "k8s_events" {
+  output {
+    logs = [otelcol.processor.transform.k8s_events.input]
+  }
+}
+{{- end }}
 
 // otelcol.receiver.prometheus sets service_name from the job label automatically;
 // otelcol.receiver.loki has no equivalent, so logs would otherwise show up as
@@ -205,6 +357,43 @@ otelcol.processor.transform "node_exporter_logs" {
     logs = [otelcol.processor.resourcedetection.environment.input]
   }
 }
+
+// loki.source.kubernetes_events formats each event as logfmt by default (name=... kind=...
+// reason=... type=... count=... msg="...", per grafana/alloy's event_controller.go) - promote
+// the fields dashboards/kubernetes.json's Events panel reads, same as cloudflared/node-exporter's
+// own log parsing above. All event types (Normal and Warning) ship through - the
+// KubernetesWarningEventsElevated alert (terraform/alerting.tf) filters to "type" = "Warning"
+// itself rather than relying on a Warning-only pipeline.
+{{- if .Values.kubeStateMetrics.enabled }}
+otelcol.processor.transform "k8s_events" {
+  error_mode = "ignore"
+
+  log_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "kubernetes-events")`,
+    ]
+  }
+
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ParseKeyValue(body))`,
+      `set(severity_text, "warn") where cache["type"] == "Warning"`,
+      `set(severity_text, "info") where cache["type"] == "Normal"`,
+      `set(attributes["type"], cache["type"]) where cache["type"] != nil`,
+      `set(attributes["reason"], cache["reason"]) where cache["reason"] != nil`,
+      `set(attributes["kind"], cache["kind"]) where cache["kind"] != nil`,
+      `set(attributes["name"], cache["name"]) where cache["name"] != nil`,
+      `set(body, cache["msg"]) where cache["msg"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+{{- end }}
 
 // ---- tag every metric/log with the current environment, so production and
 // non-production data can be told apart in Grafana Cloud. Reads the

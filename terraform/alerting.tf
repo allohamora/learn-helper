@@ -432,6 +432,228 @@ resource "grafana_rule_group" "node_exporter" {
   }
 }
 
+resource "grafana_rule_group" "kubernetes" {
+  name             = "kubernetes"
+  folder_uid       = grafana_folder.cloudflared.uid
+  interval_seconds = 60
+
+  rule {
+    name          = "PodCrashLooping"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 900
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = "sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{deployment_environment_name=\"production\"}[15m])) > bool 3"
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "A pod has restarted more than 3 times in 15 minutes"
+      description = <<-EOT
+        Counts container restarts per pod (kube-state-metrics), a proxy for crash-looping -
+        distinct from node-exporter's host-level metrics, this catches an individual
+        workload misbehaving even while the host itself looks healthy. 3 restarts in 15m is
+        a starting point, not a validated threshold - adjust once you know what's normal.
+        Deliberately does NOT fire on missing data - the server is expected to be powered
+        off sometimes, and that shouldn't page anyone. Scoped to the production environment
+        so a devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "DeploymentReplicasUnavailable"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = "kube_deployment_status_replicas_unavailable{deployment_environment_name=\"production\"} > bool 0"
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "A Deployment has unavailable replicas"
+      description = <<-EOT
+        Fires only once unavailable replicas stay above 0 for 5m, so a normal rolling
+        update in progress doesn't page anyone - only a rollout that's actually stuck does.
+        Deliberately does NOT fire on missing data. Scoped to the production environment so
+        a devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "ContainerOomKilled"
+    condition     = "A"
+    for           = "1m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = "sum(kube_pod_container_status_last_terminated_reason{reason=\"OOMKilled\", deployment_environment_name=\"production\"}) > bool 0"
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "critical"
+    }
+
+    annotations = {
+      summary     = "A container's last termination reason was OOMKilled"
+      description = <<-EOT
+        Distinct from node-exporter's HostOomKillDetected - this is a container hitting its
+        own memory limit, not the whole host running out. Unlike that rule, this reads a
+        gauge (kube-state-metrics reports the pod's *current* last-terminated reason, not a
+        counter of kill events), so it keeps firing until the container is recreated or the
+        pod is deleted, not just at the moment of the kill. Deliberately does NOT fire on
+        missing data. Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "NodeNotReady"
+    condition     = "A"
+    for           = "2m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = "kube_node_status_condition{condition=\"Ready\", status=\"true\", deployment_environment_name=\"production\"} == bool 0"
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "critical"
+    }
+
+    annotations = {
+      summary     = "A node's Ready condition is not True"
+      description = <<-EOT
+        Kubernetes' own view of node health (kube-state-metrics), distinct from
+        node-exporter's raw host metrics - this can catch a node the scheduler has given up
+        on even if the host itself still looks up. Deliberately does NOT fire on missing
+        data - the server is expected to be powered off sometimes, and that shouldn't page
+        anyone. Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "KubernetesWarningEventsElevated"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"kubernetes-events\", deployment_environment_name=\"production\"} | type=\"Warning\" [5m])) > bool 5"
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Kubernetes is logging Warning events persistently"
+      description = <<-EOT
+        Counts Warning-type cluster events (FailedScheduling, BackOff, FailedMount,
+        Unhealthy, ...) - the Events panel (dashboards/kubernetes.json) ships every event
+        type, so this rule filters to Warning itself rather than relying on a curated
+        pipeline. More than 5 in a 5m window, sustained for 5m, so a single transient event
+        doesn't page anyone. No established baseline yet - adjust once you know what's
+        normal. Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+}
+
 resource "grafana_contact_point" "cloudflared" {
   name = "learn-helper-contact-point"
 
@@ -465,6 +687,16 @@ resource "grafana_notification_policy" "default" {
       label = "alert_group"
       match = "="
       value = "node-exporter"
+    }
+  }
+
+  policy {
+    contact_point = grafana_contact_point.cloudflared.name
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "kubernetes"
     }
   }
 }

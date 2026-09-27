@@ -74,11 +74,22 @@ tunnel's own Prometheus metrics (connection health, request counts, error rates 
 `/metrics` endpoint cloudflared's deployment already exposes on port 2000) and its pod
 logs, and - when `nodeExporter.enabled: true` - host metrics (CPU, memory, disk,
 network) from the `node-exporter` DaemonSet's `/metrics` endpoint on port 9100, along
-with its pod logs. All of it ships to Grafana Cloud over OTLP, with every metric/log
-getting a `deployment.environment.name` resource attribute so production and
-non-production data can be told apart. Postgres metrics and `app` pod logs are still
-not collected. The app's own traces/logs/HTTP metrics go straight to Sentry (see
-`src/server/instrument.ts`) and aren't part of this pipeline either.
+with its pod logs. When `kubeStateMetrics.enabled: true`, it additionally collects
+Kubernetes' own view of cluster state: pod phase/restarts/OOMKilled reasons,
+Deployment/DaemonSet replica availability, and Node `Ready` condition from the
+`kube-state-metrics` Deployment; per-container CPU/memory usage
+scraped directly from every node's kubelet (`/metrics/cadvisor`, proxied through the API
+server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`, and
+`Warning`, e.g. `FailedScheduling`/`BackOff`/`FailedMount`) as logs. Except for Node
+metrics (nodes aren't namespaced), all of this is scoped to this release's own namespace,
+so other namespaces' own components (e.g. `kube-system`'s coredns/traefik) don't clutter
+`dashboards/kubernetes.json`. All of it ships to
+Grafana Cloud over OTLP, with every metric/log getting a `deployment.environment.name`
+resource attribute so production and non-production data can be told apart. Postgres
+metrics and `app` pod logs are still not collected. The app's own traces/logs/HTTP
+metrics go straight to Sentry (see `src/server/instrument.ts`) and aren't part of this
+pipeline either - there's no Kubernetes-level equivalent of traces to collect here, so
+none is added.
 
 To enable it:
 
@@ -99,14 +110,28 @@ To enable it:
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
 
-`values.schema.json` requires a `nodeExporter` block, so an existing `values.yaml` must
-add it (copy it from `values.example.yaml`, `enabled: false`) before the next
-`helm upgrade`, even if host metrics aren't wanted.
+`values.schema.json` requires `nodeExporter` and `kubeStateMetrics` blocks, so an
+existing `values.yaml` must add them (copy from `values.example.yaml`, `enabled: false`)
+before the next `helm upgrade`, even if host metrics or cluster metrics aren't wanted.
 
 To also collect host metrics, set `nodeExporter.enabled: true` in `values.yaml`
 (`nodeExporter.image` defaults to `quay.io/prometheus/node-exporter:v1.12.1` in
 `values.example.yaml`) and re-run `helm upgrade` again. It only needs Alloy enabled to
 be useful - on its own it just runs an unscraped `/metrics` endpoint.
+
+To also collect cluster-level Kubernetes metrics/events, set
+`kubeStateMetrics.enabled: true` in `values.yaml` (`kubeStateMetrics.image` defaults to
+`registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0` in
+`values.example.yaml`) and re-run `helm upgrade` again. Enabling it is also the first
+time Alloy's ServiceAccount gets cluster-wide (not namespace-scoped) read access - a
+`ClusterRole`/`ClusterRoleBinding` (`alloy.cluster-role.yaml`) granting `list`/`watch` on
+nodes, `get` on `nodes/proxy` (for the kubelet cAdvisor scrape), and `list`/`watch`/`get`
+on events cluster-wide - a deliberate, expected step for a cluster monitoring agent, but
+worth noting since every prior Alloy source only ever needed access to its own namespace.
+This grant is broader than what's actually watched: the kubelet/cAdvisor scrape and the
+events log source (`loki.source.kubernetes_events`'s `namespaces` argument) both filter
+down to this release's own namespace client-side, and `kube-state-metrics` restricts
+itself to it directly via `--namespaces`.
 
 ```bash
 # Verify Alloy is scraping/shipping correctly.
@@ -136,7 +161,7 @@ expected to come with adding the metric it needs to the relevant `keep` allow-li
 vice versa - a metric with no panel or alert reading it should come back out).
 
 The `Cloudflared Tunnel` dashboard (HA connections, uptime, errors, requests, concurrent
-requests, stream errors, origin error rate, and logs)
+requests, stream errors, origin error rate, responses by status code, and logs)
 and its 4 alert rules (degraded HA connections, origin errors, elevated error logs,
 fatal log), plus the email contact
 point/notification policy that routes them, are managed by Terraform - see
@@ -145,16 +170,53 @@ and the alert rules at `terraform/alerting.tf`; run `terraform apply` there to c
 update them. None of this is deployed by the Helm chart itself. Alloy only ships the
 handful of `cloudflared_tunnel_*` metrics (plus `process_start_time_seconds`) that
 back these panels/alerts - see the `prometheus.relabel "cloudflared_keep"` component in
-`alloy/_config.alloy`.
+`alloy/_config.alloy`. Responses by status code is the one place an actual application
+response code is visible here - distinct from the Errors panel (connection-level failures
+that never produce a status code) and from Sentry (which only sees responses the app
+itself generated, not ones Cloudflare's edge or Traefik return before a request reaches
+it). It has no alert yet. cloudflared exposes no per-request duration metric at all - its
+only latency-shaped metric (`cloudflared_proxy_connect_latency`, connection-setup time)
+was tried and dropped since it only samples on a fresh connect and sat empty in practice;
+actual request/response timing for the app is Sentry's job, not this pipeline's.
 
 Likewise, the `Node Exporter` dashboard (CPU usage, memory usage, swap usage, disk usage
-%, disk load %, network traffic, uptime, and OOM kills) and its 5 alert rules (low memory, high CPU,
-low disk space, swap filling up, OOM kill detected) route through the same contact
+%, filesystem inodes %, disk load %, disk throughput, network traffic, network
+errors/drops, uptime, and OOM kills) and its 5 alert rules (low memory, high CPU, low
+disk space, swap filling up, OOM kill detected) route through the same contact
 point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/node-exporter.json` and the alert rules are in the same
 `terraform/alerting.tf`. node-exporter itself only runs the collectors those panels/alerts
 need (see its `--collector.*` args in `node-exporter.daemonset.yaml`), and Alloy further
 filters to the exact metric names used (`prometheus.relabel "node_exporter_keep"`).
+Filesystem inodes %, disk throughput, and network errors/drops have no alert yet - they
+exist for visibility into failure modes (running out of inodes despite free bytes, a NIC
+dropping packets) their neighboring panels can't show on their own. Swap activity
+(`node_vmstat_pswpin`/`pswpout`) was tried and dropped: it only reads non-zero once swap
+usage is already moving, so it never told you anything the Swap usage panel above didn't
+already show first.
+
+Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
+OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
+and its 5 alert rules (pod crash-looping, unavailable Deployment replicas, container
+OOMKilled, node not ready, elevated Warning events) route through the same
+contact point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/kubernetes.json` and the alert rules are in the same
+`terraform/alerting.tf`. `kube-state-metrics` only watches the object kinds those
+panels/alerts need (see its `--resources=...` flag and
+`kube-state-metrics.cluster-role.yaml`), and Alloy filters the kube-state-metrics and
+kubelet/cAdvisor scrapes down to the exact metric names used (see the
+`kube_state_metrics_keep`/`kubelet_cadvisor_keep` components in `alloy/_config.alloy`). The
+CPU/memory panels group by `container` (i.e. by service - `app`, `postgres`, `cloudflared`,
+...) and show each as a percentage of that container's own configured `resources.limits`
+(e.g. 50% means using half of what it's allowed), not raw cores/bytes and not relative to
+the host - `kube_pod_container_resource_limits` (kube-state-metrics) is the denominator.
+Service replicas shows each service's current available/ready replica count (Deployments
+and the node-exporter DaemonSet, unified onto one `service` label) rather than a separate
+up/down flag - the DeploymentReplicasUnavailable alert still reads
+`kube_deployment_status_replicas_unavailable` directly even though it no longer backs its
+own dashboard panel. The events log source ships every event type, unfiltered - the
+`KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
+query, rather than relying on a curated pipeline.
 
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
