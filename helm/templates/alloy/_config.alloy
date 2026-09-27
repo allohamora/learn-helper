@@ -122,6 +122,7 @@ prometheus.relabel "node_exporter_keep" {
   }
 }
 
+{{- if .Values.kubeStateMetrics.enabled }}
 // ---- kube-state-metrics cluster object-state metrics ----
 // Scoped to just the kube-state-metrics pod via a server-side label selector, same as the
 // two sources above.
@@ -260,6 +261,7 @@ loki.source.kubernetes_events "cluster" {
   namespaces = [{{ .Release.Namespace | quote }}]
   forward_to = [otelcol.receiver.loki.k8s_events.receiver]
 }
+{{- end }}
 
 otelcol.receiver.prometheus "default" {
   output {
