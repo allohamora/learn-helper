@@ -765,7 +765,7 @@ resource "grafana_rule_group" "postgres" {
   }
 
   rule {
-    name          = "PostgresSlowQueriesElevated"
+    name          = "PostgresSlowQueryDetected"
     condition     = "A"
     for           = "5m"
     is_paused     = false
@@ -785,26 +785,27 @@ resource "grafana_rule_group" "postgres" {
         instant    = true
         range      = false
         datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
-        expr       = "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"production\"} |= \"duration:\" [5m])) > bool 10"
+        expr       = "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"production\"} |= \"duration:\" [5m])) > bool 1"
       })
     }
 
     labels = {
-      alert_group = "postgres"
+      alert_group = "postgres-slow-query"
       severity    = "warning"
     }
 
     annotations = {
-      summary     = "Postgres is logging slow queries persistently"
+      summary     = "Postgres logged a slow query"
       description = <<-EOT
-        Counts log lines containing "duration:" - emitted once per slow statement
-        by both log_min_duration_statement and auto_explain (each qualifying
-        statement produces two such lines, one from each mechanism - see
-        postgres.deployment.yaml), so this is roughly double the actual slow-query
-        count. More than 10 in a 5m window, sustained for 5m, so a single transient
-        slow query doesn't page anyone. No established baseline yet - adjust once
-        you know what's normal. Scoped to the production environment so a
-        devcontainer test run (ENVIRONMENT: development) can't page anyone.
+        Fires on a single slow query instead of waiting for a sustained volume.
+        Each slow statement logs two "duration:" lines (log_min_duration_statement
+        and auto_explain - see postgres.deployment.yaml), so threshold 1 means
+        "more than 1 line in the last 5 minutes", i.e. at least one actual slow
+        query. Routed to its own alert_group (postgres-slow-query) with a 5h
+        repeat_interval, so if slow queries keep happening it re-notifies at most
+        once every 5 hours instead of on every occurrence. Deliberately does NOT fire
+        on missing data. Scoped to the production environment so a devcontainer
+        test run (ENVIRONMENT: development) can't page anyone.
       EOT
     }
   }
@@ -968,6 +969,21 @@ resource "grafana_notification_policy" "default" {
       label = "alert_group"
       match = "="
       value = "postgres"
+    }
+  }
+
+  # PostgresSlowQueryDetected fires on a single slow query rather than a
+  # sustained volume, so it gets its own alert_group and an explicit
+  # repeat_interval - otherwise a persistently slow workload would re-notify
+  # every time Grafana re-evaluates it, instead of at most once per 5h.
+  policy {
+    contact_point   = grafana_contact_point.cloudflared.name
+    repeat_interval = "5h"
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "postgres-slow-query"
     }
   }
 }
