@@ -363,7 +363,7 @@
       "id": 12,
       "type": "timeseries",
       "title": "Sequential scan share",
-      "description": "Per-table share of scans that were sequential rather than index-based (pg_stat_user_tables_seq_scan / (seq_scan + idx_scan)) - a table sustained at or above 50%, i.e. sequential scans keeping pace with or exceeding index scans, especially as it grows, is a candidate for a missing index. Tables with no scan activity in the window are hidden to avoid meaningless flat 0%/100% lines. Reads as No data with no scan activity anywhere, same idiom as Cache hit ratio's NaN. Visibility only, no established baseline yet so no alert.",
+      "description": "Per-table share of scans that were sequential rather than index-based (pg_stat_user_tables_seq_scan / (seq_scan + idx_scan)) - a table sustained at or above 50%, i.e. sequential scans keeping pace with or exceeding index scans, especially as it grows, is a candidate for a missing index. Tables with no scan activity in the window fall back to 0% via `pg_stat_user_tables_seq_scan * 0`, which keeps the relname label (unlike `vector(0)`), instead of dropping out of the chart.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -375,7 +375,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) / (sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) + sum by (relname) (rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])))) * 100 and sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m]) + rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])) > 0",
+          "expr": "((sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) / (sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) + sum by (relname) (rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])))) * 100 and sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m]) + rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])) > 0) or sum by (relname) (pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"} * 0)",
           "legendFormat": "{{relname}}",
           "refId": "A"
         }
@@ -423,9 +423,14 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "none"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "time/sec" },
+            "properties": [{ "id": "unit", "value": "s" }]
+          }
+        ]
       },
       "transformations": [
         {
