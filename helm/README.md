@@ -84,8 +84,8 @@ server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`,
 `postgresExporter.enabled: true`, it additionally collects Postgres query/connection
 metrics (connections, cache hit ratio, transactions, deadlocks, locks, and database
 size) from a `postgres-exporter` sidecar's `/metrics` endpoint on port 9187, along with
-the `postgres` container's own JSON-formatted logs (slow queries and `auto_explain`
-plans included). Except for Node metrics (nodes aren't namespaced), all
+the `postgres` container's own plain-text logs (slow queries and `auto_explain` plans
+included, the latter with its plan JSON-formatted within the log line). Except for Node metrics (nodes aren't namespaced), all
 of this is scoped to this release's own namespace, so other namespaces' own components
 (e.g. `kube-system`'s coredns/traefik) don't clutter `dashboards/kubernetes.json`. All of
 it ships to Grafana Cloud over OTLP, with every metric/log getting a
@@ -143,8 +143,9 @@ To also collect Postgres metrics/logs, set `postgresExporter.enabled: true` in
 `quay.io/prometheuscommunity/postgres-exporter:v0.17.1` in `values.example.yaml`) and
 re-run `helm upgrade`. This adds a `postgres-exporter` sidecar container to the existing
 `postgres` pod (same network namespace, no new Service) and turns on
-`pg_stat_statements`/`auto_explain`/JSON-formatted logging on the `postgres` container
-itself - see the `args` in `postgres.deployment.yaml` for the full parameter list.
+`pg_stat_statements`/`auto_explain` (with its plan output JSON-formatted) on the
+`postgres` container itself - see the `args` in `postgres.deployment.yaml` for the full
+parameter list.
 Changing `shared_preload_libraries` requires a restart; the Deployment's
 `strategy: Recreate` already handles that as part of the same `helm upgrade`.
 
