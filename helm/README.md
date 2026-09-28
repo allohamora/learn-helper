@@ -142,12 +142,12 @@ To also collect Postgres metrics/logs, set `postgresExporter.enabled: true` in
 `values.yaml` (`postgresExporter.image` defaults to
 `quay.io/prometheuscommunity/postgres-exporter:v0.17.1` in `values.example.yaml`) and
 re-run `helm upgrade`. This adds a `postgres-exporter` sidecar container to the existing
-`postgres` pod (same network namespace, no new Service) and turns on
-`pg_stat_statements`/`auto_explain` (with its plan output JSON-formatted) on the
-`postgres` container itself - see the `args` in `postgres.deployment.yaml` for the full
-parameter list.
-Changing `shared_preload_libraries` requires a restart; the Deployment's
-`strategy: Recreate` already handles that as part of the same `helm upgrade`.
+`postgres` pod (same network namespace, no new Service) and starts Alloy shipping its
+metrics and the `postgres` container's own logs (see the Alloy section above). The
+`postgres` container's `pg_stat_statements`/`auto_explain` preload and logging settings -
+see the `args` in `postgres.deployment.yaml` for the full parameter list - are applied
+unconditionally and aren't gated on this flag; they're already active regardless of
+whether `postgresExporter` is enabled.
 
 `pg_stat_statements` is preloaded and required by the `Postgres` dashboard's "Top queries
 by time" panel, via the `postgres-exporter`'s `stat_statements` collector - the slow query
