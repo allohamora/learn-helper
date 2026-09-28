@@ -1,0 +1,18 @@
+{{- if .Values.alloy.enabled }}
+# A plain namespaced Role, created directly in kube-system (not a ClusterRole) - this
+# permission is only ever needed in that one namespace, so no cluster-scoped object is
+# necessary. Same verbs as alloy.role.yaml's own-namespace grant, just in kube-system
+# instead, bound by a RoleBinding also in kube-system (traefik.role-binding.yaml).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-alloy-traefik
+  namespace: kube-system
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+{{- end }}

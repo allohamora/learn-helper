@@ -1,0 +1,39 @@
+{{- if .Values.alloy.enabled }}
+# Patches k3s's own built-in Traefik HelmChart (installed by k3s itself, not this
+# chart) to turn on its Prometheus metrics endpoint, via k3s's HelmChartConfig CRD
+# mechanism for overriding values of a chart k3s manages. Applies in both the k3d
+# devcontainer and production, since both run the same k3s-bundled Traefik. Folded
+# into alloy.enabled rather than its own flag - Traefik is always present once a
+# cluster exists, unlike the optional exporters elsewhere in this chart.
+#
+# metrics.prometheus is already on by default in this chart version (confirmed live -
+# k3s's bundled Traefik already runs with --metrics.prometheus=true), so this key is a
+# no-op here, kept only so this stays correct if a future k3s version changes that
+# default. --log.format=json is NOT a no-op though: Traefik's own default log format is
+# a colorized, human-oriented console writer (ANSI escape codes around plain English
+# messages), not a structured format - confirmed live, it broke Alloy's logfmt parser
+# on every line. JSON is the only one of Traefik's two log formats
+# (https://doc.traefik.io/traefik/observability/logs/) that severity_text can reliably
+# be pulled from, same as cloudflared's own --output json.
+#
+# valuesContent below is deep-merged with k3s's own base HelmChart for traefik (same as
+# passing multiple -f files to `helm upgrade`), not a wholesale replacement - confirmed
+# live, the base chart's own tolerations (control-plane scheduling), priorityClassName,
+# image, and service.ipFamilyPolicy all survive untouched. The one exception is
+# additionalArguments below: Helm only deep-merges maps, not lists, so if the base
+# HelmChart ever starts setting its own additionalArguments, ours would replace that
+# list wholesale instead of appending to it - not an issue today (confirmed live, the
+# base chart currently sets none), but worth re-checking after a k3s/chart upgrade.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    metrics:
+      prometheus:
+        entryPoint: metrics
+    additionalArguments:
+      - --log.format=json
+{{- end }}

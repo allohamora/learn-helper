@@ -1018,6 +1018,203 @@ resource "grafana_rule_group" "postgres" {
 
 }
 
+resource "grafana_rule_group" "traefik" {
+  name             = "traefik"
+  folder_uid       = grafana_folder.cloudflared.uid
+  interval_seconds = 60
+
+  rule {
+    name          = "TraefikHighErrorRate"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            sum(rate(traefik_entrypoint_requests_total{code=~"5..", deployment_environment_name="production"}[5m]))
+            /
+            sum(rate(traefik_entrypoint_requests_total{deployment_environment_name="production"}[5m]))
+          ) > bool 0.05
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "traefik"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Traefik is returning 5xx responses for more than 5% of requests"
+      description = <<-EOT
+        Ratio rather than a raw rate so the threshold doesn't need retuning as
+        traffic grows or shrinks - same idiom as CloudflaredOriginErrors. 5% is a
+        starting point, not a validated threshold. This is the ingress layer's own
+        error rate, distinct from CloudflaredOriginErrors (which only catches
+        origin-connection failures that never produce a status code). Deliberately
+        does NOT fire on missing data - the server is expected to be powered off
+        sometimes, and that shouldn't page anyone. Scoped to the production
+        environment so a devcontainer test run (ENVIRONMENT: development) can't
+        page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "TraefikConfigReloadFailed"
+    condition     = "A"
+    for           = "1m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = "increase(traefik_config_reloads_failure_total{deployment_environment_name=\"production\"}[5m]) > bool 0"
+      })
+    }
+
+    labels = {
+      alert_group = "traefik"
+      severity    = "critical"
+    }
+
+    annotations = {
+      summary     = "Traefik failed to reload its dynamic configuration"
+      description = <<-EOT
+        A failed reload means a recent IngressRoute/Middleware change (or a
+        Kubernetes CRD sync glitch) didn't take effect - Traefik keeps serving its
+        last-good config, so this isn't necessarily an outage, but it's worth
+        investigating quickly since a real routing change may be silently stuck.
+        No volume threshold - a single failed reload is worth knowing about.
+        Deliberately does NOT fire on missing data. Scoped to the production
+        environment so a devcontainer test run (ENVIRONMENT: development) can't
+        page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "TraefikHighRequestLatency"
+    condition     = "A"
+    for           = "10m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          histogram_quantile(0.99, sum by (le) (rate(traefik_entrypoint_request_duration_seconds_bucket{deployment_environment_name="production"}[5m]))) > bool 1
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "traefik"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Traefik's p99 request duration has been over 1s for 10 minutes"
+      description = <<-EOT
+        p99 across all entrypoints/routes - this measures ingress-observed
+        end-to-end latency (network + app), a different vantage point than any
+        app-side (Sentry) timing. 1s is a starting point, not a validated
+        threshold - adjust once you know what's normal for this app's routes.
+        Sustained for 10m so a brief spike (a deploy, a cold cache) doesn't page
+        anyone. Deliberately does NOT fire on missing data. Scoped to the
+        production environment so a devcontainer test run (ENVIRONMENT:
+        development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "TraefikErrorLogsElevated"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"traefik\", deployment_environment_name=\"production\"} | detected_level=~\"error|fatal\" [5m])) > bool 5"
+      })
+    }
+
+    labels = {
+      alert_group = "traefik"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Traefik is logging errors persistently"
+      description = <<-EOT
+        Counts Traefik's own error/fatal-level log lines (detected_level, derived
+        by Alloy from the JSON "level" field - see traefik.helm-chart-config.yaml's
+        --log.format=json and _config.alloy's traefik_logs transform), which
+        catches failures the request-rate/latency metrics above
+        don't - TLS/cert errors, provider/watch failures, middleware
+        misconfiguration. More than 5 lines in a 5m window, sustained for 5m, so a
+        single transient error doesn't page anyone. No established baseline yet -
+        adjust once you know what's normal. Scoped to the production environment
+        so a devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+}
+
 resource "grafana_contact_point" "cloudflared" {
   name = "learn-helper-contact-point"
 
@@ -1071,6 +1268,16 @@ resource "grafana_notification_policy" "default" {
       label = "alert_group"
       match = "="
       value = "postgres"
+    }
+  }
+
+  policy {
+    contact_point = grafana_contact_point.cloudflared.name
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "traefik"
     }
   }
 
