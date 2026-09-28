@@ -253,11 +253,12 @@ own dashboard panel. The events log source ships every event type, unfiltered - 
 `KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
 query, rather than relying on a curated pipeline.
 
-Likewise, the `Postgres` dashboard (connections as a share of `max_connections`, cache hit ratio,
-transactions/sec, slow query rate, database size, deadlocks, locks by mode, a filtered
-"last slow query + plan" log panel, and unfiltered logs) and its 3 alert rules
-(connections high, cache hit ratio low, slow queries elevated) route through the same
-contact point/notification policy. The dashboard JSON lives at
+Likewise, the `Postgres` dashboard (connections as a share of `max_connections`, cache hit
+ratio, transactions/sec, CPU usage %, memory usage %, slow query rate, database size,
+deadlocks, locks by mode, dead tuples, sequential scan share, time since last autovacuum,
+top queries by time, and unfiltered logs) and its 5 alert rules (connections high, cache
+hit ratio low, slow query detected, dead tuple ratio high, error logs elevated) route
+through the same contact point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/postgres.json` and the alert rules are in the same
 `terraform/alerting.tf`. Alloy filters the postgres-exporter scrape down to the exact
 metric names used (`prometheus.relabel "postgres_keep"` in `alloy/_config.alloy`). The
@@ -267,11 +268,10 @@ slow query is counted roughly twice, one line per mechanism. Read/write query la
 (derived from `pg_stat_statements`) was tried as a metric/alert pair and dropped: it was
 only an _average_ execution time per call, not a true latency percentile the way RDS's
 `ReadLatency`/`WriteLatency` are, since `pg_stat_statements` only exposes cumulative
-sums/counts. `pg_stat_statements` itself stays enabled server-side for manual, ad-hoc
-inspection (see the Alloy section above) - it's just not wired into this dashboard/alert
-pipeline anymore.
-Deliberately not added: a CPU/memory alarm (already generic per-`container` in the
-`Kubernetes Cluster` dashboard/`ContainerOomKilled`), a storage/free-space alarm
+sums/counts - it's used for the top-queries-by-time panel's ranking instead, where an
+average is good enough.
+Deliberately not added: a Postgres-specific CPU/memory alarm (already generic
+per-`container` in the `Kubernetes Cluster` dashboard/`ContainerOomKilled`), a storage/free-space alarm
 (`HostOutOfDiskSpace` already covers the underlying filesystem `local-path` writes to),
 a swap alarm (already `HostOutOfSwap`), and anything with no bare-metal equivalent (CPU/
 burst credits, EBS burst-balance, replica lag, RDS-style snapshot/deletion-protection
