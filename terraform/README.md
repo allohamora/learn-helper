@@ -5,7 +5,7 @@ Manages Grafana Cloud resources via the
 the OTLP ingestion connection Alloy ships cloudflared's, node-exporter's,
 kube-state-metrics'/kubelet's, and Postgres's metrics/logs to (see `helm/README.md`'s
 Alloy section), the `Cloudflared Tunnel`, `Node Exporter`, `Kubernetes Cluster`, and
-`Postgres` dashboards, their 19 alert rules combined, and the email contact
+`Postgres` dashboards, their 21 alert rules combined, and the email contact
 point/notification policy that routes them. All of this used to be set up by hand in
 the Grafana Cloud UI; now it's one `terraform apply`.
 
@@ -31,8 +31,8 @@ other root credential in an IaC setup.
    Policies > Create access policy, scope it to `accesspolicies:read`,
    `accesspolicies:write`, `accesspolicies:delete`, and `stacks:read`. Create a token from
    it and copy it immediately.
-4. Alert contact email (`alert_contact_email`): where all 19 alert rules (cloudflared,
-   node-exporter, kubernetes, and postgres) should email on fire.
+4. Alert contact email (`alert_contact_email`): where all 21 alert rules (cloudflared,
+   node-exporter, kubernetes, postgres, and postgres-slow-query) should email on fire.
 5. Copy the example vars file and fill in all values:
    ```bash
    cp terraform.tfvars.example terraform.tfvars
