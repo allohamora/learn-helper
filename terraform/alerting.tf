@@ -868,7 +868,7 @@ resource "grafana_rule_group" "postgres" {
   rule {
     name          = "PostgresSlowQueryDetected"
     condition     = "A"
-    for           = "5m"
+    for           = "0s"
     is_paused     = false
     no_data_state = "OK"
 
