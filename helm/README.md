@@ -149,11 +149,11 @@ parameter list.
 Changing `shared_preload_libraries` requires a restart; the Deployment's
 `strategy: Recreate` already handles that as part of the same `helm upgrade`.
 
-`pg_stat_statements` is preloaded but not required by any dashboard panel or alert here
-
-- the slow-query/plan panel comes from `auto_explain`'s own logs, not this extension. It's
-  available for manual, ad-hoc query-stats inspection; to use it, run this once against the
-  live database (idempotent):
+`pg_stat_statements` is preloaded and required by the `Postgres` dashboard's "Top queries
+by time" panel, via the `postgres-exporter`'s `stat_statements` collector - the slow query
+rate panel and alert come from `auto_explain`'s own logs instead and don't need it. Since
+the extension isn't created automatically, run this once against the live database
+(idempotent) for that panel to populate:
 
 ```bash
 kubectl exec -n learn-helper deploy/postgres -c postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
