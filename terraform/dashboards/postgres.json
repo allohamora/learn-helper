@@ -1,0 +1,644 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    },
+    {
+      "name": "DS_LOKI",
+      "label": "Loki",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "logs",
+      "name": "Logs",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "loki",
+      "name": "Loki",
+      "version": ""
+    }
+  ],
+  "title": "Postgres",
+  "uid": "learn-helper-postgres",
+  "description": "Postgres health: CPU/memory usage, connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, time since last autovacuum, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "editable": true,
+  "schemaVersion": 39,
+  "version": 1,
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "label": "Environment",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "query": {
+          "query": "label_values(pg_stat_database_numbackends, deployment_environment_name)",
+          "refId": "StandardVariableQuery"
+        },
+        "current": {
+          "selected": true,
+          "text": "production",
+          "value": "production"
+        },
+        "refresh": 1,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Connections",
+      "description": "Active backend connections (pg_stat_database_numbackends, summed across databases) as a share of the server's own configured max_connections (pg_settings_max_connections). The PostgresConnectionsHigh alert (terraform/alerting.tf) fires above 80% of that limit - self-adjusting if max_connections is ever tuned, rather than a fixed guessed number.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(pg_stat_database_numbackends{deployment_environment_name=\"$environment\"}) / max(pg_settings_max_connections{deployment_environment_name=\"$environment\"}) * 100",
+          "legendFormat": "active connections",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 80 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Cache hit ratio",
+      "description": "Share of block reads served from shared buffers rather than disk (pg_stat_database_blks_hit / (blks_hit + blks_read)), over 10m windows. The PostgresCacheHitRatioLow alert (terraform/alerting.tf) fires below 98% sustained - the container has only 512Mi allotted, so the working set can plausibly outgrow cache. Reads as NaN (never fires) with no query activity, same idiom as node-exporter's HostOutOfSwap.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(pg_stat_database_blks_hit{deployment_environment_name=\"$environment\"}[10m])) / (sum(rate(pg_stat_database_blks_hit{deployment_environment_name=\"$environment\"}[10m])) + sum(rate(pg_stat_database_blks_read{deployment_environment_name=\"$environment\"}[10m]))) * 100",
+          "legendFormat": "cache hit ratio",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 98 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Transactions/sec",
+      "description": "Committed vs rolled-back transactions per second (pg_stat_database_xact_commit/xact_rollback) - general throughput/health visibility, no established baseline yet so no alert.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(pg_stat_database_xact_commit{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "commits/sec",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(pg_stat_database_xact_rollback{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "rollbacks/sec",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "CPU usage %",
+      "description": "CPU usage of the postgres container itself (not the exporter sidecar) as a percentage of its own configured resources.limits.cpu - e.g. 50% means it's using half of what it's allowed. Above 100% isn't possible - the kernel throttles it at the limit instead.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * sum(rate(container_cpu_usage_seconds_total{deployment_environment_name=\"$environment\", container=\"postgres\"}[5m])) / sum(kube_pod_container_resource_limits{deployment_environment_name=\"$environment\", container=\"postgres\", resource=\"cpu\"})",
+          "legendFormat": "cpu",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Memory usage %",
+      "description": "Working-set memory of the postgres container itself (not the exporter sidecar) as a percentage of its own configured resources.limits.memory - e.g. 50% means it's using half of what it's allowed. Exceeding this gets the container OOMKilled - see dashboards/kubernetes.json's Container OOMKilled panel.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * sum(container_memory_working_set_bytes{deployment_environment_name=\"$environment\", container=\"postgres\"}) / sum(kube_pod_container_resource_limits{deployment_environment_name=\"$environment\", container=\"postgres\", resource=\"memory\"})",
+          "legendFormat": "memory",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Slow query rate",
+      "description": "Count of log lines containing \"duration:\" per interval - emitted once per slow statement by both log_min_duration_statement and auto_explain (each qualifying statement produces two such lines, one from each mechanism - see postgres.deployment.yaml). Falls back to 0 (via `or vector(0)`) when no such lines exist in the window, instead of showing No data. The PostgresSlowQueryDetected alert (terraform/alerting.tf) fires above 1 in a 5m window.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": { "x": 16, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"$environment\"} |= \"duration:\" [$__interval])) or vector(0)",
+          "legendFormat": "slow queries",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Database size",
+      "description": "Logical size on disk per database (pg_database_size_bytes) - distinct from node-level free disk space, which is node-exporter's HostOutOfDiskSpace alert's job.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "pg_database_size_bytes{deployment_environment_name=\"$environment\"}",
+          "legendFormat": "{{datname}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Deadlocks",
+      "description": "New deadlocks detected per 5m window (increase(pg_stat_database_deadlocks)) - visibility only, no established baseline yet so no alert.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(increase(pg_stat_database_deadlocks{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "deadlocks",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Locks held by mode",
+      "description": "Current lock count by mode (pg_locks_count) - visibility only, no established baseline yet so no alert.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (mode) (pg_locks_count{deployment_environment_name=\"$environment\"})",
+          "legendFormat": "{{mode}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Dead tuples",
+      "description": "Dead tuple count (n_dead_tup) per table - a ratio would hit 100% on any small/lookup table and be meaningless, so this plots the raw count instead. Red above 100000, the threshold awesome-prometheus-alerts' Postgres rules use for 'high dead tuple count, vacuum needed'. A separate ratio-based check (PostgresDeadTupleRatioHigh in terraform/alerting.tf) is what actually pages, restricted to tables with over 1000 live rows so this panel and that alert can use different scales without contradicting each other.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "pg_stat_user_tables_n_dead_tup{deployment_environment_name=\"$environment\"}",
+          "legendFormat": "{{relname}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 100000 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Sequential scan share",
+      "description": "Per-table share of scans that were sequential rather than index-based (pg_stat_user_tables_seq_scan / (seq_scan + idx_scan)) - a table sustained at or above 50%, i.e. sequential scans keeping pace with or exceeding index scans, especially as it grows, is a candidate for a missing index. Tables with no scan activity in the window fall back to 0% via `pg_stat_user_tables_seq_scan * 0`, which keeps the relname label (unlike `vector(0)`), instead of dropping out of the chart.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "((sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) / (sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m])) + sum by (relname) (rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])))) * 100 and sum by (relname) (rate(pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"}[5m]) + rate(pg_stat_user_tables_idx_scan{deployment_environment_name=\"$environment\"}[5m])) > 0) or sum by (relname) (pg_stat_user_tables_seq_scan{deployment_environment_name=\"$environment\"} * 0)",
+          "legendFormat": "{{relname}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 50 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Time since last autovacuum",
+      "description": "Seconds since autovacuum last ran on each table (time() - pg_stat_user_tables_last_autovacuum). Normally sawtooths as autovacuum cycles through tables; a line that climbs without ever resetting means autovacuum has stopped touching that table. The exporter reports last_autovacuum as 0 (Unix epoch) rather than omitting the series for a NULL value, so a never-vacuumed table's line is forced flat to 0 via `* (... > bool 0)` instead of plotting a ~56-year-old fake timestamp - same idiom as the Sequential scan share panel's `* 0` fallback, so the table still shows up (and keeps its relname label) instead of dropping out of the chart. Visibility only, no established baseline yet so no alert.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(time() - pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"}) * (pg_stat_user_tables_last_autovacuum{deployment_environment_name=\"$environment\"} > bool 0)",
+          "legendFormat": "{{relname}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Top queries by time",
+      "description": "Top 10 normalized queries (pg_stat_statements, keyed by queryid) by total execution time over the last 10m, via pg_stat_statements_seconds_total, alongside calls/sec, avg latency, rows/sec, and avg rows/call for those same 10 queries (each filtered down to the ranked set with `and on(queryid, datname, user) topk(...)`, so a query that's slow-but-rare still shows its own calls/rows rather than a different top-10). Query text isn't exposed by the exporter - cross-reference queryid against pg_stat_statements on the server to identify the actual statement.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (queryid, datname, user) (rate(pg_stat_statements_calls_total{deployment_environment_name=\"$environment\"}[10m])) and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])) / sum by (queryid, datname, user) (rate(pg_stat_statements_calls_total{deployment_environment_name=\"$environment\"}[10m]))) * 1000 and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (queryid, datname, user) (rate(pg_stat_statements_rows_total{deployment_environment_name=\"$environment\"}[10m])) and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum by (queryid, datname, user) (rate(pg_stat_statements_rows_total{deployment_environment_name=\"$environment\"}[10m])) / sum by (queryid, datname, user) (rate(pg_stat_statements_calls_total{deployment_environment_name=\"$environment\"}[10m]))) and on(queryid, datname, user) topk(10, sum by (queryid, datname, user) (rate(pg_stat_statements_seconds_total{deployment_environment_name=\"$environment\"}[10m])))",
+          "format": "table",
+          "instant": true,
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "time/sec" },
+            "properties": [{ "id": "unit", "value": "s" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "calls/sec" },
+            "properties": [{ "id": "unit", "value": "ops" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "avg latency (ms)" },
+            "properties": [{ "id": "unit", "value": "ms" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "rows/sec" },
+            "properties": [{ "id": "unit", "value": "ops" }]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": {
+              "Value #A": "time/sec",
+              "Value #B": "calls/sec",
+              "Value #C": "avg latency (ms)",
+              "Value #D": "rows/sec",
+              "Value #E": "avg rows/call"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "logs",
+      "title": "All logs",
+      "description": "postgres pod logs, latest first, unfiltered.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 10 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"postgres\", deployment_environment_name=\"$environment\"}",
+          "maxLines": 100,
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    }
+  ]
+}

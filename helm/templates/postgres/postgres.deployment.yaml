@@ -29,6 +29,48 @@ spec:
           env:
             - name: PGDATA
               value: /var/lib/postgresql/data/pgdata
+          # docker-entrypoint.sh sees a leading "-" and prepends "postgres" itself,
+          # so these apply on top of its normal first-init behavior (creating
+          # POSTGRES_USER/PASSWORD/DB) rather than replacing it - only `args`, never
+          # `command`, or that init logic gets skipped entirely.
+          args:
+            - "-c"
+            - "log_min_duration_statement=200" # ms - log (and alarm on) any statement taking 200ms or longer
+            - "-c"
+            - "track_activity_query_size=4096" # bytes - pg_stat_activity.query is truncated at 1024 bytes by default, too short for longer bulk statements
+            - "-c"
+            - "shared_preload_libraries=pg_stat_statements,auto_explain"
+            - "-c"
+            - "pg_stat_statements.track=all" # track statements in nested statements (e.g. inside functions), not just top-level
+            - "-c"
+            - "pg_stat_statements.max=10000" # more normalized-query history retained before eviction
+            - "-c"
+            - "track_io_timing=on" # adds I/O read/write timing to pg_stat_statements/pg_stat_io - tells CPU-bound vs disk-bound
+            - "-c"
+            - "auto_explain.log_min_duration=200" # ms - matches log_min_duration_statement above
+            - "-c"
+            - "auto_explain.log_analyze=on" # actual row counts/timing per plan node, not just estimates
+            - "-c"
+            - "auto_explain.log_buffers=on" # shared buffer hit/read stats per node - cache hit vs disk read
+            - "-c"
+            - "auto_explain.log_verbose=on" # adds Query Text line for correlating with pg_stat_statements
+            - "-c"
+            - "auto_explain.log_triggers=on"
+            - "-c"
+            - "auto_explain.log_nested_statements=on" # explains statements inside plpgsql trigger functions too, not just the outer statement
+            - "-c"
+            - "auto_explain.log_timing=off" # per-node timing has real overhead
+            - "-c"
+            - "auto_explain.log_format=json"
+            - "-c"
+            - "auto_explain.sample_rate=1" # log every qualifying statement
+            # jsonlog/csvlog can only be produced by the logging_collector, which
+            # writes to actual files - there's no way to make it land on this
+            # container's own stdout (the /proc/self/fd/<n> trick doesn't work here:
+            # postgres unconditionally appends ".json" to the configured filename
+            # for jsonlog, so it can never resolve to a bare fd number). Logging
+            # straight to stderr (the default) is what every other pod in this
+            # cluster does, and Alloy already tails it the same way.
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
@@ -49,6 +91,44 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+        {{- if .Values.postgresExporter.enabled }}
+        - name: postgres-exporter
+          image: {{ .Values.postgresExporter.image | quote }}
+          # $(VAR) substitution below only sees vars from THIS container's own `env`
+          # list, not ones arriving via envFrom - same limitation noted in
+          # alloy.deployment.yaml's OTEL_RESOURCE_ATTRIBUTES comment.
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-env
+                  key: POSTGRES_DB
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+          args:
+            - --web.listen-address=:9187
+            - --collector.stat_statements # per-query calls/time/rows/IO from pg_stat_statements, already loaded above via shared_preload_libraries
+          ports:
+            - name: metrics
+              containerPort: 9187
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+        {{- end }}
       volumes:
         - name: postgres-data
           persistentVolumeClaim:

@@ -251,6 +251,18 @@ prometheus.relabel "kubelet_cadvisor_keep" {
   }
 }
 
+// A per-PVC disk usage % (kubelet's plain /metrics exposes kubelet_volume_stats_used_bytes/
+// capacity_bytes, the same idea as the cAdvisor scrape above but for volumes) was tried and
+// dropped: kubelet only gets real per-volume stats from a CSI driver's NodeGetVolumeStats -
+// for a plain hostPath-style mount like local-path-provisioner's, it falls back to statfs()
+// on the mount path, which reports the whole underlying filesystem's stats, not that
+// directory's actual usage. Since postgres-data and app-uploads are both just directories on
+// the same node disk, both metrics came back identical for either PVC (confirmed live:
+// ~92GB "used" for both, while `du` inside each pod showed 63MB and 4KB respectively) - not
+// usable as a per-app signal. The real constraint this would have measured (the node disk
+// filling up) is already covered by node-exporter's HostOutOfDiskSpace alert regardless of
+// how the PVC directories are laid out underneath.
+
 // ---- kubernetes events (this release's own namespace) ----
 // Scoped to this release's own namespace (not cluster-wide) so kube-system's own events
 // (coredns, traefik, ...) don't clutter the Events panel - the ClusterRole/ClusterRoleBinding
@@ -260,6 +272,95 @@ loki.source.kubernetes_events "cluster" {
   job_name   = "kubernetes-events"
   namespaces = [{{ .Release.Namespace | quote }}]
   forward_to = [otelcol.receiver.loki.k8s_events.receiver]
+}
+{{- end }}
+
+{{- if .Values.postgresExporter.enabled }}
+// ---- postgres metrics + logs ----
+// Scoped to just the postgres pod via a server-side label selector, same as the
+// other sources above.
+discovery.kubernetes "postgres" {
+  role = "pod"
+
+  namespaces {
+    own_namespace = true // in the same namespace as alloy
+  }
+
+  selectors {
+    role  = "pod"
+    label = "app=postgres"
+  }
+}
+
+// Keep only the "metrics" port target - unlike cloudflared/node-exporter's
+// single-container pods, the postgres pod now has two containers (postgres +
+// the postgres-exporter sidecar), so this filter is what picks out the
+// exporter's own port rather than assuming there's only one to find.
+discovery.relabel "postgres_metrics" {
+  targets = discovery.kubernetes.postgres.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
+  }
+}
+
+prometheus.scrape "postgres" {
+  targets         = discovery.relabel.postgres_metrics.output
+  job_name        = "postgres"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.postgres_keep.receiver]
+}
+
+// postgres_exporter's default collectors (plus stat_statements, enabled via flag
+// in postgres.deployment.yaml) expose far more than this - keep only what backs
+// a panel in dashboards/postgres.json or a rule in alerting.tf.
+prometheus.relabel "postgres_keep" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes|pg_stat_statements_calls_total|pg_stat_statements_seconds_total|pg_stat_statements_rows_total|pg_stat_user_tables_n_dead_tup|pg_stat_user_tables_n_live_tup|pg_stat_user_tables_seq_scan|pg_stat_user_tables_idx_scan|pg_stat_user_tables_last_autovacuum"
+    action        = "keep"
+  }
+}
+
+// Unlike cloudflared/node-exporter's single-container pods, filter to just the
+// "postgres" container's log stream so the exporter sidecar's own (uninteresting)
+// stdout doesn't end up mixed into the postgres logs panels.
+discovery.relabel "postgres_logs" {
+  targets = discovery.kubernetes.postgres.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    regex         = "postgres"
+    action        = "keep"
+  }
+}
+
+loki.source.kubernetes "postgres" {
+  targets    = discovery.relabel.postgres_logs.output
+  forward_to = [loki.process.postgres_multiline.receiver]
+}
+
+// Kubernetes' container log capture is strictly line-based - every "\n" postgres
+// writes (e.g. each line of a pretty-printed auto_explain plan) lands as its own
+// separately-timestamped log record with no relation to the ones around it. This
+// stitches those back together: any line starting with the log_line_prefix format
+// (the same pattern the transform below matches on) starts a new record, and every
+// line after it up to the next match - or max_wait_time - gets appended to it.
+// max_lines defaults to 128, too low for a deeply-nested plan (log_analyze/
+// log_buffers/log_verbose/log_triggers are all on) - raised well above what a
+// realistic plan here produces so a long one doesn't get split mid-plan again.
+loki.process "postgres_multiline" {
+  forward_to = [otelcol.receiver.loki.postgres.receiver]
+
+  stage.multiline {
+    firstline     = "^\\S+ \\S+ \\S+ \\[\\d+\\] \\w+:"
+    max_lines     = 4096
+    max_wait_time = "3s"
+  }
 }
 {{- end }}
 
@@ -285,6 +386,14 @@ otelcol.receiver.loki "node_exporter" {
 otelcol.receiver.loki "k8s_events" {
   output {
     logs = [otelcol.processor.transform.k8s_events.input]
+  }
+}
+{{- end }}
+
+{{- if .Values.postgresExporter.enabled }}
+otelcol.receiver.loki "postgres" {
+  output {
+    logs = [otelcol.processor.transform.postgres_logs.input]
   }
 }
 {{- end }}
@@ -386,6 +495,53 @@ otelcol.processor.transform "k8s_events" {
       `set(attributes["kind"], cache["kind"]) where cache["kind"] != nil`,
       `set(attributes["name"], cache["name"]) where cache["name"] != nil`,
       `set(body, cache["msg"]) where cache["msg"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+{{- end }}
+
+// Postgres logs plain text to stderr (jsonlog isn't usable here - see
+// postgres.deployment.yaml), so severity_text is pulled from the log_line_prefix's
+// default "%m [%p] " format instead of a structured field - e.g.
+// "2026-09-27 10:15:23.456 UTC [123] ERROR:  ...". Continuation lines
+// (STATEMENT/DETAIL/HINT/CONTEXT/QUERY) repeat the same prefix but aren't
+// severities of their own - they're mapped by what postgres guarantees about
+// their parent line instead of guessed at. Per log_min_error_statement's docs,
+// STATEMENT (the client's own failing query) is only ever printed for a message
+// at error severity or worse - the default threshold, unchanged here. DETAIL/
+// HINT/CONTEXT/QUERY (QUERY being the internally-generated query behind the
+// error, e.g. from a trigger, as distinct from STATEMENT) aren't gated by that
+// same setting and can trail a WARNING too, so with log_min_messages left at
+// its 'warning' default (nothing below warning reaches the log at all), "warn"
+// is the safe floor for them regardless of which of warning/error/fatal/panic
+// they're actually attached to. log_error_verbosity isn't raised to VERBOSE
+// here, so the SQLSTATE/LOCATION lines it would add never appear and aren't
+// handled below.
+{{- if .Values.postgresExporter.enabled }}
+otelcol.processor.transform "postgres_logs" {
+  error_mode = "ignore"
+
+  log_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "postgres")`,
+    ]
+  }
+
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ExtractPatterns(body, "(?s)^\\S+ \\S+ \\S+ \\[\\d+\\] (?P<severity>\\w+):\\s+(?P<message>.*)"))`,
+      `set(severity_text, "debug") where IsMatch(cache["severity"], "^DEBUG")`,
+      `set(severity_text, "info") where cache["severity"] == "LOG" or cache["severity"] == "INFO" or cache["severity"] == "NOTICE"`,
+      `set(severity_text, "warn") where cache["severity"] == "WARNING" or cache["severity"] == "DETAIL" or cache["severity"] == "HINT" or cache["severity"] == "CONTEXT" or cache["severity"] == "QUERY"`,
+      `set(severity_text, "error") where cache["severity"] == "ERROR" or cache["severity"] == "STATEMENT"`,
+      `set(severity_text, "fatal") where cache["severity"] == "FATAL" or cache["severity"] == "PANIC"`,
+      `set(body, cache["message"]) where cache["message"] != nil`,
     ]
   }
 

@@ -2,7 +2,16 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "required": ["domain", "cloudflared", "app", "postgres", "alloy", "nodeExporter", "kubeStateMetrics"],
+  "required": [
+    "domain",
+    "cloudflared",
+    "app",
+    "postgres",
+    "alloy",
+    "nodeExporter",
+    "kubeStateMetrics",
+    "postgresExporter"
+  ],
   "properties": {
     "domain": {
       "type": "string",
@@ -86,6 +95,20 @@
       }
     },
     "kubeStateMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "image"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "postgresExporter": {
       "type": "object",
       "additionalProperties": false,
       "required": ["enabled", "image"],

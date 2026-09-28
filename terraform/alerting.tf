@@ -652,6 +652,370 @@ resource "grafana_rule_group" "kubernetes" {
       EOT
     }
   }
+
+  rule {
+    name          = "PodCpuUsageHigh"
+    condition     = "A"
+    for           = "15m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          100 * sum by (pod, container) (rate(container_cpu_usage_seconds_total{deployment_environment_name="production"}[5m]))
+          /
+          sum by (pod, container) (kube_pod_container_resource_limits{deployment_environment_name="production", resource="cpu"})
+          > bool 80
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "{{ $labels.pod }}/{{ $labels.container }} is using more than 80% of its CPU limit"
+      description = <<-EOT
+        Multi-dimensional like PodCrashLooping above - one alert instance per (pod,
+        container) that crosses 80% of its own resources.limits.cpu, same query dashboards/
+        kubernetes.json's Container CPU usage panel plots. The kernel throttles rather than
+        kills on CPU, so this is a capacity-planning warning, not an imminent-crash signal
+        like PodMemoryUsageHigh below. Sustained for 15m so a brief legitimate spike (a
+        deploy, a batch job) doesn't page anyone. Deliberately does NOT fire on missing
+        data. Scoped to the production environment so a devcontainer test run
+        (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PodMemoryUsageHigh"
+    condition     = "A"
+    for           = "10m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          100 * sum by (pod, container) (container_memory_working_set_bytes{deployment_environment_name="production"})
+          /
+          sum by (pod, container) (kube_pod_container_resource_limits{deployment_environment_name="production", resource="memory"})
+          > bool 80
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "kubernetes"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "{{ $labels.pod }}/{{ $labels.container }} is using more than 80% of its memory limit"
+      description = <<-EOT
+        Multi-dimensional like PodCrashLooping above - one alert instance per (pod,
+        container) that crosses 80% of its own resources.limits.memory, same query
+        dashboards/kubernetes.json's Container memory usage panel plots. Unlike CPU,
+        exceeding the limit gets the container OOMKilled (see ContainerOomKilled above), so
+        this is meant to catch the approach before that happens - shorter 10m window than
+        PodCpuUsageHigh's 15m since memory pressure escalates faster. Deliberately does NOT
+        fire on missing data. Scoped to the production environment so a devcontainer test
+        run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+}
+
+resource "grafana_rule_group" "postgres" {
+  name             = "postgres"
+  folder_uid       = grafana_folder.cloudflared.uid
+  interval_seconds = 60
+
+  rule {
+    name          = "PostgresConnectionsHigh"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            sum(pg_stat_database_numbackends{deployment_environment_name="production"})
+            /
+            max(pg_settings_max_connections{deployment_environment_name="production"})
+          ) > bool 0.8
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres is using more than 80% of max_connections"
+      description = <<-EOT
+        Active backend connections as a share of the server's own configured
+        max_connections, so the threshold self-adjusts if that setting is ever
+        tuned instead of chasing a fixed guessed number. Deliberately does NOT
+        fire on missing data - the server is expected to be powered off sometimes,
+        and that shouldn't page anyone. Scoped to the production environment so a
+        devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresCacheHitRatioLow"
+    condition     = "A"
+    for           = "15m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          (
+            sum(rate(pg_stat_database_blks_hit{deployment_environment_name="production"}[10m]))
+            /
+            (
+              sum(rate(pg_stat_database_blks_hit{deployment_environment_name="production"}[10m]))
+              +
+              sum(rate(pg_stat_database_blks_read{deployment_environment_name="production"}[10m]))
+            )
+          ) < bool 0.98
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres cache hit ratio has dropped below 98%"
+      description = <<-EOT
+        Share of block reads served from shared buffers rather than disk, sustained
+        for 15m. The container has only 512Mi allotted, so the working set can
+        plausibly outgrow cache - a sustained drop signals rising physical I/O. With
+        no query activity at all this ratio is 0/0 (NaN), and Prometheus comparisons
+        against NaN are always false, so this rule stays silent rather than firing
+        on an idle database - same idiom as node-exporter's HostOutOfSwap.
+        Deliberately does NOT fire on missing data. Scoped to the production
+        environment so a devcontainer test run (ENVIRONMENT: development) can't
+        page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresSlowQueryDetected"
+    condition     = "A"
+    for           = "0s"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"production\"} |= \"duration:\" [5m])) > bool 1"
+      })
+    }
+
+    labels = {
+      alert_group = "postgres-slow-query"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres logged a slow query"
+      description = <<-EOT
+        Fires on a single slow query instead of waiting for a sustained volume.
+        Each slow statement logs two "duration:" lines (log_min_duration_statement
+        and auto_explain - see postgres.deployment.yaml), so threshold 1 means
+        "more than 1 line in the last 5 minutes", i.e. at least one actual slow
+        query. Routed to its own alert_group (postgres-slow-query) with a 5h
+        repeat_interval, so if slow queries keep happening it re-notifies at most
+        once every 5 hours instead of on every occurrence. Deliberately does NOT fire
+        on missing data. Scoped to the production environment so a devcontainer
+        test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresDeadTupleRatioHigh"
+    condition     = "A"
+    for           = "1h"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.prometheus.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "prometheus", uid = data.grafana_data_source.prometheus.uid }
+        expr       = <<-EOT
+          max(
+            (
+              pg_stat_user_tables_n_dead_tup{deployment_environment_name="production"}
+              /
+              (
+                pg_stat_user_tables_n_dead_tup{deployment_environment_name="production"}
+                +
+                pg_stat_user_tables_n_live_tup{deployment_environment_name="production"}
+              )
+            )
+            and (pg_stat_user_tables_n_live_tup{deployment_environment_name="production"} > 1000)
+          ) > bool 0.5
+        EOT
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "A table's dead tuple ratio has stayed above 50% for an hour"
+      description = <<-EOT
+        Dead tuples (n_dead_tup) as a share of a table's rows (n_dead_tup +
+        n_live_tup) - autovacuum's default scale factor already lets this ratio
+        cycle up toward ~20% between runs, so 50% signals autovacuum genuinely
+        falling behind rather than a normal catch-up cycle. Sustained for 1h to
+        filter out that normal cycling. Restricted to tables with more than 1000
+        live rows so small/lookup tables (where a handful of dead rows is a huge
+        percentage but irrelevant in practice) can't trigger it. Deliberately does
+        NOT fire on missing data. Scoped to the production environment so a
+        devcontainer test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
+  rule {
+    name          = "PostgresErrorLogsElevated"
+    condition     = "A"
+    for           = "5m"
+    is_paused     = false
+    no_data_state = "OK"
+
+    data {
+      ref_id         = "A"
+      datasource_uid = data.grafana_data_source.loki.uid
+
+      relative_time_range {
+        from = 600
+        to   = 0
+      }
+
+      model = jsonencode({
+        refId      = "A"
+        instant    = true
+        range      = false
+        datasource = { type = "loki", uid = data.grafana_data_source.loki.uid }
+        expr       = "sum(count_over_time({service_name=\"postgres\", deployment_environment_name=\"production\"} | detected_level=~\"error|fatal\" [5m])) > bool 5"
+      })
+    }
+
+    labels = {
+      alert_group = "postgres"
+      severity    = "warning"
+    }
+
+    annotations = {
+      summary     = "Postgres is logging errors persistently"
+      description = <<-EOT
+        Counts postgres's own error/fatal-level log lines (detected_level, derived
+        by Alloy from the ERROR/FATAL/PANIC severity word in each line's
+        log_line_prefix - see _config.alloy's postgres_logs transform), which
+        catches failures the pg_stat_database metrics above don't - failed auth,
+        constraint violations, deadlock victims, disk-full errors. More than 5
+        lines in a 5m window, sustained for 5m, so a single transient error
+        doesn't page anyone. No established baseline yet - adjust once you know
+        what's normal. Scoped to the production environment so a devcontainer
+        test run (ENVIRONMENT: development) can't page anyone.
+      EOT
+    }
+  }
+
 }
 
 resource "grafana_contact_point" "cloudflared" {
@@ -697,6 +1061,31 @@ resource "grafana_notification_policy" "default" {
       label = "alert_group"
       match = "="
       value = "kubernetes"
+    }
+  }
+
+  policy {
+    contact_point = grafana_contact_point.cloudflared.name
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "postgres"
+    }
+  }
+
+  # PostgresSlowQueryDetected fires on a single slow query rather than a
+  # sustained volume, so it gets its own alert_group and an explicit
+  # repeat_interval - otherwise a persistently slow workload would re-notify
+  # every time Grafana re-evaluates it, instead of at most once per 5h.
+  policy {
+    contact_point   = grafana_contact_point.cloudflared.name
+    repeat_interval = "5h"
+
+    matcher {
+      label = "alert_group"
+      match = "="
+      value = "postgres-slow-query"
     }
   }
 }

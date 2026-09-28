@@ -80,13 +80,17 @@ Deployment/DaemonSet replica availability, and Node `Ready` condition from the
 `kube-state-metrics` Deployment; per-container CPU/memory usage
 scraped directly from every node's kubelet (`/metrics/cadvisor`, proxied through the API
 server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`, and
-`Warning`, e.g. `FailedScheduling`/`BackOff`/`FailedMount`) as logs. Except for Node
-metrics (nodes aren't namespaced), all of this is scoped to this release's own namespace,
-so other namespaces' own components (e.g. `kube-system`'s coredns/traefik) don't clutter
-`dashboards/kubernetes.json`. All of it ships to
-Grafana Cloud over OTLP, with every metric/log getting a `deployment.environment.name`
-resource attribute so production and non-production data can be told apart. Postgres
-metrics and `app` pod logs are still not collected. The app's own traces/logs/HTTP
+`Warning`, e.g. `FailedScheduling`/`BackOff`/`FailedMount`) as logs. When
+`postgresExporter.enabled: true`, it additionally collects Postgres query/connection
+metrics (connections, cache hit ratio, transactions, deadlocks, locks, and database
+size) from a `postgres-exporter` sidecar's `/metrics` endpoint on port 9187, along with
+the `postgres` container's own plain-text logs (slow queries and `auto_explain` plans
+included, the latter with its plan JSON-formatted within the log line). Except for Node metrics (nodes aren't namespaced), all
+of this is scoped to this release's own namespace, so other namespaces' own components
+(e.g. `kube-system`'s coredns/traefik) don't clutter `dashboards/kubernetes.json`. All of
+it ships to Grafana Cloud over OTLP, with every metric/log getting a
+`deployment.environment.name` resource attribute so production and non-production data
+can be told apart. `app` pod logs are still not collected. The app's own traces/logs/HTTP
 metrics go straight to Sentry (see `src/server/instrument.ts`) and aren't part of this
 pipeline either - there's no Kubernetes-level equivalent of traces to collect here, so
 none is added.
@@ -110,9 +114,10 @@ To enable it:
    ```
 4. Re-run the `helm upgrade` command from the install/update steps above.
 
-`values.schema.json` requires `nodeExporter` and `kubeStateMetrics` blocks, so an
-existing `values.yaml` must add them (copy from `values.example.yaml`, `enabled: false`)
-before the next `helm upgrade`, even if host metrics or cluster metrics aren't wanted.
+`values.schema.json` requires `nodeExporter`, `kubeStateMetrics`, and `postgresExporter`
+blocks, so an existing `values.yaml` must add them (copy from `values.example.yaml`,
+`enabled: false`) before the next `helm upgrade`, even if host/cluster/Postgres metrics
+aren't wanted.
 
 To also collect host metrics, set `nodeExporter.enabled: true` in `values.yaml`
 (`nodeExporter.image` defaults to `quay.io/prometheus/node-exporter:v1.12.1` in
@@ -132,6 +137,32 @@ This grant is broader than what's actually watched: the kubelet/cAdvisor scrape 
 events log source (`loki.source.kubernetes_events`'s `namespaces` argument) both filter
 down to this release's own namespace client-side, and `kube-state-metrics` restricts
 itself to it directly via `--namespaces`.
+
+To also collect Postgres metrics/logs, set `postgresExporter.enabled: true` in
+`values.yaml` (`postgresExporter.image` defaults to
+`quay.io/prometheuscommunity/postgres-exporter:v0.17.1` in `values.example.yaml`) and
+re-run `helm upgrade`. This adds a `postgres-exporter` sidecar container to the existing
+`postgres` pod (same network namespace, no new Service) and starts Alloy shipping its
+metrics and the `postgres` container's own logs (see the Alloy section above). The
+`postgres` container's `pg_stat_statements`/`auto_explain` preload and logging settings -
+see the `args` in `postgres.deployment.yaml` for the full parameter list - are applied
+unconditionally and aren't gated on this flag; they're already active regardless of
+whether `postgresExporter` is enabled.
+
+`pg_stat_statements` is preloaded and required by the `Postgres` dashboard's "Top queries
+by time" panel, via the `postgres-exporter`'s `stat_statements` collector - the slow query
+rate panel and alert come from `auto_explain`'s own logs instead and don't need it. Since
+the extension isn't created automatically, run this once against the live database
+(idempotent) for that panel to populate:
+
+```bash
+kubectl exec -n learn-helper deploy/postgres -c postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
+```
+
+This is a one-time manual step, not a Drizzle migration (`migrations/` manages the app's
+own schema, not server-level extensions) - run it after the `helm upgrade` above has
+restarted the pod. `auto_explain` needs no equivalent step; it's a preload-only module,
+not a SQL extension.
 
 ```bash
 # Verify Alloy is scraping/shipping correctly.
@@ -197,9 +228,9 @@ already show first.
 
 Likewise, the `Kubernetes Cluster` dashboard (per-service replica count, pod restarts, container
 OOMKilled count, Node `Ready` condition, per-service CPU/memory usage, and events)
-and its 5 alert rules (pod crash-looping, unavailable Deployment replicas, container
-OOMKilled, node not ready, elevated Warning events) route through the same
-contact point/notification policy. The dashboard JSON lives at
+and its 7 alert rules (pod crash-looping, unavailable Deployment replicas, container
+OOMKilled, node not ready, elevated Warning events, high per-container CPU/memory usage)
+route through the same contact point/notification policy. The dashboard JSON lives at
 `terraform/dashboards/kubernetes.json` and the alert rules are in the same
 `terraform/alerting.tf`. `kube-state-metrics` only watches the object kinds those
 panels/alerts need (see its `--resources=...` flag and
@@ -209,7 +240,11 @@ kubelet/cAdvisor scrapes down to the exact metric names used (see the
 CPU/memory panels group by `container` (i.e. by service - `app`, `postgres`, `cloudflared`,
 ...) and show each as a percentage of that container's own configured `resources.limits`
 (e.g. 50% means using half of what it's allowed), not raw cores/bytes and not relative to
-the host - `kube_pod_container_resource_limits` (kube-state-metrics) is the denominator.
+the host - `kube_pod_container_resource_limits` (kube-state-metrics) is the denominator;
+`PodCpuUsageHigh`/`PodMemoryUsageHigh` alert on the same per-(pod, container) query
+crossing 80%. A per-PVC disk usage % panel/alert was tried and dropped - see
+`alloy/_config.alloy`'s comment above the events source for why kubelet can't give a real
+per-PVC number on this cluster's `local-path` storage class.
 Service replicas shows each service's current available/ready replica count (Deployments
 and the node-exporter DaemonSet, unified onto one `service` label) rather than a separate
 up/down flag - the DeploymentReplicasUnavailable alert still reads
@@ -217,6 +252,30 @@ up/down flag - the DeploymentReplicasUnavailable alert still reads
 own dashboard panel. The events log source ships every event type, unfiltered - the
 `KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
 query, rather than relying on a curated pipeline.
+
+Likewise, the `Postgres` dashboard (connections as a share of `max_connections`, cache hit
+ratio, transactions/sec, CPU usage %, memory usage %, slow query rate, database size,
+deadlocks, locks by mode, dead tuples, sequential scan share, time since last autovacuum,
+top queries by time, and unfiltered logs) and its 5 alert rules (connections high, cache
+hit ratio low, slow query detected, dead tuple ratio high, error logs elevated) route
+through the same contact point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/postgres.json` and the alert rules are in the same
+`terraform/alerting.tf`. Alloy filters the postgres-exporter scrape down to the exact
+metric names used (`prometheus.relabel "postgres_keep"` in `alloy/_config.alloy`). The
+slow query rate panel and alert both match log lines containing `"duration:"`, which
+both `log_min_duration_statement` and `auto_explain` emit per qualifying statement - each
+slow query is counted roughly twice, one line per mechanism. Read/write query latency
+(derived from `pg_stat_statements`) was tried as a metric/alert pair and dropped: it was
+only an _average_ execution time per call, not a true latency percentile the way RDS's
+`ReadLatency`/`WriteLatency` are, since `pg_stat_statements` only exposes cumulative
+sums/counts - it's used for the top-queries-by-time panel's ranking instead, where an
+average is good enough.
+Deliberately not added: a Postgres-specific CPU/memory alarm (already generic
+per-`container` in the `Kubernetes Cluster` dashboard/`ContainerOomKilled`), a storage/free-space alarm
+(`HostOutOfDiskSpace` already covers the underlying filesystem `local-path` writes to),
+a swap alarm (already `HostOutOfSwap`), and anything with no bare-metal equivalent (CPU/
+burst credits, EBS burst-balance, replica lag, RDS-style snapshot/deletion-protection
+alarms - backups here are `scripts/backup-db.sh`'s separate `pg_dump` flow).
 
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
