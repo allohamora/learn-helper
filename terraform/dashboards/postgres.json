@@ -80,7 +80,7 @@
       "id": 16,
       "type": "timeseries",
       "title": "Uptime",
-      "description": "Time since the Postgres server last started (pg_postmaster_start_time_seconds). A drop to zero marks a restart.",
+      "description": "Time since the Postgres exporter last started (process_start_time_seconds). A drop to zero marks a restart.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -92,7 +92,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "time() - pg_postmaster_start_time_seconds{deployment_environment_name=\"$environment\"}",
+          "expr": "time() - process_start_time_seconds{deployment_environment_name=\"$environment\", job=\"postgres\"}",
           "legendFormat": "uptime",
           "refId": "A"
         }
