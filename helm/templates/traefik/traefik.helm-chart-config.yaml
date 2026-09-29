@@ -36,4 +36,21 @@ spec:
         entryPoint: metrics
     additionalArguments:
       - --log.format=json
+    # Base HelmChart sets no resources (confirmed live, `resources: {}`), so there's no
+    # merge to worry about here, unlike additionalArguments above. Same request/limit
+    # pair as this chart's own Alloy deployment - Traefik is comparably lightweight at
+    # this cluster's scale (confirmed live: ~1m CPU, ~110-115Mi resident memory idle).
+    # dashboards/traefik.json's CPU/memory usage panels compute % of these limits
+    # directly (they're hardcoded into those panels' PromQL, since Traefik lives in
+    # kube-system and can't use the generic kube_pod_container_resource_limits +
+    # cAdvisor path the Kubernetes dashboard's panels use - see kubelet_cadvisor_keep's
+    # namespace filter in alloy/_config.alloy) - if these values change, that dashboard
+    # needs a matching edit.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
 {{- end }}

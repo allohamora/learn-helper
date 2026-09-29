@@ -45,7 +45,7 @@
   ],
   "title": "Traefik",
   "uid": "learn-helper-traefik",
-  "description": "Traefik (k3s's built-in ingress) health: uptime, request rate, responses by status code, error rate, request duration, open connections, config reload failures, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Traefik (k3s's built-in ingress) health: uptime, CPU/memory usage, error rate, request duration, config reload failures, request rate, responses by status code, open connections, throughput, and logs - roughly ordered by importance. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -111,8 +111,8 @@
     {
       "id": 2,
       "type": "timeseries",
-      "title": "Request rate",
-      "description": "Requests per second across all entrypoints.",
+      "title": "CPU usage",
+      "description": "Traefik process CPU time as a percentage of its 500m limit (rate(process_cpu_seconds_total) / 0.5 * 100), self-reported by Traefik's own /metrics rather than cAdvisor - the kubelet_cadvisor scrape (alloy/_config.alloy) is filtered to this release's own namespace and doesn't cover kube-system's Traefik pod. The 0.5 divisor is traefik.helm-chart-config.yaml's resources.limits.cpu hardcoded in - update both together if that limit ever changes.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -124,15 +124,26 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(rate(traefik_entrypoint_requests_total{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "requests/sec",
+          "expr": "rate(process_cpu_seconds_total{deployment_environment_name=\"$environment\", job=\"traefik\"}[5m]) / 0.5 * 100",
+          "legendFormat": "cpu",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "min": 0
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
@@ -140,8 +151,8 @@
     {
       "id": 3,
       "type": "timeseries",
-      "title": "Responses by status code",
-      "description": "Requests per second grouped by HTTP status code returned.",
+      "title": "Memory usage",
+      "description": "Traefik process resident memory as a percentage of its 256Mi limit, self-reported the same way as the CPU usage panel. The 256*1024*1024 divisor is traefik.helm-chart-config.yaml's resources.limits.memory hardcoded in - update both together if that limit ever changes.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -153,15 +164,26 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum by (code) (rate(traefik_entrypoint_requests_total{deployment_environment_name=\"$environment\"}[5m]))",
-          "legendFormat": "{{code}}",
+          "expr": "process_resident_memory_bytes{deployment_environment_name=\"$environment\", job=\"traefik\"} / (256 * 1024 * 1024) * 100",
+          "legendFormat": "memory",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "min": 0
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 80 },
+              { "color": "red", "value": 100 }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "area" }
+          }
         },
         "overrides": []
       }
@@ -170,7 +192,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "5xx error rate %",
-      "description": "Server-error responses as a percentage of all requests - the exact ratio the TraefikHighErrorRate alert (terraform/alerting.tf) evaluates. Fires above 5%. Denominator is clamp_min'd so a window with zero traffic reads as 0% instead of an undrawable 0/0 (NaN).",
+      "description": "Server-error responses as a percentage of all requests - the exact ratio the TraefikHighErrorRate alert (terraform/alerting.tf) evaluates. Fires above 5%. Denominator is clamp_min'd so a window with zero traffic reads as 0% instead of an undrawable 0/0 (NaN). Numerator is `or vector(0)`'d - Traefik only creates the code=\"5xx\" series after the first 5xx response ever happens, so without this a window with zero 5xx reads as No data instead of 0%, same idiom as dashboards/postgres.json's slow-queries panel.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -182,7 +204,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "(sum(rate(traefik_entrypoint_requests_total{code=~\"5..\", deployment_environment_name=\"$environment\"}[5m])) / clamp_min(sum(rate(traefik_entrypoint_requests_total{deployment_environment_name=\"$environment\"}[5m])), 1e-9)) * 100",
+          "expr": "((sum(rate(traefik_entrypoint_requests_total{code=~\"5..\", deployment_environment_name=\"$environment\"}[5m])) or vector(0)) / clamp_min(sum(rate(traefik_entrypoint_requests_total{deployment_environment_name=\"$environment\"}[5m])), 1e-9)) * 100",
           "legendFormat": "error rate",
           "refId": "A"
         }
@@ -255,8 +277,8 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Open connections",
-      "description": "In-flight connections per entrypoint at once.",
+      "title": "Config reload failures",
+      "description": "Failed dynamic-configuration reloads per 5 minutes - a failure means a recent IngressRoute/Middleware change didn't take effect, though Traefik keeps serving its last-good config. The TraefikConfigReloadFailed alert (terraform/alerting.tf) fires on any occurrence. `or vector(0)`'d - traefik_config_reloads_failure_total doesn't exist at all until the first failed reload ever happens, so without this a window with zero failures reads as No data instead of 0, same idiom as dashboards/postgres.json's slow-queries panel.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -268,36 +290,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(traefik_open_connections{deployment_environment_name=\"$environment\"})",
-          "legendFormat": "open connections",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0
-        },
-        "overrides": []
-      }
-    },
-    {
-      "id": 7,
-      "type": "timeseries",
-      "title": "Config reload failures",
-      "description": "Failed dynamic-configuration reloads per 5 minutes - a failure means a recent IngressRoute/Middleware change didn't take effect, though Traefik keeps serving its last-good config. The TraefikConfigReloadFailed alert (terraform/alerting.tf) fires on any occurrence.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "expr": "sum(increase(traefik_config_reloads_failure_total{deployment_environment_name=\"$environment\"}[5m]))",
+          "expr": "sum(increase(traefik_config_reloads_failure_total{deployment_environment_name=\"$environment\"}[5m])) or vector(0)",
           "legendFormat": "failures",
           "refId": "A"
         }
@@ -321,7 +314,132 @@
       }
     },
     {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Request rate",
+      "description": "Requests per minute across all entrypoints.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(traefik_entrypoint_requests_total{deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "requests/min",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 8,
+      "type": "timeseries",
+      "title": "Responses by status code",
+      "description": "Requests per minute grouped by HTTP status code returned.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (code) (rate(traefik_entrypoint_requests_total{deployment_environment_name=\"$environment\"}[5m])) * 60",
+          "legendFormat": "{{code}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Open connections",
+      "description": "In-flight connections per entrypoint at once.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(traefik_open_connections{deployment_environment_name=\"$environment\"})",
+          "legendFormat": "open connections",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Throughput",
+      "description": "Bytes per second flowing through Traefik's entrypoints - received (request bodies) vs sent (response bodies).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(traefik_entrypoint_requests_bytes_total{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "received",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum(rate(traefik_entrypoint_responses_bytes_total{deployment_environment_name=\"$environment\"}[5m]))",
+          "legendFormat": "sent",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
       "type": "logs",
       "title": "Logs",
       "description": "Traefik pod logs, latest first.",
@@ -329,7 +447,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 24, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {

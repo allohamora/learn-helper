@@ -165,16 +165,23 @@ prometheus.scrape "traefik" {
 
 // Traefik exposes a large metric surface (Go runtime, per-router, per-entrypoint,
 // per-service, ...) - keep only what backs a panel in dashboards/traefik.json or a
-// rule in alerting.tf. process_start_time_seconds backs the Uptime panel. Confirmed
-// against the k3s-bundled Traefik's real /metrics output (metrics.prometheus is on
-// by default in this chart version) - traefik_open_connections has no "entrypoint_"
-// prefix despite being labeled by entrypoint, unlike the request/duration metrics.
+// rule in alerting.tf. process_start_time_seconds backs the Uptime panel;
+// process_cpu_seconds_total/process_resident_memory_bytes back the CPU/memory panels
+// (Traefik's own self-reported numbers - no need to fight the kubelet_cadvisor_keep
+// namespace filter above, which is scoped to this release's own namespace and would
+// otherwise exclude kube-system's Traefik pod). Deliberately not kept: traefik_service_*
+// (per-service breakdown - not needed today) and traefik_router_* (router-level labels
+// are off by default via metrics.prometheus.addRoutersLabels and haven't been turned
+// on anyway). Confirmed against the k3s-bundled Traefik's real /metrics output
+// (metrics.prometheus is on by default in this chart version) -
+// traefik_open_connections has no "entrypoint_" prefix despite being labeled by
+// entrypoint, unlike the request/duration metrics.
 prometheus.relabel "traefik_keep" {
   forward_to = [otelcol.receiver.prometheus.default.receiver]
 
   rule {
     source_labels = ["__name__"]
-    regex         = "process_start_time_seconds|traefik_entrypoint_requests_total|traefik_entrypoint_request_duration_seconds_bucket|traefik_entrypoint_request_duration_seconds_sum|traefik_entrypoint_request_duration_seconds_count|traefik_open_connections|traefik_config_reloads_total|traefik_config_reloads_failure_total"
+    regex         = "process_start_time_seconds|process_cpu_seconds_total|process_resident_memory_bytes|traefik_entrypoint_requests_total|traefik_entrypoint_requests_bytes_total|traefik_entrypoint_responses_bytes_total|traefik_entrypoint_request_duration_seconds_bucket|traefik_entrypoint_request_duration_seconds_sum|traefik_entrypoint_request_duration_seconds_count|traefik_open_connections|traefik_config_reloads_total|traefik_config_reloads_failure_total"
     action        = "keep"
   }
 }
