@@ -15,11 +15,12 @@ resource "grafana_rule_group" "cloudflared" {
   interval_seconds = 60
 
   rule {
-    name          = "CloudflaredHAConnectionsDegraded"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "CloudflaredHAConnectionsDegraded"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -60,11 +61,12 @@ resource "grafana_rule_group" "cloudflared" {
   }
 
   rule {
-    name          = "CloudflaredOriginErrors"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "CloudflaredOriginErrors"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -109,11 +111,12 @@ resource "grafana_rule_group" "cloudflared" {
   }
 
   rule {
-    name          = "CloudflaredErrorLogsElevated"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "CloudflaredErrorLogsElevated"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -154,11 +157,12 @@ resource "grafana_rule_group" "cloudflared" {
   }
 
   rule {
-    name          = "CloudflaredFatalLog"
-    condition     = "A"
-    for           = "1m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "CloudflaredFatalLog"
+    condition      = "A"
+    for            = "1m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -206,11 +210,12 @@ resource "grafana_rule_group" "node_exporter" {
   interval_seconds = 60
 
   rule {
-    name          = "HostOutOfMemory"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "HostOutOfMemory"
+    condition      = "A"
+    for            = "2m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -249,11 +254,12 @@ resource "grafana_rule_group" "node_exporter" {
   }
 
   rule {
-    name          = "HostHighCpuLoad"
-    condition     = "A"
-    for           = "10m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "HostHighCpuLoad"
+    condition      = "A"
+    for            = "10m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -292,11 +298,12 @@ resource "grafana_rule_group" "node_exporter" {
   }
 
   rule {
-    name          = "HostOutOfDiskSpace"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "HostOutOfDiskSpace"
+    condition      = "A"
+    for            = "2m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -345,11 +352,12 @@ resource "grafana_rule_group" "node_exporter" {
   }
 
   rule {
-    name          = "HostOutOfSwap"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "HostOutOfSwap"
+    condition      = "A"
+    for            = "2m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -388,11 +396,12 @@ resource "grafana_rule_group" "node_exporter" {
   }
 
   rule {
-    name          = "HostOomKillDetected"
-    condition     = "A"
-    for           = "1m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "HostOomKillDetected"
+    condition      = "A"
+    for            = "1m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -438,11 +447,12 @@ resource "grafana_rule_group" "kubernetes" {
   interval_seconds = 60
 
   rule {
-    name          = "PodCrashLooping"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PodCrashLooping"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -482,11 +492,12 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "DeploymentReplicasUnavailable"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "DeploymentReplicasUnavailable"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -523,11 +534,12 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "ContainerOomKilled"
-    condition     = "A"
-    for           = "1m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "ContainerOomKilled"
+    condition      = "A"
+    for            = "1m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -567,11 +579,12 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "NodeNotReady"
-    condition     = "A"
-    for           = "2m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "NodeNotReady"
+    condition      = "A"
+    for            = "2m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -610,11 +623,12 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "KubernetesWarningEventsElevated"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "KubernetesWarningEventsElevated"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -654,11 +668,12 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "PodCpuUsageHigh"
-    condition     = "A"
-    for           = "15m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PodCpuUsageHigh"
+    condition      = "A"
+    for            = "15m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -704,11 +719,12 @@ resource "grafana_rule_group" "kubernetes" {
   }
 
   rule {
-    name          = "PodMemoryUsageHigh"
-    condition     = "A"
-    for           = "10m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PodMemoryUsageHigh"
+    condition      = "A"
+    for            = "10m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -761,11 +777,12 @@ resource "grafana_rule_group" "postgres" {
   interval_seconds = 60
 
   rule {
-    name          = "PostgresConnectionsHigh"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PostgresConnectionsHigh"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -810,11 +827,12 @@ resource "grafana_rule_group" "postgres" {
   }
 
   rule {
-    name          = "PostgresCacheHitRatioLow"
-    condition     = "A"
-    for           = "15m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PostgresCacheHitRatioLow"
+    condition      = "A"
+    for            = "15m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -866,11 +884,12 @@ resource "grafana_rule_group" "postgres" {
   }
 
   rule {
-    name          = "PostgresSlowQueryDetected"
-    condition     = "A"
-    for           = "0s"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PostgresSlowQueryDetected"
+    condition      = "A"
+    for            = "0s"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -912,11 +931,12 @@ resource "grafana_rule_group" "postgres" {
   }
 
   rule {
-    name          = "PostgresDeadTupleRatioHigh"
-    condition     = "A"
-    for           = "1h"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PostgresDeadTupleRatioHigh"
+    condition      = "A"
+    for            = "1h"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -971,11 +991,12 @@ resource "grafana_rule_group" "postgres" {
   }
 
   rule {
-    name          = "PostgresErrorLogsElevated"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "PostgresErrorLogsElevated"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -1024,11 +1045,12 @@ resource "grafana_rule_group" "traefik" {
   interval_seconds = 60
 
   rule {
-    name          = "TraefikHighErrorRate"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "TraefikHighErrorRate"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -1076,11 +1098,12 @@ resource "grafana_rule_group" "traefik" {
   }
 
   rule {
-    name          = "TraefikConfigReloadFailed"
-    condition     = "A"
-    for           = "1m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "TraefikConfigReloadFailed"
+    condition      = "A"
+    for            = "1m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -1121,11 +1144,12 @@ resource "grafana_rule_group" "traefik" {
   }
 
   rule {
-    name          = "TraefikHighRequestLatency"
-    condition     = "A"
-    for           = "10m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "TraefikHighRequestLatency"
+    condition      = "A"
+    for            = "10m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"
@@ -1168,11 +1192,12 @@ resource "grafana_rule_group" "traefik" {
   }
 
   rule {
-    name          = "TraefikErrorLogsElevated"
-    condition     = "A"
-    for           = "5m"
-    is_paused     = false
-    no_data_state = "OK"
+    name           = "TraefikErrorLogsElevated"
+    condition      = "A"
+    for            = "5m"
+    is_paused      = false
+    no_data_state  = "OK"
+    exec_err_state = "KeepLast"
 
     data {
       ref_id         = "A"

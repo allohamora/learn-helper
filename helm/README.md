@@ -337,6 +337,10 @@ crashed node-exporter or Alloy process on a host that's still otherwise up also 
 "no data" from here and won't page anyone either; that's accepted given how much of this
 host's time is expected to be offline anyway.
 
+Every rule also sets `exec_err_state = "KeepLast"`, so a failed query (e.g. a Grafana Cloud
+Prometheus timeout) keeps the rule's current state instead of firing a false alert and then
+resolving it.
+
 # Production setup notes
 
 ## SSH access via Cloudflare Zero Trust
