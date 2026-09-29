@@ -60,7 +60,7 @@
           "uid": "${DS_PROMETHEUS}"
         },
         "query": {
-          "query": "label_values(traefik_entrypoint_requests_total, deployment_environment_name)",
+          "query": "label_values(traefik_open_connections, deployment_environment_name)",
           "refId": "StandardVariableQuery"
         },
         "current": {
