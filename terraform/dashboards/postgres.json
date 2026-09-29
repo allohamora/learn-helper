@@ -45,7 +45,7 @@
   ],
   "title": "Postgres",
   "uid": "learn-helper-postgres",
-  "description": "Postgres health: CPU/memory usage, connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, time since last autovacuum, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
+  "description": "Postgres health: uptime, CPU/memory usage, connections, cache hit ratio, transactions, slow queries, database size, deadlocks, locks, dead tuples, sequential/index scans, time since last autovacuum, and logs. See helm/README.md's Alloy section for how this data gets to Grafana Cloud. Use the Environment variable to pick production or development data.",
   "editable": true,
   "schemaVersion": 39,
   "version": 1,
@@ -77,6 +77,36 @@
   },
   "panels": [
     {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Uptime",
+      "description": "Time since the Postgres server last started (pg_postmaster_start_time_seconds). A drop to zero marks a restart.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "time() - pg_postmaster_start_time_seconds{deployment_environment_name=\"$environment\"}",
+          "legendFormat": "uptime",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dtdurations",
+          "decimals": 1,
+          "min": 0
+        },
+        "overrides": []
+      }
+    },
+    {
       "id": 1,
       "type": "timeseries",
       "title": "Connections",
@@ -85,7 +115,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -125,7 +155,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -165,7 +195,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -203,7 +233,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -243,7 +273,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -283,7 +313,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 16, "y": 24, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 32, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -312,7 +342,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -341,7 +371,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -380,7 +410,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 24, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -409,7 +439,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -448,7 +478,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -488,7 +518,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -517,7 +547,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 8 },
+      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 8 },
       "targets": [
         {
           "datasource": {
@@ -622,7 +652,7 @@
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
-      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 48, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": {
