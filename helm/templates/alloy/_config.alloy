@@ -181,7 +181,7 @@ prometheus.relabel "traefik_keep" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "process_start_time_seconds|process_cpu_seconds_total|process_resident_memory_bytes|traefik_entrypoint_requests_total|traefik_entrypoint_requests_bytes_total|traefik_entrypoint_responses_bytes_total|traefik_entrypoint_request_duration_seconds_bucket|traefik_entrypoint_request_duration_seconds_sum|traefik_entrypoint_request_duration_seconds_count|traefik_open_connections|traefik_config_reloads_total|traefik_config_reloads_failure_total"
+    regex         = "process_start_time_seconds|process_cpu_seconds_total|process_resident_memory_bytes|traefik_entrypoint_requests_total|traefik_entrypoint_requests_bytes_total|traefik_entrypoint_responses_bytes_total|traefik_entrypoint_request_duration_seconds_bucket|traefik_open_connections|traefik_config_reloads_failure_total"
     action        = "keep"
   }
 }
