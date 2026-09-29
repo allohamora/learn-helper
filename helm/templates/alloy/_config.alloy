@@ -122,6 +122,88 @@ prometheus.relabel "node_exporter_keep" {
   }
 }
 
+// ---- Traefik (k3s/k3d built-in ingress) metrics + logs ----
+// Unlike every other source in this file, Traefik lives in kube-system, not this
+// release's own namespace - explicitly scoped there (names = ["kube-system"])
+// rather than own_namespace = true. It's the k3s-bundled Traefik, not something
+// this chart deploys itself (see traefik.helm-chart-config.yaml for how its
+// metrics endpoint gets turned on), so it's always present once a cluster exists -
+// no separate enabled flag, just gated on Alloy itself being on, same as
+// cloudflared/node-exporter above.
+discovery.kubernetes "traefik" {
+  role = "pod"
+
+  namespaces {
+    names = ["kube-system"]
+  }
+
+  selectors {
+    role  = "pod"
+    label = "app.kubernetes.io/name=traefik"
+  }
+}
+
+// Keep only the "metrics" port target, same idiom as cloudflared/node-exporter -
+// requires traefik.helm-chart-config.yaml's HelmChartConfig to have actually added
+// a container port named "metrics" (metrics.prometheus.entryPoint).
+discovery.relabel "traefik_metrics" {
+  targets = discovery.kubernetes.traefik.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_port_name"]
+    regex         = "metrics"
+    action        = "keep"
+  }
+}
+
+prometheus.scrape "traefik" {
+  targets         = discovery.relabel.traefik_metrics.output
+  job_name        = "traefik"
+  scrape_interval = "60s"
+  forward_to      = [prometheus.relabel.traefik_keep.receiver]
+}
+
+// Traefik exposes a large metric surface (Go runtime, per-router, per-entrypoint,
+// per-service, ...) - keep only what backs a panel in dashboards/traefik.json or a
+// rule in alerting.tf. process_start_time_seconds backs the Uptime panel;
+// process_cpu_seconds_total/process_resident_memory_bytes back the CPU/memory panels
+// (Traefik's own self-reported numbers - no need to fight the kubelet_cadvisor_keep
+// namespace filter above, which is scoped to this release's own namespace and would
+// otherwise exclude kube-system's Traefik pod). Deliberately not kept: traefik_service_*
+// (per-service breakdown - not needed today) and traefik_router_* (router-level labels
+// are off by default via metrics.prometheus.addRoutersLabels and haven't been turned
+// on anyway). Confirmed against the k3s-bundled Traefik's real /metrics output
+// (metrics.prometheus is on by default in this chart version) -
+// traefik_open_connections has no "entrypoint_" prefix despite being labeled by
+// entrypoint, unlike the request/duration metrics.
+prometheus.relabel "traefik_keep" {
+  forward_to = [otelcol.receiver.prometheus.default.receiver]
+
+  rule {
+    source_labels = ["__name__"]
+    regex         = "process_start_time_seconds|process_cpu_seconds_total|process_resident_memory_bytes|traefik_entrypoint_requests_total|traefik_entrypoint_requests_bytes_total|traefik_entrypoint_responses_bytes_total|traefik_entrypoint_request_duration_seconds_bucket|traefik_open_connections|traefik_config_reloads_failure_total"
+    action        = "keep"
+  }
+}
+
+// Filtered to just the "traefik" container's log stream, same reasoning as
+// postgres's own filter - the pod could carry extra init/sidecar containers
+// depending on the chart version k3s bundles.
+discovery.relabel "traefik_logs" {
+  targets = discovery.kubernetes.traefik.targets
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    regex         = "traefik"
+    action        = "keep"
+  }
+}
+
+loki.source.kubernetes "traefik" {
+  targets    = discovery.relabel.traefik_logs.output
+  forward_to = [otelcol.receiver.loki.traefik.receiver]
+}
+
 {{- if .Values.kubeStateMetrics.enabled }}
 // ---- kube-state-metrics cluster object-state metrics ----
 // Scoped to just the kube-state-metrics pod via a server-side label selector, same as the
@@ -321,7 +403,7 @@ prometheus.relabel "postgres_keep" {
 
   rule {
     source_labels = ["__name__"]
-    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes|pg_stat_statements_calls_total|pg_stat_statements_seconds_total|pg_stat_statements_rows_total|pg_stat_user_tables_n_dead_tup|pg_stat_user_tables_n_live_tup|pg_stat_user_tables_seq_scan|pg_stat_user_tables_idx_scan|pg_stat_user_tables_last_autovacuum"
+    regex         = "pg_stat_database_numbackends|pg_settings_max_connections|pg_stat_database_blks_hit|pg_stat_database_blks_read|pg_stat_database_xact_commit|pg_stat_database_xact_rollback|pg_stat_database_deadlocks|pg_locks_count|pg_database_size_bytes|pg_stat_statements_calls_total|pg_stat_statements_seconds_total|pg_stat_statements_rows_total|pg_stat_user_tables_n_dead_tup|pg_stat_user_tables_n_live_tup|pg_stat_user_tables_seq_scan|pg_stat_user_tables_idx_scan|pg_stat_user_tables_last_autovacuum|process_start_time_seconds"
     action        = "keep"
   }
 }
@@ -379,6 +461,12 @@ otelcol.receiver.loki "cloudflared" {
 otelcol.receiver.loki "node_exporter" {
   output {
     logs = [otelcol.processor.transform.node_exporter_logs.input]
+  }
+}
+
+otelcol.receiver.loki "traefik" {
+  output {
+    logs = [otelcol.processor.transform.traefik_logs.input]
   }
 }
 
@@ -459,6 +547,35 @@ otelcol.processor.transform "node_exporter_logs" {
       `set(cache, ParseKeyValue(body))`,
       `set(severity_text, cache["level"]) where cache["level"] != nil`,
       `set(body, cache["msg"]) where cache["msg"] != nil`,
+    ]
+  }
+
+  output {
+    logs = [otelcol.processor.resourcedetection.environment.input]
+  }
+}
+
+// Traefik's default, unconfigured log format is a colorized human-oriented console
+// writer (ANSI escape codes around plain English messages, confirmed live) - not a
+// structured format severity_text can be pulled from, unlike node-exporter's logfmt.
+// traefik.helm-chart-config.yaml adds --log.format=json so this can parse it the same
+// way as cloudflared's own JSON output below.
+otelcol.processor.transform "traefik_logs" {
+  error_mode = "ignore"
+
+  log_statements {
+    context = "resource"
+    statements = [
+      `set(attributes["service.name"], "traefik")`,
+    ]
+  }
+
+  log_statements {
+    context = "log"
+    statements = [
+      `set(cache, ParseJSON(body))`,
+      `set(severity_text, cache["level"]) where cache["level"] != nil`,
+      `set(body, cache["message"]) where cache["message"] != nil`,
     ]
   }
 

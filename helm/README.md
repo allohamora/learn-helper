@@ -85,9 +85,35 @@ server); and every Kubernetes event (routine, e.g. `Pulled`/`Created`/`Started`,
 metrics (connections, cache hit ratio, transactions, deadlocks, locks, and database
 size) from a `postgres-exporter` sidecar's `/metrics` endpoint on port 9187, along with
 the `postgres` container's own plain-text logs (slow queries and `auto_explain` plans
-included, the latter with its plan JSON-formatted within the log line). Except for Node metrics (nodes aren't namespaced), all
-of this is scoped to this release's own namespace, so other namespaces' own components
-(e.g. `kube-system`'s coredns/traefik) don't clutter `dashboards/kubernetes.json`. All of
+included, the latter with its plan JSON-formatted within the log line). Enabling Alloy
+also always turns on Traefik's own request/error/latency/config-reload metrics and pod
+logs - unlike every other source above, this has no separate `enabled` flag, since
+Traefik (k3s/k3d's built-in ingress) is always present once a cluster exists rather than
+being something this chart optionally deploys. `traefik.helm-chart-config.yaml` patches
+k3s's bundled Traefik `HelmChart` (via k3s's own `HelmChartConfig` CRD) to turn on its
+Prometheus metrics endpoint - already the default on the k3s version this was built
+against, so today this key is a no-op kept only as a safety net for a future k3s version
+that ships a different default - and to switch its logs to JSON (`--log.format=json`),
+since Traefik's own default log format is a colorized, human-oriented console format
+with no structured `level`/`message` fields for Alloy to parse, unlike node-exporter's
+logfmt or cloudflared's own JSON output. The same patch also sets `resources` (100m/128Mi
+request, 500m/256Mi limit, matching this chart's own Alloy deployment) - the base
+HelmChart sets none at all (confirmed live, `resources: {}`), which left Traefik
+unbounded. `dashboards/traefik.json`'s CPU/memory usage panels compute % of these exact
+limit values, hardcoded into their PromQL since Traefik can't use the generic
+`kube_pod_container_resource_limits` + cAdvisor path the `Kubernetes` dashboard's
+panels use (see below) - change the limits and those panel queries in the same commit.
+`traefik.role.yaml`/`traefik.role-binding.yaml`
+grant Alloy's ServiceAccount narrow, `kube-system`-only pod/log read access - a plain
+namespaced `Role`/`RoleBinding` pair created directly in `kube-system`, not a
+`ClusterRole` (pods/logs are namespaced resources, and this is only ever needed in that
+one namespace) - since Traefik lives outside this release's own namespace. Except for Node
+metrics (nodes aren't namespaced) and Traefik (which lives in `kube-system` by design),
+all of this is scoped to this release's own namespace, so other namespaces' own
+components (e.g. `kube-system`'s coredns) don't clutter `dashboards/kubernetes.json` -
+the kubelet/cAdvisor CPU/memory scrape and cluster events still exclude `kube-system`
+entirely, Traefik's own `/metrics` and logs are collected as a separate, deliberate
+source instead. All of
 it ships to Grafana Cloud over OTLP, with every metric/log getting a
 `deployment.environment.name` resource attribute so production and non-production data
 can be told apart. `app` pod logs are still not collected. The app's own traces/logs/HTTP
@@ -253,7 +279,7 @@ own dashboard panel. The events log source ships every event type, unfiltered - 
 `KubernetesWarningEventsElevated` alert filters to `type="Warning"` itself in its own Loki
 query, rather than relying on a curated pipeline.
 
-Likewise, the `Postgres` dashboard (connections as a share of `max_connections`, cache hit
+Likewise, the `Postgres` dashboard (uptime, connections as a share of `max_connections`, cache hit
 ratio, transactions/sec, CPU usage %, memory usage %, slow query rate, database size,
 deadlocks, locks by mode, dead tuples, sequential scan share, time since last autovacuum,
 top queries by time, and unfiltered logs) and its 5 alert rules (connections high, cache
@@ -277,6 +303,30 @@ a swap alarm (already `HostOutOfSwap`), and anything with no bare-metal equivale
 burst credits, EBS burst-balance, replica lag, RDS-style snapshot/deletion-protection
 alarms - backups here are `scripts/backup-db.sh`'s separate `pg_dump` flow).
 
+Likewise, the `Traefik` dashboard (uptime, CPU/memory usage, 5xx error rate %, request
+duration p50/p95/p99, config reload failures, request rate, responses by status code,
+open connections, throughput, and logs - roughly ordered by importance) and its 4 alert
+rules (high error rate, config reload failed, high request latency, error logs elevated)
+route through the same contact point/notification policy. The dashboard JSON lives at
+`terraform/dashboards/traefik.json` and the alert rules are in the same
+`terraform/alerting.tf`. Unlike every other source here, this one is always collected
+whenever Alloy is enabled rather than gated behind its own flag - see the Alloy section
+above. Alloy filters the scrape down to the exact metric names used
+(`prometheus.relabel "traefik_keep"` in `alloy/_config.alloy`), based on Traefik's
+standard entrypoint metric set - like every allow-list in this file, verify it against the
+k3s-bundled Traefik version's real `/metrics` output after enabling it, and adjust if that
+version's metric/label names differ. The CPU/memory panels read Traefik's own
+self-reported `process_*` metrics as a percentage of the `resources.limits` set in
+`traefik.helm-chart-config.yaml` (see the Alloy section above), rather than cAdvisor,
+since the `kubelet_cadvisor_keep` scrape is filtered to this release's own namespace and
+doesn't cover kube-system's Traefik pod. Deliberately not added: a per-router/per-service breakdown panel (entrypoint-level
+aggregation is enough for this single-node cluster - `traefik_service_*` metrics exist
+but back no panel or alert here, and its `service` label is Traefik's own generated ID,
+`<name>-<hash>@kubernetescrd`, one per IngressRoute match rule rather than one per k8s
+`Service`, so it wouldn't read cleanly without extra normalization anyway), and TLS
+certificate expiry (Cloudflare's tunnel terminates edge TLS; Traefik itself serves plain
+HTTP internally, so it holds no certs worth watching).
+
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
 `no_data_state = "OK"`). That's deliberate, not an oversight: this host is expected to be
@@ -286,6 +336,10 @@ alerting on the host being off, which nobody needs to hear about. The tradeoff i
 crashed node-exporter or Alloy process on a host that's still otherwise up also looks like
 "no data" from here and won't page anyone either; that's accepted given how much of this
 host's time is expected to be offline anyway.
+
+Every rule also sets `exec_err_state = "KeepLast"`, so a failed query (e.g. a Grafana Cloud
+Prometheus timeout) keeps the rule's current state instead of firing a false alert and then
+resolving it.
 
 # Production setup notes
 
