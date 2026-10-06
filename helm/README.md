@@ -182,7 +182,7 @@ the extension isn't created automatically, run this once against the live databa
 (idempotent) for that panel to populate:
 
 ```bash
-kubectl exec -n learn-helper deploy/postgres -c postgres -- psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
+kubectl exec -n learn-helper deploy/postgres -c postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"'
 ```
 
 This is a one-time manual step, not a Drizzle migration (`migrations/` manages the app's
