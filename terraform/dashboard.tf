@@ -69,3 +69,12 @@ resource "grafana_dashboard" "traefik" {
   folder    = grafana_folder.cloudflared.uid
   overwrite = true
 }
+
+resource "grafana_dashboard" "app" {
+  config_json = replace(
+    file("${path.module}/dashboards/app.json"),
+    "$${DS_PROMETHEUS}", data.grafana_data_source.prometheus.uid
+  )
+  folder    = grafana_folder.cloudflared.uid
+  overwrite = true
+}

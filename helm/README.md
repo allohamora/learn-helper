@@ -327,6 +327,13 @@ but back no panel or alert here, and its `service` label is Traefik's own genera
 certificate expiry (Cloudflare's tunnel terminates edge TLS; Traefik itself serves plain
 HTTP internally, so it holds no certs worth watching).
 
+The `App` dashboard (`terraform/dashboards/app.json`: replicas available, container restarts,
+OOMKilled, CPU/memory usage as % of limits) only reads the existing
+kube-state-metrics and cAdvisor series for the `app` container, so it adds no Alloy scrape or
+alert rules - the `kubernetes` rule group already covers the app pod. The app's own logs,
+traces, and request metrics go to Sentry only and are deliberately not collected into
+Grafana.
+
 None of these alert rules try to detect "the exporter/tunnel stopped responding" (no
 `NodeExporterDown`/`CloudflaredDown`-style rule, and every rule uses
 `no_data_state = "OK"`). That's deliberate, not an oversight: this host is expected to be
