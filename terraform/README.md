@@ -5,7 +5,7 @@ Manages Grafana Cloud resources via the
 the OTLP ingestion connection Alloy ships cloudflared's, node-exporter's,
 kube-state-metrics'/kubelet's, Postgres's, and Traefik's metrics/logs to (see
 `helm/README.md`'s Alloy section), the `Cloudflared Tunnel`, `Node Exporter`,
-`Kubernetes Cluster`, `Postgres`, and `Traefik` dashboards, their 25 alert rules
+`Kubernetes Cluster`, `Postgres`, `Traefik`, and `App` dashboards, their 25 alert rules
 combined, and the email contact point/notification policy that routes them. All of this
 used to be set up by hand in the Grafana Cloud UI; now it's one `terraform apply`.
 
