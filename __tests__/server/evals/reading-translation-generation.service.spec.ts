@@ -99,6 +99,18 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).toBe('тест');
     });
 
+    it("mirrors the selected text's capital first letter in the middle of a sentence", async () => {
+      const { output } = await generateTranslationData({
+        text: 'One of our favorite',
+        before: 'This is',
+        after: 'places to visit.',
+      });
+      console.log('capital-casing', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toMatch(/^Од/u);
+    });
+
     it('translates a long selection that starts and ends mid-sentence, spanning a sentence boundary, and marks it not learnable', async () => {
       // Mirrors a real reading-app selection: dragged across a page, so it starts partway through
       // one sentence, runs past its end, and stops partway into the next - never a clean sentence.
