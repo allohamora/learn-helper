@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tasksMatchRequestedItems, type VocabularyItemData } from '@/server/user-vocabulary/vocabulary-task.service';
 
-const item = (id: string): VocabularyItemData => ({ id, value: id, partOfSpeech: null });
+const item = (id: string): VocabularyItemData => ({ id, value: id, uaTranslation: id, partOfSpeech: null });
 const task = (id: string) => ({ id, sentence: `sentence-${id}`, translation: `translation-${id}` });
 
 describe('vocabulary-task.service', () => {

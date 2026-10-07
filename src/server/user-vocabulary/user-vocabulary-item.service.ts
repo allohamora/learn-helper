@@ -400,6 +400,7 @@ export const getUserVocabularyListLearnTasks = async ({
   const data: VocabularyItemData[] = items.map((item) => ({
     id: item.id,
     value: item.vocabularyItem.value,
+    uaTranslation: item.vocabularyItem.uaTranslation,
     partOfSpeech: item.vocabularyItem.partOfSpeech,
   }));
 

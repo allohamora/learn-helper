@@ -28,43 +28,16 @@ describe.concurrent('vocabulary-task.service', () => {
 
   const items = (
     [
-      {
-        value: 'a',
-        partOfSpeech: 'indefinite article',
-      },
-      {
-        value: 'can',
-        partOfSpeech: 'modal verb',
-      },
-      {
-        value: 'be going to do (sth)',
-        partOfSpeech: null,
-      },
-      {
-        value: 'for the first time',
-        partOfSpeech: null,
-      },
-      {
-        value: 'take (sb) out',
-        partOfSpeech: null,
-      },
-
-      {
-        value: 'ability',
-        partOfSpeech: 'noun',
-      },
-      {
-        value: 'challenge',
-        partOfSpeech: 'noun',
-      },
-      {
-        value: 'abandon',
-        partOfSpeech: 'verb',
-      },
-      {
-        value: 'absence',
-        partOfSpeech: 'noun',
-      },
+      { value: 'a', uaTranslation: 'неозначений артикль', partOfSpeech: 'indefinite article' },
+      { value: 'can', uaTranslation: 'могти', partOfSpeech: 'modal verb' },
+      { value: 'be going to do (sth)', uaTranslation: 'збиратися (щось) зробити', partOfSpeech: null },
+      { value: 'for the first time', uaTranslation: 'вперше', partOfSpeech: null },
+      { value: 'take (sb) out', uaTranslation: 'запросити (когось) кудись', partOfSpeech: null },
+      { value: 'ability', uaTranslation: 'здатність', partOfSpeech: 'noun' },
+      { value: 'challenge', uaTranslation: 'виклик', partOfSpeech: 'noun' },
+      { value: 'abandon', uaTranslation: 'залишати напризволяще', partOfSpeech: 'verb' },
+      { value: 'absence', uaTranslation: 'відсутність', partOfSpeech: 'noun' },
+      { value: 'bat', uaTranslation: 'кажан', partOfSpeech: 'noun' },
     ] satisfies Omit<VocabularyItemData, 'id'>[]
   ).map((data) => item(data));
 
@@ -105,15 +78,11 @@ describe.concurrent('vocabulary-task.service', () => {
       expect(articleTask?.sentence).toMatch(/\b(?:a|an)\b/iu);
 
       await expect({ items, tasks }).toSatisfyStatements([
-        `Exactly ${items.length} tasks with id matching input item.id, an English sentence, and a Ukrainian translation.`,
-        'English sentences are complete sentences with a subject and a verb (not a fragment), max 15 words, natural, sentence case.',
-        'English sentences contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" as "an" when grammatically required before a vowel sound. All function words unchanged. The sentence may naturally include additional surrounding words for context beyond the target phrase itself, and the word filling a parenthesized placeholder may sit between the target\'s words.',
-        'Parenthesized placeholders (e.g. "(sb)", "(sth)") are replaced with a concrete word and never appear literally in the sentence.',
-        'Sentences use specific real-world context, not vague or abstract phrases.',
-        'Ukrainian translations are max 15 words, sentence case, single spaces, punctuation attached to tokens. Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English.',
-        'Single sentence only. No joined independent clauses: a comma alone does not make two clauses.',
-        'Ukrainian translations have one unambiguous word order when shuffled, with pronouns/prepositions/conjunctions/particles as separate tokens.',
-        'Ukrainian translations use correct adjective-noun agreement (gender, number, case) and are otherwise generally grammatical. Do NOT flag declension variations as errors. Both singular and plural accusative/genitive forms are valid (e.g., "бабусю і дідуся", "бабусів і дідусів", "бабусь і дідусів" are all acceptable).',
+        'Each English sentence is one natural sentence with a subject and a verb, set in a specific everyday situation. It does not join two full sentences together.',
+        'Each English sentence contains every word of its item value in the same order. Only grammar changes are allowed, such as a verb form or "a" becoming "an". Extra words may come before or after, and a placeholder like (sb) or (sth) is replaced by a word.',
+        'Each English sentence uses its item in the meaning of the item uaTranslation. A function word like "a" only needs to appear in its normal role in the sentence.',
+        'Each Ukrainian translation means the same as its English sentence and sounds natural to a native speaker. Different valid word forms and word orders are fine.',
+        'Each Ukrainian translation uses a neutral word order and avoids lists of similar words. Some flexibility in word order is fine.',
       ]);
     });
   });
@@ -152,15 +121,11 @@ describe.concurrent('vocabulary-task.service', () => {
       expect(articleTask?.translation).toMatch(/\b(?:a|an)\b/iu);
 
       await expect({ items, tasks }).toSatisfyStatements([
-        `Exactly ${items.length} tasks with id matching input item.id, a Ukrainian sentence, and an English translation.`,
-        'Ukrainian sentences are max 15 words, sentence case. Must sound natural and idiomatic to a native Ukrainian speaker, not word-for-word from English. Do NOT flag grammar style preferences as errors. Accept all valid Ukrainian constructions: alternative declension forms (e.g., "бабусю і дідуся" and "бабусів і дідусів" are both valid), active impersonal voice (e.g., "покинули") alongside passive (e.g., "було покинуто"), and flexible word order.',
-        'English translations are complete sentences with a subject and a verb (not a fragment), max 15 words, sentence case.',
-        'English translations contain every word of the target phrase, in order, with the target\'s own words never reordered or replaced with synonyms - the ONLY change allowed to a target word is a minimal verb/auxiliary inflection (e.g., "be going to" -> "is going to") or rendering "a" as "an" when grammatically required before a vowel sound. All function words unchanged. The translation may naturally include additional surrounding words for context beyond the target phrase itself, and the word filling a parenthesized placeholder may sit between the target\'s words.',
-        'Parenthesized placeholders (e.g. "(sb)", "(sth)") are replaced with a concrete word and never appear literally in the translation.',
-        'English translations use single spaces, punctuation attached to tokens. Include required articles/prepositions/auxiliaries as separate tokens.',
-        'Single sentence only. No joined independent clauses: a comma alone does not make two clauses.',
-        'English translations have one unambiguous word order when shuffled.',
-        'Sentences use specific real-world context, not vague or abstract phrases.',
+        'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker. Different valid word forms, active or passive voice, and word orders are fine.',
+        'Each English translation is one sentence with a subject and a verb, and means the same as its Ukrainian sentence. It does not join two full sentences together.',
+        'Each English translation contains every word of its item value in the same order. Only grammar changes are allowed, such as a verb form or "a" becoming "an". Extra words may come before or after, and a placeholder like (sb) or (sth) is replaced by a word.',
+        'Each English translation uses its item in the meaning of the item uaTranslation. A function word like "a" only needs to appear in its normal role in the sentence.',
+        'Each English translation uses a neutral word order and avoids lists of similar words. Some flexibility in word order is fine.',
       ]);
     });
   });

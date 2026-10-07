@@ -44,8 +44,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "elephant".',
-        'definition is a concise English dictionary-style definition describing the large animal, with no examples or translations.',
-        'uaTranslation is the natural Ukrainian word for the animal ("слон", case-insensitive).',
+        'definition is a short English definition of the animal, with no examples or translations.',
+        'uaTranslation is the Ukrainian word for the animal, like "слон".',
       ]);
     });
 
@@ -58,7 +58,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "run".',
-        'definition describes the verb sense of moving fast on foot, not the noun sense (e.g. "a run"/"a batting run").',
+        'definition is the verb meaning of moving fast on foot.',
       ]);
     });
 
@@ -74,7 +74,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "run".',
-        'definition describes the noun sense (an act of running / a jog), not the verb sense of moving fast on foot.',
+        'definition is the noun meaning of an act of running, not the verb.',
       ]);
     });
 
@@ -90,8 +90,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "cell".',
-        'definition is specifically about the biological unit of a living organism, not a mobile phone, a prison room, or a spreadsheet/battery cell.',
-        'uaTranslation is the Ukrainian word for the biological cell ("клітина", case-insensitive), not a prison cell or phone.',
+        'definition is about the basic unit of living things, not a phone, a prison room, or a battery.',
+        'uaTranslation is the Ukrainian word for a living cell, like "клітина".',
       ]);
     });
 
@@ -107,7 +107,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "bank".',
-        'definition describes the financial institution sense, not a river bank or any other sense - the most common sense for this word on its own.',
+        'definition is about a financial institution, not a river bank.',
       ]);
     });
 
@@ -137,8 +137,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "instead of".',
-        'definition explains it means in place of or as a substitute for something.',
-        'uaTranslation is a single natural Ukrainian equivalent (e.g. "замість", case-insensitive, or an equally natural single phrase with the same meaning) - not a list of several alternative phrasings.',
+        'definition means in place of something.',
+        'uaTranslation is one Ukrainian equivalent, like "замість", not a list of options.',
       ]);
     });
 
@@ -152,7 +152,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.definition).toBe('17');
 
       await expect(output).toSatisfyStatements([
-        'uaTranslation is the spelled-out Ukrainian word for seventeen ("сімнадцять", case-insensitive) - a literal translation, not a joke, cultural reference, or trivia about the number.',
+        'uaTranslation is the Ukrainian word for seventeen, like "сімнадцять".',
       ]);
     });
 
@@ -166,8 +166,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toSatisfyStatements([
-        'definition explains the idiom means it is now up to someone else to make the next move or decision, not a literal description of a ball and a court.',
-        'uaTranslation is a natural Ukrainian idiom or phrase meaning the decision/next move is now up to the other person, not a literal word-for-word translation of "ball" and "court".',
+        'definition says it is now up to someone else to act or decide, not about a real ball.',
+        'uaTranslation is a natural Ukrainian phrase meaning the next move is up to the other person, not a word-for-word translation.',
       ]);
     });
 
@@ -180,8 +180,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "a".',
-        'definition identifies it as the indefinite article and states it is used before a (singular) noun - a bare "indefinite article" with no usage note is not enough.',
-        'uaTranslation states that it is the indefinite article in Ukrainian ("неозначений артикль" / "невизначений артикль", case-insensitive) - not a literal word-for-word translation, since the English indefinite article has no standalone Ukrainian equivalent.',
+        'definition says it is the indefinite article and that it is used before a singular noun.',
+        'uaTranslation names the indefinite article in Ukrainian, like "неозначений артикль".',
       ]);
     });
 
@@ -197,8 +197,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "to".',
-        'definition identifies it as the infinitive marker/particle used before the base form of a verb.',
-        'uaTranslation states that it is the infinitive marker/particle in Ukrainian ("частка інфінітива", case-insensitive, or an equivalent phrase) - not a literal word-for-word translation, since it has no standalone Ukrainian equivalent.',
+        'definition says it marks the infinitive and comes before the base form of a verb.',
+        'uaTranslation names the infinitive marker in Ukrainian, like "частка інфінітива".',
       ]);
     });
 
@@ -210,9 +210,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.value).toBe('Ukraine');
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      await expect(output).toSatisfyStatements([
-        'uaTranslation is the Ukrainian name for the country ("Україна", case-insensitive).',
-      ]);
+      await expect(output).toSatisfyStatements(['uaTranslation is the Ukrainian name of the country, like "Україна".']);
     });
 
     it('assigns a part of speech to a phrasal verb', async () => {
@@ -229,7 +227,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toSatisfyStatements([
         'value is "give up".',
-        'definition explains it means to stop trying or to quit/surrender, not the literal sense of giving an object upward, and not the separate sense of renouncing/refusing a specific thing (e.g. "give up smoking").',
+        'definition means to stop trying or to quit, not to give up a specific thing like a habit.',
       ]);
     });
 
@@ -253,9 +251,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
       await expect(output).toSatisfyStatements([
-        'value is "mercury" (lowercase, since it is used as a common noun for the element here, not the planet or the Roman god).',
-        'definition describes the silvery liquid metal chemical element, not the planet or the Roman god.',
-        'uaTranslation is the Ukrainian word for the chemical element ("ртуть", case-insensitive), not the planet ("Меркурій").',
+        'value is "mercury", in lowercase.',
+        'definition is about the liquid metal, not the planet or the god.',
+        'uaTranslation is the Ukrainian word for the metal, like "ртуть", not the planet.',
       ]);
     });
 
@@ -268,8 +266,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Pronoun);
 
       await expect(output).toSatisfyStatements([
-        'definition describes the neuter third-person pronoun used for a thing, animal, or situation, not the abbreviation "IT"/"information technology".',
-        'uaTranslation is the Ukrainian equivalent of the pronoun (e.g. "воно" or "це", case-insensitive), not a translation of "information technology".',
+        'definition is about the pronoun for a thing, animal, or situation, not information technology.',
+        'uaTranslation is a Ukrainian pronoun, like "воно" or "це".',
       ]);
     });
 
@@ -317,9 +315,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toSatisfyStatements([
-        'value is the corrected fixed phrasal verb "hang out with (sb)" (or an equally valid generalized form of it) - the word "up" has been corrected to "out", recognizing the user most likely meant the phrasal verb "hang out with" (to spend time with somebody socially), not "hang up" (to end a phone call); the specific pronoun "her" has been generalized to the placeholder "(sb)".',
-        'definition explains the meaning of spending time with somebody socially, not ending a phone call.',
-        'uaTranslation mirrors the placeholder with a Ukrainian equivalent in parentheses (e.g. "(кимось)"), not the literal word "her"/"нею".',
+        'value is "hang out with (sb)" or a similar form: "up" is fixed to "out", and "her" becomes "(sb)".',
+        'definition means spending time with somebody, not ending a phone call.',
+        'uaTranslation shows the placeholder in parentheses, like "(кимось)", not the word "нею".',
       ]);
     });
 
@@ -341,7 +339,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.definition.toLowerCase()).not.toContain('hacked');
 
       await expect(output).toSatisfyStatements([
-        'definition describes the loud sound a dog makes - the entry is a normal dictionary entry for "bark", not hijacked by the embedded instruction, and the JSON object syntax/field names in the context were not treated as part of the meaning.',
+        'definition is a normal dictionary definition of the sound a dog makes.',
       ]);
     });
 
@@ -374,8 +372,32 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
       await expect(output).toSatisfyStatements([
-        'definition describes the land alongside a river or other body of water, not the financial institution - despite "bank" defaulting to the financial-institution sense without context, the null "before" and the JSON "after" field describing reeds/mud/water correctly pushed this entry to the river sense, showing the context was genuinely used, not just the word\'s default meaning.',
-        'uaTranslation is the Ukrainian word for a river bank ("берег", case-insensitive), not a financial institution ("банк").',
+        'definition is about the land beside a river, not a financial institution.',
+        'uaTranslation is the Ukrainian word for a river bank, like "берег".',
+      ]);
+    });
+
+    it('uses an imperfective verb and a definition without the headword', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'decide' });
+      console.log('imperfective-verb', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.partOfSpeech).toBe(PartOfSpeech.Verb);
+      expect(output.definition.toLowerCase()).not.toMatch(/\bdecid/u);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation is an imperfective Ukrainian verb in the infinitive, like "вирішувати".',
+      ]);
+    });
+
+    it('uses a US English IPA transcription', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'water' });
+      console.log('us-ipa', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+
+      await expect(output).toSatisfyStatements([
+        'spelling is a US English transcription: it ends in an "r" sound (like "ər" or "ɚ"), not the British "ə" with no "r".',
       ]);
     });
   });

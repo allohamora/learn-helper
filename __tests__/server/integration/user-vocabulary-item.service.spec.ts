@@ -877,6 +877,7 @@ describe('userVocabularyItemService', () => {
       const expectedInput = batch.map((item) => ({
         id: item.id,
         value: item.vocabularyItem.value,
+        uaTranslation: item.vocabularyItem.uaTranslation,
         partOfSpeech: item.vocabularyItem.partOfSpeech,
       }));
 
