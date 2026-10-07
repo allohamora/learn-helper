@@ -1,4 +1,5 @@
 import type { RequestHandler } from 'msw';
+import { HttpNetworkFrame } from 'msw/experimental';
 import { setupServer } from 'msw/node';
 import { vitest } from 'vitest';
 
@@ -10,12 +11,16 @@ export const createMockServer = () => {
     onUnhandledRequest,
     start() {
       server.listen({
-        onUnhandledRequest(request, print) {
-          console.error(`[MSW] Request not in whitelist: ${request.method} ${request.url}`);
+        onUnhandledFrame({ frame, defaults }) {
+          if (frame instanceof HttpNetworkFrame) {
+            const { request } = frame.data;
+
+            console.error(`[MSW] Request not in whitelist: ${request.method} ${request.url}`);
+          }
 
           onUnhandledRequest();
 
-          print.error();
+          defaults.error();
         },
       });
     },

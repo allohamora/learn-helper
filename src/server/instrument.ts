@@ -23,8 +23,6 @@ Sentry.init({
     Sentry.nodeRuntimeMetricsIntegration(),
   ],
 
-  // Send structured logs to Sentry
-  enableLogs: true,
   // Tracing
   tracesSampleRate: 0.1, //  Capture 10% of the transactions
 });
