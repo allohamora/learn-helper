@@ -79,8 +79,8 @@ describe.concurrent('vocabulary-task.service', () => {
 
       await expect({ items, tasks }).toSatisfyStatements([
         'Each English sentence is one natural sentence with a subject and a verb, set in a specific everyday situation. It does not join two full sentences together.',
-        'Each English sentence contains every word of its item value in the same order. Only grammar changes are allowed, such as a verb form or "a" becoming "an". Extra words may come before or after, and a placeholder like (sb) or (sth) is replaced by a word.',
-        'Each English sentence uses its item in the meaning of the item uaTranslation. A function word like "a" only needs to appear in its normal role in the sentence.',
+        'Each English sentence contains every word of its item value in the same order. Only grammar changes are allowed, such as a verb form or "a" becoming "an". Extra words may come before or after, and a placeholder like (sb) or (sth) is replaced by a word. Search the sentence for each word of the value as a separate word before saying one is missing, including short words like "a".',
+        'Each English sentence uses its item in the meaning of the item uaTranslation. A function word like "a" only needs to appear in its normal role in the sentence. For the item "a", any "a" or "an" before a noun satisfies this, also at the start of the sentence, and the sentence does not need to be about articles.',
         'Each Ukrainian translation means the same as its English sentence and sounds natural to a native speaker. Different valid word forms and word orders are fine.',
         'Each Ukrainian translation uses a neutral word order and avoids lists of similar words. Some flexibility in word order is fine.',
       ]);
@@ -123,8 +123,8 @@ describe.concurrent('vocabulary-task.service', () => {
       await expect({ items, tasks }).toSatisfyStatements([
         'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker. Different valid word forms, active or passive voice, and word orders are fine.',
         'Each English translation is one sentence with a subject and a verb, and means the same as its Ukrainian sentence. It does not join two full sentences together.',
-        'Each English translation contains every word of its item value in the same order. Only grammar changes are allowed, such as a verb form or "a" becoming "an". Extra words may come before or after, and a placeholder like (sb) or (sth) is replaced by a word.',
-        'Each English translation uses its item in the meaning of the item uaTranslation. A function word like "a" only needs to appear in its normal role in the sentence.',
+        'Each English translation contains every word of its item value in the same order. Only grammar changes are allowed, such as a verb form or "a" becoming "an". Extra words may come before or after, and a placeholder like (sb) or (sth) is replaced by a word. Search the translation for each word of the value as a separate word before saying one is missing, including short words like "a".',
+        'Each English translation uses its item in the meaning of the item uaTranslation. A function word like "a" only needs to appear in its normal role in the sentence. For the item "a", any "a" or "an" before a noun satisfies this, also at the start of the sentence, and the sentence does not need to be about articles.',
         'Each English translation uses a neutral word order and avoids lists of similar words. Some flexibility in word order is fine.',
       ]);
     });
