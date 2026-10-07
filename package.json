@@ -28,7 +28,6 @@
     "test:evals": "vitest run --project evals"
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.87",
     "@ai-sdk/openai": "^4.0.83",
     "@date-fns/tz": "^1.5.0",
     "@floating-ui/react": "^0.27.20",
@@ -82,6 +81,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@ai-sdk/google": "^4.0.87",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@eslint/js": "^10.0.1",
