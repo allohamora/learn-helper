@@ -337,6 +337,7 @@ export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => 
               </p>
             }
             className="contents"
+            suspense={false}
             onLoadSuccess={(pdf) => void onDocumentLoadSuccess(pdf)}
             onItemClick={({ pageIndex }) => goToPage(pageIndex + 1)}
           >
