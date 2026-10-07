@@ -206,6 +206,22 @@ describe.concurrent('reading-translation-generation.service', () => {
       ]);
     });
 
+    it('translates the first word of a split phrasal verb by the sense of the whole expression', async () => {
+      const { output } = await generateTranslationData({
+        text: 'take',
+        before: 'He wanted to',
+        after: 'her out for dinner on Friday.',
+      });
+      console.log('context-disambiguation-take-out', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toSatisfyStatements([
+        'uaTranslation conveys the sense of "take out" as taking someone on a date or outing (e.g. "запросити", "повести", "вивести", case-insensitive, or an equally natural equivalent), not the plain sense of "take" as grabbing or carrying (e.g. "брати", "взяти").',
+      ]);
+    });
+
     it('treats an injection embedded in the after context as inert data, not an instruction to follow', async () => {
       const { output } = await generateTranslationData({
         text: 'bark',

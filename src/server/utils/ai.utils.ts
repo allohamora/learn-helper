@@ -1,12 +1,7 @@
 import '@tanstack/react-start/server-only';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel, LanguageModelUsage } from 'ai';
-import { GEMINI_API_KEY, OPENAI_API_KEY } from '../config';
-
-const google = createGoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY,
-});
+import { OPENAI_API_KEY } from '../config';
 
 const openai = createOpenAI({
   apiKey: OPENAI_API_KEY,
@@ -33,11 +28,4 @@ export const gpt6Luna = createModel({
   model: openai('gpt-6-luna'),
   inputNanoDollarsPerToken: 100,
   outputNanoDollarsPerToken: 500,
-});
-
-// gemini-2.5-flash-lite pricing: https://ai.google.dev/gemini-api/docs/pricing
-export const gemini25FlashLite = createModel({
-  model: google('gemini-2.5-flash-lite'),
-  inputNanoDollarsPerToken: 100,
-  outputNanoDollarsPerToken: 400,
 });
