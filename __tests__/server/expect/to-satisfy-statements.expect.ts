@@ -16,12 +16,10 @@ declare module 'vitest' {
   interface Matchers extends CustomMatchers {}
 }
 
-const model = google('gemini-3.1-flash-lite');
-
 expect.extend({
   toSatisfyStatements: async (input, statements) => {
     const { output } = await generateText({
-      model,
+      model: google('gemini-2.5-flash-lite'),
       // without a thinking budget this judge hallucinates evidence (quotes text that isn't in the input); removing it made false positives worse
       providerOptions: {
         google: {
