@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { generateText, Output } from 'ai';
 import { z } from '@hono/zod-openapi';
-import { gpt6Luna } from '../utils/ai.utils';
+import { gemini25FlashLite } from '../utils/ai.utils';
 import type { TranslateSelectionDto } from './dtos/translate-selection.dto';
 
 const translatedSelectionDto = z.object({
@@ -18,7 +18,7 @@ export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { output, usage } = await generateText({
-    model: gpt6Luna.model,
+    model: gemini25FlashLite.model,
     providerOptions: { openrouter: { reasoning: { effort: 'none' } } },
     experimental_telemetry: {
       isEnabled: true,
@@ -87,7 +87,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
   return {
     output,
     cost: {
-      costInNanoDollars: gpt6Luna.calculateCostInNanoDollars(usage),
+      costInNanoDollars: gemini25FlashLite.calculateCostInNanoDollars(usage),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
     },
