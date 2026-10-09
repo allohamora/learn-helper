@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { gemini25FlashLite } from '@/server/utils/ai.utils';
 
 type CustomMatchers = {
-  toSatisfyStatements: (statements: string[]) => Promise<void>;
+  toPassLlmEvals: (evals: string[]) => Promise<void>;
 };
 
 declare module 'vitest' {
@@ -13,7 +13,7 @@ declare module 'vitest' {
 }
 
 expect.extend({
-  toSatisfyStatements: async (input, statements) => {
+  async toPassLlmEvals(input, evals) {
     const { output } = await generateText({
       model: gemini25FlashLite.model,
       // without a thinking budget this judge hallucinates evidence (quotes text that isn't in the input); removing it made false positives worse
@@ -35,17 +35,17 @@ expect.extend({
         'Act as a meticulous, evidence-based test evaluator.',
         '',
         '# Task',
-        'Compare the input against the statements and determine whether all statements are satisfied.',
+        'Compare the input against the evals and determine whether all evals are satisfied.',
         '',
         '## Rules',
         '- Judge only what is literally present in the Input JSON. Do not infer or hallucinate content.',
         '- Only flag a statement as violated if you can quote the exact offending part of the Input JSON, from the field the statement actually refers to; otherwise treat it as satisfied.',
-        "- Only judge against constraints literally written in the Statements - never invent an additional implied rule that isn't stated. A statement banning specific things (e.g. \"no semicolons, colons, or dashes\") never implicitly bans other things it doesn't name (e.g. commas). A statement requiring a word/phrase to appear never implicitly requires it to be the sentence's main focus or subject, unless the statement says so.",
-        '- Interpret statements leniently: accept any reasonable equivalent, not just the examples given.',
+        "- Only judge against constraints literally written in the Evals - never invent an additional implied rule that isn't stated. A statement banning specific things (e.g. \"no semicolons, colons, or dashes\") never implicitly bans other things it doesn't name (e.g. commas). A statement requiring a word/phrase to appear never implicitly requires it to be the sentence's main focus or subject, unless the statement says so.",
+        '- Interpret evals leniently: accept any reasonable equivalent, not just the examples given.',
         '',
         '## Output Requirements',
-        '- `reason`: explanation if the input does not satisfy the statements.',
-        '- `satisfies`: boolean indicating if the input satisfies all the statements.',
+        '- `reason`: explanation if the input does not satisfy the evals.',
+        '- `satisfies`: boolean indicating if the input satisfies all the evals.',
         '- `actual`: stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}]).',
         '- `expected`: stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}]).',
         '',
@@ -54,9 +54,9 @@ expect.extend({
         JSON.stringify(input),
         '```',
         '',
-        '## Statements',
+        '## Evals',
         '```json',
-        JSON.stringify(statements),
+        JSON.stringify(evals),
         '```',
       ].join('\n'),
     });
@@ -65,10 +65,7 @@ expect.extend({
       pass: output.satisfies,
       actual: output.actual,
       expected: output.expected,
-      message: () =>
-        !output.satisfies
-          ? `Expected object to satisfy constraints, but it doesn't. ${output.reason || ''}`
-          : 'Object satisfies all constraints',
+      message: () => `expected ${this.utils.printReceived(input)} to pass evals\n\n${output.reason ?? ''}`,
     };
   },
 });

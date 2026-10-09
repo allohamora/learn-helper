@@ -1,2 +1,2 @@
 import './mocks/dotenv-evals.mock';
-import './expect/to-satisfy-statements.expect';
+import './expect/to-pass-llm-evals.expect';
