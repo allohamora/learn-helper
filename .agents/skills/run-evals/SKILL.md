@@ -16,6 +16,6 @@ description: Run the evals one at a time - fix the prompt on failures and run ag
 - The goal is stable evals and stable prompts. Never accept "it's flaky, nothing we can do" as a reason to ignore, skip, or retry a failure. A flaky eval means the prompt, the code, or the test is not good enough yet, so find the cause and fix it. Report the real result of every run, even when it fails.
 - Never use a loop or any repeat construct (like `for`, `while`, `seq`, `xargs`, `repeat`, `parallel`, or anything similar) to run evals, not even to re-run a single test to check how flaky it is. Every run is its own command. To check a flaky test, run it once per command.
 - Don't weaken an eval just to make it pass.
-- Write prompts in markdown, with simple, natural, concise instructions. Keep fixes general and short, with no long rules or lots of examples.
+- Write prompts in markdown, with simple, natural, concise instructions. Write one sentence per rule, one rule per bullet. Don't add duplicate or obvious rules. Keep fixes general and short, with no long rules or lots of examples.
 - Don't copy eval data into the prompt. That makes the evals meaningless.
 - Keep trying until it's fixed. Only when you've tried all your ideas and still can't fix a test, stop and ask the author what to do.
