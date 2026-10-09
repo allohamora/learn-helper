@@ -78,13 +78,20 @@ describe.concurrent('vocabulary-task.service', () => {
       expect(articleTask?.sentence).toMatch(/\b(?:a|an)\b/iu);
 
       await expect({ items, tasks }).toPassLlmEvals([
-        'Each English sentence is one natural sentence with a subject and a verb, set in a specific everyday situation.',
+        'Each English sentence is one natural sentence with a subject and a verb.',
+        'Each English sentence is set in a specific everyday situation.',
         'Each English sentence does not join two full sentences together.',
-        'Each English sentence contains every word of its item value in the same order, allowing grammar changes like a verb form or "a" becoming "an", extra words before or after, and a placeholder like (sb) or (sth) replaced by a word, and checking each word of the value as a separate word, including short words like "a".',
+        'Each English sentence contains every word of its item value in the same order.',
+        'Each English sentence is checked for every word of the value separately, including short words like "a".',
+        'Each English sentence may change a word form, like a verb form or "a" becoming "an".',
+        'Each English sentence may add extra words before or after the value.',
+        'Each English sentence replaces a placeholder like (sb) or (sth) with a word.',
         'Each English sentence uses its item in the meaning of the item uaTranslation.',
-        'For the item "a", any "a" or "an" before a noun in the sentence counts, also at the start of the sentence, and the sentence does not need to be about articles.',
+        'For the item "a", any "a" or "an" before a noun counts, also at the start of the sentence.',
+        'For the item "a", the sentence does not need to be about articles.',
         'Each Ukrainian translation means the same as its English sentence.',
-        'Each Ukrainian translation sounds natural to a native speaker, allowing different valid word forms and word orders.',
+        'Each Ukrainian translation sounds natural to a native speaker.',
+        'Each Ukrainian translation may use different valid word forms and word orders.',
         'Each Ukrainian translation uses a neutral word order, allowing some flexibility.',
         'Each Ukrainian translation avoids lists of similar words.',
       ]);
@@ -125,13 +132,19 @@ describe.concurrent('vocabulary-task.service', () => {
       expect(articleTask?.translation).toMatch(/\b(?:a|an)\b/iu);
 
       await expect({ items, tasks }).toPassLlmEvals([
-        'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker, allowing different valid word forms, active or passive voice, and word orders.',
+        'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker.',
+        'Each Ukrainian sentence may use different valid word forms, active or passive voice, and word orders.',
         'Each English translation is one sentence with a subject and a verb.',
         'Each English translation means the same as its Ukrainian sentence.',
         'Each English translation does not join two full sentences together.',
-        'Each English translation contains every word of its item value in the same order, allowing grammar changes like a verb form or "a" becoming "an", extra words before or after, and a placeholder like (sb) or (sth) replaced by a word, and checking each word of the value as a separate word, including short words like "a".',
+        'Each English translation contains every word of its item value in the same order.',
+        'Each English translation is checked for every word of the value separately, including short words like "a".',
+        'Each English translation may change a word form, like a verb form or "a" becoming "an".',
+        'Each English translation may add extra words before or after the value.',
+        'Each English translation replaces a placeholder like (sb) or (sth) with a word.',
         'Each English translation uses its item in the meaning of the item uaTranslation.',
-        'For the item "a", any "a" or "an" before a noun in the translation counts, also at the start of the sentence, and the translation does not need to be about articles.',
+        'For the item "a", any "a" or "an" before a noun counts, also at the start of the sentence.',
+        'For the item "a", the translation does not need to be about articles.',
         'Each English translation uses a neutral word order, allowing some flexibility.',
         'Each English translation avoids lists of similar words.',
       ]);

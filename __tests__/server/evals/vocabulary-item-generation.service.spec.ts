@@ -44,7 +44,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "elephant".',
-        'definition is a short English definition of the animal, with no examples or translations.',
+        'definition is a short English definition of the animal.',
+        'definition has no examples or translations.',
         'uaTranslation is the Ukrainian word for the animal, like "слон".',
       ]);
     });
@@ -184,7 +185,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "a".',
-        'definition says it is the indefinite article and that it is used before a singular noun.',
+        'definition says it is the indefinite article.',
+        'definition says it is used before a singular noun.',
         'uaTranslation names the indefinite article in Ukrainian, like "неозначений артикль".',
       ]);
     });
@@ -201,7 +203,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "to".',
-        'definition says it marks the infinitive and comes before the base form of a verb.',
+        'definition says it marks the infinitive.',
+        'definition says it comes before the base form of a verb.',
         'uaTranslation names the infinitive marker in Ukrainian, like "частка інфінітива".',
       ]);
     });
@@ -323,7 +326,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'value is "hang out with (sb)" or a similar form: "up" is fixed to "out", and "her" becomes "(sb)".',
+        'value is "hang out with (sb)" or a similar form.',
+        'value fixes "up" to "out".',
+        'value turns "her" into "(sb)".',
         'definition means spending time with somebody.',
         'definition is not about ending a phone call.',
         'uaTranslation shows the placeholder in parentheses, like "(кимось)".',
