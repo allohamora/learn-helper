@@ -24,48 +24,41 @@ expect.extend({
       },
       output: Output.object({
         schema: z.object({
-          reason: z.string().nullable(),
-          satisfies: z.boolean(),
-          actual: z.string().nullable(),
-          expected: z.string().nullable(),
+          issues: z.array(z.object({ idx: z.number(), message: z.string() })),
         }),
       }),
-      prompt: [
-        '# Role',
-        'Act as a meticulous, evidence-based test evaluator.',
-        '',
+      instructions: [
         '# Task',
-        'Compare the input against the evals and determine whether all evals are satisfied.',
+        'Validate the input against the evals, the way a schema validator checks a value against its schema.',
         '',
-        '## Rules',
-        '- Judge only what is literally present in the Input JSON. Do not infer or hallucinate content.',
-        '- Only flag a statement as violated if you can quote the exact offending part of the Input JSON, from the field the statement actually refers to; otherwise treat it as satisfied.',
-        "- Only judge against constraints literally written in the Evals - never invent an additional implied rule that isn't stated. A statement banning specific things (e.g. \"no semicolons, colons, or dashes\") never implicitly bans other things it doesn't name (e.g. commas). A statement requiring a word/phrase to appear never implicitly requires it to be the sentence's main focus or subject, unless the statement says so.",
-        '- Interpret evals leniently: accept any reasonable equivalent, not just the examples given.',
+        '# Rules',
+        '- An eval fails if the input contradicts it or lacks what it requires.',
+        '- Compare the way each eval says, whether equal, like, or anything else.',
+        '- Report only real failures of the given evals, nothing else.',
         '',
-        '## Output Requirements',
-        '- `reason`: explanation if the input does not satisfy the evals.',
-        '- `satisfies`: boolean indicating if the input satisfies all the evals.',
-        '- `actual`: stringified JSON of the actual value that failed the constraint (extract only the relevant part in the same json format as expected, example: [{"id":1,"value":{"key":"value"}}]).',
-        '- `expected`: stringified JSON of the expected value that would satisfy the constraint (extract only the relevant part in the same json format as actual, example: [{"id":1,"value":{"key":"value"}}]).',
-        '',
-        '## Input',
+        '# Output',
+        '- `issues`: one item per failed eval, empty if every eval passes.',
+        '- `issues[].idx`: the `idx` of the failed eval.',
+        '- `issues[].message`: what is wrong, with the evidence: the wrong value, or that it is missing.',
+      ].join('\n'),
+      prompt: [
+        '# Input',
         '```json',
         JSON.stringify(input),
         '```',
         '',
-        '## Evals',
+        '# Evals',
         '```json',
-        JSON.stringify(evals),
+        JSON.stringify(evals.map((item, idx) => ({ idx, eval: item }))),
         '```',
       ].join('\n'),
     });
 
+    const issues = output.issues.map(({ idx, message }) => `✖ ${message}\n  → ${evals[idx]}`).join('\n');
+
     return {
-      pass: output.satisfies,
-      actual: output.actual,
-      expected: output.expected,
-      message: () => `expected ${this.utils.printReceived(input)} to pass evals\n\n${output.reason ?? ''}`,
+      pass: output.issues.length === 0,
+      message: () => `expected ${this.utils.printReceived(input)} to pass evals${issues ? `:\n\n${issues}\n` : '.'}`,
     };
   },
 });
