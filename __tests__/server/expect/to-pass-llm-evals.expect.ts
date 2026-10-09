@@ -16,12 +16,7 @@ expect.extend({
   async toPassLlmEvals(input, evals) {
     const { output } = await generateText({
       model: claudeHaiku55.model,
-      // without a thinking budget this judge hallucinates evidence (quotes text that isn't in the input); removing it made false positives worse
-      providerOptions: {
-        openrouter: {
-          reasoning: { max_tokens: 1024 },
-        },
-      },
+      providerOptions: { openrouter: { reasoning: { enabled: false } } },
       output: Output.object({
         schema: z.object({
           issues: z.array(z.object({ idx: z.number(), message: z.string() })),
