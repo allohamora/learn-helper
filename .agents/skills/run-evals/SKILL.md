@@ -27,7 +27,7 @@ description: Run the evals one at a time - fix the prompt on failures and run ag
 - Don't weaken an eval to make it pass.
 - Don't copy eval data into the prompt.
 - Write prompts in markdown with simple, concise instructions.
-- Write one sentence per rule and one rule per bullet.
+- Write one sentence per rule and one rule per bullet, everywhere in the prompt.
 - Don't add duplicate or obvious rules.
 - Keep fixes general and short, with no long rules or many examples.
 - Keep trying until it's fixed, and ask the author only after all ideas fail.
