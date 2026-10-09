@@ -141,7 +141,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "instead of".',
-        'definition means in place of something.',
+        'definition conveys that something is used in place of something else.',
         'uaTranslation is one Ukrainian equivalent, like "замість".',
         'uaTranslation is not a list of options.',
       ]);
@@ -169,9 +169,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'definition says it is now up to someone else to act or decide.',
+        'definition says the responsibility to act or decide now lies with someone.',
         'definition is not about a real ball.',
-        'uaTranslation is a natural Ukrainian phrase meaning the next move is up to the other person.',
+        'uaTranslation is a natural Ukrainian phrase meaning the next move is up to the listener.',
         'uaTranslation is not a word-for-word translation.',
       ]);
     });
@@ -204,7 +204,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       await expect(output).toPassLlmEvals([
         'value is "to".',
         'definition says it marks the infinitive.',
-        'definition says it comes before the base form of a verb.',
+        'definition says it is used before a verb.',
         'uaTranslation names the infinitive marker in Ukrainian, like "частка інфінітива".',
       ]);
     });

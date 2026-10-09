@@ -67,8 +67,8 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(false);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is an accurate Ukrainian translation of the whole sentence.',
-        'uaTranslation leaves nothing out.',
+        `uaTranslation is an accurate Ukrainian translation of the whole sentence "${text}".`,
+        `uaTranslation leaves nothing out of the sentence "${text}".`,
       ]);
     });
 
@@ -229,7 +229,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation means taking someone out on a date or outing, like "запросити" or "повести".',
+        'uaTranslation means taking someone out on a date or outing, like "запросити", "запрошувати", or "повести".',
         'uaTranslation is not grabbing or carrying, like "брати" or "взяти".',
       ]);
     });

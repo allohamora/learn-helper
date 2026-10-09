@@ -71,7 +71,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
       '- Never use the headword itself to define it.',
       '- For a function word, name its grammar role.',
       '- For a function word, also say how it is usually used.',
-      '- For a number, write only the number in digits.',
+      '- For a number, write the digits only, with no words.',
       '- Refer to a placeholder as `somebody` or `something`.',
       '',
       '## uaTranslation',
