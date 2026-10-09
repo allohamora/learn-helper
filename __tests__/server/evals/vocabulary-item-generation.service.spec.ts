@@ -74,7 +74,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "run".',
-        'definition is the noun meaning of an act of running, not the verb.',
+        'definition is the noun meaning of an act of running.',
+        'definition is not the verb meaning.',
       ]);
     });
 
@@ -90,7 +91,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "cell".',
-        'definition is about the basic unit of living things, not a phone, a prison room, or a battery.',
+        'definition is about the basic unit of living things.',
+        'definition is not about a phone, a prison room, or a battery.',
         'uaTranslation is the Ukrainian word for a living cell, like "клітина".',
       ]);
     });
@@ -107,7 +109,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "bank".',
-        'definition is about a financial institution, not a river bank.',
+        'definition is about a financial institution.',
+        'definition is not about a river bank.',
       ]);
     });
 
@@ -138,7 +141,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       await expect(output).toPassLlmEvals([
         'value is "instead of".',
         'definition means in place of something.',
-        'uaTranslation is one Ukrainian equivalent, like "замість", not a list of options.',
+        'uaTranslation is one Ukrainian equivalent, like "замість".',
+        'uaTranslation is not a list of options.',
       ]);
     });
 
@@ -164,8 +168,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'definition says it is now up to someone else to act or decide, not about a real ball.',
-        'uaTranslation is a natural Ukrainian phrase meaning the next move is up to the other person, not a word-for-word translation.',
+        'definition says it is now up to someone else to act or decide.',
+        'definition is not about a real ball.',
+        'uaTranslation is a natural Ukrainian phrase meaning the next move is up to the other person.',
+        'uaTranslation is not a word-for-word translation.',
       ]);
     });
 
@@ -225,7 +231,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "give up".',
-        'definition means to stop trying or to quit, not to give up a specific thing like a habit.',
+        'definition means to stop trying or to quit.',
+        'definition is not about giving up a specific thing like a habit.',
       ]);
     });
 
@@ -250,8 +257,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "mercury", in lowercase.',
-        'definition is about the liquid metal, not the planet or the god.',
-        'uaTranslation is the Ukrainian word for the metal, like "ртуть", not the planet.',
+        'definition is about the liquid metal.',
+        'definition is not about the planet or the god.',
+        'uaTranslation is the Ukrainian word for the metal, like "ртуть".',
+        'uaTranslation is not the Ukrainian word for the planet.',
       ]);
     });
 
@@ -264,7 +273,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Pronoun);
 
       await expect(output).toPassLlmEvals([
-        'definition is about the pronoun for a thing, animal, or situation, not information technology.',
+        'definition is about the pronoun for a thing, animal, or situation.',
+        'definition is not about information technology.',
         'uaTranslation is a Ukrainian pronoun, like "воно" or "це".',
       ]);
     });
@@ -314,8 +324,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "hang out with (sb)" or a similar form: "up" is fixed to "out", and "her" becomes "(sb)".',
-        'definition means spending time with somebody, not ending a phone call.',
-        'uaTranslation shows the placeholder in parentheses, like "(кимось)", not the word "нею".',
+        'definition means spending time with somebody.',
+        'definition is not about ending a phone call.',
+        'uaTranslation shows the placeholder in parentheses, like "(кимось)".',
+        'uaTranslation does not use the word "нею".',
       ]);
     });
 
@@ -368,7 +380,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
       await expect(output).toPassLlmEvals([
-        'definition is about the land beside a river, not a financial institution.',
+        'definition is about the land beside a river.',
+        'definition is not about a financial institution.',
         'uaTranslation is the Ukrainian word for a river bank, like "берег".',
       ]);
     });
@@ -393,7 +406,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
 
       await expect(output).toPassLlmEvals([
-        'spelling is a US English transcription: it ends in an "r" sound (like "ər" or "ɚ"), not the British "ə" with no "r".',
+        'spelling is a US English transcription that ends in an "r" sound (like "ər" or "ɚ").',
+        'spelling is not the British "ə" with no "r".',
       ]);
     });
   });
