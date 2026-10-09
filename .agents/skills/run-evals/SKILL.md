@@ -13,7 +13,8 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Run all the related evals.
 - Save the full output to a temp file, so the result is not lost.
 - Show only the counts, the failed test names, and the failure reasons, not the full output.
-- If all passed, add 1 to the full loop streak (e.g. `full loop streak 2/5`).
+- After each full run, log one line with the full loop streak (e.g. `full loop: 1/5`).
+- If all passed, add 1 to the full loop streak.
 - If something failed, reset the full loop streak to 0 and start the fix loop.
 - Stop and sum up at 5 full passes in a row, or the number the author asks for.
 
@@ -23,8 +24,7 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Say what I suggest.
 - Make a change that fixes that cause, for every failed test, before running anything.
 - Run only the fixed tests together as one group, not the whole suite.
-- Run the group, each run as its own command, and track a fix loop streak for each test (e.g. `fix loop streak 2/5`).
-- After each group run, log one line with the fix loop streak of each test (e.g. `Test A 3/5, Test B 1/5`).
+- Run the group, each run as its own command, and after each run log one line with the fix loop streak of each test (e.g. `fix loop: test a 3/5, test b 3/5`).
 - If a test fails, the fix is wrong, so reset its fix loop streak to 0 and change its fix.
 - When a test reaches a fix loop streak of 5, drop it from the group.
 - Keep running and fixing the rest of the group.
