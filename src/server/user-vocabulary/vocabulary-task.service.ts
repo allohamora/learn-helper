@@ -30,6 +30,7 @@ export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: Vocabula
 export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) => {
   const { output, usage } = await generateText({
     model: gpt6Luna.model,
+    providerOptions: { openrouter: { reasoning: { effort: 'none' } } },
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateEnglishSentence',
@@ -122,6 +123,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
 export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) => {
   const { output, usage } = await generateText({
     model: gpt6Luna.model,
+    providerOptions: { openrouter: { reasoning: { effort: 'none' } } },
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'toTranslateUkrainianSentence',
