@@ -1,10 +1,10 @@
 import '@tanstack/react-start/server-only';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { LanguageModel, LanguageModelUsage } from 'ai';
-import { OPENAI_API_KEY } from '../config';
+import { OPENROUTER_API_KEY } from '../config';
 
-const openai = createOpenAI({
-  apiKey: OPENAI_API_KEY,
+const openrouter = createOpenRouter({
+  apiKey: OPENROUTER_API_KEY,
 });
 
 type CreateModelOptions = {
@@ -23,9 +23,16 @@ const createModel = ({ model, inputNanoDollarsPerToken, outputNanoDollarsPerToke
   },
 });
 
-// gpt-6-luna standard-tier, short-context pricing: https://developers.openai.com/api/docs/pricing
+// openai/gpt-6-luna short-context pricing: https://openrouter.ai/openai/gpt-6-luna
 export const gpt6Luna = createModel({
-  model: openai('gpt-6-luna'),
+  model: openrouter('openai/gpt-6-luna'),
   inputNanoDollarsPerToken: 100,
   outputNanoDollarsPerToken: 500,
+});
+
+// https://openrouter.ai/google/gemini-2.5-flash-lite
+export const gemini25FlashLite = createModel({
+  model: openrouter('google/gemini-2.5-flash-lite'),
+  inputNanoDollarsPerToken: 100,
+  outputNanoDollarsPerToken: 400,
 });

@@ -19,7 +19,7 @@ export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { output, usage } = await generateText({
     model: gpt6Luna.model,
-    providerOptions: { openai: { reasoningEffort: 'none' } },
+    providerOptions: { openrouter: { reasoning: { effort: 'none' } } },
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateTranslationData',

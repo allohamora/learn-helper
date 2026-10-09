@@ -1,11 +1,7 @@
 import { expect } from 'vitest';
 import { generateText, Output } from 'ai';
-import { createGoogleGenerativeAI, type GoogleLanguageModelOptions } from '@ai-sdk/google';
 import { z } from 'zod';
-
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+import { gemini25FlashLite } from '@/server/utils/ai.utils';
 
 type CustomMatchers = {
   toSatisfyStatements: (statements: string[]) => Promise<void>;
@@ -19,14 +15,12 @@ declare module 'vitest' {
 expect.extend({
   toSatisfyStatements: async (input, statements) => {
     const { output } = await generateText({
-      model: google('gemini-2.5-flash-lite'),
+      model: gemini25FlashLite.model,
       // without a thinking budget this judge hallucinates evidence (quotes text that isn't in the input); removing it made false positives worse
       providerOptions: {
-        google: {
-          thinkingConfig: {
-            thinkingBudget: 1024,
-          },
-        } satisfies GoogleLanguageModelOptions,
+        openrouter: {
+          reasoning: { max_tokens: 1024 },
+        },
       },
       output: Output.object({
         schema: z.object({
