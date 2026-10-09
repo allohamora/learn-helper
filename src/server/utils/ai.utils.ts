@@ -30,9 +30,9 @@ export const gpt6Luna = createModel({
   outputNanoDollarsPerToken: 500,
 });
 
-// https://openrouter.ai/google/gemini-2.5-flash-lite
-export const gemini25FlashLite = createModel({
-  model: openrouter('google/gemini-2.5-flash-lite'),
+// anthropic/claude-haiku-5.5 short-context pricing: https://openrouter.ai/anthropic/claude-haiku-5.5
+export const claudeHaiku55 = createModel({
+  model: openrouter('anthropic/claude-haiku-5.5'),
   inputNanoDollarsPerToken: 100,
-  outputNanoDollarsPerToken: 400,
+  outputNanoDollarsPerToken: 500,
 });

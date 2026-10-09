@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
-import { gemini25FlashLite } from '@/server/utils/ai.utils';
+import { claudeHaiku55 } from '@/server/utils/ai.utils';
 
 type CustomMatchers = {
   toPassLlmEvals: (evals: string[]) => Promise<void>;
@@ -15,7 +15,7 @@ declare module 'vitest' {
 expect.extend({
   async toPassLlmEvals(input, evals) {
     const { output } = await generateText({
-      model: gemini25FlashLite.model,
+      model: claudeHaiku55.model,
       // without a thinking budget this judge hallucinates evidence (quotes text that isn't in the input); removing it made false positives worse
       providerOptions: {
         openrouter: {
