@@ -1,5 +1,5 @@
 ---
-name: run-evals
+name: fix-evals
 description: Run the evals, fix failures by re-running only the failed tests, and stop when the full suite passes 5 times in a row.
 ---
 
