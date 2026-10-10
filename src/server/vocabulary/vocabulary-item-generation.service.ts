@@ -58,7 +58,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
       '- Keep multi-word values in the form given, except to fix mistakes, to add placeholders, and to cut a sentence down to its fixed expression.',
       '- If a sentence is built around a phrasal verb or another fixed expression, use that expression alone, in its dictionary form.',
       '- Keep a sentence that is itself an idiom whole.',
-      '- Write numbers out in words.',
+      '- Write a value that is only a number out in words.',
       '- If the value has a specific object, replace the object with a placeholder, like `(sb)`, `(sth)`, or `(sb/sth)`, and drop extra words such as time or place.',
       '- If only one word is left without the object, use that word alone.',
       '- Keep a pronoun that is a fixed part of the expression, like `thank you` or `excuse me`.',

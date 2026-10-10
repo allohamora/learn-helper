@@ -92,6 +92,14 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).toBe('42');
     });
 
+    it('translates a number written in words into Ukrainian words', async () => {
+      const { output } = await generateTranslationData({ text: 'seventeen' });
+      console.log('number-in-words', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('сімнадцять');
+    });
+
     it("mirrors the selected text's lowercase casing instead of capitalizing it", async () => {
       const { output } = await generateTranslationData({ text: 'test' });
       console.log('lowercase-casing', JSON.stringify(output, null, 2));

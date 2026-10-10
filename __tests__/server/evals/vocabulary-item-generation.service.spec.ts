@@ -159,6 +159,14 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       await expect(output).toPassLlmEvals(['uaTranslation is the Ukrainian word for seventeen, like "сімнадцять".']);
     });
 
+    it('keeps digits of a number inside a phrase', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'the 20th century' });
+      console.log('number-in-phrase', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value).toBe('the 20th century');
+    });
+
     it('corrects and interprets a full idiomatic sentence', async () => {
       const { output } = await generateVocabularyItemData({ value: "the ball is in you're court" });
       console.log('idiomatic-sentence', JSON.stringify(output, null, 2));
