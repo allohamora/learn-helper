@@ -255,12 +255,12 @@ describe.concurrent('reading-translation-generation.service', () => {
     });
 
     it('describes an article by its grammar role', async () => {
-      const { output } = await generateTranslationData({
+      const { reasoning, output } = await generateTranslationData({
         text: 'a',
         before: 'She adopted',
         after: 'dog.',
       });
-      console.log('article', JSON.stringify(output, null, 2));
+      console.log('article', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
 
@@ -270,8 +270,8 @@ describe.concurrent('reading-translation-generation.service', () => {
     });
 
     it('gives one pronoun instead of all its gender forms', async () => {
-      const { output } = await generateTranslationData({ text: 'it' });
-      console.log('pronoun', JSON.stringify(output, null, 2));
+      const { reasoning, output } = await generateTranslationData({ text: 'it' });
+      console.log('pronoun', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
       expect(output.uaTranslation).not.toMatch(/\//u);

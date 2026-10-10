@@ -17,7 +17,7 @@ const generatedVocabularyItemDto = z.object({
 export type GeneratedVocabularyItemDto = z.infer<typeof generatedVocabularyItemDto>;
 
 export const generateVocabularyItemData = async ({ value, context }: GenerateVocabularyItemDto) => {
-  const { output, usage } = await generateText({
+  const { finalStep, output, usage } = await generateText({
     model: gpt6Luna.model,
     providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
     experimental_telemetry: {
@@ -119,6 +119,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
   });
 
   return {
+    reasoning: finalStep.reasoningText,
     output,
     cost: {
       costInNanoDollars: gpt6Luna.calculateCostInNanoDollars(usage),

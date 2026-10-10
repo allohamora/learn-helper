@@ -503,6 +503,7 @@ describe('userVocabularyListService', () => {
       generateSpy = vi
         .spyOn(vocabularyItemGenerationService, 'generateVocabularyItemData')
         .mockImplementation(async ({ value }) => ({
+          reasoning: undefined,
           output: {
             value,
             definition: `definition of ${value}`,

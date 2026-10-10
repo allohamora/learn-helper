@@ -822,7 +822,7 @@ describe('userVocabularyItemService', () => {
       const english = vi
         .spyOn(vocabularyTaskService, 'toTranslateEnglishSentence')
         .mockImplementation(async (items) => ({
-          reasoning: [],
+          reasoning: undefined,
           tasks: items.map(({ id }) => ({ id, sentence: `EN sentence ${id}`, translation: `UA translation ${id}` })),
           cost: {
             taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
@@ -835,7 +835,7 @@ describe('userVocabularyItemService', () => {
       const ukrainian = vi
         .spyOn(vocabularyTaskService, 'toTranslateUkrainianSentence')
         .mockImplementation(async (items) => ({
-          reasoning: [],
+          reasoning: undefined,
           tasks: items.map(({ id }) => ({ id, sentence: `UA sentence ${id}`, translation: `EN translation ${id}` })),
           cost: {
             taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
