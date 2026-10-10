@@ -238,6 +238,25 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       ]);
     });
 
+    it("marks a person's name as not learnable and writes it in Ukrainian letters", async () => {
+      const { output } = await generateVocabularyItemData({ value: 'Margaret' });
+      console.log('person-name', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(false);
+
+      await expect(output).toPassLlmEvals(['uaTranslation is the name written in Ukrainian, like "Маргарет".']);
+    });
+
+    it('keeps a brand name in its original spelling and marks it not learnable', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'Google' });
+      console.log('brand-name', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('Google');
+      expect(output.isLearnable).toBe(false);
+    });
+
     it('capitalizes a proper noun, matching the dictionary-value convention', async () => {
       const { output } = await generateVocabularyItemData({ value: 'ukraine' });
       console.log('proper-noun', JSON.stringify(output, null, 2));

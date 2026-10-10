@@ -317,6 +317,19 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
     });
 
+    it('keeps a brand name in its original spelling and marks it not learnable', async () => {
+      const { output } = await generateTranslationData({
+        text: 'Google',
+        before: 'She searched it on',
+        after: 'yesterday.',
+      });
+      console.log('brand-name', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('Google');
+      expect(output.isLearnable).toBe(false);
+    });
+
     it('lowercases a language name, following Ukrainian rules', async () => {
       const { output } = await generateTranslationData({
         text: 'French',
