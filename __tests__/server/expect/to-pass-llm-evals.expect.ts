@@ -24,7 +24,7 @@ expect.extend({
       }),
       instructions: [
         '# Task',
-        'Validate the input against the evals, the way a schema validator checks a value against its schema.',
+        '- Validate the input against the evals, the way a schema validator checks a value against its schema.',
         '',
         '# Input',
         '- The user message is a JSON object with `input` and `evals`.',
@@ -43,7 +43,8 @@ expect.extend({
         '- Copy the `idx` of the eval exactly as given, never invent one.',
         '',
         '## results[].reason',
-        '- Explain in detail why the eval passes or does not pass, never just that it does or does not, with the evidence, like the wrong value, or that it is missing, etc.',
+        '- Explain why the eval passes or does not pass, never just that it does or does not.',
+        '- Give the evidence, like the wrong value or what is missing.',
         '',
         '## results[].isPassed',
         '- `true` if the eval passes, `false` if it does not pass.',
