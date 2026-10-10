@@ -19,6 +19,7 @@ export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { output, usage } = await generateText({
     model: gemini25FlashLite.model,
+    temperature: 0.7,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateTranslationData',
