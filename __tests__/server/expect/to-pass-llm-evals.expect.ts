@@ -44,7 +44,7 @@ expect.extend({
         '',
         '## results[].reason',
         '- Explain why the eval passes or does not pass, never just that it does or does not.',
-        '- Give the evidence, like the wrong value or what is missing.',
+        '- Give the evidence, like the wrong value, what is missing, etc.',
         '',
         '## results[].isPassed',
         '- `true` if the eval passes, `false` if it does not pass.',
