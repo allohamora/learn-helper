@@ -42,8 +42,9 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Write prompts in markdown with simple, concise, natural instructions.
 - Write one sentence per rule and one rule per bullet, everywhere in the prompt, and give each rule one job and a clear scope.
 - Don't add duplicate or obvious rules, and extend an existing rule instead of adding a new one when you can.
-- Keep fixes general and short, with no long rules or many examples.
-- Make rules direct, so they leave less room for a mistake, without hardcoding cases.
+- Keep fixes short, with no long rules or many examples.
+- Make rules direct, so they leave less room for a mistake.
+- Make rules general, so they also handle future cases and not just the failed one, by stating the reason behind the right answer instead of mapping one input to one answer.
 - End a list of examples with `etc.`, like `a, b, c, etc.`, so the LLM handles more cases than just the listed ones.
 - Never stop the loop or ask the author before the stop condition, except after all ideas fail.
 - Treat the judge as a validator that only checks the output, one rule per statement.
