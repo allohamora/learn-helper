@@ -23,7 +23,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals(['uaTranslation is the Ukrainian word for the animal, like "слон".']);
+      expect(output.uaTranslation).toBe('слон');
     });
 
     it('falls back to the most common sense when there is no surrounding context', async () => {
@@ -33,7 +33,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals(['uaTranslation means a financial institution, like "банк".']);
+      expect(output.uaTranslation).toBe('банк');
     });
 
     it('translates an idiom with a Ukrainian idiom and marks it learnable', async () => {
@@ -43,8 +43,10 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
+      expect(output.uaTranslation).not.toMatch(/кіт|кот|кіш|соба|пес|псів/iu);
+
       await expect(output).toPassLlmEvals([
-        'uaTranslation is a Ukrainian idiom for heavy rain, like "ллє як з відра", and does not mention cats or dogs.',
+        'uaTranslation is a Ukrainian idiom for heavy rain, like "ллє як з відра".',
       ]);
     });
 
@@ -55,7 +57,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals(['uaTranslation means beside something, like "поруч з" or "біля".']);
+      expect(output.uaTranslation).toMatch(/^(?:поруч|поряд|біля)(?:\s|$)/u);
     });
 
     it('translates a full sentence accurately and marks it not learnable', async () => {
@@ -155,11 +157,11 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation.trim().toLowerCase()).not.toBe(after.trim().toLowerCase());
       expect(output.uaTranslation.trim().toLowerCase()).not.toBe(before.trim().toLowerCase());
       expect(output.isLearnable).toBe(false);
+      expect(output.uaTranslation).not.toMatch(/книг|сторінк/iu);
 
       await expect(output).toPassLlmEvals([
         'uaTranslation translates the text about pastel de nata and ends where it mentions the old proverb.',
         'uaTranslation may have small grammar slips.',
-        'uaTranslation does not include or paraphrase the quote about life being like a book.',
       ]);
     });
 
@@ -173,12 +175,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
       expect(output.isLearnable).toBe(true);
-
-      await expect(output).toPassLlmEvals([
-        'uaTranslation means the sound a dog makes, like "гавкати".',
-        'uaTranslation is not about tree bark.',
-        'uaTranslation does not translate the rest of the sentence.',
-      ]);
+      expect(output.uaTranslation).toMatch(/^гавк\S*$/u);
     });
 
     it('translates the fixed collocation "cramped quarters" and marks it learnable', async () => {
@@ -188,10 +185,10 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals([
-        'uaTranslation means small, crowded living space, like "тісне житло".',
-        'uaTranslation is not about fractions, coins, or city districts.',
-      ]);
+      expect(output.uaTranslation).toMatch(/^тісн/u);
+      expect(output.uaTranslation).not.toMatch(/чверт|монет|квартал/iu);
+
+      await expect(output).toPassLlmEvals(['uaTranslation means small, crowded living space, like "тісне житло".']);
     });
 
     it('uses surrounding context to translate "quarters" as living space, not a fraction or coin', async () => {
@@ -205,10 +202,9 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals([
-        'uaTranslation means living space, like "житло" or "приміщення".',
-        'uaTranslation is not a fourth ("чверть") or a coin.',
-      ]);
+      expect(output.uaTranslation).not.toMatch(/чверт|монет/iu);
+
+      await expect(output).toPassLlmEvals(['uaTranslation means living space, like "житло" or "приміщення".']);
     });
 
     it('uses surrounding context to translate "cramped" consistently with the following "quarters"', async () => {
@@ -222,7 +218,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals(['uaTranslation is an adjective meaning lacking space, like "тісний".']);
+      expect(output.uaTranslation).toMatch(/^тісн\S*$/u);
     });
 
     it('translates the first word of a split phrasal verb by the sense of the whole expression', async () => {
@@ -264,7 +260,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      await expect(output).toPassLlmEvals(['uaTranslation means to receive, like "отримувати" or "отримати".']);
+      expect(output.uaTranslation).toMatch(/^(?:отрим|одерж)\S*$/u);
     });
 
     it('describes an article by its grammar role', async () => {
@@ -277,9 +273,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      await expect(output).toPassLlmEvals([
-        'uaTranslation names the indefinite article in Ukrainian, like "неозначений артикль".',
-      ]);
+      expect(output.uaTranslation).toMatch(/неозначений артикль/iu);
     });
 
     it('gives one pronoun instead of all its gender forms', async () => {
@@ -301,9 +295,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
       expect(output.isLearnable).toBe(true);
-      expect(output.uaTranslation.toLowerCase()).not.toContain('hacked');
-
-      await expect(output).toPassLlmEvals(['uaTranslation means the sound a dog makes, like "гавкати".']);
+      expect(output.uaTranslation).toMatch(/^гавк\S*$/u);
     });
 
     it('translates an injection-shaped selection literally instead of following it', async () => {
@@ -333,7 +325,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(false);
 
-      await expect(output).toPassLlmEvals(['uaTranslation is the name written in Ukrainian, like "Маргарет".']);
+      expect(output.uaTranslation).toBe('Маргарет');
     });
 
     it('capitalizes a place name even when the selection is in lowercase', async () => {
@@ -389,7 +381,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      await expect(output).toPassLlmEvals(['uaTranslation is a Ukrainian translation of "beautiful garden".']);
+      expect(output.uaTranslation).toMatch(/^(?:красив|гарн|прекрасн|чудов)\S* сад$/iu);
     });
 
     it('returns non-English text unchanged and marks it not learnable', async () => {

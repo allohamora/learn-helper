@@ -26,24 +26,55 @@ describe.concurrent('vocabulary-task.service', () => {
     ...data,
   });
 
-  const items = (
+  const cases = (
     [
-      { value: 'a', uaTranslation: 'неозначений артикль', partOfSpeech: 'indefinite article' },
-      { value: 'can', uaTranslation: 'могти', partOfSpeech: 'modal verb' },
-      { value: 'be going to do (sth)', uaTranslation: 'збиратися (щось) зробити', partOfSpeech: null },
-      { value: 'for the first time', uaTranslation: 'вперше', partOfSpeech: null },
-      { value: 'take (sb) out', uaTranslation: 'запрошувати (когось) кудись', partOfSpeech: null },
-      { value: 'piece of cake', uaTranslation: 'раз плюнути', partOfSpeech: null },
-      { value: 'ability', uaTranslation: 'здатність', partOfSpeech: 'noun' },
-      { value: 'challenge', uaTranslation: 'виклик', partOfSpeech: 'noun' },
-      { value: 'abandon', uaTranslation: 'залишати напризволяще', partOfSpeech: 'verb' },
-      { value: 'absence', uaTranslation: 'відсутність', partOfSpeech: 'noun' },
-      { value: 'bat', uaTranslation: 'кажан', partOfSpeech: 'noun' },
-    ] satisfies Omit<VocabularyItemData, 'id'>[]
-  ).map((data) => item(data));
+      {
+        value: 'a',
+        uaTranslation: 'неозначений артикль',
+        partOfSpeech: 'indefinite article',
+        pattern: /\b(?:a|an)\b/iu,
+      },
+      { value: 'can', uaTranslation: 'могти', partOfSpeech: 'modal verb', pattern: /\b(?:can|cannot|could)\b/iu },
+      {
+        value: 'be going to do (sth)',
+        uaTranslation: 'збиратися (щось) зробити',
+        partOfSpeech: null,
+        pattern: /(?:\b(?:am|is|are|was|were|be)|['’](?:m|s|re))\s+going to do\s+\S/iu,
+      },
+      {
+        value: 'for the first time',
+        uaTranslation: 'вперше',
+        partOfSpeech: null,
+        pattern: /\bfor the first time\b/iu,
+      },
+      {
+        value: 'take (sb) out',
+        uaTranslation: 'запрошувати (когось) кудись',
+        partOfSpeech: null,
+        pattern: /\b(?:take|takes|took|taken|taking)\s+(?:\S+\s+)+?out\b/iu,
+      },
+      { value: 'piece of cake', uaTranslation: 'раз плюнути', partOfSpeech: null, pattern: /\bpiece of cake\b/iu },
+      { value: 'ability', uaTranslation: 'здатність', partOfSpeech: 'noun', pattern: /\babilit(?:y|ies)\b/iu },
+      { value: 'challenge', uaTranslation: 'виклик', partOfSpeech: 'noun', pattern: /\bchallenges?\b/iu },
+      {
+        value: 'abandon',
+        uaTranslation: 'залишати напризволяще',
+        partOfSpeech: 'verb',
+        pattern: /\babandon(?:s|ed|ing)?\b/iu,
+      },
+      { value: 'absence', uaTranslation: 'відсутність', partOfSpeech: 'noun', pattern: /\babsences?\b/iu },
+      { value: 'bat', uaTranslation: 'кажан', partOfSpeech: 'noun', pattern: /\bbats?\b/iu },
+    ] satisfies (Omit<VocabularyItemData, 'id'> & { pattern: RegExp })[]
+  ).map(({ pattern, ...data }) => ({ item: item(data), pattern }));
 
-  const findTaskByValue = <T extends { id: string }>(tasks: T[], value: string) =>
-    tasks.find((task) => task.id === items.find((item) => item.value === value)?.id);
+  const items = cases.map(({ item }) => item);
+
+  const findPattern = (id: string) => {
+    const pattern = cases.find(({ item }) => item.id === id)?.pattern;
+    if (!pattern) throw new Error(`expected a pattern for task "${id}"`);
+
+    return pattern;
+  };
 
   const withItems = <T extends { id: string }>(tasks: T[]) =>
     tasks.map((task) => {
@@ -80,18 +111,14 @@ describe.concurrent('vocabulary-task.service', () => {
         expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
       }
 
-      const phrasalVerbTask = findTaskByValue(tasks, 'take (sb) out');
-      expect(phrasalVerbTask?.sentence).toMatch(/\b(?:take|takes|took|taken|taking)\b[\s\S]*\bout\b/iu);
-
-      const articleTask = findTaskByValue(tasks, 'a');
-      expect(articleTask?.sentence).toMatch(/\b(?:a|an)\b/iu);
+      for (const task of tasks) {
+        expect(task.sentence).toMatch(findPattern(task.id));
+      }
 
       await expect(withItems(tasks)).toPassLlmEvals([
         'Each English sentence is one natural sentence with a subject and a verb.',
         'Each English sentence is set in a specific everyday situation.',
         'Each English sentence does not join two full sentences together.',
-        'Each English sentence contains every word of its item value, including short words like "a", in the same order, where a word may change its form, like a verb form, a capital letter at the start of the sentence, "a" becoming "an", or "be" becoming "am", "is", "are", "was", or "were", and where extra words may come before or after the value.',
-        'Each English sentence replaces a placeholder like (sb) or (sth) with a word, when its item has one.',
         'Each English sentence uses its item in the meaning of the item uaTranslation, where a grammar word like "a" only needs to be used in that role, not be the topic.',
         'Each Ukrainian translation means the same as its English sentence.',
         'Each Ukrainian translation sounds natural to a native speaker, where any valid word forms and word orders are fine.',
@@ -129,19 +156,15 @@ describe.concurrent('vocabulary-task.service', () => {
         expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
       }
 
-      const phrasalVerbTask = findTaskByValue(tasks, 'take (sb) out');
-      expect(phrasalVerbTask?.translation).toMatch(/\b(?:take|takes|took|taken|taking)\b[\s\S]*\bout\b/iu);
-
-      const articleTask = findTaskByValue(tasks, 'a');
-      expect(articleTask?.translation).toMatch(/\b(?:a|an)\b/iu);
+      for (const task of tasks) {
+        expect(task.translation).toMatch(findPattern(task.id));
+      }
 
       await expect(withItems(tasks)).toPassLlmEvals([
         'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker, where any valid word forms and word orders are fine.',
         'Each English translation is one sentence with a subject and a verb.',
         'Each English translation means the same as its Ukrainian sentence.',
         'Each English translation does not join two full sentences together.',
-        'Each English translation contains every word of its item value, including short words like "a", in the same order, where a word may change its form, like a verb form, a capital letter at the start of the sentence, "a" becoming "an", or "be" becoming "am", "is", "are", "was", or "were", and where extra words may come before or after the value.',
-        'Each English translation replaces a placeholder like (sb) or (sth) with a word, when its item has one.',
         'Each English translation uses its item in the meaning of the item uaTranslation, where a grammar word like "a" only needs to be used in that role, not be the topic.',
         'Each English translation uses a neutral word order, allowing some flexibility.',
         'Each English translation avoids lists of similar words.',

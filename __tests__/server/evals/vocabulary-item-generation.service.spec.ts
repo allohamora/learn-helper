@@ -41,12 +41,12 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
+      expect(output.value).toBe('elephant');
+      expect(output.uaTranslation).toBe('слон');
 
       await expect(output).toPassLlmEvals([
-        'value is "elephant".',
         'definition is a short English definition of the animal.',
         'definition has no examples or translations.',
-        'uaTranslation is the Ukrainian word for the animal, like "слон".',
       ]);
     });
 
@@ -56,11 +56,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Verb);
+      expect(output.value).toBe('run');
 
-      await expect(output).toPassLlmEvals([
-        'value is "run".',
-        'definition is the verb meaning of moving fast on foot.',
-      ]);
+      await expect(output).toPassLlmEvals(['definition is the verb meaning of moving fast on foot.']);
     });
 
     it('uses the context to pick a non-default part of speech and sense', async () => {
@@ -72,9 +70,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
+      expect(output.value).toBe('run');
 
       await expect(output).toPassLlmEvals([
-        'value is "run".',
         'definition is the noun meaning of an act of running.',
         'definition is not the verb meaning.',
       ]);
@@ -90,12 +88,11 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      await expect(output).toPassLlmEvals([
-        'value is "cell".',
-        'definition is about the basic unit of living things.',
-        'definition is not about a phone, a prison room, or a battery.',
-        'uaTranslation is the Ukrainian word for a living cell, like "клітина".',
-      ]);
+      expect(output.value).toBe('cell');
+      expect(output.definition).not.toMatch(/phone|prison|batter/iu);
+      expect(output.uaTranslation).toBe('клітина');
+
+      await expect(output).toPassLlmEvals(['definition is about the basic unit of living things.']);
     });
 
     it('falls back to the most common sense when context does not disambiguate', async () => {
@@ -108,11 +105,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      await expect(output).toPassLlmEvals([
-        'value is "bank".',
-        'definition is about a financial institution.',
-        'definition is not about a river bank.',
-      ]);
+      expect(output.value).toBe('bank');
+      expect(output.definition).toMatch(/financ|money/iu);
+      expect(output.definition).not.toMatch(/river/iu);
     });
 
     it('corrects a misspelled word', async () => {
@@ -139,12 +134,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Preposition);
 
-      await expect(output).toPassLlmEvals([
-        'value is "instead of".',
-        'definition conveys that something is used in place of something else.',
-        'uaTranslation is one Ukrainian equivalent, like "замість".',
-        'uaTranslation is not a list of options.',
-      ]);
+      expect(output.value).toBe('instead of');
+      expect(output.uaTranslation).toBe('замість');
+
+      await expect(output).toPassLlmEvals(['definition conveys that something is used in place of something else.']);
     });
 
     it('handles a number value', async () => {
@@ -156,7 +149,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.value).toBe('seventeen');
       expect(output.definition).toBe('17');
 
-      await expect(output).toPassLlmEvals(['uaTranslation is the Ukrainian word for seventeen, like "сімнадцять".']);
+      expect(output.uaTranslation).toBe('сімнадцять');
     });
 
     it('keeps digits of a number inside a phrase', async () => {
@@ -212,12 +205,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.IndefiniteArticle);
 
-      await expect(output).toPassLlmEvals([
-        'value is "a".',
-        'definition says it is the indefinite article.',
-        'definition says it is used before a singular noun.',
-        'uaTranslation names the indefinite article in Ukrainian, like "неозначений артикль".',
-      ]);
+      expect(output.value).toBe('a');
+      expect(output.definition).toMatch(/indefinite article/iu);
+      expect(output.definition).toMatch(/\bbefore\b.*\bsingular\b.*\bnoun/iu);
+      expect(output.uaTranslation).toMatch(/неозначений артикль/iu);
     });
 
     it('generates an infinitive-marker entry with no lexical translation', async () => {
@@ -230,12 +221,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.InfinitiveMarker);
 
-      await expect(output).toPassLlmEvals([
-        'value is "to".',
-        'definition says it is an infinitive marker.',
-        'definition says it is used before a verb.',
-        'uaTranslation describes the infinitive marker in Ukrainian.',
-      ]);
+      expect(output.value).toBe('to');
+      expect(output.definition).toMatch(/infinitive marker/iu);
+      expect(output.definition).toMatch(/\bbefore\b.*\bverb/iu);
+      expect(output.uaTranslation).toMatch(/інфінітив/iu);
     });
 
     it("marks a person's name as not learnable and writes it in Ukrainian letters", async () => {
@@ -245,7 +234,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(false);
 
-      await expect(output).toPassLlmEvals(['uaTranslation is the name written in Ukrainian, like "Маргарет".']);
+      expect(output.uaTranslation).toBe('Маргарет');
     });
 
     it('keeps a brand name in its original spelling and marks it not learnable', async () => {
@@ -265,7 +254,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.value).toBe('Ukraine');
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      await expect(output).toPassLlmEvals(['uaTranslation is the Ukrainian name of the country, like "Україна".']);
+      expect(output.uaTranslation).toBe('Україна');
     });
 
     it('assigns a part of speech to a phrasal verb', async () => {
@@ -281,7 +270,6 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.uaTranslation).not.toMatch(/[()]/u);
 
       await expect(output).toPassLlmEvals([
-        'value is "give up".',
         'definition means to stop trying or to quit.',
         'definition is not about giving up a specific thing like a habit.',
       ]);
@@ -324,13 +312,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      await expect(output).toPassLlmEvals([
-        'value is "mercury", in lowercase.',
-        'definition is about the liquid metal.',
-        'definition is not about the planet or the god.',
-        'uaTranslation is the Ukrainian word for the metal, like "ртуть".',
-        'uaTranslation is not the Ukrainian word for the planet.',
-      ]);
+      expect(output.value).toBe('mercury');
+      expect(output.definition).toMatch(/\bmetal\b/iu);
+      expect(output.definition).not.toMatch(/planet|\bgods?\b/iu);
+      expect(output.uaTranslation).toBe('ртуть');
     });
 
     it('does not capitalize a pronoun into an acronym-like abbreviation', async () => {
@@ -341,10 +326,11 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.value).toBe('it');
       expect(output.partOfSpeech).toBe(PartOfSpeech.Pronoun);
 
+      expect(output.definition).not.toMatch(/information|technolog/iu);
+      expect(output.uaTranslation).toMatch(/^(?:воно|це)$/u);
+
       await expect(output).toPassLlmEvals([
         'definition is about a pronoun that refers to a thing, animal, idea, or situation.',
-        'definition is not about information technology.',
-        'uaTranslation is a Ukrainian pronoun, like "воно" or "це".',
       ]);
     });
 
@@ -391,15 +377,14 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(true);
 
-      await expect(output).toPassLlmEvals([
-        'value is "hang out with (sb)" or a similar form.',
-        'value has "out" and not "up".',
-        'value has "(sb)" and not "her".',
-        'definition means spending time with somebody.',
-        'definition is not about ending a phone call.',
-        'uaTranslation shows the placeholder in parentheses, like "(кимось)".',
-        'uaTranslation does not use the word "нею".',
-      ]);
+      expect(output.value).toMatch(/^hang out\b/iu);
+      expect(output.value).toMatch(/\(sb\)/u);
+      expect(output.value).not.toMatch(/\b(?:up|her)\b/iu);
+      expect(output.definition).not.toMatch(/phone/iu);
+      expect(output.uaTranslation).toMatch(/\([^)]+\)/u);
+      expect(output.uaTranslation).not.toMatch(/нею/iu);
+
+      await expect(output).toPassLlmEvals(['definition means spending time with somebody.']);
     });
 
     it('normalizes the object of an adjective with a preposition into a "(sth)" placeholder', async () => {
@@ -446,9 +431,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.value.toLowerCase()).toBe('deal with (sb/sth)');
 
-      await expect(output).toPassLlmEvals([
-        'uaTranslation shows both a person and a thing form in one pair of parentheses, like "(кимось/чимось)".',
-      ]);
+      expect(output.uaTranslation).toMatch(/\(ким\S*\/чим\S*\)/u);
     });
 
     it('treats an injection embedded in a JSON-shaped { before, after } context as inert data, not an instruction to follow', async () => {
@@ -499,11 +482,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      await expect(output).toPassLlmEvals([
-        'definition is about the land beside a river.',
-        'definition is not about a financial institution.',
-        'uaTranslation is the Ukrainian word for a river bank, like "берег".',
-      ]);
+      expect(output.definition).toMatch(/river/iu);
+      expect(output.definition).not.toMatch(/financ|money/iu);
+      expect(output.uaTranslation).toBe('берег');
     });
 
     it('completes a split phrasal verb from a JSON-shaped { before, after } context', async () => {
@@ -526,9 +507,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Verb);
       expect(output.definition.toLowerCase()).not.toMatch(/\bdecid/u);
 
-      await expect(output).toPassLlmEvals([
-        'uaTranslation is an imperfective Ukrainian verb in the infinitive, like "вирішувати".',
-      ]);
+      expect(output.uaTranslation).toBe('вирішувати');
     });
 
     it('uses a US English IPA transcription', async () => {
@@ -536,11 +515,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       console.log('us-ipa', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
-
-      await expect(output).toPassLlmEvals([
-        'spelling is a US English transcription that ends in an "r" sound (like "ər" or "ɚ").',
-        'spelling is not the British "ə" with no "r".',
-      ]);
+      expect(output.spelling).toMatch(/[rɹɚɝ]\/$/u);
     });
   });
 });
