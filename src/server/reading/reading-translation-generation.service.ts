@@ -50,6 +50,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
       '- When a word or phrasal verb has several meanings, use the words next to it and the rest of the sentence to pick the sense that fits the whole sentence, not the literal sense of its parts.',
       '- Without helpful context, use the most common meaning.',
       '- If the selection starts or ends in the middle of a word, complete that word using the text right next to it, then translate every word of the selection, including that one.',
+      '- If a word of the selection is misspelled, translate the word that was meant.',
       '- If the selection itself is not in English, return the selection exactly as given, even if you know its Ukrainian translation.',
       '',
       '# Output',

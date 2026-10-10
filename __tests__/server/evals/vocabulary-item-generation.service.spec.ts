@@ -296,11 +296,12 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.isLearnable).toBe(true);
     });
 
-    it('marks non-English text as not learnable', async () => {
+    it('keeps non-English text as given and marks it not learnable', async () => {
       const { reasoning, output } = await generateVocabularyItemData({ value: 'Guten Morgen' });
       console.log('non-english', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
+      expect(output.value).toBe('Guten Morgen');
       expect(output.isLearnable).toBe(false);
     });
 

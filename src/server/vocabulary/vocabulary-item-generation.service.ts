@@ -38,6 +38,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
       '',
       '# Instructions',
       '- Fix spelling, grammar, and wrong-word mistakes in the value.',
+      '- If the value is not in English, keep it as given, never turn it into English.',
       '- Use the fixed form in every field.',
       '- Change as little as you can, so if an expression is wrong, fix the one word that breaks it and keep the rest as given.',
       '- Use the surrounding words and context to decide which word is wrong.',

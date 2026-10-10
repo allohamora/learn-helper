@@ -254,6 +254,19 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).toBe('вирішувати');
     });
 
+    it('translates the meant word when the selection is misspelled', async () => {
+      const { reasoning, output } = await generateTranslationData({
+        text: 'recieve',
+        before: 'Did you',
+        after: 'my letter?',
+      });
+      console.log('misspelled-word', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+
+      await expect(output).toPassLlmEvals(['uaTranslation means to receive, like "отримувати" or "отримати".']);
+    });
+
     it('describes an article by its grammar role', async () => {
       const { reasoning, output } = await generateTranslationData({
         text: 'a',
