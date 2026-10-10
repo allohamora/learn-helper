@@ -20,6 +20,7 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 
 ## Fix loop
 
+- Read the reasoning of the model and the judge for each failure, to find the step where the logic went wrong, and fix the rule that led to it.
 - Name the cause of each failure: the prompt, the code, a wrong test or judge statement, or something else.
 - Say what I suggest.
 - Make a change that fixes that cause, for every failed test, before running anything.
@@ -42,6 +43,7 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Write one sentence per rule and one rule per bullet, everywhere in the prompt, and give each rule one job and a clear scope.
 - Don't add duplicate or obvious rules, and extend an existing rule instead of adding a new one when you can.
 - Keep fixes general and short, with no long rules or many examples.
+- Make rules direct, so they leave less room for a mistake, without hardcoding cases.
 - End a list of examples with `etc.`, like `a, b, c, etc.`, so the LLM handles more cases than just the listed ones.
 - Never stop the loop or ask the author before the stop condition, except after all ideas fail.
 - Treat the judge as a validator that only checks the output, one rule per statement.
