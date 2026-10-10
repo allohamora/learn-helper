@@ -45,6 +45,14 @@ describe.concurrent('vocabulary-task.service', () => {
   const findTaskByValue = <T extends { id: string }>(tasks: T[], value: string) =>
     tasks.find((task) => task.id === items.find((item) => item.value === value)?.id);
 
+  const withItems = <T extends { id: string }>(tasks: T[]) =>
+    tasks.map((task) => {
+      const item = items.find((item) => item.id === task.id);
+      if (!item) throw new Error(`expected an item for task "${task.id}"`);
+
+      return { item, task };
+    });
+
   describe('toTranslateEnglishSentence', () => {
     it('generates English to Ukrainian translation tasks', async () => {
       const { reasoning, tasks } = await toTranslateEnglishSentence(items);
@@ -78,7 +86,7 @@ describe.concurrent('vocabulary-task.service', () => {
       const articleTask = findTaskByValue(tasks, 'a');
       expect(articleTask?.sentence).toMatch(/\b(?:a|an)\b/iu);
 
-      await expect({ items, tasks }).toPassLlmEvals([
+      await expect(withItems(tasks)).toPassLlmEvals([
         'Each English sentence is one natural sentence with a subject and a verb.',
         'Each English sentence is set in a specific everyday situation.',
         'Each English sentence does not join two full sentences together.',
@@ -131,7 +139,7 @@ describe.concurrent('vocabulary-task.service', () => {
       const articleTask = findTaskByValue(tasks, 'a');
       expect(articleTask?.translation).toMatch(/\b(?:a|an)\b/iu);
 
-      await expect({ items, tasks }).toPassLlmEvals([
+      await expect(withItems(tasks)).toPassLlmEvals([
         'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker.',
         'Each Ukrainian sentence may use different valid word forms and word orders.',
         'Each English translation is one sentence with a subject and a verb.',
