@@ -19,7 +19,7 @@ expect.extend({
       providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
       output: Output.object({
         schema: z.object({
-          issues: z.array(z.object({ idx: z.number(), message: z.string() })),
+          results: z.array(z.object({ idx: z.number(), reason: z.string(), isPassed: z.boolean() })),
         }),
       }),
       instructions: [
@@ -33,19 +33,20 @@ expect.extend({
         '# Instructions',
         '- An eval fails if the input contradicts it or lacks what it requires.',
         '- Apply each eval exactly as written, no stricter and no looser.',
-        '- Report only real failures of the given evals, nothing else.',
         '',
         '# Output',
         '',
-        '## issues',
-        '- Add one item per failed eval.',
-        '- Leave it empty if every eval passes.',
+        '## results',
+        '- Return one item per eval, in the same order as the `evals` input.',
         '',
-        '## issues[].idx',
-        '- Use the `idx` of the failed eval.',
+        '## results[].idx',
+        '- Copy the `idx` of the eval exactly as given, never invent one.',
         '',
-        '## issues[].message',
-        '- Say what is wrong, with the evidence: the wrong value, or that it is missing.',
+        '## results[].reason',
+        '- Explain in detail why the eval passes or does not pass, never just that it does or does not, with the evidence, like the wrong value, or that it is missing, etc.',
+        '',
+        '## results[].isPassed',
+        '- `true` if the eval passes, `false` if it does not pass.',
       ].join('\n'),
       prompt: [
         '# Input',
@@ -55,10 +56,12 @@ expect.extend({
       ].join('\n'),
     });
 
-    const issues = output.issues.map(({ idx, message }) => `✖ ${message}\n  → ${evals[idx]}`).join('\n');
+    const issues = output.results
+      .map(({ idx, reason, isPassed }) => `${isPassed ? '✔' : '✖'} ${evals[idx]}\n  → ${reason}`)
+      .join('\n');
 
     return {
-      pass: output.issues.length === 0,
+      pass: output.results.every(({ isPassed }) => isPassed),
       message: () => `expected ${this.utils.printReceived(input)} to pass evals${issues ? `:\n\n${issues}\n` : '.'}`,
     };
   },
