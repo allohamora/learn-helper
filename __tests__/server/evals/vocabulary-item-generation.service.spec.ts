@@ -506,6 +506,18 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       ]);
     });
 
+    it('completes a split phrasal verb from a JSON-shaped { before, after } context', async () => {
+      const { reasoning, output } = await generateVocabularyItemData({
+        value: 'take',
+        context: JSON.stringify({ before: 'He wanted to', after: 'her out for dinner on Friday.' }),
+      });
+      console.log('split-phrasal-verb-context', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('take (sb) out');
+      expect(output.isLearnable).toBe(true);
+    });
+
     it('uses an imperfective verb and a definition without the headword', async () => {
       const { reasoning, output } = await generateVocabularyItemData({ value: 'decide' });
       console.log('imperfective-verb', JSON.stringify({ reasoning, output }, null, 2));
