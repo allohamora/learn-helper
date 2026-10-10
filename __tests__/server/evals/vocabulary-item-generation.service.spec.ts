@@ -22,7 +22,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
     expect(output.uaTranslation.length).toBeGreaterThan(0);
     expect(output.uaTranslation.length).toBeLessThanOrEqual(255);
     expect(output.uaTranslation).not.toMatch(/;/u);
-    expect(output.uaTranslation.split('/').length).toBeLessThanOrEqual(2);
+    expect(output.uaTranslation.replace(/\([^)]*\)/gu, '').split('/').length).toBeLessThanOrEqual(2);
 
     expect(typeof output.spelling).toBe('string');
     expect(output.spelling.length).toBeGreaterThan(0);
@@ -346,6 +346,55 @@ describe.concurrent('vocabulary-item-generation.service', () => {
         'definition is not about ending a phone call.',
         'uaTranslation shows the placeholder in parentheses, like "(кимось)".',
         'uaTranslation does not use the word "нею".',
+      ]);
+    });
+
+    it('normalizes the object of an adjective with a preposition into a "(sth)" placeholder', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'good at math' });
+      console.log('placeholder-adjective', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('good at (sth)');
+      expect(output.isLearnable).toBe(true);
+    });
+
+    it('keeps a pronoun that is a fixed part of the expression', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'let me know' });
+      console.log('fixed-pronoun', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('let me know');
+      expect(output.uaTranslation).not.toMatch(/[()]/u);
+    });
+
+    it('drops the object of a single verb instead of adding a placeholder', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'admire him' });
+      console.log('single-verb-object', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('admire');
+      expect(output.partOfSpeech).toBe(PartOfSpeech.Verb);
+      expect(output.uaTranslation).not.toMatch(/[()]/u);
+    });
+
+    it('cuts a sentence down to the phrasal verb it is built around', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'he took her out' });
+      console.log('sentence-to-phrasal-verb', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('take (sb) out');
+      expect(output.isLearnable).toBe(true);
+    });
+
+    it('shows a "(sb/sth)" placeholder as both Ukrainian forms in one pair of parentheses', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'deal with (sb/sth)' });
+      console.log('placeholder-sb-sth', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('deal with (sb/sth)');
+
+      await expect(output).toPassLlmEvals([
+        'uaTranslation shows both a person and a thing form in one pair of parentheses, like "(кимось/чимось)".',
       ]);
     });
 
