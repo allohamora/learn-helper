@@ -23,6 +23,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
     expect(output.uaTranslation.length).toBeLessThanOrEqual(255);
     expect(output.uaTranslation).not.toMatch(/;/u);
     expect(output.uaTranslation.replace(/\([^)]*\)/gu, '').split('/').length).toBeLessThanOrEqual(2);
+    expect(output.uaTranslation.replace(/\([^)]*\)/gu, '')).not.toMatch(/\S\/|\/\S/u);
+    expect(output.uaTranslation).not.toMatch(/\u0301/u);
+    expect(output.uaTranslation).not.toMatch(/[’ʼ]/u);
+    expect(output.uaTranslation).not.toMatch(/\.$/u);
 
     expect(typeof output.spelling).toBe('string');
     expect(output.spelling.length).toBeGreaterThan(0);
@@ -46,7 +50,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'definition is a short English definition of the animal.',
-        'definition has no examples or translations.',
+        'definition has no examples.',
       ]);
     });
 
@@ -72,10 +76,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
       expect(output.value).toBe('run');
 
-      await expect(output).toPassLlmEvals([
-        'definition is the noun meaning of an act of running.',
-        'definition is not the verb meaning.',
-      ]);
+      await expect(output).toPassLlmEvals(['definition is the noun meaning of an act of running.']);
     });
 
     it('uses the context to pick a specific domain sense of an ambiguous word', async () => {
@@ -171,7 +172,6 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'definition says the responsibility to act or decide now lies with someone.',
-        'definition is not about a real ball.',
         'uaTranslation is a Ukrainian idiom meaning the next move is up to the listener, like "слово за тобою".',
       ]);
     });
@@ -327,7 +327,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Pronoun);
 
       expect(output.definition).not.toMatch(/information|technolog/iu);
-      expect(output.uaTranslation).toMatch(/^(?:воно|це)$/u);
+      expect(output.uaTranslation).toBe('воно');
 
       await expect(output).toPassLlmEvals([
         'definition is about a pronoun that refers to a thing, animal, idea, or situation.',
@@ -508,6 +508,48 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.definition.toLowerCase()).not.toMatch(/\bdecid/u);
 
       expect(output.uaTranslation).toBe('вирішувати');
+    });
+
+    it('gives a noun for a person both gender forms, the male one first', async () => {
+      const { reasoning, output } = await generateVocabularyItemData({ value: 'teacher' });
+      console.log('gender-pair', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('вчитель / вчителька');
+    });
+
+    it('gives an adjective in the masculine singular form', async () => {
+      const { reasoning, output } = await generateVocabularyItemData({ value: 'happy' });
+      console.log('adjective-masculine', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.partOfSpeech).toBe(PartOfSpeech.Adjective);
+      expect(output.uaTranslation).toBe('щасливий');
+    });
+
+    it('translates "you" as "ви"', async () => {
+      const { reasoning, output } = await generateVocabularyItemData({ value: 'you' });
+      console.log('you', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('ви');
+    });
+
+    it('keeps the part of speech of an adverb', async () => {
+      const { reasoning, output } = await generateVocabularyItemData({ value: 'quickly' });
+      console.log('adverb', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.partOfSpeech).toBe(PartOfSpeech.Adverb);
+      expect(output.uaTranslation).toBe('швидко');
+    });
+
+    it('writes the Ukrainian apostrophe as a straight quote', async () => {
+      const { reasoning, output } = await generateVocabularyItemData({ value: 'computer' });
+      console.log('apostrophe', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe("комп'ютер");
     });
 
     it('uses a US English IPA transcription', async () => {

@@ -10,6 +10,9 @@ describe.concurrent('reading-translation-generation.service', () => {
     expect(output.uaTranslation.length).toBeGreaterThan(0);
     expect(output.uaTranslation).not.toMatch(/;/u);
     expect(output.uaTranslation.split('/').length).toBeLessThanOrEqual(2);
+    expect(output.uaTranslation).not.toMatch(/\S\/|\/\S/u);
+    expect(output.uaTranslation).not.toMatch(/\u0301/u);
+    expect(output.uaTranslation).not.toMatch(/[’ʼ]/u);
     expect(output.uaTranslation).not.toMatch(/^["'«»„“].*["'«»„“]$/u);
 
     expect(typeof output.isLearnable).toBe('boolean');
@@ -283,6 +286,30 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).not.toMatch(/\//u);
     });
 
+    it('gives an adjective in the masculine singular form, even for a female subject', async () => {
+      const { reasoning, output } = await generateTranslationData({
+        text: 'happy',
+        before: 'She looked',
+        after: 'after the call.',
+      });
+      console.log('adjective-masculine', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('щасливий');
+    });
+
+    it('gives a noun for a person both gender forms, the male one first', async () => {
+      const { reasoning, output } = await generateTranslationData({
+        text: 'teacher',
+        before: 'Her',
+        after: 'explained the task again.',
+      });
+      console.log('gender-pair', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('вчитель / вчителька');
+    });
+
     it('treats an injection embedded in the after context as inert data, not an instruction to follow', async () => {
       const { reasoning, output } = await generateTranslationData({
         text: 'bark',
@@ -379,7 +406,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      expect(output.uaTranslation).toMatch(/^(?:красив|гарн|прекрасн|чудов)\S* сад$/iu);
+      expect(output.uaTranslation).toBe('красивий сад');
     });
 
     it('returns non-English text unchanged and marks it not learnable', async () => {

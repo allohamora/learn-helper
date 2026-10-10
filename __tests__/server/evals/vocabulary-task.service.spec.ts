@@ -20,6 +20,7 @@ describe.concurrent('vocabulary-task.service', () => {
   const hasForbiddenSemicolonOrColon = (value: string) => /[;:]/gim.test(value);
   const hasForbiddenDash = (value: string) => /[-–—]/gim.test(value);
   const hasParenthesizedPlaceholder = (value: string) => /\([^)]*\)/gim.test(value);
+  const hasBadSpacing = (value: string) => /\s{2,}|\s[,.!?]/u.test(value);
 
   const item = (data: Omit<VocabularyItemData, 'id'>) => ({
     id: uuidv7(),
@@ -34,38 +35,72 @@ describe.concurrent('vocabulary-task.service', () => {
         partOfSpeech: 'indefinite article',
         pattern: /\b(?:a|an)\b/iu,
       },
-      { value: 'can', uaTranslation: 'могти', partOfSpeech: 'modal verb', pattern: /\b(?:can|cannot|could)\b/iu },
+      {
+        value: 'can',
+        uaTranslation: 'могти',
+        partOfSpeech: 'modal verb',
+        pattern: /\b(?:can|cannot|could)\b/iu,
+        uaPattern: /мож|мог|міг/iu,
+      },
       {
         value: 'be going to do (sth)',
         uaTranslation: 'збиратися (щось) зробити',
         partOfSpeech: null,
         pattern: /(?:\b(?:am|is|are|was|were|be)|['’](?:m|s|re))\s+going to do\s+\S/iu,
+        uaPattern: /збира/iu,
       },
       {
         value: 'for the first time',
         uaTranslation: 'вперше',
         partOfSpeech: null,
         pattern: /\bfor the first time\b/iu,
+        uaPattern: /вперше/iu,
       },
       {
         value: 'take (sb) out',
         uaTranslation: 'запрошувати (когось) кудись',
         partOfSpeech: null,
         pattern: /\b(?:take|takes|took|taken|taking)\s+(?:\S+\s+)+?out\b/iu,
+        uaPattern: /запро[шс]/iu,
       },
-      { value: 'piece of cake', uaTranslation: 'раз плюнути', partOfSpeech: null, pattern: /\bpiece of cake\b/iu },
-      { value: 'ability', uaTranslation: 'здатність', partOfSpeech: 'noun', pattern: /\babilit(?:y|ies)\b/iu },
-      { value: 'challenge', uaTranslation: 'виклик', partOfSpeech: 'noun', pattern: /\bchallenges?\b/iu },
+      {
+        value: 'piece of cake',
+        uaTranslation: 'раз плюнути',
+        partOfSpeech: null,
+        pattern: /\bpiece of cake\b/iu,
+        uaPattern: /плюнути/iu,
+      },
+      {
+        value: 'ability',
+        uaTranslation: 'здатність',
+        partOfSpeech: 'noun',
+        pattern: /\babilit(?:y|ies)\b/iu,
+        uaPattern: /здатн/iu,
+      },
+      {
+        value: 'challenge',
+        uaTranslation: 'виклик',
+        partOfSpeech: 'noun',
+        pattern: /\bchallenges?\b/iu,
+        uaPattern: /виклик/iu,
+      },
       {
         value: 'abandon',
         uaTranslation: 'залишати напризволяще',
         partOfSpeech: 'verb',
         pattern: /\babandon(?:s|ed|ing)?\b/iu,
+        uaPattern: /напризволяще/iu,
       },
-      { value: 'absence', uaTranslation: 'відсутність', partOfSpeech: 'noun', pattern: /\babsences?\b/iu },
-      { value: 'bat', uaTranslation: 'кажан', partOfSpeech: 'noun', pattern: /\bbats?\b/iu },
-    ] satisfies (Omit<VocabularyItemData, 'id'> & { pattern: RegExp })[]
-  ).map(({ pattern, ...data }) => ({ item: item(data), pattern }));
+      {
+        value: 'absence',
+        uaTranslation: 'відсутність',
+        partOfSpeech: 'noun',
+        pattern: /\babsences?\b/iu,
+        uaPattern: /відсутн/iu,
+      },
+      { value: 'bat', uaTranslation: 'кажан', partOfSpeech: 'noun', pattern: /\bbats?\b/iu, uaPattern: /кажан/iu },
+    ] satisfies (Omit<VocabularyItemData, 'id'> & { pattern: RegExp; uaPattern?: RegExp })[]
+  ).map(({ pattern, uaPattern, ...data }) => ({ item: item(data), pattern, uaPattern }));
 
   const items = cases.map(({ item }) => item);
 
@@ -75,6 +110,10 @@ describe.concurrent('vocabulary-task.service', () => {
 
     return pattern;
   };
+
+  const findUaPattern = (id: string) => cases.find(({ item }) => item.id === id)?.uaPattern;
+
+  const pieceOfCakeId = cases.find(({ item }) => item.value === 'piece of cake')?.item.id;
 
   const withItems = <T extends { id: string }>(tasks: T[]) =>
     tasks.map((task) => {
@@ -109,14 +148,26 @@ describe.concurrent('vocabulary-task.service', () => {
         expect(hasForbiddenDash(task.translation)).toBe(false);
         expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
         expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
+        expect(hasBadSpacing(task.sentence)).toBe(false);
+        expect(hasBadSpacing(task.translation)).toBe(false);
       }
 
       for (const task of tasks) {
         expect(task.sentence).toMatch(findPattern(task.id));
       }
 
+      for (const task of tasks) {
+        const uaPattern = findUaPattern(task.id);
+        if (!uaPattern) continue;
+
+        expect(task.translation).toMatch(uaPattern);
+      }
+
+      expect(tasks.find((task) => task.id === pieceOfCakeId)?.translation).not.toMatch(/торт|тістеч|пиріг|шмат/iu);
+
       await expect(withItems(tasks)).toPassLlmEvals([
-        'Each English sentence is one natural sentence with a subject and a verb.',
+        'Each English sentence has a subject and a verb.',
+        'Each English sentence sounds natural to a native speaker.',
         'Each English sentence is set in a specific everyday situation.',
         'Each English sentence does not join two full sentences together.',
         'Each English sentence uses its item in the meaning of the item uaTranslation.',
@@ -124,7 +175,6 @@ describe.concurrent('vocabulary-task.service', () => {
         'Each Ukrainian translation sounds natural to a native speaker.',
         'Each Ukrainian translation uses a neutral word order.',
         'Each Ukrainian translation avoids lists of similar words.',
-        'For the item "piece of cake", the Ukrainian translation translates it like its uaTranslation and is not about cake.',
       ]);
     });
   });
@@ -154,21 +204,31 @@ describe.concurrent('vocabulary-task.service', () => {
         expect(hasForbiddenDash(task.translation)).toBe(false);
         expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
         expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
+        expect(hasBadSpacing(task.sentence)).toBe(false);
+        expect(hasBadSpacing(task.translation)).toBe(false);
       }
 
       for (const task of tasks) {
         expect(task.translation).toMatch(findPattern(task.id));
       }
 
+      for (const task of tasks) {
+        const uaPattern = findUaPattern(task.id);
+        if (!uaPattern) continue;
+
+        expect(task.sentence).toMatch(uaPattern);
+      }
+
+      expect(tasks.find((task) => task.id === pieceOfCakeId)?.sentence).not.toMatch(/торт|тістеч|пиріг|шмат/iu);
+
       await expect(withItems(tasks)).toPassLlmEvals([
-        'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker.',
-        'Each English translation is one sentence with a subject and a verb.',
+        'Each Ukrainian sentence sounds natural to a native speaker.',
+        'Each English translation has a subject and a verb.',
         'Each English translation means the same as its Ukrainian sentence.',
         'Each English translation does not join two full sentences together.',
         'Each English translation uses its item in the meaning of the item uaTranslation.',
         'Each English translation uses a neutral word order.',
         'Each English translation avoids lists of similar words.',
-        'For the item "piece of cake", the Ukrainian sentence translates it like its uaTranslation and is not about cake.',
       ]);
     });
   });
