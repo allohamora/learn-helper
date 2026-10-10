@@ -37,8 +37,11 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Never re-run without a change, because a re-run with no change is a gamble, not a fix.
 - Don't weaken an eval to make it pass.
 - Don't copy eval data into the prompt.
-- Write prompts in markdown with simple, concise instructions.
-- Write one sentence per rule and one rule per bullet, everywhere in the prompt.
-- Don't add duplicate or obvious rules.
+- Write prompts in markdown with simple, concise, natural instructions.
+- Write one sentence per rule and one rule per bullet, everywhere in the prompt, and give each rule one job and a clear scope.
+- Don't add duplicate or obvious rules, and extend an existing rule instead of adding a new one when you can.
 - Keep fixes general and short, with no long rules or many examples.
 - Never stop the loop or ask the author before the stop condition, except after all ideas fail.
+- Treat the judge as a validator that only checks the output, one rule per statement.
+- Never put how to handle a case in the judge, because that makes it a god prompt.
+- Fix a gap by tightening the prompt or the judge statement, never with a costlier model or more reasoning.
