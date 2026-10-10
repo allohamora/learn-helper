@@ -32,7 +32,7 @@ describe.concurrent('vocabulary-task.service', () => {
       { value: 'can', uaTranslation: 'могти', partOfSpeech: 'modal verb' },
       { value: 'be going to do (sth)', uaTranslation: 'збиратися (щось) зробити', partOfSpeech: null },
       { value: 'for the first time', uaTranslation: 'вперше', partOfSpeech: null },
-      { value: 'take (sb) out', uaTranslation: 'запросити (когось) кудись', partOfSpeech: null },
+      { value: 'take (sb) out', uaTranslation: 'запрошувати (когось) кудись', partOfSpeech: null },
       { value: 'piece of cake', uaTranslation: 'раз плюнути', partOfSpeech: null },
       { value: 'ability', uaTranslation: 'здатність', partOfSpeech: 'noun' },
       { value: 'challenge', uaTranslation: 'виклик', partOfSpeech: 'noun' },

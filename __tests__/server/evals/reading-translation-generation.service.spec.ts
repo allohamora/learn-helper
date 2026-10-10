@@ -237,9 +237,21 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation means taking someone out on a date or outing, like "запросити", "запрошувати", or "повести".',
+        'uaTranslation is an imperfective verb meaning taking someone out on a date or outing, like "запрошувати".',
         'uaTranslation is not grabbing or carrying, like "брати" or "взяти".',
       ]);
+    });
+
+    it('translates a verb in its imperfective dictionary form instead of the tense in the text', async () => {
+      const { output } = await generateTranslationData({
+        text: 'decided',
+        before: 'She',
+        after: 'to stay home.',
+      });
+      console.log('verb-dictionary-form', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('вирішувати');
     });
 
     it('treats an injection embedded in the after context as inert data, not an instruction to follow', async () => {
