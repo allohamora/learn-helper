@@ -119,10 +119,10 @@ describe.concurrent('vocabulary-task.service', () => {
         'Each English sentence is one natural sentence with a subject and a verb.',
         'Each English sentence is set in a specific everyday situation.',
         'Each English sentence does not join two full sentences together.',
-        'Each English sentence uses its item in the meaning of the item uaTranslation, where a grammar word like "a" only needs to be used in that role, not be the topic.',
+        'Each English sentence uses its item in the meaning of the item uaTranslation.',
         'Each Ukrainian translation means the same as its English sentence.',
-        'Each Ukrainian translation sounds natural to a native speaker, where any valid word forms and word orders are fine.',
-        'Each Ukrainian translation uses a neutral word order, allowing some flexibility.',
+        'Each Ukrainian translation sounds natural to a native speaker.',
+        'Each Ukrainian translation uses a neutral word order.',
         'Each Ukrainian translation avoids lists of similar words.',
         'For the item "piece of cake", the Ukrainian translation translates it like its uaTranslation and is not about cake.',
       ]);
@@ -161,12 +161,12 @@ describe.concurrent('vocabulary-task.service', () => {
       }
 
       await expect(withItems(tasks)).toPassLlmEvals([
-        'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker, where any valid word forms and word orders are fine.',
+        'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker.',
         'Each English translation is one sentence with a subject and a verb.',
         'Each English translation means the same as its Ukrainian sentence.',
         'Each English translation does not join two full sentences together.',
-        'Each English translation uses its item in the meaning of the item uaTranslation, where a grammar word like "a" only needs to be used in that role, not be the topic.',
-        'Each English translation uses a neutral word order, allowing some flexibility.',
+        'Each English translation uses its item in the meaning of the item uaTranslation.',
+        'Each English translation uses a neutral word order.',
         'Each English translation avoids lists of similar words.',
         'For the item "piece of cake", the Ukrainian sentence translates it like its uaTranslation and is not about cake.',
       ]);
