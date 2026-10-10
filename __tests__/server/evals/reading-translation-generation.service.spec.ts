@@ -44,7 +44,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is a natural Ukrainian phrase for heavy rain, not a word-for-word translation.',
+        'uaTranslation is a natural Ukrainian phrase for heavy rain and does not mention cats or dogs.',
       ]);
     });
 
@@ -312,7 +312,7 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      await expect(output).toPassLlmEvals(['uaTranslation means a beautiful garden, like "гарний сад".']);
+      await expect(output).toPassLlmEvals(['uaTranslation is a Ukrainian translation of "beautiful garden".']);
     });
 
     it('returns non-English text unchanged and marks it not learnable', async () => {

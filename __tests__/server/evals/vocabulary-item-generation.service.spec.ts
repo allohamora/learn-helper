@@ -203,9 +203,9 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "to".',
-        'definition says it marks the infinitive.',
+        'definition says it is an infinitive marker.',
         'definition says it is used before a verb.',
-        'uaTranslation names the infinitive marker in Ukrainian, like "частка інфінітива".',
+        'uaTranslation describes the infinitive marker in Ukrainian.',
       ]);
     });
 
@@ -276,7 +276,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Pronoun);
 
       await expect(output).toPassLlmEvals([
-        'definition is about the pronoun for a thing, animal, or situation.',
+        'definition is about a pronoun that refers to a thing, animal, idea, or situation.',
         'definition is not about information technology.',
         'uaTranslation is a Ukrainian pronoun, like "воно" or "це".',
       ]);
@@ -327,8 +327,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'value is "hang out with (sb)" or a similar form.',
-        'value fixes "up" to "out".',
-        'value turns "her" into "(sb)".',
+        'value has "out" and not "up".',
+        'value has "(sb)" and not "her".',
         'definition means spending time with somebody.',
         'definition is not about ending a phone call.',
         'uaTranslation shows the placeholder in parentheses, like "(кимось)".',
