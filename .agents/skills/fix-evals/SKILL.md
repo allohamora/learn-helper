@@ -32,7 +32,8 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 
 ## Instructions
 
-- Aim for stable evals and stable prompts.
+- Aim for stable evals and predictable prompts, so the same input gives about the same output on every run.
+- When a rule allows more than one valid answer, add a tie-breaker that picks one, like the dictionary form, the masculine form first, the most neutral word, etc.
 - Never accept "it's flaky, nothing we can do" as a reason to ignore or skip a failure, because a flaky eval means the prompt, the code, or the test is not good enough yet.
 - Never re-run without a change, because a re-run with no change is a gamble, not a fix.
 - Don't weaken an eval to make it pass.
@@ -41,6 +42,7 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Write one sentence per rule and one rule per bullet, everywhere in the prompt, and give each rule one job and a clear scope.
 - Don't add duplicate or obvious rules, and extend an existing rule instead of adding a new one when you can.
 - Keep fixes general and short, with no long rules or many examples.
+- End a list of examples with `etc.`, like `a, b, c, etc.`, so the LLM handles more cases than just the listed ones.
 - Never stop the loop or ask the author before the stop condition, except after all ideas fail.
 - Treat the judge as a validator that only checks the output, one rule per statement.
 - Never put how to handle a case in the judge, because that makes it a god prompt.
