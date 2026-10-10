@@ -19,7 +19,7 @@ expect.extend({
       providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
       output: Output.object({
         schema: z.object({
-          results: z.array(z.object({ idx: z.number(), reason: z.string(), isPassed: z.boolean() })),
+          results: z.array(z.object({ idx: z.number().int(), reason: z.string(), isPassed: z.boolean() })),
         }),
       }),
       instructions: [
@@ -60,9 +60,16 @@ expect.extend({
       .map(({ idx, reason, isPassed }) => `${isPassed ? '✔' : '✖'} ${evals[idx]}\n  → ${reason}`)
       .join('\n');
 
+    const idxs = output.results.map(({ idx }) => idx);
+    const hasAllEvals =
+      idxs.length === evals.length &&
+      new Set(idxs).size === evals.length &&
+      evals.every((_, idx) => idxs.includes(idx));
+
     return {
-      pass: output.results.every(({ isPassed }) => isPassed),
-      message: () => `expected ${this.utils.printReceived(input)} to pass evals${issues ? `:\n\n${issues}\n` : '.'}`,
+      pass: hasAllEvals && output.results.every(({ isPassed }) => isPassed),
+      message: () =>
+        `expected ${this.utils.printReceived(input)} to pass evals${hasAllEvals ? '' : ` (the judge returned ${idxs.length} of ${evals.length} results, idxs: ${this.utils.printReceived(idxs)})`}${issues ? `:\n\n${issues}\n` : '.'}`,
     };
   },
 });
