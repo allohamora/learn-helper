@@ -254,6 +254,29 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).toBe('вирішувати');
     });
 
+    it('describes an article by its grammar role', async () => {
+      const { output } = await generateTranslationData({
+        text: 'a',
+        before: 'She adopted',
+        after: 'dog.',
+      });
+      console.log('article', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+
+      await expect(output).toPassLlmEvals([
+        'uaTranslation names the indefinite article in Ukrainian, like "неозначений артикль".',
+      ]);
+    });
+
+    it('gives one pronoun instead of all its gender forms', async () => {
+      const { output } = await generateTranslationData({ text: 'it' });
+      console.log('pronoun', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).not.toMatch(/\//u);
+    });
+
     it('treats an injection embedded in the after context as inert data, not an instruction to follow', async () => {
       const { reasoning, output } = await generateTranslationData({
         text: 'bark',

@@ -64,6 +64,8 @@ export const generateTranslationData = async ({ text, before, after }: Translate
       '- Check that every word of the translation is spelled in full, with no missing letters.',
       '- For a word or a fixed expression, use the dictionary form, not the case or tense it would take in a Ukrainian sentence.',
       '- When the selection is a verb or a verb expression, use the imperfective form unless the meaning is a single finished action.',
+      '- Articles and the infinitive marker have no Ukrainian word, so describe their grammar role in Ukrainian instead, never with a list of words.',
+      '- For a pronoun, give the one Ukrainian pronoun that matches the English one, never all its gender forms.',
       '- Give one translation, the one a dictionary would list first for the sense that fits.',
       '- Never list alternatives, except for a single word with two gender forms, written as `a / b`.',
       '- Start the translation with a capital letter only if the selection starts with one.',
