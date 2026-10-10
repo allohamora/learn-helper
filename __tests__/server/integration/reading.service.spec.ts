@@ -161,6 +161,7 @@ describe('reading.service', () => {
       await seedUser(USER_ID);
       const reading = await seedReading({ userId: USER_ID, title: 'Book' });
       generateSpy.mockResolvedValue({
+        reasoning: undefined,
         output: { uaTranslation: 'бігти', isLearnable: true },
         cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
       });
@@ -189,6 +190,7 @@ describe('reading.service', () => {
       await seedUser(USER_ID);
       const reading = await seedReading({ userId: USER_ID, title: 'Book' });
       generateSpy.mockResolvedValue({
+        reasoning: undefined,
         output: { uaTranslation: 'переклад речення', isLearnable: false },
         cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
       });
@@ -206,6 +208,7 @@ describe('reading.service', () => {
       await seedUser(USER_ID);
       const reading = await seedReading({ userId: USER_ID, title: 'Book' });
       generateSpy.mockResolvedValue({
+        reasoning: undefined,
         output: { uaTranslation: 'переклад', isLearnable: true },
         cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
       });
@@ -224,6 +227,7 @@ describe('reading.service', () => {
       await seedUser(USER_ID);
       const reading = await seedReading({ userId: USER_ID, title: 'Book' });
       generateSpy.mockResolvedValue({
+        reasoning: undefined,
         output: { uaTranslation: 'переклад', isLearnable: true },
         cost: { costInNanoDollars: 1_000_000, inputTokens: 100, outputTokens: 200 },
       });

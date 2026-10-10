@@ -17,7 +17,7 @@ const translatedSelectionDto = z.object({
 export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
-  const { output, usage } = await generateText({
+  const { finalStep, output, usage } = await generateText({
     model: gemini25FlashLite.model,
     providerOptions: { openrouter: { reasoning: { max_tokens: 1024 } } },
     temperature: 0.7,
@@ -96,6 +96,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
   });
 
   return {
+    reasoning: finalStep.reasoningText,
     output,
     cost: {
       costInNanoDollars: gemini25FlashLite.calculateCostInNanoDollars(usage),
