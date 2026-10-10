@@ -19,7 +19,7 @@ export type GeneratedVocabularyItemDto = z.infer<typeof generatedVocabularyItemD
 export const generateVocabularyItemData = async ({ value, context }: GenerateVocabularyItemDto) => {
   const { output, usage } = await generateText({
     model: gpt6Luna.model,
-    providerOptions: { openrouter: { reasoning: { effort: 'none' } } },
+    providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateVocabularyItemData',

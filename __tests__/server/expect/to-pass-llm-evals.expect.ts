@@ -16,7 +16,7 @@ expect.extend({
   async toPassLlmEvals(input, evals) {
     const { output } = await generateText({
       model: claudeHaiku55.model,
-      providerOptions: { openrouter: { reasoning: { enabled: false } } },
+      providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
       output: Output.object({
         schema: z.object({
           issues: z.array(z.object({ idx: z.number(), message: z.string() })),
