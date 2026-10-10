@@ -136,7 +136,7 @@ describe.concurrent('vocabulary-task.service', () => {
 
       await expect({ items, tasks }).toPassLlmEvals([
         'Each Ukrainian sentence is one natural sentence that sounds right to a native speaker.',
-        'Each Ukrainian sentence may use different valid word forms, active or passive voice, and word orders.',
+        'Each Ukrainian sentence may use different valid word forms and word orders.',
         'Each English translation is one sentence with a subject and a verb.',
         'Each English translation means the same as its Ukrainian sentence.',
         'Each English translation does not join two full sentences together.',
