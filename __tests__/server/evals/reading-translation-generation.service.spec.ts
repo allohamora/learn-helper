@@ -36,7 +36,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       await expect(output).toPassLlmEvals(['uaTranslation means a financial institution, like "банк".']);
     });
 
-    it('translates an idiom idiomatically and marks it learnable', async () => {
+    it('translates an idiom with a Ukrainian idiom and marks it learnable', async () => {
       const { output } = await generateTranslationData({ text: "it's raining cats and dogs" });
       console.log('idiom', JSON.stringify(output, null, 2));
 
@@ -44,7 +44,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is a natural Ukrainian phrase for heavy rain and does not mention cats or dogs.',
+        'uaTranslation is a Ukrainian idiom for heavy rain, like "ллє як з відра", and does not mention cats or dogs.',
       ]);
     });
 

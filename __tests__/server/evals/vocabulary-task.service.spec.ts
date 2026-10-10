@@ -33,6 +33,7 @@ describe.concurrent('vocabulary-task.service', () => {
       { value: 'be going to do (sth)', uaTranslation: 'збиратися (щось) зробити', partOfSpeech: null },
       { value: 'for the first time', uaTranslation: 'вперше', partOfSpeech: null },
       { value: 'take (sb) out', uaTranslation: 'запросити (когось) кудись', partOfSpeech: null },
+      { value: 'piece of cake', uaTranslation: 'раз плюнути', partOfSpeech: null },
       { value: 'ability', uaTranslation: 'здатність', partOfSpeech: 'noun' },
       { value: 'challenge', uaTranslation: 'виклик', partOfSpeech: 'noun' },
       { value: 'abandon', uaTranslation: 'залишати напризволяще', partOfSpeech: 'verb' },
@@ -95,6 +96,7 @@ describe.concurrent('vocabulary-task.service', () => {
         'Each Ukrainian translation may use different valid word forms and word orders.',
         'Each Ukrainian translation uses a neutral word order, allowing some flexibility.',
         'Each Ukrainian translation avoids lists of similar words.',
+        'For the item "piece of cake", the Ukrainian translation translates it like its uaTranslation and is not about cake.',
       ]);
     });
   });
@@ -149,6 +151,7 @@ describe.concurrent('vocabulary-task.service', () => {
         'For the item "a", the translation does not need to be about articles.',
         'Each English translation uses a neutral word order, allowing some flexibility.',
         'Each English translation avoids lists of similar words.',
+        'For the item "piece of cake", the Ukrainian sentence translates it like its uaTranslation and is not about cake.',
       ]);
     });
   });

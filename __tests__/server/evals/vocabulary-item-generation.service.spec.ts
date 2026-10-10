@@ -171,8 +171,21 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       await expect(output).toPassLlmEvals([
         'definition says the responsibility to act or decide now lies with someone.',
         'definition is not about a real ball.',
-        'uaTranslation is a natural Ukrainian phrase meaning the next move is up to the listener.',
-        'uaTranslation is not a word-for-word translation.',
+        'uaTranslation is a Ukrainian idiom meaning the next move is up to the listener, like "слово за тобою".',
+      ]);
+    });
+
+    it('translates an idiom word for word when it has no Ukrainian idiom', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'under the weather' });
+      console.log('idiom-word-for-word', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      await expect(output).toPassLlmEvals([
+        'definition means feeling slightly ill.',
+        'uaTranslation is a Ukrainian idiom meaning feeling slightly ill, or a word-for-word translation like "під погодою".',
+        'uaTranslation is not a plain non-idiomatic word like "нездужати" or "хворіти".',
       ]);
     });
 
