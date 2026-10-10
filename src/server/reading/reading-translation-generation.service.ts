@@ -86,6 +86,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
       '- `false` for a sentence, clause, or phrase put together for this text, even a long one, unless it is a fixed idiom or proverb that people reuse as one unit.',
       '- `false` for text with more than one sentence.',
       '- `false` for text that is not in English.',
+      '- When unsure, use `false`.',
     ].join('\n'),
     prompt: [
       '# Input',

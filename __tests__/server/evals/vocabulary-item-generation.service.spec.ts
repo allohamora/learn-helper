@@ -287,6 +287,23 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       ]);
     });
 
+    it('keeps a proverb whole and marks it learnable', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'actions speak louder than words' });
+      console.log('proverb', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.value.toLowerCase()).toBe('actions speak louder than words');
+      expect(output.isLearnable).toBe(true);
+    });
+
+    it('marks non-English text as not learnable', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'Guten Morgen' });
+      console.log('non-english', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(false);
+    });
+
     it('corrects a full sentence that is not an idiom, but marks it as not learnable', async () => {
       const { output } = await generateVocabularyItemData({ value: 'she dont like it' });
       console.log('non-idiom-sentence', JSON.stringify(output, null, 2));
