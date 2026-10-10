@@ -300,6 +300,14 @@ describe.concurrent('reading-translation-generation.service', () => {
       await expect(output).toPassLlmEvals(['uaTranslation is the name written in Ukrainian, like "Маргарет".']);
     });
 
+    it('capitalizes a place name even when the selection is in lowercase', async () => {
+      const { output } = await generateTranslationData({ text: 'paris' });
+      console.log('lowercase-place-name', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toBe('Париж');
+    });
+
     it('translates a place name and marks it learnable', async () => {
       const { output } = await generateTranslationData({ text: 'Paris' });
       console.log('place-name', JSON.stringify(output, null, 2));

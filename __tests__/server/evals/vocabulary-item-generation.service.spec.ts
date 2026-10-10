@@ -197,6 +197,14 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       ]);
     });
 
+    it('starts the translation of a greeting with a lowercase letter', async () => {
+      const { output } = await generateVocabularyItemData({ value: 'good morning' });
+      console.log('greeting-lowercase', JSON.stringify(output, null, 2));
+
+      assertShape(output);
+      expect(output.uaTranslation).toMatch(/^[а-яіїєґ']/u);
+    });
+
     it('generates a function word entry matching dictionary conventions', async () => {
       const { output } = await generateVocabularyItemData({ value: 'a' });
       console.log('function-word', JSON.stringify(output, null, 2));

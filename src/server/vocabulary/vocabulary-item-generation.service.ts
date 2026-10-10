@@ -88,6 +88,7 @@ export const generateVocabularyItemData = async ({ value, context }: GenerateVoc
       '- Use at most one `/` outside parentheses, and when a word has more than two gender forms, give only the most common one.',
       '- For a pronoun, give the one Ukrainian pronoun that matches the English one, never all its gender forms.',
       '- Use Ukrainian capitalization, whatever the case of the value, so write a language, nationality, day, or month in lowercase.',
+      '- Start it with a lowercase letter, unless the first word is a name or an acronym.',
       '- For a single word, use the dictionary form: nouns in the nominative singular, verbs in the infinitive.',
       '- For a verb, use the imperfective form unless the meaning is a single finished action.',
       '- Articles and the infinitive marker have no Ukrainian word, so describe their grammar role in Ukrainian instead, never with a list of words.',
