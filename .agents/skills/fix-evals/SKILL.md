@@ -7,16 +7,18 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 
 - Run only the evals related to the change, unless the author asks for more.
 - Run each command on its own, never in a loop or repeat construct (`for`, `while`, `seq`, `xargs`, `repeat`, `parallel`).
+- Save the full output of each run to a temp file, so the results do not disappear.
 
 ## Full loop
 
 - Run all the related evals.
-- Save the full output to a temp file, so the result is not lost.
-- Show only the counts, the failed test names, and the failure reasons, not the full output.
-- After each full run, log one line with the full loop streak (e.g. `full loop: 1/5`).
 - If all passed, add 1 to the full loop streak.
-- If something failed, reset the full loop streak to 0 and start the fix loop.
-- Stop and sum up at 5 full passes in a row, or the number the author asks for.
+- If something failed, reset the full loop streak to 0.
+- Write one line in the chat with the run number, the passed count, and the full loop streak, so the author can follow the loop (e.g. `full run 3: 79/81, full loop: 0/5`).
+- Under it, list the failed test names and the failure reasons, never the full output.
+- If something failed, start the fix loop.
+- Stop at 5 full passes in a row, or the number the author asks for.
+- When I stop, for any reason, sum up the work: the number of full runs and fix runs, the full loop streak, what I fixed, what still fails and why, and the decisions left for the author.
 
 ## Fix loop
 
@@ -25,10 +27,13 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Say what I suggest.
 - Make a change that fixes that cause, for every failed test, before running anything.
 - Run only the fixed tests together as one group, not the whole suite.
-- Run the group, each run as its own command, and after each run log one line with the fix loop streak of each test (e.g. `fix loop: test a 3/5, test b 3/5`).
-- If a test fails, the fix is wrong, so reset its fix loop streak to 0 and change its fix.
+- Run the group, each run as its own command.
+- If a test passes, add 1 to its fix loop streak.
+- If a test fails, the fix is wrong, so reset its fix loop streak to 0.
+- Write one line in the chat with the fix run number and the fix loop streak of each test, so the author can follow the loop (e.g. `fix run 2: test a 3/5, test b 0/5`).
+- Under it, list the failed test names and the failure reasons, never the full output.
 - When a test reaches a fix loop streak of 5, drop it from the group.
-- Keep running and fixing the rest of the group.
+- Change the fix of each failed test, and keep running the rest of the group.
 - When the group is empty, go back to the full loop.
 
 ## Instructions
@@ -40,8 +45,9 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Don't weaken an eval to make it pass.
 - Don't copy eval data into the prompt.
 - Write prompts in markdown with simple, concise, natural instructions.
+- Keep the full text of each prompt inline in its own call, even when another prompt repeats the same rules, and never move rules into shared constants or helpers, because one prompt read top to bottom is easy to debug.
 - Write one sentence per rule and one rule per bullet, everywhere in the prompt, and give each rule one job and a clear scope.
-- Don't add duplicate or obvious rules, and extend an existing rule instead of adding a new one when you can.
+- Don't add duplicate or obvious rules within one prompt, and extend an existing rule instead of adding a new one when you can.
 - Keep fixes short, with no long rules or many examples.
 - Make rules direct, so they leave less room for a mistake.
 - Make rules general, so they also handle future cases and not just the failed one, by stating the reason behind the right answer instead of mapping one input to one answer.
