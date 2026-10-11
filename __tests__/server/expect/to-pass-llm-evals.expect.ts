@@ -14,7 +14,7 @@ declare module 'vitest' {
 
 expect.extend({
   async toPassLlmEvals(input, evals) {
-    const { output } = await generateText({
+    const { finalStep, output } = await generateText({
       model: claudeHaiku55.model,
       providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
       output: Output.object({
@@ -48,6 +48,7 @@ expect.extend({
         '',
         '## results[].isPassed',
         '- `true` if the eval passes, `false` if it does not pass.',
+        '- Decide it from the evidence in `reason`, so it never contradicts the reason.',
       ].join('\n'),
       prompt: [
         '# Input',
@@ -61,6 +62,8 @@ expect.extend({
       .map(({ idx, reason, isPassed }) => `${isPassed ? '✔' : '✖'} ${evals[idx]}\n  → ${reason}`)
       .join('\n');
 
+    const reasoning = finalStep.reasoningText ? `judge reasoning:\n${finalStep.reasoningText}\n\n` : '';
+
     const idxs = output.results.map(({ idx }) => idx);
     const hasAllEvals =
       idxs.length === evals.length &&
@@ -70,7 +73,7 @@ expect.extend({
     return {
       pass: hasAllEvals && output.results.every(({ isPassed }) => isPassed),
       message: () =>
-        `expected ${this.utils.printReceived(input)} to pass evals${hasAllEvals ? '' : ` (the judge returned ${idxs.length} of ${evals.length} results, idxs: ${this.utils.printReceived(idxs)})`}${issues ? `:\n\n${issues}\n` : '.'}`,
+        `expected ${this.utils.printReceived(input)} to pass evals${hasAllEvals ? '' : ` (the judge returned ${idxs.length} of ${evals.length} results, idxs: ${this.utils.printReceived(idxs)})`}${issues || reasoning ? `:\n\n${reasoning}${issues}\n` : '.'}`,
     };
   },
 });
