@@ -22,7 +22,7 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 
 ## Fix loop
 
-- Read the reasoning of the model and the judge for each failure, to find the step where the logic went wrong, and fix the rule that led to it.
+- Read the reasoning of the model and the judge for each failure, when there is one, to find the step that went wrong or was skipped, and fix the rule that led to it.
 - Name the cause of each failure: the prompt, the code, a wrong test or judge statement, or something else.
 - Say what I suggest.
 - Make a change that fixes that cause, for every failed test, before running anything.

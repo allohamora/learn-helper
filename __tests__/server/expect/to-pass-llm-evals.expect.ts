@@ -16,7 +16,7 @@ expect.extend({
   async toPassLlmEvals(input, evals) {
     const { finalStep, output } = await generateText({
       model: claudeHaiku55.model,
-      providerOptions: { openrouter: { reasoning: { effort: 'low' } } },
+      providerOptions: { openrouter: { reasoning: { max_tokens: 1024 } } },
       output: Output.object({
         schema: z.object({
           results: z.array(z.object({ idx: z.number().int(), reason: z.string(), isPassed: z.boolean() })),
