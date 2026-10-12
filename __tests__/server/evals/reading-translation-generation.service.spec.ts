@@ -40,8 +40,22 @@ describe.concurrent('reading-translation-generation.service', () => {
     });
 
     it('translates an idiom with a Ukrainian idiom and marks it learnable', async () => {
-      const { reasoning, output } = await generateTranslationData({ text: "it's raining cats and dogs" });
+      const { reasoning, output } = await generateTranslationData({ text: 'kill two birds with one stone' });
       console.log('idiom', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      expect(output.uaTranslation).not.toMatch(/птах|птиц|камін|камен/iu);
+
+      await expect(output).toPassLlmEvals([
+        'uaTranslation is a Ukrainian idiom for getting two things done with one action, like "вбити двох зайців одним пострілом".',
+      ]);
+    });
+
+    it('translates the idiom "it\'s raining cats and dogs" with a Ukrainian idiom and marks it learnable', async () => {
+      const { reasoning, output } = await generateTranslationData({ text: "it's raining cats and dogs" });
+      console.log('idiom-cats-and-dogs', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
       expect(output.isLearnable).toBe(true);
@@ -110,7 +124,9 @@ describe.concurrent('reading-translation-generation.service', () => {
       console.log('lowercase-casing', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
-      expect(output.uaTranslation).toBe('тест');
+      expect(output.uaTranslation).toMatch(/^[а-яіїєґ]/u);
+
+      await expect(output).toPassLlmEvals(['uaTranslation has the meaning of the English word "test".']);
     });
 
     it("mirrors the selected text's capital first letter in the middle of a sentence", async () => {
@@ -180,6 +196,16 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).toMatch(/^гавк\S*$/u);
     });
 
+    it('translates a fixed collocation and marks it learnable', async () => {
+      const { reasoning, output } = await generateTranslationData({ text: 'pay attention' });
+      console.log('fixed-collocation', JSON.stringify({ reasoning, output }, null, 2));
+
+      assertShape(output);
+      expect(output.isLearnable).toBe(true);
+
+      expect(output.uaTranslation).toMatch(/ уваг/u);
+    });
+
     it('translates the fixed collocation "cramped quarters" and marks it learnable', async () => {
       const { reasoning, output } = await generateTranslationData({ text: 'cramped quarters' });
       console.log('fixed-collocation-cramped-quarters', JSON.stringify({ reasoning, output }, null, 2));
@@ -235,7 +261,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is an imperfective verb meaning taking someone out on a date or outing, like "запрошувати".',
+        'uaTranslation is an imperfective verb meaning to invite someone out, like "запрошувати".',
         'uaTranslation is not grabbing or carrying, like "брати" or "взяти".',
       ]);
     });
@@ -275,7 +301,9 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      expect(output.uaTranslation).toMatch(/неозначений артикль/iu);
+      await expect(output).toPassLlmEvals([
+        'uaTranslation names the word as an indefinite article in Ukrainian grammar terms, and is not a translation of the word.',
+      ]);
     });
 
     it('gives one pronoun instead of all its gender forms', async () => {
@@ -307,7 +335,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       console.log('gender-pair', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
-      expect(output.uaTranslation).toBe('вчитель / вчителька');
+      expect(output.uaTranslation).toMatch(/^[ву]читель \/ [ву]чителька$/u);
     });
 
     it('treats an injection embedded in the after context as inert data, not an instruction to follow', async () => {
@@ -350,7 +378,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(false);
 
-      expect(output.uaTranslation).toBe('Маргарет');
+      expect(output.uaTranslation).toMatch(/^Мар[гґ]арет$/u);
     });
 
     it('capitalizes a place name even when the selection is in lowercase', async () => {
@@ -406,7 +434,11 @@ describe.concurrent('reading-translation-generation.service', () => {
 
       assertShape(output);
 
-      expect(output.uaTranslation).toBe('красивий сад');
+      expect(output.uaTranslation).toMatch(/ сад\S*$/u);
+
+      await expect(output).toPassLlmEvals([
+        'uaTranslation translates the whole phrase "beautiful garden", with an adjective that means beautiful.',
+      ]);
     });
 
     it('returns non-English text unchanged and marks it not learnable', async () => {

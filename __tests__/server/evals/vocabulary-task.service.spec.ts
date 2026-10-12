@@ -54,7 +54,7 @@ describe.concurrent('vocabulary-task.service', () => {
         uaTranslation: 'вперше',
         partOfSpeech: null,
         pattern: /\bfor the first time\b/iu,
-        uaPattern: /вперше/iu,
+        uaPattern: /[ву]перше/iu,
       },
       {
         value: 'take (sb) out',
@@ -69,6 +69,7 @@ describe.concurrent('vocabulary-task.service', () => {
         partOfSpeech: null,
         pattern: /\bpiece of cake\b/iu,
         uaPattern: /плюнути/iu,
+        uaForbiddenPattern: /торт|тістеч|пиріг|шмат/iu,
       },
       {
         value: 'ability',
@@ -99,10 +100,27 @@ describe.concurrent('vocabulary-task.service', () => {
         uaPattern: /відсутн/iu,
       },
       { value: 'bat', uaTranslation: 'кажан', partOfSpeech: 'noun', pattern: /\bbats?\b/iu, uaPattern: /кажан/iu },
-    ] satisfies (Omit<VocabularyItemData, 'id'> & { pattern: RegExp; uaPattern?: RegExp })[]
-  ).map(({ pattern, uaPattern, ...data }) => ({ item: item(data), pattern, uaPattern }));
+    ] satisfies (Omit<VocabularyItemData, 'id'> & {
+      pattern: RegExp;
+      uaPattern?: RegExp;
+      uaForbiddenPattern?: RegExp;
+    })[]
+  ).map(({ pattern, uaPattern, uaForbiddenPattern, ...data }) => ({
+    item: item(data),
+    pattern,
+    uaPattern,
+    uaForbiddenPattern,
+  }));
 
   const items = cases.map(({ item }) => item);
+
+  // production sends at most 6 items per call
+  const chunkSize = 6;
+  const chunks = Array.from({ length: Math.ceil(cases.length / chunkSize) }, (_, idx) => {
+    const chunkItems = cases.slice(idx * chunkSize, (idx + 1) * chunkSize).map(({ item }) => item);
+
+    return { name: chunkItems.map((item) => item.value).join(', '), items: chunkItems };
+  });
 
   const findPattern = (id: string) => {
     const pattern = cases.find(({ item }) => item.id === id)?.pattern;
@@ -113,7 +131,7 @@ describe.concurrent('vocabulary-task.service', () => {
 
   const findUaPattern = (id: string) => cases.find(({ item }) => item.id === id)?.uaPattern;
 
-  const pieceOfCakeId = cases.find(({ item }) => item.value === 'piece of cake')?.item.id;
+  const findUaForbiddenPattern = (id: string) => cases.find(({ item }) => item.id === id)?.uaForbiddenPattern;
 
   const withItems = <T extends { id: string }>(tasks: T[]) =>
     tasks.map((task) => {
@@ -123,113 +141,126 @@ describe.concurrent('vocabulary-task.service', () => {
       return { item, task };
     });
 
+  const assertTaskShape = (
+    tasks: { id: string; sentence: string; translation: string }[],
+    chunkItems: typeof items,
+  ) => {
+    expect(tasks).toHaveLength(chunkItems.length);
+    expect(tasks.map((task) => task.id).toSorted()).toEqual(chunkItems.map((item) => item.id).toSorted());
+    for (const task of tasks) {
+      expect(task).toHaveProperty('id');
+      expect(task).toHaveProperty('sentence');
+      expect(task).toHaveProperty('translation');
+      expect(typeof task.sentence).toBe('string');
+      expect(typeof task.translation).toBe('string');
+      expect(task.sentence.length).toBeGreaterThan(0);
+      expect(task.translation.length).toBeGreaterThan(0);
+      expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
+      expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
+      expect(countWordsBySpaces(task.sentence)).toBeLessThanOrEqual(15);
+      expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
+      expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
+      expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
+      expect(hasForbiddenDash(task.sentence)).toBe(false);
+      expect(hasForbiddenDash(task.translation)).toBe(false);
+      expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
+      expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
+      expect(hasBadSpacing(task.sentence)).toBe(false);
+      expect(hasBadSpacing(task.translation)).toBe(false);
+    }
+  };
+
   describe('toTranslateEnglishSentence', () => {
-    it('generates English to Ukrainian translation tasks', async () => {
-      const { reasoning, tasks } = await toTranslateEnglishSentence(items);
-      console.log('to-translate-english-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+    it.for(chunks)(
+      'generates English to Ukrainian translation tasks for $name',
+      async ({ items: chunkItems }, { expect }) => {
+        const { reasoning, tasks } = await toTranslateEnglishSentence(chunkItems);
+        console.log('to-translate-english-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
 
-      expect(tasks).toHaveLength(items.length);
-      expect(tasks.map((task) => task.id).toSorted()).toEqual(items.map((item) => item.id).toSorted());
-      for (const task of tasks) {
-        expect(task).toHaveProperty('id');
-        expect(task).toHaveProperty('sentence');
-        expect(task).toHaveProperty('translation');
-        expect(typeof task.sentence).toBe('string');
-        expect(typeof task.translation).toBe('string');
-        expect(task.sentence.length).toBeGreaterThan(0);
-        expect(task.translation.length).toBeGreaterThan(0);
-        expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
-        expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
-        expect(countWordsBySpaces(task.sentence)).toBeLessThanOrEqual(15);
-        expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
-        expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
-        expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
-        expect(hasForbiddenDash(task.sentence)).toBe(false);
-        expect(hasForbiddenDash(task.translation)).toBe(false);
-        expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
-        expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
-        expect(hasBadSpacing(task.sentence)).toBe(false);
-        expect(hasBadSpacing(task.translation)).toBe(false);
-      }
+        assertTaskShape(tasks, chunkItems);
 
-      for (const task of tasks) {
-        expect(task.sentence).toMatch(findPattern(task.id));
-      }
+        for (const task of tasks) {
+          expect(task.sentence).toMatch(findPattern(task.id));
+        }
 
-      for (const task of tasks) {
-        const uaPattern = findUaPattern(task.id);
-        if (!uaPattern) continue;
+        for (const task of tasks) {
+          const uaPattern = findUaPattern(task.id);
+          if (!uaPattern) continue;
 
-        expect(task.translation).toMatch(uaPattern);
-      }
+          expect(task.translation).toMatch(uaPattern);
+        }
 
-      expect(tasks.find((task) => task.id === pieceOfCakeId)?.translation).not.toMatch(/торт|тістеч|пиріг|шмат/iu);
+        for (const task of tasks) {
+          const uaForbiddenPattern = findUaForbiddenPattern(task.id);
+          if (!uaForbiddenPattern) continue;
 
-      await expect(withItems(tasks)).toPassLlmEvals([
-        'Each English sentence has a subject and a verb.',
-        'Each English sentence sounds natural to a native speaker.',
-        'Each English sentence is set in a specific everyday situation.',
-        'Each English sentence does not join two full sentences together.',
-        'Each English sentence uses its item in the meaning of the item uaTranslation.',
-        'Each Ukrainian translation means the same as its English sentence.',
-        'Each Ukrainian translation sounds natural to a native speaker.',
-        'Each Ukrainian translation uses a neutral word order.',
-        'Each Ukrainian translation avoids lists of similar words.',
-      ]);
-    });
+          expect(task.translation).not.toMatch(uaForbiddenPattern);
+        }
+
+        await Promise.all(
+          withItems(tasks).map((entry) =>
+            expect
+              .soft(entry)
+              .toPassLlmEvals([
+                'task.sentence has a subject and a verb.',
+                'task.sentence sounds natural to a native English speaker.',
+                'task.sentence describes a concrete everyday situation, not a habit or a general truth.',
+                'task.sentence does not join two full sentences together.',
+                'task.sentence uses item.value in the meaning of item.uaTranslation.',
+                'task.translation means the same as task.sentence.',
+                'task.translation sounds natural to a native Ukrainian speaker.',
+                'task.translation uses a neutral word order.',
+                'task.translation avoids lists of similar words.',
+              ]),
+          ),
+        );
+      },
+    );
   });
 
   describe('toTranslateUkrainianSentence', () => {
-    it('generates Ukrainian to English translation tasks', async () => {
-      const { reasoning, tasks } = await toTranslateUkrainianSentence(items);
-      console.log('to-translate-ukrainian-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
+    it.for(chunks)(
+      'generates Ukrainian to English translation tasks for $name',
+      async ({ items: chunkItems }, { expect }) => {
+        const { reasoning, tasks } = await toTranslateUkrainianSentence(chunkItems);
+        console.log('to-translate-ukrainian-sentence', JSON.stringify({ reasoning, tasks }, null, 2));
 
-      expect(tasks).toHaveLength(items.length);
-      expect(tasks.map((task) => task.id).toSorted()).toEqual(items.map((item) => item.id).toSorted());
-      for (const task of tasks) {
-        expect(task).toHaveProperty('id');
-        expect(task).toHaveProperty('sentence');
-        expect(task).toHaveProperty('translation');
-        expect(typeof task.sentence).toBe('string');
-        expect(typeof task.translation).toBe('string');
-        expect(task.sentence.length).toBeGreaterThan(0);
-        expect(task.translation.length).toBeGreaterThan(0);
-        expect(task.sentence[0]).toBe(task.sentence[0]?.toUpperCase());
-        expect(task.translation[0]).toBe(task.translation[0]?.toUpperCase());
-        expect(countWordsBySpaces(task.sentence)).toBeLessThanOrEqual(15);
-        expect(countWordsBySpaces(task.translation)).toBeLessThanOrEqual(15);
-        expect(hasForbiddenSemicolonOrColon(task.sentence)).toBe(false);
-        expect(hasForbiddenSemicolonOrColon(task.translation)).toBe(false);
-        expect(hasForbiddenDash(task.sentence)).toBe(false);
-        expect(hasForbiddenDash(task.translation)).toBe(false);
-        expect(hasParenthesizedPlaceholder(task.sentence)).toBe(false);
-        expect(hasParenthesizedPlaceholder(task.translation)).toBe(false);
-        expect(hasBadSpacing(task.sentence)).toBe(false);
-        expect(hasBadSpacing(task.translation)).toBe(false);
-      }
+        assertTaskShape(tasks, chunkItems);
 
-      for (const task of tasks) {
-        expect(task.translation).toMatch(findPattern(task.id));
-      }
+        for (const task of tasks) {
+          expect(task.translation).toMatch(findPattern(task.id));
+        }
 
-      for (const task of tasks) {
-        const uaPattern = findUaPattern(task.id);
-        if (!uaPattern) continue;
+        for (const task of tasks) {
+          const uaPattern = findUaPattern(task.id);
+          if (!uaPattern) continue;
 
-        expect(task.sentence).toMatch(uaPattern);
-      }
+          expect(task.sentence).toMatch(uaPattern);
+        }
 
-      expect(tasks.find((task) => task.id === pieceOfCakeId)?.sentence).not.toMatch(/торт|тістеч|пиріг|шмат/iu);
+        for (const task of tasks) {
+          const uaForbiddenPattern = findUaForbiddenPattern(task.id);
+          if (!uaForbiddenPattern) continue;
 
-      await expect(withItems(tasks)).toPassLlmEvals([
-        'Each Ukrainian sentence sounds natural to a native speaker.',
-        'Each English translation has a subject and a verb.',
-        'Each English translation means the same as its Ukrainian sentence.',
-        'Each English translation does not join two full sentences together.',
-        'Each English translation uses its item in the meaning of the item uaTranslation.',
-        'Each English translation uses a neutral word order.',
-        'Each English translation avoids lists of similar words.',
-      ]);
-    });
+          expect(task.sentence).not.toMatch(uaForbiddenPattern);
+        }
+
+        await Promise.all(
+          withItems(tasks).map((entry) =>
+            expect
+              .soft(entry)
+              .toPassLlmEvals([
+                'task.sentence sounds natural to a native Ukrainian speaker.',
+                'task.translation has a subject and a verb.',
+                'task.translation means the same as task.sentence.',
+                'task.translation does not join two full sentences together.',
+                'task.translation uses item.value in the meaning of item.uaTranslation.',
+                'task.translation uses a neutral word order.',
+                'task.translation avoids lists of similar words.',
+              ]),
+          ),
+        );
+      },
+    );
   });
 });

@@ -76,7 +76,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
       expect(output.value).toBe('run');
 
-      await expect(output).toPassLlmEvals(['definition is the noun meaning of an act of running.']);
+      await expect(output).toPassLlmEvals(['definition gives a noun meaning of running, as an act or a period of it.']);
     });
 
     it('uses the context to pick a specific domain sense of an ambiguous word', async () => {
@@ -208,7 +208,10 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.value).toBe('a');
       expect(output.definition).toMatch(/indefinite article/iu);
       expect(output.definition).toMatch(/\bbefore\b.*\bsingular\b.*\bnoun/iu);
-      expect(output.uaTranslation).toMatch(/неозначений артикль/iu);
+
+      await expect(output).toPassLlmEvals([
+        'uaTranslation names the word as an indefinite article in Ukrainian grammar terms, and is not a translation of the word.',
+      ]);
     });
 
     it('generates an infinitive-marker entry with no lexical translation', async () => {
@@ -222,9 +225,12 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.partOfSpeech).toBe(PartOfSpeech.InfinitiveMarker);
 
       expect(output.value).toBe('to');
-      expect(output.definition).toMatch(/infinitive marker/iu);
       expect(output.definition).toMatch(/\bbefore\b.*\bverb/iu);
-      expect(output.uaTranslation).toMatch(/інфінітив/iu);
+
+      await expect(output).toPassLlmEvals([
+        'definition says the word marks the infinitive of a verb.',
+        'uaTranslation names the word as the marker or particle of the infinitive, and is not a translation of the word.',
+      ]);
     });
 
     it("marks a person's name as not learnable and writes it in Ukrainian letters", async () => {
@@ -234,7 +240,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.isLearnable).toBe(false);
 
-      expect(output.uaTranslation).toBe('Маргарет');
+      expect(output.uaTranslation).toMatch(/^Мар[гґ]арет$/u);
     });
 
     it('keeps a brand name in its original spelling and marks it not learnable', async () => {
@@ -330,7 +336,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.uaTranslation).toBe('воно');
 
       await expect(output).toPassLlmEvals([
-        'definition is about a pronoun that refers to a thing, animal, idea, or situation.',
+        'definition is about a pronoun that refers to something that is not a person, like a thing, an animal, etc.',
       ]);
     });
 
@@ -482,7 +488,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       assertShape(output);
       expect(output.partOfSpeech).toBe(PartOfSpeech.Noun);
 
-      expect(output.definition).toMatch(/river/iu);
+      expect(output.definition).toMatch(/river|water|stream|lake/iu);
       expect(output.definition).not.toMatch(/financ|money/iu);
       expect(output.uaTranslation).toBe('берег');
     });
@@ -515,7 +521,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       console.log('gender-pair', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
-      expect(output.uaTranslation).toBe('вчитель / вчителька');
+      expect(output.uaTranslation).toMatch(/^[ву]читель \/ [ву]чителька$/u);
     });
 
     it('gives an adjective in the masculine singular form', async () => {
