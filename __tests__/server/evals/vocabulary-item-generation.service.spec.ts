@@ -172,7 +172,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'definition says that doing something late is better than never doing it.',
-        'uaTranslation is a Ukrainian idiom meaning it is better to do something late than never, like "краще пізно, ніж ніколи".',
+        'uaTranslation is "краще пізно, ніж ніколи" in any standard Ukrainian spelling, or another Ukrainian idiom with the same meaning.',
       ]);
     });
 
@@ -185,7 +185,7 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'definition means feeling slightly ill.',
-        'uaTranslation is a Ukrainian idiom meaning feeling slightly ill, or a word-for-word translation like "під погодою".',
+        'uaTranslation is a word-for-word translation like "під погодою" or a Ukrainian idiom meaning feeling slightly ill.',
         'uaTranslation is not a plain non-idiomatic word like "нездужати" or "хворіти".',
       ]);
     });
@@ -210,7 +210,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
       expect(output.definition).toMatch(/\bbefore\b.*\bsingular\b.*\bnoun/iu);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation names the word as an indefinite article in Ukrainian grammar terms, and is not a translation of the word.',
+        'uaTranslation names the word as an indefinite article in Ukrainian grammar terms.',
+        'uaTranslation is not a Ukrainian word with the same meaning as the word, like "один" or "якийсь".',
       ]);
     });
 
@@ -229,7 +230,8 @@ describe.concurrent('vocabulary-item-generation.service', () => {
 
       await expect(output).toPassLlmEvals([
         'definition says the word marks the infinitive of a verb.',
-        'uaTranslation names the word as the marker or particle of the infinitive, and is not a translation of the word.',
+        'uaTranslation names the word as the marker or particle of the infinitive.',
+        'uaTranslation is not a Ukrainian word with the same meaning as the word, like "до" or "щоб".',
       ]);
     });
 

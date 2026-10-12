@@ -40,12 +40,11 @@ export const generateTranslationData = async ({ text, before, after }: Translate
       '',
       '# Instructions',
       '- Use the surrounding text only to pick the right meaning.',
-      '- Look in `textAfter` for a particle that completes a phrasal verb.',
-      '- If the selection is part of a phrasal verb, idiom, or collocation, even when other words sit between its parts, translate it with the meaning of the whole expression, never a meaning built from its parts.',
+      '- If the selection is part of a phrasal verb, idiom, or collocation, even when other words sit between its parts or its particle is in `textAfter`, translate it with the meaning of the whole expression, never a meaning built from its parts.',
       '- When a word or phrasal verb has several meanings, pick the sense that fits the whole sentence.',
       '- Without helpful context, use the most common meaning.',
       '- When an English plural noun has a meaning of its own, like `glasses`, `goods`, `customs`, etc., translate that meaning, never the meaning of its singular.',
-      '- Use the Ukrainian word with the narrowest meaning that fits, like a word for a kitchen for a room to cook in, etc., never a broader word for any room, place, or thing, because the learner needs the exact meaning.',
+      '- Use the Ukrainian word with the narrowest meaning that fits, one that names what a place or thing is used for, like a word for a kitchen for a room to cook in, etc., never a broader word for any room, place, or thing, because the learner needs the exact meaning.',
       '- If the selection starts or ends in the middle of a word, complete that word using the text right next to it.',
       '- If a word of the selection is misspelled, translate the word that was meant.',
       '- If the selection has no English words, like only digits, Ukrainian text, text in another language, etc., return it exactly as given, even if you know its Ukrainian translation.',
@@ -82,7 +81,6 @@ export const generateTranslationData = async ({ text, before, after }: Translate
       '- For a single noun for a person, like a job, a role, etc., give the male and the female form as `a / b`, the male one first, because Ukrainian has a form for each gender even when English does not.',
       '- For a pronoun, give the one Ukrainian pronoun of the same kind, like a personal one for a personal one, etc., never all its gender forms.',
       '- Translate `you` as `ви`, unless the surrounding text clearly speaks to one person informally.',
-      "- Write the Ukrainian apostrophe as `'`, never `’` or `ʼ`, even in a long text, because the learner types it with that key.",
       '- Never add stress marks.',
       '- Never end the translation of a word or a fixed expression with a period.',
       '- Copy the case of the first letter of the selection to the first letter of the translation, wherever the selection sits in the sentence, unless a rule below says otherwise.',
@@ -114,7 +112,7 @@ export const generateTranslationData = async ({ text, before, after }: Translate
 
   return {
     reasoning: finalStep.reasoningText,
-    output,
+    output: { ...output, uaTranslation: output.uaTranslation.replace(/[’ʼ]/gu, "'") },
     cost: {
       costInNanoDollars: gpt6Luna.calculateCostInNanoDollars(usage),
       inputTokens: usage.inputTokens,

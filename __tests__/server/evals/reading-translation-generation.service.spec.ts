@@ -49,7 +49,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).not.toMatch(/птах|птиц|камін|камен/iu);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is a Ukrainian idiom for getting two things done with one action, like "вбити двох зайців одним пострілом".',
+        'uaTranslation is "вбити двох зайців одним пострілом", "убити двох зайців одним пострілом", or another Ukrainian idiom for getting two things done with one action.',
       ]);
     });
 
@@ -63,7 +63,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).not.toMatch(/кіт|кот|кіш|соба|пес|псів/iu);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is a Ukrainian idiom for heavy rain, like "ллє як з відра".',
+        'uaTranslation is "ллє як з відра" in any standard Ukrainian spelling, or another Ukrainian idiom for heavy rain.',
       ]);
     });
 
@@ -261,7 +261,8 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation is an imperfective verb meaning to invite someone out, like "запрошувати".',
+        'uaTranslation is an imperfective verb.',
+        'uaTranslation means to invite someone out, like "запрошувати".',
         'uaTranslation is not grabbing or carrying, like "брати" or "взяти".',
       ]);
     });
@@ -302,7 +303,8 @@ describe.concurrent('reading-translation-generation.service', () => {
       assertShape(output);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation names the word as an indefinite article in Ukrainian grammar terms, and is not a translation of the word.',
+        'uaTranslation names the word as an indefinite article in Ukrainian grammar terms.',
+        'uaTranslation is not a Ukrainian word with the same meaning as the word, like "один" or "якийсь".',
       ]);
     });
 
@@ -437,7 +439,8 @@ describe.concurrent('reading-translation-generation.service', () => {
       expect(output.uaTranslation).toMatch(/ сад\S*$/u);
 
       await expect(output).toPassLlmEvals([
-        'uaTranslation translates the whole phrase "beautiful garden", with an adjective that means beautiful.',
+        'uaTranslation translates the whole phrase "beautiful garden".',
+        'uaTranslation has an adjective that means beautiful.',
       ]);
     });
 
