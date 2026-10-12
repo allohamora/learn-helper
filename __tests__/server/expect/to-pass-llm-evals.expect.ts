@@ -33,6 +33,7 @@ expect.extend({
         '# Instructions',
         '- An eval fails if the input contradicts it or lacks what it requires.',
         '- Apply each eval exactly as written, no stricter and no looser.',
+        '- Never fail an eval because a better answer exists, if the input already meets the eval.',
         '',
         '# Output',
         '',
