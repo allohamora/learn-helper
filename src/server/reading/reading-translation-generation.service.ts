@@ -19,8 +19,6 @@ export type TranslatedSelectionDto = z.infer<typeof translatedSelectionDto>;
 export const generateTranslationData = async ({ text, before, after }: TranslateSelectionDto) => {
   const { finalStep, output, usage } = await generateText({
     model: gemini25FlashLite.model,
-    providerOptions: { openrouter: { reasoning: { max_tokens: 1024 } } },
-    temperature: 0.7,
     experimental_telemetry: {
       isEnabled: true,
       functionId: 'generateTranslationData',
