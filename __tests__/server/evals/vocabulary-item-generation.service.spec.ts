@@ -162,17 +162,17 @@ describe.concurrent('vocabulary-item-generation.service', () => {
     });
 
     it('corrects and interprets a full idiomatic sentence', async () => {
-      const { reasoning, output } = await generateVocabularyItemData({ value: "the ball is in you're court" });
+      const { reasoning, output } = await generateVocabularyItemData({ value: 'better late then never' });
       console.log('idiomatic-sentence', JSON.stringify({ reasoning, output }, null, 2));
 
       assertShape(output);
-      expect(output.value.toLowerCase()).toBe('the ball is in your court');
+      expect(output.value.toLowerCase()).toBe('better late than never');
       expect(output.partOfSpeech).toBeNull();
       expect(output.isLearnable).toBe(true);
 
       await expect(output).toPassLlmEvals([
-        'definition says the responsibility to act or decide now lies with someone.',
-        'uaTranslation is a Ukrainian idiom meaning the next move is up to the listener, like "слово за тобою".',
+        'definition says that doing something late is better than never doing it.',
+        'uaTranslation is a Ukrainian idiom meaning it is better to do something late than never, like "краще пізно, ніж ніколи".',
       ]);
     });
 
