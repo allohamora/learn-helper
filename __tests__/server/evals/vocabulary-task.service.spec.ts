@@ -65,10 +65,10 @@ describe.concurrent('vocabulary-task.service', () => {
       },
       {
         value: 'piece of cake',
-        uaTranslation: 'раз плюнути',
+        uaTranslation: 'як води напитися',
         partOfSpeech: null,
         pattern: /\bpiece of cake\b/iu,
-        uaPattern: /плюнути/iu,
+        uaPattern: /води напитися/iu,
         uaForbiddenPattern: /торт|тістеч|пиріг|шмат/iu,
       },
       {
