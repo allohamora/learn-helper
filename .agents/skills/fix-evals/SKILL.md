@@ -42,7 +42,7 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 - Aim for stable evals and predictable prompts, so the same input gives about the same output on every run.
 - When an instruction allows more than one valid answer, add a tie-breaker that picks one, like the dictionary form, the masculine form first, the most neutral word, etc.
 - Never accept "it's flaky, nothing we can do" as a reason to ignore or skip a failure, because a flaky eval means the prompt, the code, or the test is not good enough yet.
-- Never re-run without a change, because a re-run with no change is a gamble, not a fix.
+- Never re-run a failed test without a change, because a re-run with no change is a gamble, not a fix.
 - Don't weaken an eval to make it pass.
 - Don't copy eval data into the prompt, including into few-shot examples, so the eval still checks a result the prompt didn't hand over.
 - Write prompts in markdown with simple, concise, natural instructions.
