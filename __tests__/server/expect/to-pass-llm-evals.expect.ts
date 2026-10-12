@@ -63,7 +63,7 @@ expect.extend({
       .map(({ idx, reason, isPassed }) => `${isPassed ? '✔' : '✖'} ${evals[idx]}\n  → ${reason}`)
       .join('\n');
 
-    const reasoning = finalStep.reasoningText ? `judge reasoning:\n${finalStep.reasoningText}\n\n` : '';
+    const reasoning = finalStep.reasoningText ? `judge reasoning:\n${finalStep.reasoningText.trim()}\n\n` : '';
 
     const idxs = output.results.map(({ idx }) => idx);
     const hasAllEvals =
