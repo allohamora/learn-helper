@@ -219,8 +219,7 @@ describe.concurrent('reading-translation-generation.service', () => {
       await expect(output).toPassLlmEvals(['uaTranslation means small, crowded living space, like "тісне житло".']);
     });
 
-    // TODO: gemini 2.5-flash-lite cannot translate it correct
-    it.skip('uses surrounding context to translate "quarters" as living space, not a fraction or coin', async () => {
+    it('uses surrounding context to translate "quarters" as living space, not a fraction or coin', async () => {
       const { reasoning, output } = await generateTranslationData({
         text: 'quarters',
         before: 'They spent the whole winter in cramped',
