@@ -16,15 +16,40 @@ type GeneratedTask = { id: string; sentence: string; translation: string };
 
 // the schema only validates each task's shape, not that the batch as a whole maps onto the
 // requested items, so a missing item, a duplicate id, or a fabricated id must be caught here
-export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: VocabularyItemData[]) => {
+const describeTaskMismatch = (tasks: GeneratedTask[], items: VocabularyItemData[]) => {
   const expectedIds = new Set(items.map((item) => item.id));
   const taskIds = tasks.map((task) => task.id);
+  const returnedIds = new Set(taskIds);
 
-  return (
-    taskIds.length === items.length &&
-    new Set(taskIds).size === items.length &&
-    taskIds.every((id) => expectedIds.has(id))
-  );
+  const unknown = [...returnedIds].filter((id) => !expectedIds.has(id));
+  const missing = [...expectedIds].filter((id) => !returnedIds.has(id));
+  const duplicated = [...returnedIds].filter((id) => taskIds.indexOf(id) !== taskIds.lastIndexOf(id));
+
+  const problems = [
+    taskIds.length !== items.length && `requested ${items.length}, returned ${taskIds.length}`,
+    unknown.length > 0 && `unknown ids: ${unknown.join(', ')}`,
+    missing.length > 0 && `missing ids: ${missing.join(', ')}`,
+    duplicated.length > 0 && `duplicated ids: ${duplicated.join(', ')}`,
+  ].filter(Boolean);
+
+  return problems.length > 0 ? problems.join('; ') : null;
+};
+
+export const tasksMatchRequestedItems = (tasks: GeneratedTask[], items: VocabularyItemData[]) =>
+  describeTaskMismatch(tasks, items) === null;
+
+const assertTasksMatchRequestedItems = (
+  taskType: UserVocabularyItemTaskType,
+  tasks: GeneratedTask[],
+  items: VocabularyItemData[],
+) => {
+  const mismatch = describeTaskMismatch(tasks, items);
+
+  if (mismatch) {
+    throw Exception.internalServer(
+      `Generated ${taskType} tasks do not match the requested vocabulary items (${mismatch})`,
+    );
+  }
 };
 
 export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) => {
@@ -139,11 +164,7 @@ export const toTranslateEnglishSentence = async (items: VocabularyItemData[]) =>
     prompt: ['# Input', '```json', JSON.stringify({ items }), '```'].join('\n'),
   });
 
-  if (!tasksMatchRequestedItems(output, items)) {
-    throw Exception.internalServer(
-      `Generated ${UserVocabularyItemTaskType.TranslateEnglishSentence} tasks do not match the requested vocabulary items (requested ${items.length}, returned ${output.length})`,
-    );
-  }
+  assertTasksMatchRequestedItems(UserVocabularyItemTaskType.TranslateEnglishSentence, output, items);
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
@@ -268,11 +289,7 @@ export const toTranslateUkrainianSentence = async (items: VocabularyItemData[]) 
     prompt: ['# Input', '```json', JSON.stringify({ items }), '```'].join('\n'),
   });
 
-  if (!tasksMatchRequestedItems(output, items)) {
-    throw Exception.internalServer(
-      `Generated ${UserVocabularyItemTaskType.TranslateUkrainianSentence} tasks do not match the requested vocabulary items (requested ${items.length}, returned ${output.length})`,
-    );
-  }
+  assertTasksMatchRequestedItems(UserVocabularyItemTaskType.TranslateUkrainianSentence, output, items);
 
   const cost = {
     taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,
