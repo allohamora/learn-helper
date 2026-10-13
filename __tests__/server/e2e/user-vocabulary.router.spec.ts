@@ -429,6 +429,7 @@ describe('user-vocabulary.router', () => {
       generateSpy = vi
         .spyOn(vocabularyItemGenerationService, 'generateVocabularyItemData')
         .mockImplementation(async ({ value }) => ({
+          reasoning: undefined,
           output: {
             value,
             definition: `definition of ${value}`,
@@ -980,7 +981,7 @@ describe('user-vocabulary.router', () => {
       const english = vi
         .spyOn(vocabularyTaskService, 'toTranslateEnglishSentence')
         .mockImplementation(async (items) => ({
-          reasoning: [],
+          reasoning: undefined,
           tasks: items.map(({ id }) => ({ id, sentence: `EN sentence ${id}`, translation: `UA translation ${id}` })),
           cost: {
             taskType: UserVocabularyItemTaskType.TranslateEnglishSentence,
@@ -993,7 +994,7 @@ describe('user-vocabulary.router', () => {
       const ukrainian = vi
         .spyOn(vocabularyTaskService, 'toTranslateUkrainianSentence')
         .mockImplementation(async (items) => ({
-          reasoning: [],
+          reasoning: undefined,
           tasks: items.map(({ id }) => ({ id, sentence: `UA sentence ${id}`, translation: `EN translation ${id}` })),
           cost: {
             taskType: UserVocabularyItemTaskType.TranslateUkrainianSentence,

@@ -41,7 +41,7 @@ const getHttpRoute = (pathname: string) => {
     return pathname;
   }
 
-  const route = spanToJSON(getRootSpan(activeSpan)).data['http.route'];
+  const route = spanToJSON(getRootSpan(activeSpan)).attributes['http.route'];
 
   return typeof route === 'string' ? route : pathname;
 };

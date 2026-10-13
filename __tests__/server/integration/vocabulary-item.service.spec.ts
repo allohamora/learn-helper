@@ -30,6 +30,7 @@ describe('vocabularyItemService', () => {
       generateSpy = vi
         .spyOn(vocabularyItemGenerationService, 'generateVocabularyItemData')
         .mockImplementation(async ({ value }) => ({
+          reasoning: undefined,
           output: {
             value,
             definition: `definition of ${value}`,
@@ -79,6 +80,7 @@ describe('vocabularyItemService', () => {
       const { id: userId } = await createTestUser('user-2');
 
       generateSpy.mockImplementation(async ({ value }) => ({
+        reasoning: undefined,
         output: {
           value,
           definition: `definition of ${value}`,

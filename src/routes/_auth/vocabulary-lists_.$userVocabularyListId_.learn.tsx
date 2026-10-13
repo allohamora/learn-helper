@@ -4,6 +4,7 @@ import { Learn } from '@/components/learn';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
 import { pageHead } from '@/utils/page';
+import { getVocabularyListTitle } from '@/utils/vocabulary';
 
 export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/learn')({
   loader: async ({ params: { userVocabularyListId } }) => {
@@ -17,7 +18,8 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
       'Failed to load vocabulary list',
     );
   },
-  head: ({ loaderData }) => pageHead(loaderData ? `Learn: ${loaderData.vocabularyList.title}` : 'Learn'),
+  head: ({ loaderData }) =>
+    pageHead(loaderData ? `Learn: ${getVocabularyListTitle(loaderData.vocabularyList)}` : 'Learn'),
   component: VocabularyListLearnPage,
 });
 

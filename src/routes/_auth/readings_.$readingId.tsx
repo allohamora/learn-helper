@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { ClientOnly, createFileRoute } from '@tanstack/react-router';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
 import { PdfReader } from '@/components/pdf-reader';
 import { pageHead } from '@/utils/page';
@@ -27,11 +27,13 @@ function ReadingPage() {
   const reading = Route.useLoaderData();
 
   return (
-    <PdfReader
-      key={reading.id}
-      readingId={reading.id}
-      totalPages={reading.totalPages}
-      initialPage={reading.currentPage}
-    />
+    <ClientOnly>
+      <PdfReader
+        key={reading.id}
+        readingId={reading.id}
+        totalPages={reading.totalPages}
+        initialPage={reading.currentPage}
+      />
+    </ClientOnly>
   );
 }

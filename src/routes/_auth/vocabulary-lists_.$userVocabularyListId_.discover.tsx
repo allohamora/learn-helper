@@ -12,6 +12,7 @@ import { VocabularyDiscoverCard } from '@/components/vocabulary-discover-card';
 import { LearningStatus } from '@/const/vocabulary';
 import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { pageHead } from '@/utils/page';
+import { getVocabularyListTitle } from '@/utils/vocabulary';
 
 const BATCH_LIMIT = 10;
 const HISTORY_LIMIT = 5;
@@ -28,7 +29,8 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
       'Failed to load vocabulary list',
     );
   },
-  head: ({ loaderData }) => pageHead(loaderData ? `Discover: ${loaderData.vocabularyList.title}` : 'Discover'),
+  head: ({ loaderData }) =>
+    pageHead(loaderData ? `Discover: ${getVocabularyListTitle(loaderData.vocabularyList)}` : 'Discover'),
   component: VocabularyListDiscoverPage,
 });
 

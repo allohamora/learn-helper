@@ -124,7 +124,7 @@ describe('withRequestMetrics', () => {
   it('records metrics for a path that merely starts with "/api" but is not under the /api mount', async () => {
     getActiveSpan.mockReturnValue({});
     getRootSpan.mockImplementation((span) => span);
-    spanToJSON.mockReturnValue({ data: { 'http.route': '/apiary' } });
+    spanToJSON.mockReturnValue({ attributes: { 'http.route': '/apiary' } });
 
     const inner = buildServerEntry(new Response('ok', { status: 200 }));
     const wrapped = withRequestMetrics(inner);
@@ -143,7 +143,7 @@ describe('withRequestMetrics', () => {
   it('records metrics for the root path "/"', async () => {
     getActiveSpan.mockReturnValue({});
     getRootSpan.mockImplementation((span) => span);
-    spanToJSON.mockReturnValue({ data: { 'http.route': '/' } });
+    spanToJSON.mockReturnValue({ attributes: { 'http.route': '/' } });
 
     const inner = buildServerEntry(new Response('ok', { status: 200 }));
     const wrapped = withRequestMetrics(inner);
@@ -163,7 +163,7 @@ describe('withRequestMetrics', () => {
   it('records metrics for non-/api requests using the root span http.route attribute', async () => {
     getActiveSpan.mockReturnValue({});
     getRootSpan.mockImplementation((span) => span);
-    spanToJSON.mockReturnValue({ data: { 'http.route': '/vocabulary-lists/$id' } });
+    spanToJSON.mockReturnValue({ attributes: { 'http.route': '/vocabulary-lists/$id' } });
 
     const inner = buildServerEntry(new Response('ok', { status: 200 }));
     const wrapped = withRequestMetrics(inner);
@@ -195,7 +195,7 @@ describe('withRequestMetrics', () => {
   it('falls back to the raw pathname when the root span has no http.route attribute', async () => {
     getActiveSpan.mockReturnValue({});
     getRootSpan.mockImplementation((span) => span);
-    spanToJSON.mockReturnValue({ data: {} });
+    spanToJSON.mockReturnValue({ attributes: {} });
 
     const inner = buildServerEntry(new Response('ok'));
     const wrapped = withRequestMetrics(inner);

@@ -1,15 +1,10 @@
 import '@tanstack/react-start/server-only';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { LanguageModel, LanguageModelUsage } from 'ai';
-import { GEMINI_API_KEY, OPENAI_API_KEY } from '../config';
+import { OPENROUTER_API_KEY } from '../config';
 
-const google = createGoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY,
-});
-
-const openai = createOpenAI({
-  apiKey: OPENAI_API_KEY,
+const openrouter = createOpenRouter({
+  apiKey: OPENROUTER_API_KEY,
 });
 
 type CreateModelOptions = {
@@ -28,16 +23,16 @@ const createModel = ({ model, inputNanoDollarsPerToken, outputNanoDollarsPerToke
   },
 });
 
-// gpt-5.6-luna standard-tier, short-context pricing: https://developers.openai.com/api/docs/pricing
-export const gpt56Luna = createModel({
-  model: openai('gpt-5.6-luna'),
-  inputNanoDollarsPerToken: 200,
-  outputNanoDollarsPerToken: 1200,
+// openai/gpt-6-luna short-context pricing: https://openrouter.ai/openai/gpt-6-luna
+export const gpt6Luna = createModel({
+  model: openrouter('openai/gpt-6-luna'),
+  inputNanoDollarsPerToken: 100,
+  outputNanoDollarsPerToken: 500,
 });
 
-// gemini-2.5-flash-lite pricing: https://ai.google.dev/gemini-api/docs/pricing
-export const gemini25FlashLite = createModel({
-  model: google('gemini-2.5-flash-lite'),
+// anthropic/claude-haiku-5.5 short-context pricing: https://openrouter.ai/anthropic/claude-haiku-5.5
+export const claudeHaiku55 = createModel({
+  model: openrouter('anthropic/claude-haiku-5.5'),
   inputNanoDollarsPerToken: 100,
-  outputNanoDollarsPerToken: 400,
+  outputNanoDollarsPerToken: 500,
 });
