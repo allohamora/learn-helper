@@ -3,6 +3,131 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.0](https://github.com/allohamora/learn-helper/compare/v0.1.2...v0.2.0) (2026-10-13)
+
+### Features
+
+- Switch vocabulary generation to gpt-6-luna ([eeccaf6](https://github.com/allohamora/learn-helper/commit/eeccaf6315ed8c99e7ddbd4f879fe965ea6c3468))
+- Switch reading translation to gpt-6-luna ([83bde8c](https://github.com/allohamora/learn-helper/commit/83bde8c727e09deacb297d8c19abb83facce2872))
+- Update react-pdf to 11 and pdfjs-dist to 6 ([ef2733c](https://github.com/allohamora/learn-helper/commit/ef2733c2a3538155cde94de6ba50e0d094073e52))
+- Enable low reasoning for gemini, gpt-6-luna, and haiku judge ([6d422f7](https://github.com/allohamora/learn-helper/commit/6d422f76494781ff1c4a3f63584ce2000c4c4963))
+- Use ukrainian idioms or word-for-word translation for idioms ([468af69](https://github.com/allohamora/learn-helper/commit/468af699e083a8ce3e0bbcee139aa290a1151b11))
+- Normalize objects in vocabulary items into placeholders ([86e1cde](https://github.com/allohamora/learn-helper/commit/86e1cdece167bf321b13697338afa5a48d104b88))
+- Keep the source number form in translations ([d5b1624](https://github.com/allohamora/learn-helper/commit/d5b1624a5bac962a3d5bd8dc19faa44308295f55))
+- Use the imperfective dictionary form for verbs in the reading popup ([fea19a1](https://github.com/allohamora/learn-helper/commit/fea19a17743514a76193abc44a882b21b3e85331))
+- Align translation capitalization for names and greetings ([393a5d6](https://github.com/allohamora/learn-helper/commit/393a5d68e08b420ce68d1d3a31a38f0930bbac56))
+- Keep brand names in original spelling and mark names not learnable ([85f73f9](https://github.com/allohamora/learn-helper/commit/85f73f9b70d54753d8344ef07505cefc41f9bfac))
+- Align learnable rules for proverbs, non-English text, and unclear cases ([2c8c8ec](https://github.com/allohamora/learn-helper/commit/2c8c8ecfac4519e78186d8ba2d6e978f63058d34))
+- Align function word and pronoun translations across prompts ([2e4e25e](https://github.com/allohamora/learn-helper/commit/2e4e25ea89b885da045b5741804ad894869683c1))
+- Translate misspelled words and keep non-English values as given ([c2913ef](https://github.com/allohamora/learn-helper/commit/c2913ef122ed8f4660d976e3abdd55f9d34d5651))
+- Complete split expressions from reading context in vocabulary items ([6a2e3e2](https://github.com/allohamora/learn-helper/commit/6a2e3e2f5e432b74273f33ec4af35155a8550198))
+- Align sentence rules between the two translation tasks ([191b815](https://github.com/allohamora/learn-helper/commit/191b81571e59e5bc894ebdcecdb06748dc9ba37d))
+- Switch reading translation to gpt-6-luna ([ea9bc80](https://github.com/allohamora/learn-helper/commit/ea9bc80912e1c75e83b7c6700f3cb8b22ff2b02f))
+
+### Bug Fixes
+
+- Show list title instead of null in learn and discover page titles ([66d73d8](https://github.com/allohamora/learn-helper/commit/66d73d8ee9dedca1110c072d8add50899bf76daf))
+- Preserve source capitalization in reading translation ([bc0b98e](https://github.com/allohamora/learn-helper/commit/bc0b98e71489a879708d593dfae5fe5d6dba4619))
+- Render pdf reader on the client only ([8313dc7](https://github.com/allohamora/learn-helper/commit/8313dc73a0ac1623009180f98a2c8ad8a8712a68))
+- Make generation prompts follow value and context more closely ([cb8af81](https://github.com/allohamora/learn-helper/commit/cb8af8112b7655295d0ddd79e1e0892b20f6abfa))
+- Enable 1024 reasoning token budget for reading translations ([d192a7a](https://github.com/allohamora/learn-helper/commit/d192a7abc5717e00ce70e4f732b5ede59db40cf9))
+- Tune reading, vocabulary item, and task prompts for stable evals ([20245e5](https://github.com/allohamora/learn-helper/commit/20245e5d0649e13f242422c5a590ce2f41850937))
+- Tighten translation rules so models agree on one result ([447d274](https://github.com/allohamora/learn-helper/commit/447d274fd4253f37ad1ba59c8b9cf2c2fc93c4cc))
+- Tighten prompts and normalize apostrophes in translations ([3a556cc](https://github.com/allohamora/learn-helper/commit/3a556cc4cc12e3330fd9480eef59bb1a4128ad7d))
+
+### Performance Improvements
+
+- Lower reasoning effort for reading translation ([2ba8ee0](https://github.com/allohamora/learn-helper/commit/2ba8ee07e1027a621b7c8ee1230dc2f8abff5a96))
+- Use gemini 2.5 flash lite for reading translations ([f37fee1](https://github.com/allohamora/learn-helper/commit/f37fee1f3fcc29e8e164c11d3eb9e521aaeffbb8))
+- Disable reasoning for gemini and gpt-6-luna ([88e2165](https://github.com/allohamora/learn-helper/commit/88e216553910e602abcf455d1494629545bb40a1))
+- Disable reasoning for haiku eval judge ([b8a29e7](https://github.com/allohamora/learn-helper/commit/b8a29e74776ec437e7d673e1f5bd006fdec48aec))
+- Give the luna calls a reasoning budget instead of low effort ([5c1ccc9](https://github.com/allohamora/learn-helper/commit/5c1ccc91e3ac2191218910deb32058561df6d669))
+- Drop reasoning and temperature from reading translation ([4337151](https://github.com/allohamora/learn-helper/commit/4337151bf4aa729bae4e3e5e1cad632f851d45e4))
+
+### Code Refactoring
+
+- Improve ai generation prompts and pass translation to sentence tasks ([98aabd8](https://github.com/allohamora/learn-helper/commit/98aabd871006e1a14e336b0add4cb2720906dbbd))
+- Resolve type errors from sentry 11 and msw 3 upgrades ([464461f](https://github.com/allohamora/learn-helper/commit/464461f6afa3a341aa06947153b603bedca5f855))
+- Drop GEMINI_API_KEY from app config ([da45333](https://github.com/allohamora/learn-helper/commit/da45333b097b242459f13c0f1ba9569fb96e693d))
+- Route all ai calls through openrouter ([2c24bf4](https://github.com/allohamora/learn-helper/commit/2c24bf46e77c98fa9bfd1c1940697e877106f73d))
+- Unify prompt structure and split evals into single sentences ([859b4ab](https://github.com/allohamora/learn-helper/commit/859b4abb770fb5c6f8acee1e9c82ca7687dedaaa))
+- Apply one-sentence rule to prompts and eval statements ([d385aa2](https://github.com/allohamora/learn-helper/commit/d385aa206b0d6c868c05abd14baa20df73dc30a4))
+- Set gemini 2.5 flash lite temperature to 0.7 ([3166197](https://github.com/allohamora/learn-helper/commit/31661976c9852e4caeb924e9deb946382f4a4789))
+- Tune generation prompts and evals for stable results ([6eeef6f](https://github.com/allohamora/learn-helper/commit/6eeef6f83c6806c540a8bf03a655ce026374c0ba))
+- Return reasoning from reading translation generation ([641e16b](https://github.com/allohamora/learn-helper/commit/641e16b76c6f5d8c37d1a27c6a9e841ba909b75e))
+- Return reasoning from vocabulary generation and task services ([e5b16b7](https://github.com/allohamora/learn-helper/commit/e5b16b7c86a5aa1eb50fefd80b679ae642a44bbd))
+- Fix prompt building violations ([8098a5c](https://github.com/allohamora/learn-helper/commit/8098a5c2fa2c0d992f79bdf4e78d45f49e06ca04))
+- Merge duplicate prompt rules and plain judge statements ([485e1a9](https://github.com/allohamora/learn-helper/commit/485e1a98682972eadbd61dc1d974ec5628301a0b))
+- Add item counts to task mismatch errors ([cc8c435](https://github.com/allohamora/learn-helper/commit/cc8c4357686acb4e6e0721d342922a5986f7574d))
+- Simplify the reading translation prompt ([6df4626](https://github.com/allohamora/learn-helper/commit/6df462665f125d97145cd2d7e3c8baf1ce3201a7))
+- Tighten the vocabulary item and task prompts ([334affc](https://github.com/allohamora/learn-helper/commit/334affc4ce4ba009e5f10d885536010189f2ec87))
+- Tighten the vocabulary item and task prompts for edge cases ([ee9cd95](https://github.com/allohamora/learn-helper/commit/ee9cd95cb2588aff2a55890cd09a628457cff7b6))
+- Report the cause of task and item mismatches ([c07c338](https://github.com/allohamora/learn-helper/commit/c07c338390b91ef8baebc89f650ee50dd1063033))
+
+### Tests
+
+- Use testing-library act in vocabulary discover flow spec ([ec957d3](https://github.com/allohamora/learn-helper/commit/ec957d3909cbed526389f1c88a11d4a0bdb11f5b))
+- Switch eval judge to gemini-2.5-flash-lite ([718fb86](https://github.com/allohamora/learn-helper/commit/718fb866ba9f0ad2a860b5bb4405eaf1d44fd762))
+- Rename toSatisfyStatements to toPassLlmEvals ([a60bf51](https://github.com/allohamora/learn-helper/commit/a60bf51bd760ca5fe43db3acb59aadf55b49511c))
+- Report toPassLlmEvals failures as a list of issues ([40e0b2f](https://github.com/allohamora/learn-helper/commit/40e0b2f5ad939a5d096621615e13c79c00c27296))
+- Switch evals judge model to claude haiku 5.5 ([8f257b6](https://github.com/allohamora/learn-helper/commit/8f257b69b42f935a9fbdb354533b25005d255702))
+- Return a reasoned pass or fail result for each eval ([cbaf138](https://github.com/allohamora/learn-helper/commit/cbaf138eaab755dc08e793a140322f371065c4cc))
+- Fail llm evals when the judge skips or duplicates evals ([bd34e56](https://github.com/allohamora/learn-helper/commit/bd34e562f4cfe1ecb9c58f24864cbc8f68c2a839))
+- Make task evals self-contained ([be65a55](https://github.com/allohamora/learn-helper/commit/be65a554abd49d447b9df234d6e2c7ee0d2e53e6))
+- Pass each task with its item to the task evals judge ([ab54d44](https://github.com/allohamora/learn-helper/commit/ab54d44e6913b91b47522711b9acc6b1b199cd94))
+- Fold the article exception into the task value eval ([d60ee99](https://github.com/allohamora/learn-helper/commit/d60ee99aba323e7c1739fd17f77bc9410f2d45ab))
+- Align the eval judge prompt with the prompt style ([bbb480b](https://github.com/allohamora/learn-helper/commit/bbb480b79e42868755be1328b21fe1e1fcec66e2))
+- Replace llm judge statements with runtime checks in evals ([ae3ec47](https://github.com/allohamora/learn-helper/commit/ae3ec47cb1dd5a986e9dc25090e755d3a4d459ca))
+- Add runtime checks for the tightened translation rules ([2e3a1f2](https://github.com/allohamora/learn-helper/commit/2e3a1f2a2e0617c310cbb54b8bf87ae7a04bd8f7))
+- Show judge reasoning in failed llm eval messages ([9e0c2b8](https://github.com/allohamora/learn-helper/commit/9e0c2b80a16484daa49a58cdd4845282dced3bc9))
+- Let the eval judge reason before its verdicts ([61906c5](https://github.com/allohamora/learn-helper/commit/61906c58a09ac89814b0ef027ba9ef559469af20))
+- Stop the eval judge from failing evals over a better answer ([78b9db1](https://github.com/allohamora/learn-helper/commit/78b9db119751794ac390115cf9e1f965ec9b950f))
+- Tighten eval checks with per-case patterns ([c0af0d9](https://github.com/allohamora/learn-helper/commit/c0af0d99adf7ba411e205784f041316c3a866921))
+- Skip the quarters context eval and swap the piece of cake idiom ([a520b5b](https://github.com/allohamora/learn-helper/commit/a520b5b5bf2dbe3da7ad89b5bac6215ec5ebccb2))
+- Replace the ball idiom eval with better late than never ([98a54c6](https://github.com/allohamora/learn-helper/commit/98a54c6b8e0f97460262cd36b3c19eaf5d6c1cb3))
+- Add judge reasoning.trim() ([eeaf66f](https://github.com/allohamora/learn-helper/commit/eeaf66f7ab6352c97db792b9de9b4ad8adc9d9e4))
+- Show unknown idx in llm evals failure message ([defa5ba](https://github.com/allohamora/learn-helper/commit/defa5ba449e553d6ab50e7f15bf4f975927a88dc))
+
+### Documentation
+
+- Fix pg_stat_statements command in helm readme ([116b119](https://github.com/allohamora/learn-helper/commit/116b1191c87231809f1c4bc21107f2c6481bbe90))
+- Forbid loops and flaky excuses in run-evals skill ([036e3f1](https://github.com/allohamora/learn-helper/commit/036e3f126e2b85067300f4286f2dbeb57b59e932))
+- Add prompt writing rules to run-evals skill ([0aac3fd](https://github.com/allohamora/learn-helper/commit/0aac3fdda8c76ec5a25c774f1e7d8f43ccb07f80))
+- Restructure run-evals skill into sections ([8ef17b5](https://github.com/allohamora/learn-helper/commit/8ef17b55da384e6e6d6a5867264e640708042408))
+- Apply one-sentence rule everywhere in run-evals prompts ([ab880cb](https://github.com/allohamora/learn-helper/commit/ab880cb2a1959e3427570dfdd55208d3c2d1492d))
+- Require a change before re-running failed evals in run-evals skill ([f74bcfd](https://github.com/allohamora/learn-helper/commit/f74bcfd289f1c4149c6b090bad6681b64294e5f1))
+- Rework run-evals skill to re-run only fixed tests ([8ac0976](https://github.com/allohamora/learn-helper/commit/8ac09760e03126339c6e8be429f8e9754d5c15f0))
+- Name run-evals streaks fix loop and full loop ([7ee48bd](https://github.com/allohamora/learn-helper/commit/7ee48bd85d7ace55442d80b020c52a3cf7693141))
+- Log fix loop and full loop streaks in run-evals skill ([51b5efc](https://github.com/allohamora/learn-helper/commit/51b5efcec1aaa5fb23e553cd4a22c851fa2e9288))
+- Rename run-evals skill to fix-evals ([ebd9a18](https://github.com/allohamora/learn-helper/commit/ebd9a189687eec53b26eebde2351d66b942a1687))
+- Add judge and prompt tightening rules to fix-evals skill ([4a520f7](https://github.com/allohamora/learn-helper/commit/4a520f79462ca8129c1573f57562dfdf0da40bac))
+- Add predictable prompt rules to fix-evals skill ([821d6d6](https://github.com/allohamora/learn-helper/commit/821d6d6f79db8b74ac6e0307ba583b0cf6a69be3))
+- Add reasoning analysis and direct rules to fix-evals skill ([50d1d59](https://github.com/allohamora/learn-helper/commit/50d1d597682ea6894fcab2d0a705ccda9a556163))
+- Add general rule guidance to fix-evals skill ([2158baf](https://github.com/allohamora/learn-helper/commit/2158baf035c4e169b446609d54fe705c61ddb4b0))
+- Log fix-evals runs in the chat and keep prompts inline ([dacc60b](https://github.com/allohamora/learn-helper/commit/dacc60bb6dcb30354634cbe6dfbea1c8c77222db))
+- Say instruction instead of rule in the fix-evals skill ([d5642eb](https://github.com/allohamora/learn-helper/commit/d5642eb9741a31f0e89ee1dd5ff435bc5b8d1941))
+- Prefer general instructions over few-shot examples in fix-evals ([64859b9](https://github.com/allohamora/learn-helper/commit/64859b9f81786c63d49fe6c9b2083437f47b2177))
+- Allow unchanged re-runs of passing evals in fix-evals skill ([d5da895](https://github.com/allohamora/learn-helper/commit/d5da895541c39f70b57af169cd835ef70ea72242))
+
+### Continuous Integration
+
+- Add better live check for cloudflared ([e1717a8](https://github.com/allohamora/learn-helper/commit/e1717a868e9a094adaa99af6c148637c67fdfde7))
+
+### Miscellaneous Chores
+
+- **deps:** Bump the npm_and_yarn group across 1 directory with 6 updates ([24f2f1a](https://github.com/allohamora/learn-helper/commit/24f2f1afc17ea5767e7b353cd1fd946919a4db37))
+- Bump deps ([0ab6479](https://github.com/allohamora/learn-helper/commit/0ab647953d0631f9f02f3d157e1c9f18b147cdd5))
+- Apply npm audit fix ([bb83635](https://github.com/allohamora/learn-helper/commit/bb83635cb2dcec9b2b3014d9a249b4173b8ed5ce))
+- Use default import for package.json in vite config ([bf6f8c0](https://github.com/allohamora/learn-helper/commit/bf6f8c0327bf94f23984e3a2b82260b8e196c71b))
+- Update @vitejs/plugin-react to ^6.1.1 ([ba4e734](https://github.com/allohamora/learn-helper/commit/ba4e734482c9a62561476f1f74cbbb02b5b79353))
+- Update @types/node to ^24.19.1 ([11c82f5](https://github.com/allohamora/learn-helper/commit/11c82f5d98af6851bd5194d6b2f72b74623eca5e))
+- Update vitest to ^5.0.3 ([8a0c6bf](https://github.com/allohamora/learn-helper/commit/8a0c6bf7812a3949c2f6eec9c19317f8075ed5c6))
+- Unpin recharts ([54d794c](https://github.com/allohamora/learn-helper/commit/54d794c1c44bef567ed992d8a32bdec7003161d8))
+- Add run-evals skill ([18c12ca](https://github.com/allohamora/learn-helper/commit/18c12cac337633bbf061d3a1390b29c72b3381bf))
+- Apply npm audit fix ([2fbae32](https://github.com/allohamora/learn-helper/commit/2fbae32e5882dd2ee01e34a63186edff47458cf7))
+- Use chart version instead of appVersion ([d0f57d2](https://github.com/allohamora/learn-helper/commit/d0f57d2012271c88d61fca1c6427c888d328eadb))
+- Sync Chart.yaml and package.json versions ([ac29409](https://github.com/allohamora/learn-helper/commit/ac294090704dee7f6239f3d42a226008234999bb))
+
 ## [0.1.2](https://github.com/allohamora/learn-helper/compare/v0.1.1...v0.1.2) (2026-10-06)
 
 ### Bug Fixes
