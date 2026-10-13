@@ -75,9 +75,9 @@ jobs:
       - name: Bump version in package.json
         run: npm version ${{ steps.version.outputs.version }} --no-git-tag-version --workspaces --include-workspace-root
 
-      - name: Bump appVersion in Chart.yaml
+      - name: Bump version in Chart.yaml
         run: |-
-          sed -i 's/^appVersion: .*/appVersion: "${{ steps.version.outputs.version }}"/' helm/Chart.yaml
+          sed -i 's/^version: .*/version: ${{ steps.version.outputs.version }}/' helm/Chart.yaml
 
       - name: Commit and tag
         run: |-
