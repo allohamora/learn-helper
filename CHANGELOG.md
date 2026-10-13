@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/allohamora/learn-helper/compare/v0.2.0...v0.2.1) (2026-10-13)
+
+### Bug Fixes
+
+- Bundle hono once to restore api requests in production ([b5ba5ce](https://github.com/allohamora/learn-helper/commit/b5ba5ce968104631f31ada3f959eeba9c022746f))
+
 ## [0.2.0](https://github.com/allohamora/learn-helper/compare/v0.1.2...v0.2.0) (2026-10-13)
 
 ### Features
