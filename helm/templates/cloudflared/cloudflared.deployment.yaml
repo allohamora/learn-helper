@@ -41,7 +41,7 @@ spec:
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
-              path: /ready
+              path: /healthcheck
               port: metrics
             periodSeconds: 10
             timeoutSeconds: 5
