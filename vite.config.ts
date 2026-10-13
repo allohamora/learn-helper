@@ -15,6 +15,10 @@ export default defineConfig(({ mode }) => {
       allowedHosts: BETTER_AUTH_URL ? [new URL(BETTER_AUTH_URL).hostname] : undefined,
     },
     resolve: { tsconfigPaths: true },
+    // Without this, the build has two copies of hono's GET_MATCH_RESULT symbol (one inlined in the
+    // app chunk via 'hono/route', one in a Nitro _libs chunk), so routePath() throws on every /api request.
+    // Add any new package that imports hono here.
+    ssr: { noExternal: [/^hono(\/|$)/, /^@hono\//, /^@scalar\/hono-api-reference/] },
     plugins: [
       devtools(),
       tanstackStart(),
