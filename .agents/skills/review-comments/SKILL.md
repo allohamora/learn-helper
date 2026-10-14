@@ -7,8 +7,8 @@ description: Walk through PR review comments one at a time with the author - ass
 
 - Read all open review comment threads on the current PR.
 - Go through the threads **one at a time**, never in bulk:
-  1. Show a link to the thread, the comment, and my assessment: is this a real/valid issue, or not?
-  2. If valid, propose a concrete change. If not, explain why I think it doesn't apply.
+  1. Show a link to the thread, the comment, and my assessment: is this a real/valid issue, or not? When it helps, add a code example.
+  2. If valid, propose a concrete change and, when it helps, show a code example of it. If not, explain why I think it doesn't apply.
   3. Ask the author what to do: apply the change, decline with a reason, or something else.
   4. Wait for the author's decision - do not act without it.
   5. If applying a change: make the code change, then show the proposed commit message and ask for confirmation before committing - wait for a yes, then commit, push, and reply to the thread with the commit link.
