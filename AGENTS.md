@@ -40,3 +40,13 @@
 - If a change affects something that has docs (e.g. `docs/`, `README.md`) or code comments, update them in the same change. If it has none, don't create any.
 - If code changed since you last looked at it in a way no linter/formatter would produce (removed comments, edited logic, renamed vars), assume the user edited it manually and factor that in.
 - Treat staged changes you didn't stage yourself as the user's work: don't unstage, revert or change them.
+- When writing or editing LLM prompts, `AGENTS.md` or skills, follow these rules:
+  - When an instruction allows more than one valid answer, add a tie-breaker that picks one, like the dictionary form, the masculine form first, the most neutral word, etc.
+  - Write prompts in markdown with simple, concise, natural instructions.
+  - Keep the full text of each prompt inline in its own call, even when another prompt repeats the same instructions, and never move instructions into shared constants or helpers, because one prompt read top to bottom is easy to debug.
+  - Write one sentence per instruction and one instruction per bullet, everywhere in the prompt.
+  - Give each instruction one job and a clear scope.
+  - Don't add duplicate or obvious instructions within one prompt, and extend an existing instruction instead of adding a new one when you can.
+  - Keep fixes short and direct, with no long instructions or many examples, so they leave less room for a mistake.
+  - Make instructions general, so they also handle future cases and not just the failed one, by stating the reason behind the right answer instead of mapping one input to one answer.
+  - End a list of examples with `etc.`, like `a, b, c, etc.`, so the LLM handles more cases than just the listed ones.

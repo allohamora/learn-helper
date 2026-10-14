@@ -40,20 +40,11 @@ description: Run the evals, fix failures by re-running only the failed tests, an
 ## Instructions
 
 - Aim for stable evals and predictable prompts, so the same input gives about the same output on every run.
-- When an instruction allows more than one valid answer, add a tie-breaker that picks one, like the dictionary form, the masculine form first, the most neutral word, etc.
 - Never accept "it's flaky, nothing we can do" as a reason to ignore or skip a failure, because a flaky eval means the prompt, the code, or the test is not good enough yet.
 - Never re-run a failed test without a change, because a re-run with no change is a gamble, not a fix.
+- Try to fix with a general instruction first, and if it doesn't work, then use prompting techniques like few-shot examples, etc.
 - Don't weaken an eval to make it pass.
 - Don't copy eval data into the prompt, including into few-shot examples, so the eval still checks a result the prompt didn't hand over.
-- Write prompts in markdown with simple, concise, natural instructions.
-- Keep the full text of each prompt inline in its own call, even when another prompt repeats the same instructions, and never move instructions into shared constants or helpers, because one prompt read top to bottom is easy to debug.
-- Write one sentence per instruction and one instruction per bullet, everywhere in the prompt.
-- Give each instruction one job and a clear scope.
-- Don't add duplicate or obvious instructions within one prompt, and extend an existing instruction instead of adding a new one when you can.
-- Keep fixes short and direct, with no long instructions or many examples, so they leave less room for a mistake.
-- Make instructions general, so they also handle future cases and not just the failed one, by stating the reason behind the right answer instead of mapping one input to one answer.
-- Try to fix with a general instruction first, and if it doesn't work, then use prompting techniques like few-shot examples, etc.
-- End a list of examples with `etc.`, like `a, b, c, etc.`, so the LLM handles more cases than just the listed ones.
 - Never stop the loop or ask the author before the stop condition, except after all ideas fail.
 - Keep the judge a validator that only checks the output, one instruction per statement, so it never holds how to handle a case.
 - Fix a gap by tightening the prompt or the judge statement, never with a costlier model or more reasoning.
