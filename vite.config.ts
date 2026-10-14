@@ -27,6 +27,8 @@ export default defineConfig(({ mode }) => {
         project: SENTRY_PROJECT,
         authToken: SENTRY_AUTH_TOKEN,
         release: { name: pkg.version },
+        // The default './**/*.map' also deletes the source maps of packages in node_modules.
+        sourcemaps: { filesToDeleteAfterUpload: ['./.output/**/*.map'] },
       }),
       nitro({
         // https://github.com/nitrojs/nitro/issues/2973
