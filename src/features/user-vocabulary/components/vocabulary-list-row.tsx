@@ -7,7 +7,7 @@ import { apiRequest, appClient } from '@/services/api';
 import { VocabularyListType } from '@/const/vocabulary';
 import { getVocabularyListTitle } from '../utils/vocabulary';
 
-type Props = {
+type VocabularyListRowProps = {
   id: string;
   title: string | null;
   type: VocabularyListType;
@@ -16,7 +16,7 @@ type Props = {
   } | null;
 };
 
-export const VocabularyListRow: FC<Props> = ({ id, title, type, userVocabularyList }) => {
+export const VocabularyListRow: FC<VocabularyListRowProps> = ({ id, title, type, userVocabularyList }) => {
   const router = useRouter();
 
   const addMutation = useMutation({

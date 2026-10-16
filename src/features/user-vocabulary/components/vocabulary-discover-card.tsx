@@ -14,11 +14,11 @@ export type VocabularyDiscoverItem = SuccessData<
   InferResponseType<(typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']>
 >[number];
 
-type Props = {
+type VocabularyDiscoverCardProps = {
   item: VocabularyDiscoverItem;
 };
 
-export const VocabularyDiscoverCard: FC<Props> = ({ item }) => {
+export const VocabularyDiscoverCard: FC<VocabularyDiscoverCardProps> = ({ item }) => {
   const { isPlaying, playAudio } = useAudioPlayer();
   const { openEdit } = useEditVocabularyItemTranslation();
   const { vocabularyItem } = item;

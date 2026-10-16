@@ -4,11 +4,11 @@ import { Progress } from '@/components/ui/progress';
 import { Loader } from '@/components/ui/loader';
 import { apiRequest, appClient } from '@/services/api';
 
-type Props = {
+type VocabularyListProgressProps = {
   userVocabularyListId: string;
 };
 
-export const VocabularyListProgress: FC<Props> = ({ userVocabularyListId }) => {
+export const VocabularyListProgress: FC<VocabularyListProgressProps> = ({ userVocabularyListId }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['vocabulary-list-progress', userVocabularyListId],
     queryFn: () =>

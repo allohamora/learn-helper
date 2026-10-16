@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { ClientOnly } from '@tanstack/react-router';
 import { PdfReader } from '../components/pdf-reader';
 
-type Props = {
+type ReadingPageProps = {
   reading: {
     id: string;
     totalPages: number;
@@ -10,7 +10,7 @@ type Props = {
   };
 };
 
-export const ReadingPage: FC<Props> = ({ reading }) => {
+export const ReadingPage: FC<ReadingPageProps> = ({ reading }) => {
   return (
     <ClientOnly>
       <PdfReader

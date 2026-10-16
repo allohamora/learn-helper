@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNumberFieldInput } from '../hooks/use-number-field-input';
 import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT } from '../hooks/use-pdf-zoom';
 
-type Props = {
+type PdfReaderToolbarProps = {
   currentPage: number;
   totalPages: number;
   onGoToPage: (page: number) => void;
@@ -19,7 +19,7 @@ type Props = {
   onZoomChange: (percent: number) => void;
 };
 
-export const PdfReaderToolbar: FC<Props> = ({
+export const PdfReaderToolbar: FC<PdfReaderToolbarProps> = ({
   currentPage,
   totalPages,
   onGoToPage,

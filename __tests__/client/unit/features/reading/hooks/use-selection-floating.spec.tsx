@@ -8,13 +8,13 @@ import { useSelectionFloating } from '@/features/reading/hooks/use-selection-flo
 // This suite scopes down to what happy-dom can verify for real: the virtual reference is bound to the
 // live selection Range, and the open/dismiss/mount lifecycle behaves correctly.
 
-type Props = {
+type TestPanelProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   range: Range | null;
 };
 
-const TestPanel: FC<Props> = (props) => {
+const TestPanel: FC<TestPanelProps> = (props) => {
   // gapPx only affects on-screen placement, which happy-dom can't verify anyway (see above) - a
   // fixed value keeps every render call below focused on what this suite actually covers.
   const { refs, isMounted, getFloatingProps } = useSelectionFloating({ ...props, gapPx: 8 });

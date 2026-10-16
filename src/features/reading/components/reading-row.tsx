@@ -16,7 +16,7 @@ import {
 import { apiRequest, appClient } from '@/services/api';
 import { formatDuration } from '@/utils/duration';
 
-type Props = {
+type ReadingRowProps = {
   id: string;
   title: string;
   totalPages: number;
@@ -24,7 +24,7 @@ type Props = {
   durationMs: number;
 };
 
-export const ReadingRow: FC<Props> = ({ id, title, totalPages, currentPage, durationMs }) => {
+export const ReadingRow: FC<ReadingRowProps> = ({ id, title, totalPages, currentPage, durationMs }) => {
   const [isRemoveConfirmationOpen, setIsRemoveConfirmationOpen] = useState(false);
   const queryClient = useQueryClient();
 

@@ -17,7 +17,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 // same module that renders <Document>/<Page>, or module execution order can let a stale default win.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
 
-type Props = {
+type PdfReaderProps = {
   readingId: string;
   totalPages: number;
   initialPage: number;
@@ -35,7 +35,7 @@ const MAX_AUTO_SCALE = 1.25;
 
 const TIME_SPENT_FLUSH_INTERVAL_MS = 5 * 60_000;
 
-export const PdfReader: FC<Props> = ({ readingId, totalPages, initialPage }) => {
+export const PdfReader: FC<PdfReaderProps> = ({ readingId, totalPages, initialPage }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 

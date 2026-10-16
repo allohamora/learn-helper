@@ -291,7 +291,7 @@ const GRID_COLS_CLASS = 'grid grid-cols-[15rem_24rem_10rem_7rem_13rem]';
 const ROW_HEIGHT_PX = 72;
 const LOAD_MORE_THRESHOLD_PX = 200;
 
-type Props = {
+type VocabularyItemsTableProps = {
   items: VocabularyItem[];
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
@@ -300,7 +300,7 @@ type Props = {
   vocabularyListType: VocabularyListType;
 };
 
-export const VocabularyItemsTable: FC<Props> = ({
+export const VocabularyItemsTable: FC<VocabularyItemsTableProps> = ({
   items,
   hasNextPage,
   isFetchingNextPage,

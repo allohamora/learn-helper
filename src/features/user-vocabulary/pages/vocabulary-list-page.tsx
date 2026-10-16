@@ -12,7 +12,7 @@ import { VocabularyListType, LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 import { getVocabularyListTitle } from '../utils/vocabulary';
 
-type Props = {
+type VocabularyListPageProps = {
   userVocabularyListId: string;
   status?: LearningStatus;
   search?: string;
@@ -25,7 +25,7 @@ type Props = {
   onFiltersChange: ComponentProps<typeof VocabularyListFilters>['onChange'];
 };
 
-export const VocabularyListPage: FC<Props> = ({
+export const VocabularyListPage: FC<VocabularyListPageProps> = ({
   userVocabularyListId,
   status,
   search,

@@ -21,9 +21,12 @@ type EditVocabularyItemTranslationContextValue = {
 
 const EditVocabularyItemTranslationContext = createContext<EditVocabularyItemTranslationContextValue | null>(null);
 
-type Props = PropsWithChildren<{ userVocabularyListId: string }>;
+type EditVocabularyItemTranslationProviderProps = PropsWithChildren<{ userVocabularyListId: string }>;
 
-export const EditVocabularyItemTranslationProvider: FC<Props> = ({ userVocabularyListId, children }) => {
+export const EditVocabularyItemTranslationProvider: FC<EditVocabularyItemTranslationProviderProps> = ({
+  userVocabularyListId,
+  children,
+}) => {
   const [editingItem, setEditingItem] = useState<EditableVocabularyItem | null>(null);
   const queryClient = useQueryClient();
 

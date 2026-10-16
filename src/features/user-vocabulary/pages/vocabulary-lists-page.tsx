@@ -1,11 +1,11 @@
 import type { ComponentProps, FC } from 'react';
 import { VocabularyListRow } from '../components/vocabulary-list-row';
 
-type Props = {
+type VocabularyListsPageProps = {
   lists: ComponentProps<typeof VocabularyListRow>[];
 };
 
-export const VocabularyListsPage: FC<Props> = ({ lists }) => {
+export const VocabularyListsPage: FC<VocabularyListsPageProps> = ({ lists }) => {
   return (
     <>
       <div className="flex flex-col items-center px-4 pt-4 text-center md:pt-8">

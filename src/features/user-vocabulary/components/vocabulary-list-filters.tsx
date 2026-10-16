@@ -7,13 +7,13 @@ import { LEARNING_STATUS_LABEL, LEARNING_STATUS_ORDER, LearningStatus } from '@/
 
 const ALL_STATUSES = 'all';
 
-type Props = {
+type VocabularyListFiltersProps = {
   status?: LearningStatus;
   search?: string;
   onChange: (patch: { status?: LearningStatus; search?: string }) => void;
 };
 
-export const VocabularyListFilters: FC<Props> = ({ status, search, onChange }) => {
+export const VocabularyListFilters: FC<VocabularyListFiltersProps> = ({ status, search, onChange }) => {
   const [searchInput, setSearchInput] = useState(search ?? '');
   const [debouncedSearch] = useDebounce(searchInput, 300);
 

@@ -27,7 +27,7 @@ import { VocabularyItemToOptions } from './vocabulary-item-to-options';
 import { WordOrder } from './word-order';
 import { Loader } from '@/components/ui/loader';
 
-type Props = {
+type LearnProps = {
   userVocabularyListId: string;
 };
 
@@ -216,7 +216,7 @@ export const toServerTasks = (_items: LearnItem[], tasks: LearnTasksData): Learn
 const getRetryId = () => `retry-${crypto.randomUUID()}`;
 const isRetryId = (id: string) => id.startsWith('retry-');
 
-export const Learn: FC<Props> = ({ userVocabularyListId }) => {
+export const Learn: FC<LearnProps> = ({ userVocabularyListId }) => {
   const [idx, setIdx] = useState(0);
   const [mistakes, setMistakes] = useState<Record<string, number>>({});
   const [isFinished, setIsFinished] = useState(false);

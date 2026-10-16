@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useNumberField, type AriaNumberFieldProps } from 'react-aria';
 import { useNumberFieldState, type NumberFieldStateOptions } from 'react-stately';
 
-type Props = AriaNumberFieldProps & {
+type UseNumberFieldInputProps = AriaNumberFieldProps & {
   locale?: NumberFieldStateOptions['locale'];
   // Not part of AriaNumberFieldProps, but react-aria's underlying useTextField forwards it to the
   // native input regardless - typed here so callers can opt out of the browser/OS inferring "next"
@@ -12,7 +12,7 @@ type Props = AriaNumberFieldProps & {
 
 // Wraps react-aria's number field hooks (buffered text input, clamp/commit on blur or Enter,
 // revert on invalid) for a single <input>, without pulling in react-aria-components' own markup.
-export const useNumberFieldInput = ({ locale = 'en-US', onChange, ...props }: Props) => {
+export const useNumberFieldInput = ({ locale = 'en-US', onChange, ...props }: UseNumberFieldInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const state = useNumberFieldState({
     ...props,
