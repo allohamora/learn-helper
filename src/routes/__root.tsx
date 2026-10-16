@@ -7,7 +7,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { NotFound } from '@/components/not-found';
 import { ErrorFallback } from '@/components/error-fallback';
 import { Toaster } from '@/components/ui/sonner';
-import { APP_NAME } from '@/utils/page';
+import { APP_NAME } from '@/utils/route';
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,

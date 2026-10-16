@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
-import { pageHead } from '@/utils/page';
+import { routeHead } from '@/utils/route';
 import { getVocabularyListTitle } from '@/features/user-vocabulary/utils/vocabulary';
 import { VocabularyListDiscoverPage } from '@/features/user-vocabulary/pages/vocabulary-list-discover-page';
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
     );
   },
   head: ({ loaderData }) =>
-    pageHead(loaderData ? `Discover: ${getVocabularyListTitle(loaderData.vocabularyList)}` : 'Discover'),
+    routeHead(loaderData ? `Discover: ${getVocabularyListTitle(loaderData.vocabularyList)}` : 'Discover'),
   component: RouteComponent,
 });
 

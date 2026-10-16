@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
 import { LearningStatus } from '@/const/vocabulary';
-import { pageHead } from '@/utils/page';
+import { routeHead } from '@/utils/route';
 import { getVocabularyListTitle } from '@/features/user-vocabulary/utils/vocabulary';
 import { VocabularyListPage } from '@/features/user-vocabulary/pages/vocabulary-list-page';
 
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
     );
   },
   head: ({ loaderData }) =>
-    pageHead(loaderData ? getVocabularyListTitle(loaderData.vocabularyList) : 'Vocabulary List'),
+    routeHead(loaderData ? getVocabularyListTitle(loaderData.vocabularyList) : 'Vocabulary List'),
   component: RouteComponent,
 });
 

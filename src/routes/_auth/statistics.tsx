@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { pageHead } from '@/utils/page';
+import { routeHead } from '@/utils/route';
 import { StatisticsPage } from '@/features/statistics/pages/statistics-page';
 
 export const Route = createFileRoute('/_auth/statistics')({
-  head: () => pageHead('Statistics'),
+  head: () => routeHead('Statistics'),
   component: StatisticsPage,
 });

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
-import { pageHead } from '@/utils/page';
+import { routeHead } from '@/utils/route';
 import { ReadingPage } from '@/features/reading/pages/reading-page';
 
 export const Route = createFileRoute('/_auth/readings_/$readingId')({
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_auth/readings_/$readingId')({
     // reader always shows the true resume page, never a stale one.
     staleReloadMode: 'blocking',
   },
-  head: ({ loaderData }) => pageHead(loaderData?.title ?? 'Reading'),
+  head: ({ loaderData }) => routeHead(loaderData?.title ?? 'Reading'),
   component: RouteComponent,
 });
 

@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { pageHead } from '@/utils/page';
+import { routeHead } from '@/utils/route';
 
 export const Route = createFileRoute('/_auth/')({
-  head: () => pageHead('Home'),
+  head: () => routeHead('Home'),
   component: IndexPage,
 });
 

@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
 import { VocabularyListsPage } from '@/features/user-vocabulary/pages/vocabulary-lists-page';
-import { pageHead } from '@/utils/page';
+import { routeHead } from '@/utils/route';
 
 export const Route = createFileRoute('/_auth/vocabulary-lists')({
-  head: () => pageHead('Vocabulary Lists'),
+  head: () => routeHead('Vocabulary Lists'),
   loader: async () => {
     const app = await getIsomorphicAppClient();
 
