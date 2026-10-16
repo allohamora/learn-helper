@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
+import { PdfReaderToolbar } from '@/features/reading/components/pdf-reader-toolbar';
 
 const zoomProps = {
   isLoading: false,

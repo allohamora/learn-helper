@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { usePdfZoom } from '@/hooks/use-pdf-zoom';
+import { usePdfZoom } from '@/features/reading/hooks/use-pdf-zoom';
 
 const ZOOM_STORAGE_KEY = 'pdf-zoom';
 

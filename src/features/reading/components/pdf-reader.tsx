@@ -6,10 +6,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useInterval } from 'react-use';
 import { apiRequest, appClient } from '@/services/api';
 import { useVisibleDuration } from '@/hooks/use-visible-duration';
-import { usePdfZoom } from '@/hooks/use-pdf-zoom';
+import { usePdfZoom } from '../hooks/use-pdf-zoom';
 import { Loader } from '@/components/ui/loader';
-import { PdfReaderToolbar } from '@/components/pdf-reader-toolbar';
-import { TranslationPopover } from '@/components/translation-popover';
+import { PdfReaderToolbar } from './pdf-reader-toolbar';
+import { TranslationPopover } from './translation-popover';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 

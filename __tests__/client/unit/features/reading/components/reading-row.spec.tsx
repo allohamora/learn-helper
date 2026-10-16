@@ -9,8 +9,8 @@ import {
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ReadingRow } from '@/components/reading-row';
-import { mockServer } from '../../setup-unit-context';
+import { ReadingRow } from '@/features/reading/components/reading-row';
+import { mockServer } from '../../../../setup-unit-context';
 
 describe('ReadingRow', () => {
   const renderRow = (props: {

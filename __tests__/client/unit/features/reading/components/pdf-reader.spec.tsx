@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PdfReader } from '@/components/pdf-reader';
-import { mockServer } from '../../setup-unit-context';
+import { PdfReader } from '@/features/reading/components/pdf-reader';
+import { mockServer } from '../../../../setup-unit-context';
 
 // This suite's fixtures always render 5 pages; the mock PDF below reports that many so
 // onDocumentLoadSuccess resolves pageSizes for real, matching real usage.

@@ -1,7 +1,7 @@
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSelection } from '@/hooks/use-selection';
-import { getContext } from '@/utils/selection';
+import { useSelection } from '@/features/reading/hooks/use-selection';
+import { getContext } from '@/features/reading/utils/selection';
 
 const setSelection = (node: Node, startOffset: number, endOffset: number) => {
   const range = document.createRange();

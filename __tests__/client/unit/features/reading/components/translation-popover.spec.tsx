@@ -3,9 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HttpResponse, http } from 'msw';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TranslationPopover } from '@/components/translation-popover';
-import { api } from '../../utils/api.utils';
-import { mockServer } from '../../setup-unit-context';
+import { TranslationPopover } from '@/features/reading/components/translation-popover';
+import { api } from '../../../../utils/api.utils';
+import { mockServer } from '../../../../setup-unit-context';
 
 const READING_ID = 'reading-1';
 

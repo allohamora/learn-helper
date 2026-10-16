@@ -3,8 +3,8 @@ import { ZoomInIcon, ZoomOutIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useNumberFieldInput } from '@/hooks/use-number-field-input';
-import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT } from '@/hooks/use-pdf-zoom';
+import { useNumberFieldInput } from '../hooks/use-number-field-input';
+import { MAX_ZOOM_PERCENT, MIN_ZOOM_PERCENT } from '../hooks/use-pdf-zoom';
 
 type Props = {
   currentPage: number;

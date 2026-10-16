@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useSelectionFloating } from '@/hooks/use-selection-floating';
+import { useSelectionFloating } from '@/features/reading/hooks/use-selection-floating';
 
 // happy-dom has no real layout engine, so getBoundingClientRect() always resolves to zeros - actual
 // on-screen placement (flip/shift/offset math) isn't verifiable here and is covered manually instead.

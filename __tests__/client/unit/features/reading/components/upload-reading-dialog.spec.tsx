@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UploadReadingDialog } from '@/components/upload-reading-dialog';
-import { api } from '../../utils/api.utils';
-import { mockServer } from '../../setup-unit-context';
+import { UploadReadingDialog } from '@/features/reading/components/upload-reading-dialog';
+import { api } from '../../../../utils/api.utils';
+import { mockServer } from '../../../../setup-unit-context';
 
 describe('UploadReadingDialog', () => {
   const renderDialog = () => {

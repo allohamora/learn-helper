@@ -6,10 +6,10 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
 import { apiRequest, appClient } from '@/services/api';
-import { useSelection } from '@/hooks/use-selection';
-import { useSelectionFloating } from '@/hooks/use-selection-floating';
-import { useHideGoogleTranslateExtensionPopup } from '@/hooks/use-hide-google-translate-extension-popup';
-import { correctRange, getContext } from '@/utils/selection';
+import { useSelection } from '../hooks/use-selection';
+import { useSelectionFloating } from '../hooks/use-selection-floating';
+import { useHideGoogleTranslateExtensionPopup } from '../hooks/use-hide-google-translate-extension-popup';
+import { correctRange, getContext } from '../utils/selection';
 
 type TranslationData = {
   // The exact selection the user made. Anchors the trigger/panel position and tells one selection

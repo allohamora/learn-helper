@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { correctRange, getContext } from '@/utils/selection';
+import { correctRange, getContext } from '@/features/reading/utils/selection';
 
 const makeRange = (setup: (range: Range) => void): Range => {
   const range = document.createRange();
