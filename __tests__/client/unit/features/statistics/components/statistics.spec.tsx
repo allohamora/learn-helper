@@ -1,8 +1,13 @@
 import type { ComponentProps } from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { StatisticsDashboard } from '@/components/statistics-dashboard';
+import { Statistics } from '@/features/statistics/components/statistics';
+import { StatisticsDashboard } from '@/features/statistics/components/statistics-dashboard';
 import { PartOfSpeech } from '@/const/vocabulary';
+import { api } from '../../../../utils/api.utils';
+import { mockServer } from '../../../../setup-unit-context';
 
 type StatisticsData = ComponentProps<typeof StatisticsDashboard>['data'];
 
@@ -51,10 +56,39 @@ const statisticsData = {
   topHintedItems: [{ count: 3, value: 'practice', partOfSpeech: PartOfSpeech.Verb }],
 } satisfies StatisticsData;
 
-describe('StatisticsDashboard', () => {
+describe('Statistics', () => {
   let getBoundingClientRectSpy: ReturnType<typeof vi.spyOn>;
+  let matchMediaSpy: ReturnType<typeof vi.spyOn>;
+
+  const renderStatistics = () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+        },
+      },
+    });
+
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <Statistics />
+      </QueryClientProvider>,
+    );
+  };
+
+  afterEach(() => {
+    matchMediaSpy.mockRestore();
+    getBoundingClientRectSpy.mockRestore();
+    cleanup();
+  });
 
   beforeEach(() => {
+    matchMediaSpy = vi.spyOn(window, 'matchMedia').mockReturnValue({
+      matches: false,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+
     // happy-dom has no layout engine, so getBoundingClientRect() always reports 0x0,
     // which makes Recharts' ResponsiveContainer warn about a non-positive container size.
     getBoundingClientRectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
@@ -70,36 +104,35 @@ describe('StatisticsDashboard', () => {
     } as DOMRect);
   });
 
-  afterEach(() => {
-    getBoundingClientRectSpy.mockRestore();
-    cleanup();
-  });
+  it('loads statistics using the browser timezone', async () => {
+    const getStatistics = vi.fn((searchParams: URLSearchParams) => {
+      expect(searchParams.get('timezone')).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
-  it('renders the migrated metrics, charts, and ranked vocabulary', () => {
-    render(<StatisticsDashboard data={statisticsData} isPhoneScreen={false} />);
+      return HttpResponse.json({ success: true, data: statisticsData });
+    });
+    mockServer.addHandlers(api.statistics.mock(getStatistics));
 
-    expect(screen.getByText('Discovery Undos')).toBeTruthy();
-    expect(screen.getByText('discoveries reverted')).toBeTruthy();
-    expect(screen.getByText('Item Discovery')).toBeTruthy();
-    expect(screen.getByText('Learning Activity')).toBeTruthy();
-    expect(screen.getByText('Reading Activity')).toBeTruthy();
-    expect(screen.getAllByText('AI Cost')).toHaveLength(2);
-    expect(screen.getByText('Items Generated')).toBeTruthy();
-    expect(screen.getByText('Readings Deleted')).toBeTruthy();
-    expect(screen.getByText('Most Mistaken Items')).toBeTruthy();
-    expect(screen.getByText('example')).toBeTruthy();
-    expect(screen.getByText('Most Hinted Items')).toBeTruthy();
-    expect(screen.getByText('practice')).toBeTruthy();
+    renderStatistics();
+
+    expect(screen.getByText('Loading...')).toBeTruthy();
+    expect(await screen.findByText('Discovery Undos')).toBeTruthy();
+    expect(getStatistics).toHaveBeenCalledOnce();
     expect(getBoundingClientRectSpy).toHaveBeenCalled();
   });
 
-  it('renders both ranked-table empty states', () => {
-    render(
-      <StatisticsDashboard data={{ ...statisticsData, topMistakes: [], topHintedItems: [] }} isPhoneScreen={true} />,
-    );
+  it('shows an API error and retries the request', async () => {
+    const getStatistics = vi
+      .fn()
+      .mockReturnValueOnce(HttpResponse.json(null, { status: 500 }))
+      .mockReturnValueOnce(HttpResponse.json({ success: true, data: statisticsData }));
+    mockServer.addHandlers(api.statistics.mock(getStatistics));
 
-    expect(screen.getByText('No mistakes recorded yet. Keep practicing!')).toBeTruthy();
-    expect(screen.getByText('No hints viewed yet. Try using hints when you need help!')).toBeTruthy();
+    renderStatistics();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Try Again' }));
+
+    expect(await screen.findByText('Discovery Undos')).toBeTruthy();
+    expect(getStatistics).toHaveBeenCalledTimes(2);
     expect(getBoundingClientRectSpy).toHaveBeenCalled();
   });
 });

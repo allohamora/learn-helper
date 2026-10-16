@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { StatisticsDashboard } from '@/components/statistics-dashboard';
+import { StatisticsDashboard } from './statistics-dashboard';
 import { Button } from '@/components/ui/button';
 import { Loader } from '@/components/ui/loader';
 import { useMediaQuery } from '@/hooks/use-media-query';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDollars, nanoDollarsToDollars } from '@/utils/currency';
+import { formatDollars, nanoDollarsToDollars } from '@/features/statistics/utils/currency';
 
 describe('nanoDollarsToDollars', () => {
   it('converts nano-dollars to dollars', () => {

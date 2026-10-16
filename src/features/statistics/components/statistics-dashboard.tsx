@@ -28,7 +28,7 @@ import { appClient, type SuccessData } from '@/services/api';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { formatDollars, nanoDollarsToDollars } from '@/utils/currency';
+import { formatDollars, nanoDollarsToDollars } from '../utils/currency';
 import { toShortDate } from '@/utils/date';
 import { formatDuration } from '@/utils/duration';
 
