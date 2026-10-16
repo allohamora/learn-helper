@@ -1,7 +1,13 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
-import { apiRequest, apiPaginationRequest, appClient, getIsomorphicAppClient } from '@/services/api';
+import {
+  apiRequest,
+  apiPaginationRequest,
+  appClient,
+  getIsomorphicAppClient,
+  paginatedQueryOptions,
+} from '@/services/api';
 import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
 import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { AddPersonalVocabularyItemDialog } from '@/components/add-personal-vocabulary-item-dialog';
@@ -42,22 +48,25 @@ function VocabularyListPage() {
   const { status, search } = Route.useSearch();
   const userVocabularyList = Route.useLoaderData();
 
-  const { data, isPending, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
+  const {
+    data = [],
+    isPending,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['vocabulary-list-items', userVocabularyListId, status, search],
-    queryFn: ({ pageParam }) =>
+    ...paginatedQueryOptions((cursor) =>
       apiPaginationRequest(
         () =>
           appClient.api.v1.users.me['vocabulary-lists'][':userVocabularyListId'].items.$get({
             param: { userVocabularyListId },
-            query: { status, search, cursor: pageParam, type: RequestType.All },
+            query: { status, search, cursor, type: RequestType.All },
           }),
         'Failed to load vocabulary list items',
       ),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor,
+    ),
   });
-
-  const items = data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
     <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
@@ -86,7 +95,7 @@ function VocabularyListPage() {
             </div>
           ) : (
             <VocabularyItemsTable
-              items={items}
+              items={data}
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               onLoadMore={() => void fetchNextPage({ cancelRefetch: false })}

@@ -19,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { apiRequest, apiPaginationRequest, appClient, type SuccessData } from '@/services/api';
+import { apiRequest, apiPaginationRequest, appClient, paginatedQueryOptions, type SuccessData } from '@/services/api';
 import { formatPartOfSpeech } from '@/utils/vocabulary';
 
 type SearchResult = SuccessData<
@@ -197,22 +197,26 @@ export const AddPersonalVocabularyItemDialog: FC = () => {
   const searchValue = searchInput.trim();
   const [debouncedValue] = useDebounce(searchValue, 300);
 
-  const { data, isPending, isError, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
+  const {
+    data = [],
+    isPending,
+    isError,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['personal-vocabulary-search', debouncedValue],
-    queryFn: ({ pageParam }) =>
+    ...paginatedQueryOptions((cursor) =>
       apiPaginationRequest(
         () =>
           appClient.api.v1.users.me['vocabulary-lists'].personal.search.$get({
-            query: { value: debouncedValue, cursor: pageParam },
+            query: { value: debouncedValue, cursor },
           }),
         'Failed to search items',
       ),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor,
+    ),
     enabled: debouncedValue.length > 0,
   });
-
-  const results = data?.pages.flatMap((page) => page.data) ?? [];
 
   const queryClient = useQueryClient();
 
@@ -307,13 +311,13 @@ export const AddPersonalVocabularyItemDialog: FC = () => {
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               Failed to search items. Please try again.
             </p>
-          ) : results.length === 0 ? (
+          ) : data.length === 0 ? (
             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
               No matches for &ldquo;{debouncedValue}&rdquo;.
             </p>
           ) : (
             <div className="divide-y">
-              {results.map((item) => (
+              {data.map((item) => (
                 <ResultRow key={item.id} item={item} />
               ))}
               {isFetchingNextPage && (

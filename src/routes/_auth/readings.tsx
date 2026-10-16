@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { apiPaginationRequest, appClient } from '@/services/api';
+import { apiPaginationRequest, appClient, paginatedQueryOptions } from '@/services/api';
 import { ReadingRow } from '@/components/reading-row';
 import { UploadReadingDialog } from '@/components/upload-reading-dialog';
 import { Button } from '@/components/ui/button';
@@ -14,21 +14,25 @@ export const Route = createFileRoute('/_auth/readings')({
 });
 
 function ReadingsPage() {
-  const { data, isPending, isError, isFetchingNextPage, hasNextPage, fetchNextPage } = useInfiniteQuery({
+  const {
+    data = [],
+    isPending,
+    isError,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['readings'],
-    queryFn: ({ pageParam }) =>
+    ...paginatedQueryOptions((cursor) =>
       apiPaginationRequest(
         () =>
           appClient.api.v1.users.me.readings.$get({
-            query: { cursor: pageParam, type: RequestType.Data },
+            query: { cursor, type: RequestType.Data },
           }),
         'Failed to load readings',
       ),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.pageInfo.nextCursor,
+    ),
   });
-
-  const readings = data?.pages.flatMap((page) => page.data) ?? [];
 
   return (
     <>
@@ -44,12 +48,12 @@ function ReadingsPage() {
           </div>
         ) : isError ? (
           <p className="text-center text-sm text-muted-foreground">Failed to load readings. Please try again.</p>
-        ) : readings.length === 0 ? (
+        ) : data.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">No readings yet.</p>
         ) : (
           <div className="mx-auto max-w-2xl space-y-4">
             <div className="divide-y overflow-hidden rounded-lg border text-left">
-              {readings.map((reading) => (
+              {data.map((reading) => (
                 <ReadingRow key={reading.id} {...reading} />
               ))}
             </div>

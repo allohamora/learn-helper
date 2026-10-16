@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
-import { apiRequest, apiPaginationRequest, appClient } from '@/services/api';
+import { describe, expect, it, vi } from 'vitest';
+import { apiRequest, apiPaginationRequest, appClient, paginatedQueryOptions } from '@/services/api';
 import { mockServer } from '../../setup-unit-context';
 
 describe('services/api', () => {
@@ -111,6 +111,42 @@ describe('services/api', () => {
           'Failed to search items',
         ),
       ).rejects.toThrow('Search failed');
+    });
+  });
+
+  describe('paginatedQueryOptions', () => {
+    const page = (ids: string[], nextCursor?: string) => ({
+      success: true as const,
+      data: ids.map((id) => ({ id })),
+      pageInfo: { total: 3, count: ids.length, nextCursor },
+    });
+
+    it('fetches a page with the page param as cursor', async () => {
+      const fetchPage = vi.fn().mockResolvedValue(page(['a']));
+      const options = paginatedQueryOptions(fetchPage);
+
+      await options.queryFn({ pageParam: 'cursor-1' });
+
+      expect(fetchPage).toHaveBeenCalledWith('cursor-1');
+    });
+
+    it('starts without a cursor and follows the next cursor of the last page', () => {
+      const options = paginatedQueryOptions(() => Promise.resolve(page([])));
+
+      expect(options.initialPageParam).toBeUndefined();
+      expect(options.getNextPageParam(page(['a'], 'cursor-2'))).toBe('cursor-2');
+      expect(options.getNextPageParam(page(['a']))).toBeUndefined();
+    });
+
+    it('selects the items of all pages as one flat list', () => {
+      const options = paginatedQueryOptions(() => Promise.resolve(page([])));
+
+      const items = options.select({
+        pages: [page(['a', 'b'], 'cursor-2'), page(['c'])],
+        pageParams: [undefined, 'cursor-2'],
+      });
+
+      expect(items).toEqual([{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
     });
   });
 });

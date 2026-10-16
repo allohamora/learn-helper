@@ -1,3 +1,4 @@
+import type { InfiniteData } from '@tanstack/react-query';
 import { hc } from 'hono/client';
 import type { ClientResponse } from 'hono/client';
 import type { AppType } from '@/server/api';
@@ -41,6 +42,13 @@ export const apiPaginationRequest = <T>(
   fn: () => Promise<ClientResponse<PaginatedResponse<T> | ErrorResponse, number, 'json'>>,
   fallback?: string,
 ): Promise<PaginatedResponse<T>> => fetchApiResponse(fn, fallback);
+
+export const paginatedQueryOptions = <T>(fetchPage: (cursor: string | undefined) => Promise<PaginatedResponse<T>>) => ({
+  initialPageParam: undefined as string | undefined,
+  queryFn: ({ pageParam }: { pageParam: string | undefined }) => fetchPage(pageParam),
+  getNextPageParam: (lastPage: PaginatedResponse<T>) => lastPage.pageInfo.nextCursor,
+  select: (data: InfiniteData<PaginatedResponse<T>, string | undefined>) => data.pages.flatMap((page) => page.data),
+});
 
 export const getIsomorphicAppClient = createIsomorphicFn()
   .server(async () => {
