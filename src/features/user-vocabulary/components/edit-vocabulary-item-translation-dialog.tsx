@@ -4,8 +4,8 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
-import { formatPartOfSpeech } from '@/utils/vocabulary';
+import { useEditVocabularyItemTranslation } from './edit-vocabulary-item-translation';
+import { formatPartOfSpeech } from '../utils/vocabulary';
 
 type EditFormProps = {
   value: string;

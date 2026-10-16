@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Volume2, ExternalLink, ArrowRight, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
+import { useEditVocabularyItemTranslation } from './edit-vocabulary-item-translation';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
-import type { LearnItem, ShowcaseTask } from '@/types/learn';
+import type { LearnItem, ShowcaseTask } from '../types/learn';
 
 type LearnShowcaseCardProps = {
   data: ShowcaseTask['data'];

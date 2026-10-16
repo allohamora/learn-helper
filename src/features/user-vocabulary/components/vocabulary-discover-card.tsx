@@ -4,11 +4,11 @@ import { ExternalLink, Pencil, Volume2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
+import { useEditVocabularyItemTranslation } from './edit-vocabulary-item-translation';
 import { appClient, type SuccessData } from '@/services/api';
 import { useAudioPlayer } from '@/hooks/use-audio-player';
 import { cn } from '@/lib/utils';
-import { formatPartOfSpeech } from '@/utils/vocabulary';
+import { formatPartOfSpeech } from '../utils/vocabulary';
 
 export type VocabularyDiscoverItem = SuccessData<
   InferResponseType<(typeof appClient.api.v1.users.me)['vocabulary-lists'][':userVocabularyListId']['items']['$get']>

@@ -1,10 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { EditVocabularyItemTranslationDialog } from '@/components/edit-vocabulary-item-translation-dialog';
-import { Learn } from '@/components/learn';
-import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
 import { pageHead } from '@/utils/page';
-import { getVocabularyListTitle } from '@/utils/vocabulary';
+import { getVocabularyListTitle } from '@/features/user-vocabulary/utils/vocabulary';
+import { VocabularyListLearnPage } from '@/features/user-vocabulary/pages/vocabulary-list-learn-page';
 
 export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyListId_/learn')({
   loader: async ({ params: { userVocabularyListId } }) => {
@@ -20,19 +18,11 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
   },
   head: ({ loaderData }) =>
     pageHead(loaderData ? `Learn: ${getVocabularyListTitle(loaderData.vocabularyList)}` : 'Learn'),
-  component: VocabularyListLearnPage,
+  component: RouteComponent,
 });
 
-function VocabularyListLearnPage() {
+function RouteComponent() {
   const { userVocabularyListId } = Route.useParams();
 
-  return (
-    <EditVocabularyItemTranslationProvider userVocabularyListId={userVocabularyListId}>
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <Learn userVocabularyListId={userVocabularyListId} />
-      </div>
-
-      <EditVocabularyItemTranslationDialog />
-    </EditVocabularyItemTranslationProvider>
-  );
+  return <VocabularyListLearnPage userVocabularyListId={userVocabularyListId} />;
 }

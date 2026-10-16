@@ -20,7 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { apiRequest, apiPaginationRequest, appClient, paginatedQueryOptions, type SuccessData } from '@/services/api';
-import { formatPartOfSpeech } from '@/utils/vocabulary';
+import { formatPartOfSpeech } from '../utils/vocabulary';
 
 type SearchResult = SuccessData<
   InferResponseType<(typeof appClient.api.v1.users.me)['vocabulary-lists']['personal']['search']['$get']>

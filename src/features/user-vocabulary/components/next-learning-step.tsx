@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiRequest, appClient } from '@/services/api';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 
 export type NextLearningStepProps = {
   userVocabularyListId: string;

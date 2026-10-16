@@ -1,40 +1,18 @@
-import type { ComponentType } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Route } from '@/routes/_auth/vocabulary-lists_.$userVocabularyListId_.discover';
+import { VocabularyListDiscoverPage } from '@/features/user-vocabulary/pages/vocabulary-list-discover-page';
 import { LearningStatus } from '@/const/vocabulary';
 import type { z } from '@hono/zod-openapi';
 import type { userVocabularyItemWithRelationsDto } from '@/server/user-vocabulary/dtos/user-vocabulary-item-with-relations.dto';
-import { api } from '../../utils/api.utils';
-import { mockServer } from '../../setup-unit-context';
+import { api } from '../../../../utils/api.utils';
+import { mockServer } from '../../../../setup-unit-context';
 
 type UserVocabularyItem = z.infer<typeof userVocabularyItemWithRelationsDto>;
 
-const { userVocabularyListId } = vi.hoisted(() => ({ userVocabularyListId: crypto.randomUUID() }));
-
-// Route.useParams() normally reads real router context, which only exists under a mounted
-// <RouterProvider>; stubbing it lets the page component render standalone in a test without
-// pulling in a full router harness for a bug that lives entirely in the component's own state
-vi.mock('@tanstack/react-router', async (importOriginal) => {
-  const actualRouterModule = await importOriginal<typeof import('@tanstack/react-router')>();
-
-  return {
-    ...actualRouterModule,
-    createFileRoute: ((routePath: string) => {
-      const createRoute = actualRouterModule.createFileRoute(routePath as never);
-
-      return (options: never) => {
-        const mockedRoute = createRoute(options);
-        mockedRoute.useParams = (() => ({ userVocabularyListId })) as typeof mockedRoute.useParams;
-
-        return mockedRoute;
-      };
-    }) as unknown as typeof actualRouterModule.createFileRoute,
-  };
-});
+const userVocabularyListId = crypto.randomUUID();
 
 const createVocabularyItem = (value: string): UserVocabularyItem => {
   const timestamp = new Date().toISOString();
@@ -79,11 +57,10 @@ const restoreVisibilityState = (original: PropertyDescriptor | undefined) => {
 describe('Vocabulary discover page', () => {
   const renderDiscoverPage = () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const DiscoverPage = Route.options.component as ComponentType;
 
     return render(
       <QueryClientProvider client={queryClient}>
-        <DiscoverPage />
+        <VocabularyListDiscoverPage userVocabularyListId={userVocabularyListId} />
       </QueryClientProvider>,
     );
   };

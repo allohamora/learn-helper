@@ -4,12 +4,12 @@ import { HttpResponse } from 'msw';
 import { toast } from 'sonner';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { z } from '@hono/zod-openapi';
-import { AddPersonalVocabularyItemDialog } from '@/components/add-personal-vocabulary-item-dialog';
+import { AddPersonalVocabularyItemDialog } from '@/features/user-vocabulary/components/add-personal-vocabulary-item-dialog';
 import { LearningStatus } from '@/const/vocabulary';
 import type { personalVocabularyItemSearchResultDto } from '@/server/user-vocabulary/dtos/personal-vocabulary-item-search-result.dto';
 import type { userVocabularyItemWithRelationsDto } from '@/server/user-vocabulary/dtos/user-vocabulary-item-with-relations.dto';
-import { api } from '../../utils/api.utils';
-import { mockServer } from '../../setup-unit-context';
+import { api } from '../../../../utils/api.utils';
+import { mockServer } from '../../../../setup-unit-context';
 
 type SearchResult = z.infer<typeof personalVocabularyItemSearchResultDto>;
 type UserVocabularyItem = z.infer<typeof userVocabularyItemWithRelationsDto>;

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
-import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
+import { useCreateVocabularyListLearnEvents } from '../hooks/use-create-vocabulary-list-learn-events';
 import { useVisibleDuration } from '@/hooks/use-visible-duration';
 import { apiRequest, appClient } from '@/services/api';
 import type {
@@ -18,14 +18,14 @@ import type {
   TranslationToVocabularyItemTask,
   VocabularyItemToDefinitionTask,
   VocabularyItemToTranslationTask,
-} from '@/types/learn';
+} from '../types/learn';
 import { LearnShowcaseCard } from './learn-showcase-card';
 import { PronunciationToVocabularyItem } from './pronunciation-to-vocabulary-item';
 import { LearnResult } from './learn-result';
 import { TextToVocabularyItem } from './text-to-vocabulary-item';
 import { VocabularyItemToOptions } from './vocabulary-item-to-options';
 import { WordOrder } from './word-order';
-import { Loader } from './ui/loader';
+import { Loader } from '@/components/ui/loader';
 
 type Props = {
   userVocabularyListId: string;

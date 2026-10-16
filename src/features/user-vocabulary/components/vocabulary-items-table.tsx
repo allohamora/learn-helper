@@ -16,8 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useEditVocabularyItemTranslation } from '@/components/providers/edit-vocabulary-item-translation';
-import { VocabularyStatusBadge } from '@/components/vocabulary-status-badge';
+import { useEditVocabularyItemTranslation } from './edit-vocabulary-item-translation';
+import { VocabularyStatusBadge } from './vocabulary-status-badge';
 import { apiRequest, appClient, type SuccessData } from '@/services/api';
 import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import { useAudioPlayer } from '@/hooks/use-audio-player';

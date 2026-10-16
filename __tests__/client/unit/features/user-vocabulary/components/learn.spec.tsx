@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Learn, toClientTasks, toServerTasks } from '@/components/learn';
-import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
+import { Learn, toClientTasks, toServerTasks } from '@/features/user-vocabulary/components/learn';
+import { EditVocabularyItemTranslationProvider } from '@/features/user-vocabulary/components/edit-vocabulary-item-translation';
 import { EventType, UserVocabularyItemTaskType } from '@/const/event';
-import type { LearnItem, LearnTasksData } from '@/types/learn';
-import { mockServer } from '../../setup-unit-context';
+import type { LearnItem, LearnTasksData } from '@/features/user-vocabulary/types/learn';
+import { mockServer } from '../../../../setup-unit-context';
 
 const learnItem = ({ id, value, pronunciation }: { id: string; value: string; pronunciation: string | null }) => {
   return {

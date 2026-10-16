@@ -5,7 +5,7 @@ import { Link, useRouter } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { apiRequest, appClient } from '@/services/api';
 import { VocabularyListType } from '@/const/vocabulary';
-import { getVocabularyListTitle } from '@/utils/vocabulary';
+import { getVocabularyListTitle } from '../utils/vocabulary';
 
 type Props = {
   id: string;

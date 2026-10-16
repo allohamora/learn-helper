@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 import { Link } from '@tanstack/react-router';
-import type { LearnItem } from '@/types/learn';
-import { Button } from './ui/button';
+import type { LearnItem } from '../types/learn';
+import { Button } from '@/components/ui/button';
 import { NextLearningStep } from './next-learning-step';
 
 export type LearnResultProps = {

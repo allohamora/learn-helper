@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PronunciationToVocabularyItem } from '@/components/pronunciation-to-vocabulary-item';
+import { PronunciationToVocabularyItem } from '@/features/user-vocabulary/components/pronunciation-to-vocabulary-item';
 import { UserVocabularyItemTaskType } from '@/const/event';
-import type { PronunciationToVocabularyItemTask } from '@/types/learn';
+import type { PronunciationToVocabularyItemTask } from '@/features/user-vocabulary/types/learn';
 
 // happy-dom does not implement the Web Speech API, so SttButton (rendered inside
 // ToVocabularyItem) hits its "not supported" branch unless SpeechRecognition exists.

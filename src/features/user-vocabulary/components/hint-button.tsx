@@ -3,7 +3,7 @@ import { CircleQuestionMarkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EventType, type UserVocabularyItemTaskType } from '@/const/event';
-import { useCreateVocabularyListLearnEvents } from '@/hooks/use-create-vocabulary-list-learn-events';
+import { useCreateVocabularyListLearnEvents } from '../hooks/use-create-vocabulary-list-learn-events';
 import { cn } from '@/lib/utils';
 
 type HintButtonProps = {

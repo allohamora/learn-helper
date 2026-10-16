@@ -3,12 +3,15 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { z } from '@hono/zod-openapi';
-import { VocabularyItemsTable, requiresResetConfirmation } from '@/components/vocabulary-items-table';
-import { EditVocabularyItemTranslationProvider } from '@/components/providers/edit-vocabulary-item-translation';
+import {
+  VocabularyItemsTable,
+  requiresResetConfirmation,
+} from '@/features/user-vocabulary/components/vocabulary-items-table';
+import { EditVocabularyItemTranslationProvider } from '@/features/user-vocabulary/components/edit-vocabulary-item-translation';
 import { LearningStatus, VocabularyListType } from '@/const/vocabulary';
 import type { userVocabularyItemWithRelationsDto } from '@/server/user-vocabulary/dtos/user-vocabulary-item-with-relations.dto';
-import { api } from '../../utils/api.utils';
-import { mockServer } from '../../setup-unit-context';
+import { api } from '../../../../utils/api.utils';
+import { mockServer } from '../../../../setup-unit-context';
 
 // jsdom/happy-dom report zero element dimensions, so react-virtual would otherwise render no rows;
 // this replaces it with a pass-through that renders every item, matching this test's single-item lists.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compare } from '@/components/to-vocabulary-item';
+import { compare } from '@/features/user-vocabulary/components/to-vocabulary-item';
 
 describe('compare', () => {
   it('matches case-insensitively and trims whitespace', () => {
