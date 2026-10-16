@@ -5,7 +5,7 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { sql } from 'drizzle-orm';
-import { DRIZZLE_DEBUG, POSTGRES_URL } from '../config';
+import { DRIZZLE_DEBUG, POSTGRES_URL } from '../services/config.service';
 import { createLogger } from '../utils/logger.utils';
 
 const logger = createLogger('db.service');

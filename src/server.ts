@@ -1,4 +1,4 @@
-import { wrapFetchWithSentry } from '@/server/services/telemetry';
+import { wrapFetchWithSentry } from '@/server/services/telemetry.service';
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry';
 import { runMigrations } from '@/server/db/db.service';
 import { withRequestMetrics } from '@/server/utils/http-metrics.utils';

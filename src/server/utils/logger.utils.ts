@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import pinoPretty from 'pino-pretty';
 import pino, { type Logger } from 'pino';
-import { PINO_LEVEL } from '../config';
+import { PINO_LEVEL } from '../services/config.service';
 
 export type { Logger };
 

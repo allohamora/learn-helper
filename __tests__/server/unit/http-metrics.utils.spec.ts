@@ -8,7 +8,7 @@ const getActiveSpan = vitest.fn();
 const getRootSpan = vitest.fn();
 const spanToJSON = vitest.fn();
 
-vitest.mock('@/server/services/telemetry', () => ({
+vitest.mock('@/server/services/telemetry.service', () => ({
   metrics: { count: metricsCount, distribution: metricsDistribution },
   getActiveSpan,
   getRootSpan,

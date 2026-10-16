@@ -1,11 +1,11 @@
-import '@/server/services/telemetry';
+import '@/server/services/telemetry.service';
 import closeWithGrace from 'close-with-grace';
 import { useNitroApp as getNitroApp } from 'nitro/app';
 import { serve } from 'srvx/node';
 import { createLogger } from './utils/logger.utils';
 import { onApplicationStop } from './utils/hook.utils';
 import { disconnectFromDb } from './db/db.service';
-import { PORT } from './config';
+import { PORT } from '@/server/services/config.service';
 
 // https://github.com/nitrojs/nitro/blob/eee0abd9fc4f729445f5b1a4da06fa78daf7a3da/src/presets/node/runtime/node-server.ts
 const nitroApp = getNitroApp();

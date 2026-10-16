@@ -2,7 +2,7 @@ import '@tanstack/react-start/server-only';
 import { createMiddleware } from 'hono/factory';
 import { routePath } from 'hono/route';
 import type { ServerEntry } from '@tanstack/react-start/server-entry';
-import { getActiveSpan, getRootSpan, metrics, spanToJSON } from '../services/telemetry';
+import { getActiveSpan, getRootSpan, metrics, spanToJSON } from '../services/telemetry.service';
 
 type HttpMetricAttributes = {
   'http.request.method': string;

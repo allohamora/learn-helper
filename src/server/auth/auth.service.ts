@@ -10,7 +10,7 @@ import {
   BETTER_AUTH_SECRET,
   BETTER_AUTH_URL,
   BETTER_AUTH_ALLOWED_USERS,
-} from '../config';
+} from '../services/config.service';
 import { createLogger } from '../utils/logger.utils';
 import { createPersonalVocabularyListForUser } from '../user-vocabulary/user-vocabulary-list.service';
 

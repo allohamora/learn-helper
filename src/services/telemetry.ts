@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/tanstackstart-react';
 import { version } from '../../package.json' with { type: 'json' };
-import { ENVIRONMENT, IS_PRODUCTION, VITE_SENTRY_DSN } from '@/config';
+import { ENVIRONMENT, IS_PRODUCTION, VITE_SENTRY_DSN } from '@/services/config';
 
 Sentry.init({
   dsn: VITE_SENTRY_DSN,

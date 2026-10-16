@@ -1,7 +1,7 @@
 import '@tanstack/react-start/server-only';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import type { LanguageModel, LanguageModelUsage } from 'ai';
-import { OPENROUTER_API_KEY } from '../config';
+import { OPENROUTER_API_KEY } from '../services/config.service';
 
 const openrouter = createOpenRouter({
   apiKey: OPENROUTER_API_KEY,

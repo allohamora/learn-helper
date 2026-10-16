@@ -3,7 +3,7 @@ import { StrictMode, startTransition } from 'react';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { StartClient } from '@tanstack/react-start/client';
 import { hydrateRoot } from 'react-dom/client';
-import { IS_DEV } from './config';
+import { IS_DEV } from '@/services/config';
 
 startTransition(() => {
   hydrateRoot(

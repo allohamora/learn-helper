@@ -117,7 +117,7 @@ source instead. All of
 it ships to Grafana Cloud over OTLP, with every metric/log getting a
 `deployment.environment.name` resource attribute so production and non-production data
 can be told apart. `app` pod logs are still not collected. The app's own traces/logs/HTTP
-metrics go straight to Sentry (see `src/server/services/telemetry.ts`) and aren't part of this
+metrics go straight to Sentry (see `src/server/services/telemetry.service.ts`) and aren't part of this
 pipeline either - there's no Kubernetes-level equivalent of traces to collect here, so
 none is added.
 
