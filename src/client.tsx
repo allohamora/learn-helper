@@ -1,4 +1,4 @@
-import '@/instrument';
+import '@/services/telemetry';
 import { StrictMode, startTransition } from 'react';
 import * as Sentry from '@sentry/tanstackstart-react';
 import { StartClient } from '@tanstack/react-start/client';

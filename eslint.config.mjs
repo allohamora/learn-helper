@@ -58,8 +58,8 @@ export default defineConfig(
         {
           special: [
             './mocks',
-            '@/instrument',
-            '@/server/instrument',
+            '@/services/telemetry',
+            '@/server/services/telemetry',
             '@tanstack/react-start/server-only',
             '@tanstack/react-start/client-only',
             'react',

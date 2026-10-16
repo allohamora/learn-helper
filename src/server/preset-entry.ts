@@ -1,4 +1,4 @@
-import '@/server/instrument';
+import '@/server/services/telemetry';
 import closeWithGrace from 'close-with-grace';
 import { useNitroApp as getNitroApp } from 'nitro/app';
 import { serve } from 'srvx/node';

@@ -1,8 +1,8 @@
 import '@tanstack/react-start/server-only';
 import * as Sentry from '@sentry/tanstackstart-react';
-import { version } from '../../package.json' with { type: 'json' };
+import { version } from '../../../package.json' with { type: 'json' };
 import { VITE_SENTRY_DSN } from '@/config';
-import { NODE_ENV } from './config';
+import { NODE_ENV } from '@/server/config';
 
 Sentry.init({
   dsn: VITE_SENTRY_DSN,
