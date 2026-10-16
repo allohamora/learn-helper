@@ -20,5 +20,11 @@ export const Route = createFileRoute('/_auth/readings_/$readingId')({
     staleReloadMode: 'blocking',
   },
   head: ({ loaderData }) => pageHead(loaderData?.title ?? 'Reading'),
-  component: ReadingPage,
+  component: RouteComponent,
 });
+
+function RouteComponent() {
+  const reading = Route.useLoaderData();
+
+  return <ReadingPage reading={reading} />;
+}

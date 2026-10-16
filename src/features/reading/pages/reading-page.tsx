@@ -1,12 +1,16 @@
 import type { FC } from 'react';
-import { ClientOnly, getRouteApi } from '@tanstack/react-router';
+import { ClientOnly } from '@tanstack/react-router';
 import { PdfReader } from '../components/pdf-reader';
 
-const route = getRouteApi('/_auth/readings_/$readingId');
+type Props = {
+  reading: {
+    id: string;
+    totalPages: number;
+    currentPage: number;
+  };
+};
 
-export const ReadingPage: FC = () => {
-  const reading = route.useLoaderData();
-
+export const ReadingPage: FC<Props> = ({ reading }) => {
   return (
     <ClientOnly>
       <PdfReader

@@ -1,12 +1,11 @@
-import type { FC } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
+import type { ComponentProps, FC } from 'react';
 import { VocabularyListRow } from '../components/vocabulary-list-row';
 
-const route = getRouteApi('/_auth/vocabulary-lists');
+type Props = {
+  lists: ComponentProps<typeof VocabularyListRow>[];
+};
 
-export const VocabularyListsPage: FC = () => {
-  const lists = route.useLoaderData();
-
+export const VocabularyListsPage: FC<Props> = ({ lists }) => {
   return (
     <>
       <div className="flex flex-col items-center px-4 pt-4 text-center md:pt-8">

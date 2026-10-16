@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
 import { apiRequest, getIsomorphicAppClient } from '@/services/api';
@@ -26,5 +27,27 @@ export const Route = createFileRoute('/_auth/vocabulary-lists_/$userVocabularyLi
   },
   head: ({ loaderData }) =>
     pageHead(loaderData ? getVocabularyListTitle(loaderData.vocabularyList) : 'Vocabulary List'),
-  component: VocabularyListPage,
+  component: RouteComponent,
 });
+
+function RouteComponent() {
+  const { userVocabularyListId } = Route.useParams();
+  const { status, search } = Route.useSearch();
+  const userVocabularyList = Route.useLoaderData();
+  const navigate = Route.useNavigate();
+  const onFiltersChange = useCallback(
+    (patch: { status?: LearningStatus; search?: string }) =>
+      void navigate({ search: (prev) => ({ ...prev, ...patch }) }),
+    [navigate],
+  );
+
+  return (
+    <VocabularyListPage
+      userVocabularyListId={userVocabularyListId}
+      status={status}
+      search={search}
+      userVocabularyList={userVocabularyList}
+      onFiltersChange={onFiltersChange}
+    />
+  );
+}

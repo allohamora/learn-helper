@@ -13,5 +13,11 @@ export const Route = createFileRoute('/_auth/vocabulary-lists')({
       'Failed to load vocabulary lists',
     );
   },
-  component: VocabularyListsPage,
+  component: RouteComponent,
 });
+
+function RouteComponent() {
+  const lists = Route.useLoaderData();
+
+  return <VocabularyListsPage lists={lists} />;
+}

@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { ComponentProps, FC } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { apiPaginationRequest, appClient, paginatedQueryOptions } from '@/services/api';
 import { EditVocabularyItemTranslationDialog } from '../components/edit-vocabulary-item-translation-dialog';
@@ -8,18 +8,30 @@ import { VocabularyListFilters } from '../components/vocabulary-list-filters';
 import { VocabularyItemsTable } from '../components/vocabulary-items-table';
 import { VocabularyListProgress } from '../components/vocabulary-list-progress';
 import { Loader } from '@/components/ui/loader';
-import { VocabularyListType } from '@/const/vocabulary';
+import { VocabularyListType, LearningStatus } from '@/const/vocabulary';
 import { RequestType } from '@/const/request';
 import { getVocabularyListTitle } from '../utils/vocabulary';
-import { getRouteApi } from '@tanstack/react-router';
 
-const route = getRouteApi('/_auth/vocabulary-lists_/$userVocabularyListId');
+type Props = {
+  userVocabularyListId: string;
+  status?: LearningStatus;
+  search?: string;
+  userVocabularyList: {
+    vocabularyList: {
+      type: VocabularyListType;
+      title: string | null;
+    };
+  };
+  onFiltersChange: ComponentProps<typeof VocabularyListFilters>['onChange'];
+};
 
-export const VocabularyListPage: FC = () => {
-  const { userVocabularyListId } = route.useParams();
-  const { status, search } = route.useSearch();
-  const userVocabularyList = route.useLoaderData();
-
+export const VocabularyListPage: FC<Props> = ({
+  userVocabularyListId,
+  status,
+  search,
+  userVocabularyList,
+  onFiltersChange,
+}) => {
   const {
     data = [],
     isPending,
@@ -57,7 +69,7 @@ export const VocabularyListPage: FC = () => {
         </div>
 
         <div className="mt-6">
-          <VocabularyListFilters />
+          <VocabularyListFilters status={status} search={search} onChange={onFiltersChange} />
         </div>
 
         <div className="mt-4 overflow-hidden rounded-lg border">
