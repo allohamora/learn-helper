@@ -136,10 +136,10 @@
   },
   "homepage": "https://github.com/allohamora/learn-helper#readme",
   "engines": {
-    "node": ">=24.14.1",
-    "npm": ">=11.11.0"
+    "node": ">=24.22.1",
+    "npm": ">=11.19.1"
   },
-  "packageManager": "npm@11.11.0",
+  "packageManager": "npm@11.19.1",
   "lint-staged": {
     "*.css": "stylelint --fix",
     "*.{ts,tsx}": "eslint --fix",
