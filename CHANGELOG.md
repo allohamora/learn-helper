@@ -3,6 +3,63 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.0](https://github.com/allohamora/learn-helper/compare/v0.2.1...v0.3.0) (2026-10-31)
+
+### Features
+
+- Add email and password login next to optional google login ([3ecfd1d](https://github.com/allohamora/learn-helper/commit/3ecfd1df4d3f02d0d6380ba53eb5c45ee0d7b7c2))
+- Show the login page in a card with a mode-based subtitle ([269c256](https://github.com/allohamora/learn-helper/commit/269c256bc7abfaf08138873f5f2b7627066e3c4d))
+
+### Bug Fixes
+
+- Remove darker overlap in pdf selection highlight ([0dade53](https://github.com/allohamora/learn-helper/commit/0dade53520e6b4e569a89240048b3521e96d5d50))
+- Add csrf middleware for server functions ([e1161b6](https://github.com/allohamora/learn-helper/commit/e1161b65c409e4530df15a0c7efb0c172136c7a1))
+- Run sentry init once in the server build ([d7e1c27](https://github.com/allohamora/learn-helper/commit/d7e1c2764e5b2147f6889852478481321f6d569d))
+- Add accessible labels to the login and register fields ([110c801](https://github.com/allohamora/learn-helper/commit/110c801b19926b0d776842d7cfaf5c4c8a35f254))
+- Require at least one auth provider in the config and helm schema ([206caf3](https://github.com/allohamora/learn-helper/commit/206caf33aba0589fc0ee51a4e752599fd82a7e29))
+- Normalize auth config values ([39b9225](https://github.com/allohamora/learn-helper/commit/39b9225b5cdd19813e422444cbca8a8943c3674f))
+
+### Code Refactoring
+
+- Extract shared form text field for auth forms ([de4a415](https://github.com/allohamora/learn-helper/commit/de4a415da478eceb20151144bae001bf58fde97f))
+
+### Tests
+
+- Mock the sentry package in http metrics tests ([9311c4a](https://github.com/allohamora/learn-helper/commit/9311c4a45b1662f15d7cc3dd2a6bd947df06f305))
+- Cover sign in for existing users that are not allowed ([679c827](https://github.com/allohamora/learn-helper/commit/679c827dfd5ae040ea1fdb229025dd18ae391f77))
+- Fix flaky pdf reader last page scroll test ([7834974](https://github.com/allohamora/learn-helper/commit/78349743ef2e7d4e860445c00a75c585d05a5b3d))
+
+### Documentation
+
+- Add screenshots for the readme ([4c3daaf](https://github.com/allohamora/learn-helper/commit/4c3daafa74d13d947bb50f5dd453e42c904cffc1))
+- Rewrite readme for users with features, screenshots and self-hosting ([e4c34c7](https://github.com/allohamora/learn-helper/commit/e4c34c77c86f7f5bab0cd8552474449ea1d1ea99))
+- Replace readme screenshot tables with side-by-side images ([1505a7e](https://github.com/allohamora/learn-helper/commit/1505a7e42f2ef89e1cc4e816ff5d7de6449956da))
+- Stack desktop and mobile readme screenshots ([f9d4bdc](https://github.com/allohamora/learn-helper/commit/f9d4bdc051e26ccb3a9c1ab3f713dfc828a4df91))
+- Link screenshots as images and add a link to more images ([f30538e](https://github.com/allohamora/learn-helper/commit/f30538eb87c7c9fa1dbefba8dfcf2b4693d94432))
+- Remove mobile screenshot links from readme ([25c76b7](https://github.com/allohamora/learn-helper/commit/25c76b77480bd137dbcf4070225ba21a944fbe91))
+- Show the full mobile statistics page and add a light version ([430ec73](https://github.com/allohamora/learn-helper/commit/430ec734c09e05e8ba47aa7a2e156531c7ed40cd))
+
+### Build System
+
+- Update dependencies ([744fa5f](https://github.com/allohamora/learn-helper/commit/744fa5f552df7d3460b7c13add157876a904a179))
+- Keep node_modules source maps on build ([2978c1b](https://github.com/allohamora/learn-helper/commit/2978c1bd23628dc1928760cb1ec06177b8453cb6))
+- Update node.js to v24.22.1 and npm to v11.19.1 ([99333ee](https://github.com/allohamora/learn-helper/commit/99333ee0e15acea0688522e6edfae30928a220fb))
+- **deps:** Bump the npm_and_yarn group across 1 directory with 2 updates ([f3d1e73](https://github.com/allohamora/learn-helper/commit/f3d1e7399c4378cf4cf1ac3ae5d6860760b5ffd5))
+- **deps:** Bump the npm_and_yarn group across 1 directory with 4 updates ([69c0977](https://github.com/allohamora/learn-helper/commit/69c0977a9315c7d1e2c4cf22b2d53124fce5b434))
+
+### Continuous Integration
+
+- Update terraform to v1.17.0 and its providers ([474845c](https://github.com/allohamora/learn-helper/commit/474845c8fb440bf36fb90dd19ba67e72a1d90909))
+- Make google credentials optional in the helm schema ([ddb34df](https://github.com/allohamora/learn-helper/commit/ddb34df23350c9ff737b3783a5a4ae6c1b96f6cb))
+
+### Miscellaneous Chores
+
+- Update agents.md rules ([86ead74](https://github.com/allohamora/learn-helper/commit/86ead74ec2b31250d993296faae07ae75bbc54d9))
+- Add more instructions to review comments skill ([4dee4ed](https://github.com/allohamora/learn-helper/commit/4dee4edb5d9a92a7a3c1854df0dd6ec0cbc83457))
+- Move prompt writing rules to agents.md ([fe3d6b8](https://github.com/allohamora/learn-helper/commit/fe3d6b8369b27784d319738d72a47351563f49ee))
+- Group agents.md rules by topic ([7600a66](https://github.com/allohamora/learn-helper/commit/7600a663bdcc3f32903f5420a3759054dd6b3023))
+- Allow tailwind @apply in stylelint at-rule prelude check ([561e718](https://github.com/allohamora/learn-helper/commit/561e71880ffa6e2e14018f9c033126e010bc698a))
+
 ## [0.2.1](https://github.com/allohamora/learn-helper/compare/v0.2.0...v0.2.1) (2026-10-13)
 
 ### Bug Fixes
