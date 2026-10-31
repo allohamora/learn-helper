@@ -1,5 +1,5 @@
-import { wrapFetchWithSentry } from '@/server/instrument';
 import handler, { createServerEntry } from '@tanstack/react-start/server-entry';
+import { wrapFetchWithSentry } from '@sentry/tanstackstart-react';
 import { runMigrations } from '@/server/db/db.service';
 import { withRequestMetrics } from '@/server/utils/http-metrics.utils';
 

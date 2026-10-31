@@ -13,7 +13,7 @@ import type { Context } from 'hono';
 import { MimeType } from '@/const/mime-type';
 import { statisticsRouter } from './statistics/statistics.router';
 import { readingRouter } from './reading/reading.router';
-import { setUser } from './instrument';
+import { setUser } from '@sentry/tanstackstart-react';
 import { httpMetricsMiddleware } from './utils/http-metrics.utils';
 
 declare module 'hono' {
