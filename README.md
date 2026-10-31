@@ -20,16 +20,12 @@ More screenshots, including mobile and light theme, are in the [images](images) 
 
 ![Vocabulary lists](images/lists-desktop-dark.png)
 
-[Mobile screenshot](images/lists-mobile-dark.png)
-
 ### Discover
 
 - Go through a list and mark each item as `I Know This` or `Learn This`.
 - Made a mistake? Undo it.
 
 ![Discover](images/discover-desktop-dark.png)
-
-[Mobile screenshot](images/discover-mobile-dark.png)
 
 ### Learn
 
@@ -43,19 +39,13 @@ More screenshots, including mobile and light theme, are in the [images](images) 
 
 ![Showcase](images/learn-showcase-desktop-dark.png)
 
-[Mobile screenshot](images/learn-showcase-mobile-dark.png)
-
 **Exercise**
 
 ![Exercise](images/learn-task-desktop-dark.png)
 
-[Mobile screenshot](images/learn-task-mobile-dark.png)
-
 **Session result**
 
 ![Session result](images/learn-result-desktop-dark.png)
-
-[Mobile screenshot](images/learn-result-mobile-dark.png)
 
 ### Personal list
 
@@ -63,8 +53,6 @@ More screenshots, including mobile and light theme, are in the [images](images) 
 - Or generate an item with AI from any word or phrase, with an optional context to pick the right meaning.
 
 ![Personal list](images/personal-desktop-dark.png)
-
-[Mobile screenshot](images/personal-mobile-dark.png)
 
 ### Readings
 
@@ -75,8 +63,6 @@ More screenshots, including mobile and light theme, are in the [images](images) 
 
 ![Readings](images/reading-desktop-dark.png)
 
-[Mobile screenshot](images/reading-mobile-dark.png)
-
 ### Statistics
 
 - Counters for discovered items, completed tasks, mistakes, retries, hints, generated items, readings and translations.
@@ -86,8 +72,6 @@ More screenshots, including mobile and light theme, are in the [images](images) 
 - The items with the most mistakes and the most hints.
 
 ![Statistics](images/statistics-desktop-dark.png)
-
-[Mobile screenshot](images/statistics-mobile-dark.png)
 
 ### Accounts and themes
 
