@@ -16,16 +16,20 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Search the items of a list and filter them by status: waiting, learning or known.
 - Edit the translation of an item, reset its progress or remove it from your list.
 
-<img src="images/lists-mobile-dark.png" alt="Vocabulary lists on mobile" width="260">
+<p>
+  <img src="images/lists-desktop-dark.png" alt="Vocabulary lists on desktop" width="72%">
+  <img src="images/lists-mobile-dark.png" alt="Vocabulary lists on mobile" width="24%">
+</p>
 
 ### Discover
 
 - Go through a list and mark each item as `I Know This` or `Learn This`.
 - Made a mistake? Undo it.
 
-| Desktop                                       | Mobile                                                                 |
-| --------------------------------------------- | ---------------------------------------------------------------------- |
-| ![Discover](images/discover-desktop-dark.png) | <img src="images/discover-mobile-dark.png" alt="Discover" width="260"> |
+<p>
+  <img src="images/discover-desktop-dark.png" alt="Discover on desktop" width="72%">
+  <img src="images/discover-mobile-dark.png" alt="Discover on mobile" width="24%">
+</p>
 
 ### Learn
 
@@ -35,20 +39,36 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Use hints when you are stuck. Mistakes come back as retries.
 - The session result shows the mistakes per item. You decide when an item is learned: move it to the next step yourself, or keep practicing it in the next session.
 
-| Desktop                                                 | Mobile                                                                           |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| ![Showcase](images/learn-showcase-desktop-dark.png)     | <img src="images/learn-showcase-mobile-dark.png" alt="Showcase" width="260">     |
-| ![Exercise](images/learn-task-desktop-dark.png)         | <img src="images/learn-task-mobile-dark.png" alt="Exercise" width="260">         |
-| ![Session result](images/learn-result-desktop-dark.png) | <img src="images/learn-result-mobile-dark.png" alt="Session result" width="260"> |
+**Showcase**
+
+<p>
+  <img src="images/learn-showcase-desktop-dark.png" alt="Showcase on desktop" width="72%">
+  <img src="images/learn-showcase-mobile-dark.png" alt="Showcase on mobile" width="24%">
+</p>
+
+**Exercise**
+
+<p>
+  <img src="images/learn-task-desktop-dark.png" alt="Exercise on desktop" width="72%">
+  <img src="images/learn-task-mobile-dark.png" alt="Exercise on mobile" width="24%">
+</p>
+
+**Session result**
+
+<p>
+  <img src="images/learn-result-desktop-dark.png" alt="Session result on desktop" width="72%">
+  <img src="images/learn-result-mobile-dark.png" alt="Session result on mobile" width="24%">
+</p>
 
 ### Personal list
 
 - Search the Oxford items and add them to your personal list.
 - Or generate an item with AI from any word or phrase, with an optional context to pick the right meaning.
 
-| Desktop                                            | Mobile                                                                      |
-| -------------------------------------------------- | --------------------------------------------------------------------------- |
-| ![Personal list](images/personal-desktop-dark.png) | <img src="images/personal-mobile-dark.png" alt="Personal list" width="260"> |
+<p>
+  <img src="images/personal-desktop-dark.png" alt="Personal list on desktop" width="72%">
+  <img src="images/personal-mobile-dark.png" alt="Personal list on mobile" width="24%">
+</p>
 
 ### Readings
 
@@ -57,9 +77,10 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Add the translated word or phrase to your personal list in one tap.
 - Your page and reading time are saved for every reading.
 
-| Desktop                                      | Mobile                                                                |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| ![Readings](images/reading-desktop-dark.png) | <img src="images/reading-mobile-dark.png" alt="Readings" width="260"> |
+<p>
+  <img src="images/reading-desktop-dark.png" alt="Readings on desktop" width="72%">
+  <img src="images/reading-mobile-dark.png" alt="Readings on mobile" width="24%">
+</p>
 
 ### Statistics
 
@@ -69,9 +90,10 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Daily charts for discovery, learning activity, AI cost, edits and reading.
 - The items with the most mistakes and the most hints.
 
-| Desktop                                           | Mobile                                                                     |
-| ------------------------------------------------- | -------------------------------------------------------------------------- |
-| ![Statistics](images/statistics-desktop-dark.png) | <img src="images/statistics-mobile-dark.png" alt="Statistics" width="260"> |
+<p>
+  <img src="images/statistics-desktop-dark.png" alt="Statistics on desktop" width="72%">
+  <img src="images/statistics-mobile-dark.png" alt="Statistics on mobile" width="24%">
+</p>
 
 ### Accounts and themes
 
@@ -79,13 +101,17 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Only the emails you allow can sign up, and every user has their own data.
 - Dark and light theme, with a layout for desktop and mobile.
 
-<details>
-<summary>Light theme</summary>
+### Light theme
 
-|                                               |                                                    |
-| --------------------------------------------- | -------------------------------------------------- |
-| ![Lists](images/lists-desktop-light.png)      | ![Exercise](images/learn-task-desktop-light.png)   |
-| ![Readings](images/reading-desktop-light.png) | ![Statistics](images/statistics-desktop-light.png) |
+<details>
+<summary>Show light theme screenshots</summary>
+
+<p>
+  <img src="images/lists-desktop-light.png" alt="Lists in light theme" width="48%">
+  <img src="images/learn-task-desktop-light.png" alt="Exercise in light theme" width="48%">
+  <img src="images/reading-desktop-light.png" alt="Readings in light theme" width="48%">
+  <img src="images/statistics-desktop-light.png" alt="Statistics in light theme" width="48%">
+</p>
 
 </details>
 
