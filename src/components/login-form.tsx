@@ -4,7 +4,7 @@ import { useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FormTextField } from '@/components/form-text-field';
 import { authClient } from '@/services/auth';
 
 const formSchema = z.object({
@@ -41,37 +41,19 @@ export const LoginForm: FC = () => {
     >
       <form.Field name="email">
         {(field) => (
-          <div className="space-y-1">
-            <Input
-              type="email"
-              placeholder="Email"
-              aria-label="Email"
-              autoComplete="email"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-            {field.state.meta.errors.length > 0 && (
-              <p className="text-sm text-destructive">{field.state.meta.errors[0]?.message}</p>
-            )}
-          </div>
+          <FormTextField field={field} type="email" placeholder="Email" aria-label="Email" autoComplete="email" />
         )}
       </form.Field>
 
       <form.Field name="password">
         {(field) => (
-          <div className="space-y-1">
-            <Input
-              type="password"
-              placeholder="Password"
-              aria-label="Password"
-              autoComplete="current-password"
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-            {field.state.meta.errors.length > 0 && (
-              <p className="text-sm text-destructive">{field.state.meta.errors[0]?.message}</p>
-            )}
-          </div>
+          <FormTextField
+            field={field}
+            type="password"
+            placeholder="Password"
+            aria-label="Password"
+            autoComplete="current-password"
+          />
         )}
       </form.Field>
 
