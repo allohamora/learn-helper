@@ -17,8 +17,11 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Edit the translation of an item, reset its progress or remove it from your list.
 
 <p>
-  <img src="images/lists-desktop-dark.png" alt="Vocabulary lists on desktop" width="72%">
-  <img src="images/lists-mobile-dark.png" alt="Vocabulary lists on mobile" width="24%">
+  <img src="images/lists-desktop-dark.png" alt="Vocabulary lists on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/lists-mobile-dark.png" alt="Vocabulary lists on mobile" width="30%">
 </p>
 
 ### Discover
@@ -27,8 +30,11 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Made a mistake? Undo it.
 
 <p>
-  <img src="images/discover-desktop-dark.png" alt="Discover on desktop" width="72%">
-  <img src="images/discover-mobile-dark.png" alt="Discover on mobile" width="24%">
+  <img src="images/discover-desktop-dark.png" alt="Discover on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/discover-mobile-dark.png" alt="Discover on mobile" width="30%">
 </p>
 
 ### Learn
@@ -42,22 +48,31 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 **Showcase**
 
 <p>
-  <img src="images/learn-showcase-desktop-dark.png" alt="Showcase on desktop" width="72%">
-  <img src="images/learn-showcase-mobile-dark.png" alt="Showcase on mobile" width="24%">
+  <img src="images/learn-showcase-desktop-dark.png" alt="Showcase on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/learn-showcase-mobile-dark.png" alt="Showcase on mobile" width="30%">
 </p>
 
 **Exercise**
 
 <p>
-  <img src="images/learn-task-desktop-dark.png" alt="Exercise on desktop" width="72%">
-  <img src="images/learn-task-mobile-dark.png" alt="Exercise on mobile" width="24%">
+  <img src="images/learn-task-desktop-dark.png" alt="Exercise on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/learn-task-mobile-dark.png" alt="Exercise on mobile" width="30%">
 </p>
 
 **Session result**
 
 <p>
-  <img src="images/learn-result-desktop-dark.png" alt="Session result on desktop" width="72%">
-  <img src="images/learn-result-mobile-dark.png" alt="Session result on mobile" width="24%">
+  <img src="images/learn-result-desktop-dark.png" alt="Session result on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/learn-result-mobile-dark.png" alt="Session result on mobile" width="30%">
 </p>
 
 ### Personal list
@@ -66,8 +81,11 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Or generate an item with AI from any word or phrase, with an optional context to pick the right meaning.
 
 <p>
-  <img src="images/personal-desktop-dark.png" alt="Personal list on desktop" width="72%">
-  <img src="images/personal-mobile-dark.png" alt="Personal list on mobile" width="24%">
+  <img src="images/personal-desktop-dark.png" alt="Personal list on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/personal-mobile-dark.png" alt="Personal list on mobile" width="30%">
 </p>
 
 ### Readings
@@ -78,8 +96,11 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - Your page and reading time are saved for every reading.
 
 <p>
-  <img src="images/reading-desktop-dark.png" alt="Readings on desktop" width="72%">
-  <img src="images/reading-mobile-dark.png" alt="Readings on mobile" width="24%">
+  <img src="images/reading-desktop-dark.png" alt="Readings on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/reading-mobile-dark.png" alt="Readings on mobile" width="30%">
 </p>
 
 ### Statistics
@@ -91,8 +112,11 @@ Pick a list, tell the app what you already know, and learn the rest with short e
 - The items with the most mistakes and the most hints.
 
 <p>
-  <img src="images/statistics-desktop-dark.png" alt="Statistics on desktop" width="72%">
-  <img src="images/statistics-mobile-dark.png" alt="Statistics on mobile" width="24%">
+  <img src="images/statistics-desktop-dark.png" alt="Statistics on desktop" width="100%">
+</p>
+
+<p>
+  <img src="images/statistics-mobile-dark.png" alt="Statistics on mobile" width="30%">
 </p>
 
 ### Accounts and themes
