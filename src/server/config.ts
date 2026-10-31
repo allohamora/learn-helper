@@ -20,8 +20,8 @@ export const {
 
   BETTER_AUTH_SECRET,
   BETTER_AUTH_URL,
-  BETTER_AUTH_GOOGLE_CLIENT_ID,
-  BETTER_AUTH_GOOGLE_CLIENT_SECRET,
+  BETTER_AUTH_PROVIDERS,
+  BETTER_AUTH_GOOGLE,
   BETTER_AUTH_ALLOWED_USERS,
 
   OPENROUTER_API_KEY,
@@ -38,10 +38,30 @@ export const {
 
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.url(),
-    BETTER_AUTH_GOOGLE_CLIENT_ID: z.string(),
-    BETTER_AUTH_GOOGLE_CLIENT_SECRET: z.string(),
+    BETTER_AUTH_PROVIDERS: json(z.array(z.enum(['local', 'google']))).default(['local']),
+    BETTER_AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
+    BETTER_AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
     BETTER_AUTH_ALLOWED_USERS: json(z.array(z.string())),
 
     OPENROUTER_API_KEY: z.string(),
+  })
+  .transform((env, ctx) => {
+    if (!env.BETTER_AUTH_PROVIDERS.includes('google')) {
+      return { ...env, BETTER_AUTH_GOOGLE: undefined };
+    }
+
+    const { BETTER_AUTH_GOOGLE_CLIENT_ID: clientId, BETTER_AUTH_GOOGLE_CLIENT_SECRET: clientSecret } = env;
+
+    if (!clientId || !clientSecret) {
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'BETTER_AUTH_GOOGLE_CLIENT_ID and BETTER_AUTH_GOOGLE_CLIENT_SECRET are required when "google" is in BETTER_AUTH_PROVIDERS',
+      });
+
+      return z.NEVER;
+    }
+
+    return { ...env, BETTER_AUTH_GOOGLE: { clientId, clientSecret } };
   })
   .parse(process.env);
