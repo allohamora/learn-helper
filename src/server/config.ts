@@ -38,10 +38,15 @@ export const {
 
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.url(),
-    BETTER_AUTH_PROVIDERS: json(z.array(z.enum(['local', 'google'])).min(1)).default(['local']),
+    BETTER_AUTH_PROVIDERS: json(
+      z
+        .array(z.enum(['local', 'google']))
+        .min(1)
+        .transform((providers) => [...new Set(providers)]),
+    ).default(['local']),
     BETTER_AUTH_GOOGLE_CLIENT_ID: z.string().optional(),
     BETTER_AUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
-    BETTER_AUTH_ALLOWED_USERS: json(z.array(z.string())),
+    BETTER_AUTH_ALLOWED_USERS: json(z.array(z.string().toLowerCase())),
 
     OPENROUTER_API_KEY: z.string(),
   })
