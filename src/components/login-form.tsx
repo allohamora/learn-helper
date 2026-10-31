@@ -45,6 +45,7 @@ export const LoginForm: FC = () => {
             <Input
               type="email"
               placeholder="Email"
+              aria-label="Email"
               autoComplete="email"
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
@@ -62,6 +63,7 @@ export const LoginForm: FC = () => {
             <Input
               type="password"
               placeholder="Password"
+              aria-label="Password"
               autoComplete="current-password"
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}

@@ -45,6 +45,7 @@ export const RegisterForm: FC = () => {
           <div className="space-y-1">
             <Input
               placeholder="Name"
+              aria-label="Name"
               autoComplete="name"
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
@@ -62,6 +63,7 @@ export const RegisterForm: FC = () => {
             <Input
               type="email"
               placeholder="Email"
+              aria-label="Email"
               autoComplete="email"
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
@@ -79,6 +81,7 @@ export const RegisterForm: FC = () => {
             <Input
               type="password"
               placeholder="Password"
+              aria-label="Password"
               autoComplete="new-password"
               value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
