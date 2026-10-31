@@ -8,7 +8,7 @@ const getActiveSpan = vitest.fn();
 const getRootSpan = vitest.fn();
 const spanToJSON = vitest.fn();
 
-vitest.mock('@/server/instrument', () => ({
+vitest.mock('@sentry/tanstackstart-react', () => ({
   metrics: { count: metricsCount, distribution: metricsDistribution },
   getActiveSpan,
   getRootSpan,
