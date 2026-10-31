@@ -146,6 +146,10 @@
           "type": "string",
           "format": "uri"
         },
+        "BETTER_AUTH_PROVIDERS": {
+          "type": "string",
+          "pattern": "\"(local|google)\""
+        },
         "BETTER_AUTH_GOOGLE_CLIENT_ID": {
           "type": "string",
           "minLength": 1
