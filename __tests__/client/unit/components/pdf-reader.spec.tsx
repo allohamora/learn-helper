@@ -330,9 +330,12 @@ describe('PdfReader', () => {
     // Simulates a short last page: the offset lookup would otherwise stay stuck one page early.
     mockGetVirtualItemForOffset.mockReturnValue({ index: 1 });
     mockIsAtEnd.mockReturnValue(true);
-    fireEvent.scroll(window);
 
-    expect((screen.getByRole('textbox', { name: 'Page number' }) as HTMLInputElement).value).toBe('5');
+    // The scroll listener is re-registered in an effect after the page sizes load, so retry the scroll until it is.
+    await waitFor(() => {
+      fireEvent.scroll(window);
+      expect((screen.getByRole('textbox', { name: 'Page number' }) as HTMLInputElement).value).toBe('5');
+    });
   });
 
   it('jumps to the target page when an internal PDF link is clicked', async () => {
