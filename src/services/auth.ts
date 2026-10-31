@@ -1,4 +1,4 @@
-import { createIsomorphicFn } from '@tanstack/react-start';
+import { createIsomorphicFn, createServerFn } from '@tanstack/react-start';
 import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({ basePath: '/api/auth' });
@@ -16,3 +16,9 @@ export const getIsomorphicSession = createIsomorphicFn()
 
     return data;
   });
+
+export const getAuthProviders = createServerFn({ method: 'GET' }).handler(async () => {
+  const { BETTER_AUTH_PROVIDERS } = await import('@/server/config');
+
+  return BETTER_AUTH_PROVIDERS;
+});

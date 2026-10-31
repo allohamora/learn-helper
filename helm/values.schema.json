@@ -130,8 +130,6 @@
         "NODE_ENV",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
-        "BETTER_AUTH_GOOGLE_CLIENT_ID",
-        "BETTER_AUTH_GOOGLE_CLIENT_SECRET",
         "BETTER_AUTH_ALLOWED_USERS",
         "OPENROUTER_API_KEY"
       ],
@@ -147,6 +145,10 @@
         "BETTER_AUTH_URL": {
           "type": "string",
           "format": "uri"
+        },
+        "BETTER_AUTH_PROVIDERS": {
+          "type": "string",
+          "pattern": "\"(local|google)\""
         },
         "BETTER_AUTH_GOOGLE_CLIENT_ID": {
           "type": "string",
@@ -164,6 +166,17 @@
           "type": "string",
           "minLength": 1
         }
+      },
+      "if": {
+        "required": ["BETTER_AUTH_PROVIDERS"],
+        "properties": {
+          "BETTER_AUTH_PROVIDERS": {
+            "pattern": "\"google\""
+          }
+        }
+      },
+      "then": {
+        "required": ["BETTER_AUTH_GOOGLE_CLIENT_ID", "BETTER_AUTH_GOOGLE_CLIENT_SECRET"]
       },
       "additionalProperties": {
         "type": "string"

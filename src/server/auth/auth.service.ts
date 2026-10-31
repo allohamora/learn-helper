@@ -5,8 +5,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError } from 'better-auth/api';
 import { db } from '../db/db.service';
 import {
-  BETTER_AUTH_GOOGLE_CLIENT_ID,
-  BETTER_AUTH_GOOGLE_CLIENT_SECRET,
+  BETTER_AUTH_PROVIDERS,
+  BETTER_AUTH_GOOGLE,
   BETTER_AUTH_SECRET,
   BETTER_AUTH_URL,
   BETTER_AUTH_ALLOWED_USERS,
@@ -21,12 +21,13 @@ export const auth = betterAuth({
     provider: 'pg',
     schema,
   }),
-  socialProviders: {
-    google: {
-      clientId: BETTER_AUTH_GOOGLE_CLIENT_ID,
-      clientSecret: BETTER_AUTH_GOOGLE_CLIENT_SECRET,
-    },
+  emailAndPassword: {
+    enabled: BETTER_AUTH_PROVIDERS.includes('local'),
   },
+  account: {
+    accountLinking: { enabled: false },
+  },
+  socialProviders: BETTER_AUTH_GOOGLE ? { google: BETTER_AUTH_GOOGLE } : {},
   databaseHooks: {
     user: {
       create: {
