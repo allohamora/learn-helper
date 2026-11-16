@@ -34,7 +34,7 @@
     "@hono/zod-openapi": "^1.6.3",
     "@openrouter/ai-sdk-provider": "^3.1.0",
     "@scalar/hono-api-reference": "^0.12.11",
-    "@sentry/tanstackstart-react": "^11.6.0",
+    "@sentry/tanstackstart-react": "^11.12.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-devtools": "^0.10.13",
     "@tanstack/react-form": "^1.33.5",
